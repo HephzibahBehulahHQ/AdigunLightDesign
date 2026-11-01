@@ -1,0 +1,12 @@
+{
+  "name": "adigun-light-design",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "check": "node scripts/check-project.mjs",
+    "build": "node scripts/build.mjs"
+  },
+  "engines": { "node": ">=24" }
+}
