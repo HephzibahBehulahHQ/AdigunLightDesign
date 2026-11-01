@@ -33,6 +33,7 @@ npm run build
 - [Virtual DMX](docs/DMX.md)
 - [Cue timeline](docs/TIMELINE.md)
 - [Export formats](docs/EXPORT_FORMATS.md)
+- [Lux action contract](docs/AI_TOOLS.md)
 
 ## Honest integration status
 
