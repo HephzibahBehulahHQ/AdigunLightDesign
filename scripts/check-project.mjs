@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 
-const required = ["README.md", "AGENTS.md", "index.html", "docs/M0_AUDIT.md", "docs/ARCHITECTURE.md", "docs/SECURITY.md", "docs/I18N.md", "docs/COLOR_ENGINE.md", "docs/LIGHTING_ENGINE.md", "docs/DMX.md", "src/app.js", "src/domain/project.js", "src/domain/color-engine.js", "src/light-lab/renderer.js", "src/dmx/engine.js"];
+const required = ["README.md", "AGENTS.md", "index.html", "docs/M0_AUDIT.md", "docs/ARCHITECTURE.md", "docs/SECURITY.md", "docs/I18N.md", "docs/COLOR_ENGINE.md", "docs/LIGHTING_ENGINE.md", "docs/DMX.md", "docs/TIMELINE.md", "src/app.js", "src/domain/project.js", "src/domain/color-engine.js", "src/light-lab/renderer.js", "src/dmx/engine.js", "src/timeline/engine.js"];
 const missing = required.filter((file) => !existsSync(file));
 if (missing.length) throw new Error(`Missing required files: ${missing.join(", ")}`);
 const manifest = JSON.parse(readFileSync("package.json", "utf8"));

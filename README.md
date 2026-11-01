@@ -6,7 +6,7 @@ It is being built as an offline-first browser application. It will connect palet
 
 ## Status
 
-Milestones 0–4 are implemented on the current feature branch. The product repository was empty before this work; no existing application has been replaced.
+Milestones 0–5 are implemented on the current feature branch. The product repository was empty before this work; no existing application has been replaced.
 
 ## Local development
 
@@ -31,6 +31,7 @@ npm run build
 - [Color engine](docs/COLOR_ENGINE.md)
 - [Lighting engine](docs/LIGHTING_ENGINE.md)
 - [Virtual DMX](docs/DMX.md)
+- [Cue timeline](docs/TIMELINE.md)
 
 ## Honest integration status
 
