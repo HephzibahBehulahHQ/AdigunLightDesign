@@ -6,7 +6,7 @@ It is being built as an offline-first browser application. It will connect palet
 
 ## Status
 
-Milestone 0 (audit and architecture) is the current baseline. The product repository was empty before this work; no existing application has been replaced.
+Milestones 0–2 are implemented on the current feature branch. The product repository was empty before this work; no existing application has been replaced.
 
 ## Local development
 
@@ -28,6 +28,7 @@ npm run build
 - [Testing](docs/TESTING.md)
 - [Security](docs/SECURITY.md)
 - [Internationalization](docs/I18N.md)
+- [Color engine](docs/COLOR_ENGINE.md)
 
 ## Honest integration status
 
