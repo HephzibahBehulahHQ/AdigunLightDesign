@@ -32,6 +32,7 @@ npm run build
 - [Lighting engine](docs/LIGHTING_ENGINE.md)
 - [Virtual DMX](docs/DMX.md)
 - [Cue timeline](docs/TIMELINE.md)
+- [Export formats](docs/EXPORT_FORMATS.md)
 
 ## Honest integration status
 
