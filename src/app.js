@@ -2,14 +2,15 @@ import { createProject, validateProject } from "./domain/project.js";
 import { contrastResult, normalizeHex } from "./domain/color-engine.js";
 import { paletteCssVariables, rerollUnlocked, starterPalette, updateSwatch } from "./domain/palette-store.js";
 import { supportedLocales, translate } from "./i18n.js";
+import { createLightLabRenderer } from "./light-lab/renderer.js";
 
 const storageKey = "adigunlightdesign/project-v1";
 const preferencesKey = "adigunlightdesign/preferences-v1";
 const app = document.querySelector("#app");
-const defaults = { locale:"en", theme:"dark", module:"canvas", tool:"select", selected:"deep-blue", luxOpen:true, harmony:"analogous", seed:"#2196F3" };
+const defaults = { locale:"en", theme:"dark", module:"canvas", view:"palette", tool:"select", selected:"deep-blue", luxOpen:true, harmony:"analogous", seed:"#2196F3" };
 const preferences = { ...defaults, ...safeParse(localStorage.getItem(preferencesKey)) };
 let project = loadProject();
-let undoStack = [], redoStack = [], status = "";
+let undoStack = [], redoStack = [], status = "", renderer = null;
 
 function safeParse(value) { try { return JSON.parse(value) ?? {}; } catch { return {}; } }
 function loadProject() {
@@ -22,6 +23,7 @@ function loadProject() {
 function t(key) { return translate(preferences.locale, key); }
 function palette() { return project.palettes[0]; }
 function selected() { return palette().colors.find((swatch) => swatch.id === preferences.selected) ?? palette().colors[0]; }
+function scene() { if (!project.scenes[0]) project.scenes.push({ id:"studio-room", name:"Studio room", materialColor:"#C21888" }); return project.scenes[0]; }
 function savePreferences() { localStorage.setItem(preferencesKey, JSON.stringify(preferences)); }
 function saveProject() { project.updatedAt = new Date().toISOString(); localStorage.setItem(storageKey, JSON.stringify(project)); status = t("statusSaved"); }
 function pushChange(nextColours) { undoStack.push(structuredClone(palette().colors)); redoStack = []; palette().colors = nextColours; saveProject(); }
@@ -33,14 +35,15 @@ function esc(value) { return String(value).replace(/[&<>"]/g, (char) => ({"&":"&
 function disabled(title) { return `disabled title="${esc(title)}"`; }
 
 function render() {
+  renderer?.destroy(); renderer = null;
   document.documentElement.lang = preferences.locale;
   document.documentElement.dataset.theme = preferences.theme;
   const active = selected();
   const contrast = contrastResult(active.hex, "#0B1220");
   const nav = [
-    ["canvas", "⌂", true], ["palette", "◉", true], ["light", "☼", false], ["copilot", "◌", true], ["library", "▱", false], ["export", "↗", false], ["community", "♧", false]
+    ["canvas", "⌂", true], ["palette", "◉", true], ["light", "☼", true], ["copilot", "◌", true], ["library", "▱", false], ["export", "↗", false], ["community", "♧", false]
   ].map(([key, icon, enabled]) => `<button class="module ${preferences.module === key ? "is-active" : ""}" data-module="${key}" ${enabled ? "" : disabled(`${t(key)} is scheduled after the current milestone.`)}><span>${icon}</span>${t(key)}</button>`).join("");
-  const tools = [["select","↖",true],["paletteBrush","◉",true],["fixture","☀",false],["material","◆",false],["shapes","□",false],["text","T",false],["measure","⌗",false],["orbit","◎",false],["aiPin","✦",false]].map(([key, icon, enabled]) => `<button class="tool ${preferences.tool === key ? "is-active" : ""}" data-tool="${key}" ${enabled ? "" : disabled(`${t(key)} is available with the 3D editor milestone.`)}><span>${icon}</span>${t(key)}</button>`).join("");
+  const tools = [["select","↖",true],["paletteBrush","◉",true],["fixture","☀",false],["material","◆",true],["shapes","□",false],["text","T",false],["measure","⌗",false],["orbit","◎",true],["aiPin","✦",false]].map(([key, icon, enabled]) => `<button class="tool ${preferences.tool === key ? "is-active" : ""}" data-tool="${key}" ${enabled ? "" : disabled(`${t(key)} is available with the 3D editor milestone.`)}><span>${icon}</span>${t(key)}</button>`).join("");
   const swatches = palette().colors.map((swatch) => `<button class="swatch ${active.id === swatch.id ? "is-selected" : ""}" data-swatch="${swatch.id}" aria-label="${esc(swatch.name)} ${swatch.hex}"><span style="background:${swatch.hex}"></span><b>${esc(swatch.name)}</b><small>${swatch.hex}</small>${swatch.locked ? "<em>⌁</em>" : ""}</button>`).join("");
   app.innerHTML = `
     <header class="topbar">
@@ -59,8 +62,8 @@ function render() {
         <section class="tool-section"><h2>☼ ${t("tools")}</h2><div class="tool-list">${tools}</div></section>
       </aside>
       <section class="work-area">
-        <div class="workspace-tabs panel"><button class="tab is-active">2D ${t("palette")}</button><button class="tab" ${disabled("Real 3D editing begins in M3.")}>3D ${t("light")}</button><span></span><button class="view-menu" ${disabled("Perspective controls begin in M3.")}>Perspective⌄</button></div>
-        <div class="scene-preview panel" role="img" aria-label="${t("scenePreview")}"><div class="scene-title"><b>${t("scenePreview")}</b><small>${t("sceneNote")}</small></div><div class="beam beam-blue"></div><div class="beam beam-amber"></div><div class="beam beam-magenta"></div><div class="stage-truss"></div><div class="scene-wall"><div class="art-frame"></div><div class="couch"></div><div class="plant plant-left"></div><div class="plant plant-right"></div><div class="lamp"></div></div><div class="axis"><i>X</i><b>Y</b><em>Z</em></div></div>
+        <div class="workspace-tabs panel"><button class="tab ${preferences.view === "palette" ? "is-active" : ""}" data-view="palette">2D ${t("palette")}</button><button class="tab ${preferences.view === "light" ? "is-active" : ""}" data-view="light">3D ${t("light")}</button><span></span><button class="view-menu" ${preferences.view === "light" ? "" : disabled("Select 3D Light Lab to use perspective orbit.")}>Perspective⌄</button></div>
+        ${preferences.view === "light" ? `<div class="scene-preview light-canvas panel"><div class="scene-title"><b>3D ${t("light")}</b><small>WebGL artistic previsualization · M3</small></div><canvas id="light-canvas" tabindex="0" aria-label="Interactive 3D studio preview; drag to orbit camera"></canvas><div class="canvas-actions"><button id="apply-scene">${t("apply")} ${t("selectedColour")}</button><button id="reset-camera">Reset camera</button></div></div>` : `<div class="scene-preview panel" role="img" aria-label="${t("scenePreview")}"><div class="scene-title"><b>${t("scenePreview")}</b><small>${t("sceneNote")}</small></div><div class="beam beam-blue"></div><div class="beam beam-amber"></div><div class="beam beam-magenta"></div><div class="stage-truss"></div><div class="scene-wall"><div class="art-frame"></div><div class="couch"></div><div class="plant plant-left"></div><div class="plant plant-right"></div><div class="lamp"></div></div><div class="axis"><i>X</i><b>Y</b><em>Z</em></div></div>`}
         <div class="lower-workspace"><section class="palette-panel panel"><div class="section-title"><h2>◉ ${t("activePalette")} — ${esc(palette().name)}</h2><button id="copy-css" class="subtle" title="${t("exportCss")}">▣</button></div><div class="swatches">${swatches}</div><div class="palette-actions"><input id="seed" value="${preferences.seed}" aria-label="Seed colour" maxlength="7" /><select id="harmony" aria-label="${t("harmony")}">${["analogous","complementary","splitComplementary","triadic","tetradic","square","monochromatic"].map((type) => `<option value="${type}" ${type === preferences.harmony ? "selected" : ""}>${type}</option>`).join("")}</select><button id="reroll">⟳ ${t("reroll")}</button><button id="add-colour">＋ ${t("add")}</button></div></section>
           <section class="timeline panel"><div class="section-title"><h2>◌ ${t("virtualDmx")}</h2><span class="m-badge">M4</span></div><p>${t("dmxUnavailable")}</p><div class="timeline-lines" aria-hidden="true"><i></i><i></i><i></i></div></section></div>
       </section>
@@ -69,12 +72,14 @@ function render() {
     </main>
     <footer><span>${t("footer")}</span><span id="status" role="status" aria-live="polite">${status}</span><div><button id="save">${t("save")}</button><button id="undo" ${undoStack.length ? "" : "disabled"}>↶ ${t("undo")}</button><button id="redo" ${redoStack.length ? "" : "disabled"}>↷ ${t("redo")}</button></div></footer>`;
   bind();
+  if (preferences.view === "light") renderer = createLightLabRenderer(document.querySelector("#light-canvas"), { accent:scene().materialColor });
 }
 
 function bind() {
   document.querySelector("#locale").onchange = (event) => { preferences.locale = event.target.value; savePreferences(); status = t("statusLocale"); render(); };
   document.querySelector("#theme").onclick = () => { preferences.theme = preferences.theme === "dark" ? "light" : "dark"; savePreferences(); status = t("statusTheme"); render(); };
   document.querySelectorAll("[data-module]").forEach((button) => button.onclick = () => { const key = button.dataset.module; if (key === "copilot") preferences.luxOpen = true; else preferences.module = key; status = t("statusModule") + button.textContent.trim(); render(); });
+  document.querySelectorAll("[data-view]").forEach((button) => button.onclick = () => { preferences.view = button.dataset.view; savePreferences(); render(); });
   document.querySelectorAll("[data-tool]").forEach((button) => button.onclick = () => { preferences.tool = button.dataset.tool; status = t("statusTool") + button.textContent.trim(); render(); });
   document.querySelectorAll("[data-swatch]").forEach((button) => button.onclick = () => { preferences.selected = button.dataset.swatch; render(); });
   document.querySelector("#project-name").onchange = (event) => { project.name = event.target.value.trim() || project.name; saveProject(); render(); };
@@ -88,6 +93,8 @@ function bind() {
   document.querySelector("#save").onclick = () => { saveProject(); render(); };
   document.querySelector("#undo").onclick = undo; document.querySelector("#redo").onclick = redo;
   document.querySelector("#toggle-lux").onclick = () => { preferences.luxOpen = !preferences.luxOpen; savePreferences(); render(); };
+  const applyScene = document.querySelector("#apply-scene"); if (applyScene) applyScene.onclick = () => { scene().materialColor = selected().hex; saveProject(); renderer.setAccent(selected().hex); status = `${t("apply")} ${selected().hex}`; document.querySelector("#status").textContent = status; };
+  const resetCamera = document.querySelector("#reset-camera"); if (resetCamera) resetCamera.onclick = () => renderer.reset();
   const form = document.querySelector("#lux-form"); if (form) form.onsubmit = (event) => { event.preventDefault(); setStatus(t("luxUnavailable")); };
 }
 function downloadCss() { const file = new Blob([paletteCssVariables(palette().colors)], { type:"text/css" }); const link = document.createElement("a"); link.href = URL.createObjectURL(file); link.download = `${project.name.toLowerCase().replace(/[^a-z0-9]+/gi, "-")}-palette.css`; link.click(); URL.revokeObjectURL(link.href); setStatus(t("statusExport")); }

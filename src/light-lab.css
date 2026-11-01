@@ -1,0 +1,5 @@
+.light-canvas { min-height:353px; }
+.light-canvas canvas { position:absolute; inset:0; width:100%; height:100%; touch-action:none; cursor:grab; }
+.light-canvas canvas:active { cursor:grabbing; }
+.canvas-actions { position:absolute; z-index:9; right:12px; bottom:12px; display:flex; gap:6px; }
+.canvas-actions button { padding:7px 9px; border-radius:6px; color:var(--text); background:#101827dd; border:1px solid #596985; }
