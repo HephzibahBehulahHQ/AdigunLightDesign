@@ -19,6 +19,7 @@ import { createCue, duplicateCue, removeCue, editCue, evaluateCue, evaluateSeque
 import { evaluateEffect } from "./timeline/effects.js";
 import { createPlaybackClock, playbackPosition } from "./timeline/playback-clock.js";
 import { timelineLayout } from "./timeline/layout.js";
+import { arrangeTracks,arrangementDuration,evaluateTracks,scheduleCue } from "./timeline/tracks.js";
 import { groupFixtures,saveFixtureGroup } from "./domain/fixture-groups.js";
 import { cueCsv, designTokenJson, paletteCss, paletteJson, paletteSvg, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
 import { readProjectFile } from "./domain/import-project.js";
@@ -125,12 +126,26 @@ function playLatestCue() {
   },100);
   render();
 }
+function playArrangement() {
+  if (!project.cues.length) return;
+  stopPlayback();
+  const source=structuredClone(project.fixtures),cues=structuredClone(project.cues),duration=arrangementDuration(cues);
+  playbackClock=createPlaybackClock(performance.now());preferences.view="light";
+  playbackTimer=setInterval(()=>{
+    const position=playbackPosition(playbackClock.elapsed(performance.now()),duration,Boolean(preferences.loopSequence));
+    renderer?.setFixtures(evaluateTracks(source,cues,position.time));
+    document.querySelector("#arrangement-playhead").style.left=`${position.time/Math.max(30,duration)*100}%`;
+    document.querySelector("#status").textContent=`${t("playTracks")} · ${position.time.toFixed(1)} s`;
+    if (position.complete && !playbackClock.paused) {stopPlayback();render();}
+  },100);
+  render();
+}
 function downloadText(content, filename, type) { const file=new Blob([content],{type}); const link=document.createElement("a"); link.href=URL.createObjectURL(file); link.download=filename; link.click(); URL.revokeObjectURL(link.href); }
 function exportFile(kind) { const stem=safeFileStem(project.name); const exports={ project:[projectJson(project),`${stem}.ald.json`,"application/json"], palette:[paletteJson(palette()),`${stem}-palette.json`,"application/json"], css:[paletteCss(palette()),`${stem}-palette.css`,"text/css"], patch:[patchCsv(project.fixtures),`${stem}-patch.csv`,"text/csv"], cues:[cueCsv(project.cues),`${stem}-cues.csv`,"text/csv"] }; const [content,name,type]=exports[kind]; downloadText(content,name,type); status=`${name} downloaded.`; document.querySelector("#status").textContent=status; }
 async function importNativeProject(file) { const result=await readProjectFile(file); if(!result.valid) return setStatus(result.errors.join(" ")); stopPlayback(); project=prepareEditorProject(result.project); undoStack=[];redoStack=[];saveProject();status=`${project.name} imported locally.`;render(); }
 function savePreferences() { localStorage.setItem(preferencesKey, JSON.stringify(preferences)); }
 function saveProject() { project.updatedAt = new Date().toISOString(); localStorage.setItem(storageKey, JSON.stringify(project)); status = t("statusSaved"); }
-function commitProjectChange(label, mutate) { stopPlayback(); const next=commitTransaction({project,undoStack,redoStack},label,mutate); project=next.project;undoStack=next.undoStack;redoStack=next.redoStack;saveProject(); }
+function commitProjectChange(label, mutate) { stopPlayback(); const next=commitTransaction({project,undoStack,redoStack},label,mutate); const validation=validateProject(next.project); if (!validation.valid) throw new Error(validation.errors.join(" ")); project=next.project;undoStack=next.undoStack;redoStack=next.redoStack;saveProject(); }
 function mutateColours(fn) { commitProjectChange("palette-update",(draft)=>{draft.palettes[0].colors=fn(structuredClone(draft.palettes[0].colors));}); render(); }
 function undo() { if (!undoStack.length) return setStatus(t("noUndo")); stopPlayback(); const next=undoTransaction({project,undoStack,redoStack});project=next.project;undoStack=next.undoStack;redoStack=next.redoStack;saveProject();status=t("statusUndo");render(); }
 function redo() { if (!redoStack.length) return setStatus(t("noRedo")); stopPlayback(); const next=redoTransaction({project,undoStack,redoStack});project=next.project;undoStack=next.undoStack;redoStack=next.redoStack;saveProject();status=t("statusRedo");render(); }
@@ -223,12 +238,16 @@ function render() {
   document.querySelector(".dmx-actions").insertAdjacentHTML("beforeend", `<button id="play-sequence" ${project.cues.length ? "" : "disabled"}>▶ ${t("playSequence")}</button>`);
   document.querySelector("#stop-cue").insertAdjacentHTML("beforebegin", `<button id="pause-playback" aria-pressed="${Boolean(playbackClock?.paused)}" ${playbackTimer ? "" : "disabled"}>${t(playbackClock?.paused ? "resumePlayback" : "pausePlayback")}</button>`);
   const sequenceDuration=project.cues.reduce((sum,cue)=>sum+cue.duration,0);
+  const tracks=arrangeTracks(project.cues),trackSpan=Math.max(30,arrangementDuration(project.cues));
+  document.querySelector(".timeline").insertAdjacentHTML("beforeend", `<details class="fixture-group-editor" open><summary>${t("tracks")}</summary><button id="play-tracks" ${project.cues.length ? "" : "disabled"}>▶ ${t("playTracks")}</button><div class="cue-track"><div class="timeline-scale">${tracks.map((track)=>`<div class="track-name">${esc(track.id)}</div><div class="timeline-lane">${track.entries.map(({cue,start})=>`<button class="cue-block" data-cue="${esc(cue.id)}" aria-pressed="${cue.id===activeCue?.id}" title="${esc(cue.name)} · ${start}s" style="left:${start/trackSpan*100}%;width:${cue.duration/trackSpan*100}%">${esc(cue.name)}</button>`).join("")}</div>`).join("")}<div id="arrangement-playhead" class="timeline-playhead" aria-hidden="true"></div></div></div></details>`);
   document.querySelector("#create-cue").insertAdjacentHTML("beforebegin", `<label>${t("captureGroup")} <select id="cue-group"><option value="">${t("allFixtures")}</option>${(project.fixtureGroups ?? []).map((group)=>`<option value="${esc(group.id)}">${esc(group.name)}</option>`).join("")}</select></label>`);
   document.querySelector(".timeline").insertAdjacentHTML("beforeend", `<details class="fixture-group-editor"><summary>${t("fixtureGroups")}</summary><label>${t("groupName")} <input id="group-name" maxlength="120"></label><div>${project.fixtures.map((fixture)=>`<label><input type="checkbox" data-group-member value="${esc(fixture.id)}"> ${esc(fixture.name)}</label>`).join("")}</div><button id="save-group">${t("saveGroup")}</button>${(project.fixtureGroups ?? []).map((group)=>`<p>${esc(group.name)} · ${group.fixtureIds.length} <button data-delete-group="${esc(group.id)}">${t("deleteGroup")}</button></p>`).join("")}</details>`);
   document.querySelector(".timeline").insertAdjacentHTML("beforeend", `<div class="dmx-actions"><label><input id="sequence-loop" type="checkbox" ${preferences.loopSequence ? "checked" : ""}> ${t("loopSequence")}</label><label>${t("seekSequence")} <input id="sequence-seek" type="range" min="0" max="${sequenceDuration}" step="0.1" value="0" ${sequenceDuration ? "" : "disabled"}></label><output id="sequence-position">0 / ${sequenceDuration.toFixed(1)} s</output></div>`);
   document.querySelector(".timeline").insertAdjacentHTML("beforeend", `<div class="dmx-actions"><label>${t("virtualEffect")} <select id="effect-type"><option value="pulse">${t("pulse")}</option><option value="chase">${t("chase")}</option></select></label><label>${t("effectPeriod")} <input id="effect-period" type="number" min="0.1" max="120" step="0.1" value="2"></label><button id="play-effect" ${project.fixtures.length ? "" : "disabled"}>▶ ${t("play")}</button></div>`);
   if (activeCue) {
     const index=project.cues.indexOf(activeCue);
+    const scheduled=tracks.flatMap((track)=>track.entries).find((entry)=>entry.cue.id===activeCue.id);
+    document.querySelector("#edit-cue").insertAdjacentHTML("afterend", `<label>${t("trackName")}<input id="cue-track-name" maxlength="80" value="${esc(activeCue.trackId ?? "Main")}"></label><label>${t("startTime")}<input id="cue-start-time" type="number" min="0" step="0.1" required value="${scheduled.start}"></label><button id="schedule-cue">${t("scheduleCue")}</button>`);
     document.querySelector("#edit-cue").insertAdjacentHTML("afterend", `<button id="duplicate-cue">${t("duplicateCue")}</button><button id="delete-cue">${t("deleteCue")}</button>`);
     document.querySelector("#edit-cue").insertAdjacentHTML("afterend", `<button data-move-cue="-1" ${index === 0 ? "disabled" : ""}>← ${t("earlier")}</button><button data-move-cue="1" ${index === project.cues.length - 1 ? "disabled" : ""}>${t("later")} →</button>`);
   }
@@ -438,6 +457,17 @@ function bind() {
   document.querySelector("#sequence-loop").onchange=(event)=>{preferences.loopSequence=event.target.checked;savePreferences();};
   document.querySelector("#sequence-seek").onchange=(event)=>playSequence({seek:Number(event.target.value),paused:true});
   document.querySelector("#play-effect").onclick=playEffect;
+  document.querySelector("#play-tracks").onclick=playArrangement;
+  const scheduleButton=document.querySelector("#schedule-cue");
+  if (scheduleButton) scheduleButton.onclick=()=>{
+    try {
+      const input=document.querySelector("#cue-start-time");
+      if (!input.value.trim() || !input.checkValidity()) return input.reportValidity();
+      const cue=project.cues.find((item)=>item.id===preferences.cueId) ?? project.cues.at(-1);
+      const track=document.querySelector("#cue-track-name").value;
+      commitProjectChange("cue-schedule",(draft)=>{draft.cues=scheduleCue(draft.cues,cue.id,track,Number(input.value));});render();
+    } catch(error) {setStatus(error.message);}
+  };
   document.querySelector("#save-group").onclick=()=>{
     try {
       const name=document.querySelector("#group-name").value,fixtureIds=[...document.querySelectorAll("[data-group-member]:checked")].map((input)=>input.value);

@@ -7,6 +7,11 @@ export function duplicateCue(cues,cueId,{id=crypto.randomUUID(),name}={}) {
   if (typeof id!=="string" || !id.trim() || cues.some((cue)=>cue.id===id)) throw new Error("Cue identity must be unique.");
   const copy=structuredClone(cues[index]);
   copy.id=id;
+  if (cues.some((cue)=>cue.startTime!==undefined && (cue.trackId ?? "Main")===(copy.trackId ?? "Main"))) {
+    let end=0;
+    for (const cue of cues.filter((item)=>(item.trackId ?? "Main")===(copy.trackId ?? "Main"))) end=Math.max(end,(cue.startTime ?? end)+cue.duration);
+    copy.startTime=end;
+  }
   copy.name=name ?? `${copy.name} (copy)`;
   if (typeof copy.name!=="string" || !copy.name.trim()) throw new Error("Cue name must not be empty.");
   return [...cues.slice(0,index+1),copy,...cues.slice(index+1)];

@@ -114,4 +114,8 @@ Object.assign(messages.en,{fixtureGroups:"Fixture groups",captureGroup:"Capture 
 Object.assign(messages.de,{fixtureGroups:"Gerätegruppen",captureGroup:"Gruppe erfassen",allFixtures:"Alle Geräte",groupName:"Gruppenname",saveGroup:"Gruppe speichern",deleteGroup:"Gruppe löschen"});
 Object.assign(messages.yo,{fixtureGroups:"Àwọn ẹgbẹ́ fìtílà",captureGroup:"Gba ẹgbẹ́ sí cue",allFixtures:"Gbogbo fìtílà",groupName:"Orúkọ ẹgbẹ́",saveGroup:"Fi ẹgbẹ́ pamọ́",deleteGroup:"Pa ẹgbẹ́ rẹ́"});
 Object.assign(messages.pcm,{fixtureGroups:"Fixture groups",captureGroup:"Capture group",allFixtures:"All fixtures",groupName:"Group name",saveGroup:"Save group",deleteGroup:"Delete group"});
+Object.assign(messages.en,{tracks:"Scheduled tracks",playTracks:"Play tracks",trackName:"Track name",startTime:"Start (seconds)",scheduleCue:"Schedule cue"});
+Object.assign(messages.de,{tracks:"Geplante Spuren",playTracks:"Spuren abspielen",trackName:"Spurname",startTime:"Start (Sekunden)",scheduleCue:"Cue einplanen"});
+Object.assign(messages.yo,{tracks:"Àwọn orin cue tí a ṣètò",playTracks:"Ṣeré àwọn orin cue",trackName:"Orúkọ orin cue",startTime:"Ìbẹ̀rẹ̀ (ìṣẹ́jú àáyá)",scheduleCue:"Ṣètò cue"});
+Object.assign(messages.pcm,{tracks:"Scheduled tracks",playTracks:"Play tracks",trackName:"Track name",startTime:"Start (seconds)",scheduleCue:"Schedule cue"});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }

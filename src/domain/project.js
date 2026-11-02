@@ -1,5 +1,6 @@
 import { fixtureProfiles } from "../dmx/engine.js";
 import { validateFixtureGroups } from "./fixture-groups.js";
+import { arrangeTracks } from "../timeline/tracks.js";
 
 export const CURRENT_SCHEMA_VERSION = 1;
 
@@ -41,6 +42,7 @@ export function validateProject(project) {
     }
   }
   if (Array.isArray(project?.cues)) {
+    try { arrangeTracks(project.cues); } catch { errors.push("Cue track scheduling is invalid."); }
     const ids=new Set();
     for (const cue of project.cues) {
       if (!cue || typeof cue.id !== "string" || !cue.id.trim() || ids.has(cue.id) || typeof cue.name !== "string" || !cue.name.trim()) errors.push("Cues require unique ids and nonempty names.");
