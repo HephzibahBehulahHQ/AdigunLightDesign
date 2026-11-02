@@ -1,5 +1,16 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { beamVolume } from "../src/light-lab/renderer.js";
+test("builds a closed three-dimensional beam with a floor footprint",()=>{
+  const data=beamVolume({x:1,y:3,z:0,spread:1,colour:[1,.5,0]});
+  assert.equal(data.length,16*6*6);
+  assert.ok(data.every(Number.isFinite));
+  const positions=Array.from({length:data.length/6},(_,index)=>data.slice(index*6,index*6+3));
+  assert.ok(positions.some((point)=>point[0]===0));
+  assert.ok(positions.some((point)=>point[0]===2));
+  assert.ok(positions.some((point)=>point[1]===.03));
+  assert.ok(positions.some((point)=>point[1]>2));
+});
 import { cameraMatrix, hexVector, perspective, radians } from "../src/light-lab/math.js";
 import { createLightLabRenderer, virtualFixtureVisuals } from "../src/light-lab/renderer.js";
 

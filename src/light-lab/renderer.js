@@ -8,7 +8,23 @@ function quad(target, a, b, c, d, colour) { for (const point of [a,b,c,a,c,d]) t
 function box(target, x, y, z, w, h, d, colour) { const X=x+w,Y=y+h,Z=z+d, shade=colour.map((value)=>value*.55),mid=colour.map((value)=>value*.78); quad(target,[x,y,z],[X,y,z],[X,Y,z],[x,Y,z],colour);quad(target,[X,y,Z],[x,y,Z],[x,Y,Z],[X,Y,Z],shade);quad(target,[x,y,Z],[X,y,Z],[X,y,z],[x,y,z],mid);quad(target,[x,Y,z],[X,Y,z],[X,Y,Z],[x,Y,Z],colour);quad(target,[x,y,Z],[x,y,z],[x,Y,z],[x,Y,Z],shade);quad(target,[X,y,z],[X,y,Z],[X,Y,Z],[X,Y,z],mid); }
 const channel = (value) => Math.max(0, Math.min(255, Number(value) || 0)) / 255;
 export function virtualFixtureVisuals(fixtures = [], fallback = "#C21888") { return fixtures.slice(0, 12).map((fixture, index) => { const properties=fixture.properties ?? {},white=channel(properties.white),dimmer=channel(properties.dimmer),transform=fixture.transform ?? {}; return { x:Number.isFinite(transform.x) ? transform.x : (index - 1) * 2.5, y:Number.isFinite(transform.y) ? transform.y : 3.65, z:Number.isFinite(transform.z) ? transform.z : .45, colour:["red","green","blue"].map((name)=>Math.min(1,(channel(properties[name]) + white) * dimmer)), spread:.55 + channel(properties.beam) * .85 }; }) || [{x:0,y:3.65,z:.45,colour:hexVector(fallback),spread:.9}]; }
-function lightGeometry(data, light) { const fixtureColour=light.colour.map((value)=>Math.max(.12,value)), spill=light.colour.map((value)=>value*.36), floorY=.03; box(data,light.x-.18,light.y-.11,light.z-.18,.36,.18,.36,fixtureColour); quad(data,[light.x-.07,light.y-.11,light.z],[light.x+.07,light.y-.11,light.z],[light.x+light.spread,floorY,light.z+1.35],[light.x-light.spread,floorY,light.z+1.35],spill); }
+export function beamVolume(light, segments=16) {
+  const data=[],tip=[light.x,light.y-.11,light.z],center=[light.x,.03,light.z+1.35];
+  for (let index=0;index<segments;index+=1) {
+    const angle=index / segments * Math.PI * 2,next=(index + 1) / segments * Math.PI * 2;
+    const a=[center[0]+Math.cos(angle)*light.spread,center[1],center[2]+Math.sin(angle)*light.spread];
+    const b=[center[0]+Math.cos(next)*light.spread,center[1],center[2]+Math.sin(next)*light.spread];
+    const shade=.12 + .16 * (1 + Math.cos(angle)) / 2;
+    for (const point of [tip,a,b]) data.push(...point,...light.colour.map((value)=>value*shade));
+    for (const point of [center,b,a]) data.push(...point,...light.colour.map((value)=>value*.55));
+  }
+  return data;
+}
+function lightGeometry(data, light) {
+  const fixtureColour=light.colour.map((value)=>Math.max(.12,value));
+  box(data,light.x-.18,light.y-.11,light.z-.18,.36,.18,.36,fixtureColour);
+  if (light.colour.some((value)=>value>0)) data.push(...beamVolume(light));
+}
 function sceneData(accent, fixtures) { const data=[],floor=hexVector("#172238"),wall=hexVector("#27324A"),couch=hexVector("#9C4F48"),cyan=hexVector("#22D3EE"); quad(data,[-5,0,-4],[5,0,-4],[5,0,4],[-5,0,4],floor);quad(data,[-5,0,4],[5,0,4],[5,4,4],[-5,4,4],wall);quad(data,[-5,0,-4],[-5,0,4],[-5,4,4],[-5,4,-4],hexVector("#132746"));box(data,-1.7,.25,1.4,3.4,.8,.75,couch);box(data,-1.45,1.05,1.55,2.9,.55,.35,couch.map((value)=>Math.min(1,value*1.2)));box(data,-3.9,0,2.4,.35,2.3,.35,cyan);box(data,3.3,0,2.2,.35,2.1,.35,accent);box(data,-.15,.05,-.1,.3,.7,.3,hexVector("#D4AF37"));virtualFixtureVisuals(fixtures,accent).forEach((light)=>lightGeometry(data,light));return new Float32Array(data); }
 
 export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = [] } = {}) {
