@@ -9,6 +9,6 @@ export function comparePalettes(current,saved) {
   return ids.map((id)=>{
     const currentIndex=current.colors.findIndex((color)=>color.id===id),savedIndex=saved.colors.findIndex((color)=>color.id===id);
     const a=current.colors[currentIndex] ?? null,b=saved.colors[savedIndex] ?? null;
-    return {id,current:structuredClone(a),saved:structuredClone(b),changed:!a || !b || a.hex!==b.hex || a.name!==b.name || a.locked!==b.locked || currentIndex!==savedIndex};
+    return {id,current:structuredClone(a),saved:structuredClone(b),changed:!a || !b || a.hex!==b.hex || (a.opacity ?? 1)!==(b.opacity ?? 1) || a.name!==b.name || a.locked!==b.locked || currentIndex!==savedIndex};
   });
 }

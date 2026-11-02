@@ -32,6 +32,7 @@ export function validateProject(project) {
       }
       const ids=new Set();
       for (const color of palette.colors) {
+        if (color?.opacity !== undefined && (!Number.isFinite(color.opacity) || color.opacity<0 || color.opacity>1)) errors.push("Color opacity must be from 0 to 1.");
         if (!color || typeof color.id !== "string" || !color.id.trim() || ids.has(color.id) || typeof color.name !== "string" || typeof color.hex !== "string" || !/^#[0-9a-f]{6}$/i.test(color.hex) || typeof color.locked !== "boolean") errors.push("Palette colors require unique ids, names, six-digit HEX values, and boolean locks.");
         if (color) ids.add(color.id);
       }

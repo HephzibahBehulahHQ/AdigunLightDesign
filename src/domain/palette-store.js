@@ -1,4 +1,5 @@
 import { harmony, normalizeHex } from "./color-engine.js";
+import { swatchCssColor } from "./swatch-opacity.js";
 
 export const starterPalette = [
   { id:"deep-blue", name:"Deep Blue", hex:"#0B3D91", locked:false }, { id:"ocean-blue", name:"Ocean Blue", hex:"#2196F3", locked:false },
@@ -14,7 +15,7 @@ export function paletteCssVariables(palette) {
     used.add(name);
     const hex=normalizeHex(swatch.hex);
     if (!hex) throw new Error("CSS export requires valid HEX colors.");
-    return `  --ald-${name}: ${hex};`;
+    return `  --ald-${name}: ${swatchCssColor({...swatch,hex})};`;
   });
   return `:root {\n${declarations.join("\n")}\n}\n`;
 }

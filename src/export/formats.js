@@ -1,11 +1,12 @@
 import { paletteCssVariables } from "../domain/palette-store.js";
 import { normalizeHex } from "../domain/color-engine.js";
+import { swatchCssColor } from "../domain/swatch-opacity.js";
 
 const xmlText=(value)=>String(value ?? "").replace(/[&<>"']/g,(char)=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&apos;"})[char]);
 export function designTokenJson(palette) {
   if (!Array.isArray(palette?.colors) || !palette.colors.length) throw new Error("Token export requires a nonempty palette.");
   const tokens=palette.colors.map((color,index)=>{
-    const value=normalizeHex(color.hex);
+    const value=swatchCssColor(color);
     if (!value) throw new Error("Token export requires valid HEX colors.");
     return [`swatch_${index+1}`,{type:"color",value,name:String(color.name ?? ""),sourceId:String(color.id ?? "")}];
   });
@@ -16,7 +17,7 @@ export function paletteSvg(palette) {
   const colors=palette.colors.map((color)=>{
     const hex=normalizeHex(color.hex);
     if (!hex) throw new Error("SVG export requires valid HEX colors.");
-    return {...color,hex};
+    return {...color,hex:swatchCssColor({...color,hex})};
   });
   const columns=Math.min(5,colors.length),rows=Math.ceil(colors.length/columns),width=columns*180+40,height=rows*150+90;
   const swatches=colors.map((color,index)=>{

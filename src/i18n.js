@@ -86,4 +86,8 @@ Object.assign(messages.en,{compareVersions:"Compare versions",currentVersion:"Cu
 Object.assign(messages.de,{compareVersions:"Versionen vergleichen",currentVersion:"Aktuell"});
 Object.assign(messages.yo,{compareVersions:"Ṣe àfiwé àwọn ẹ̀dà",currentVersion:"Lọ́wọ́lọ́wọ́"});
 Object.assign(messages.pcm,{compareVersions:"Compare versions",currentVersion:"Current"});
+Object.assign(messages.en,{opacity:"Opacity"});
+Object.assign(messages.de,{opacity:"Deckkraft"});
+Object.assign(messages.yo,{opacity:"Ìṣípaya àwọ̀"});
+Object.assign(messages.pcm,{opacity:"Opacity"});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }

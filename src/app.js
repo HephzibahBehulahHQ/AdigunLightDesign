@@ -2,6 +2,7 @@ import { validateProject } from "./domain/project.js";
 import { prepareEditorProject } from "./domain/editor-project.js";
 import { moveSwatch, removeSwatch, reorderSwatch } from "./domain/palette-store.js";
 import { readImagePalette } from "./domain/image-file.js";
+import { compositeSwatch,swatchCssColor } from "./domain/swatch-opacity.js";
 import { snapshotPalette, restorePalette, comparePalettes } from "./domain/palette-versions.js";
 import { paletteRaster } from "./export/raster.js";
 import { hslToRgb } from "./domain/color-engine.js";
@@ -133,7 +134,7 @@ function render() {
   document.documentElement.dataset.theme = preferences.theme;
   const active = selected();
   const contrastBackground=normalizeHex(preferences.contrastBackground) ?? "#0B1220";
-  const contrast = contrastResult(active.hex, contrastBackground);
+  const contrast = contrastResult(compositeSwatch(active,contrastBackground), contrastBackground);
   const colourSpaces = colourSpaceMarkup(active.hex);
   const nav = [
     ["canvas", "⌂", true], ["palette", "◉", true], ["light", "☼", true], ["copilot", "◌", true], ["library", "▱", true], ["export", "↗", true], ["community", "♧", false]
@@ -220,13 +221,19 @@ function render() {
   const contrastCard=document.querySelector(".contrast-card");
   contrastCard.querySelector("small").textContent=contrastBackground;
   contrastCard.insertAdjacentHTML("beforeend", `<label>${t("contrastBackground")}<input id="contrast-background" type="color" value="${contrastBackground}" /></label><dl>${[["normalText","AA",contrast.aa],["normalText","AAA",contrast.aaa],["largeText","AA",contrast.largeAa],["largeText","AAA",contrast.largeAaa]].map(([key,level,pass])=>`<div><dt>${t(key)} ${level}</dt><dd class="${pass ? "pass" : "fail"}">${t(pass ? "passes" : "fails")}</dd></div>`).join("")}</dl>`);
-  const contrastSuggestion=contrast.aa ? null : suggestContrast(active.hex,contrastBackground);
+  const contrastSuggestion=contrast.aa || (active.opacity ?? 1)<1 ? null : suggestContrast(active.hex,contrastBackground);
   if (contrastSuggestion) contrastCard.insertAdjacentHTML("beforeend", `<button id="apply-contrast" class="wide">${t("improveContrast")} ${contrastSuggestion}</button>`);
   const oklch=oklabToOklch(rgbToOklab(hexToRgb(active.hex)));
   document.querySelector("#lock-swatch").insertAdjacentHTML("beforebegin", `<section class="colour-space-card"><h3>OKLCH</h3>${[["l",oklch.l,1,t("lightness")],["c",oklch.c,1,t("chroma")],["h",oklch.h,360,t("hue")]].map(([key,value,max,label])=>`<label>${label} (0–${max})<input id="oklch-${key}" type="number" required min="0" max="${max}" step="any" value="${compact(value,4)}" /></label>`).join("")}<button id="apply-oklch" class="wide">${t("apply")} OKLCH</button></section>`);
   document.querySelector("#oklch-l").closest("label").firstChild.textContent="L (0–1)";
   document.querySelector(".palette-panel").insertAdjacentHTML("beforeend", `<div class="palette-actions"><button id="save-version">${t("saveVersion")}</button><select id="palette-version" aria-label="${t("savedVersions")}">${project.palettes.slice(1).map((item)=>`<option value="${esc(item.id)}">${esc(item.name)}</option>`).join("")}</select><button id="restore-version" ${project.palettes.length<2 ? "disabled" : ""}>${t("restoreVersion")}</button></div>`);
   if (project.palettes.length>1) document.querySelector(".palette-panel").insertAdjacentHTML("beforeend", `<details class="palette-comparison"><summary>${t("compareVersions")}</summary><div id="version-comparison"></div></details>`);
+  document.querySelector("#lock-swatch").insertAdjacentHTML("beforebegin", `<label>${t("opacity")} (%)<input id="swatch-opacity" type="number" required min="0" max="100" step="any" value="${(active.opacity ?? 1)*100}" /></label><button id="apply-opacity" class="wide">${t("apply")}</button>`);
+  for (const button of document.querySelectorAll("[data-swatch]")) {
+    const swatch=palette().colors.find((item)=>item.id===button.dataset.swatch);
+    button.querySelector("span").style.background=swatchCssColor(swatch);
+  }
+  document.querySelector(".selected-preview").style.background=swatchCssColor(active);
   bind();
   if (preferences.view === "light") {
     renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {accent:scene().materialColor,fixtures:project.fixtures.map((fixture)=>({...fixture,selected:fixture.id===selectedFixture()?.id}))});
@@ -242,12 +249,17 @@ function render() {
 }
 
 function bind() {
+  document.querySelector("#apply-opacity").onclick=()=>{
+    const input=document.querySelector("#swatch-opacity");
+    if (!input.value.trim() || !input.checkValidity()) return input.reportValidity();
+    mutateColours((colors)=>updateSwatch(colors,selected().id,{opacity:Number(input.value)/100}));
+  };
   const comparison=document.querySelector("#version-comparison");
   if (comparison) {
     const updateComparison=()=>{
       const saved=project.palettes.find((item)=>item.id===document.querySelector("#palette-version").value);
       if (!saved) return;
-      const cell=(color)=>color ? `<span style="background:${color.hex};display:inline-block;width:12px;height:12px"></span> ${esc(color.name)} ${color.hex}` : "—";
+      const cell=(color)=>color ? `<span style="background:${swatchCssColor(color)};display:inline-block;width:12px;height:12px"></span> ${esc(color.name)} ${swatchCssColor(color)}` : "—";
       comparison.innerHTML=`<table><thead><tr><th>${t("currentVersion")}</th><th>${t("savedVersions")}</th></tr></thead><tbody>${comparePalettes(palette(),saved).map((row)=>`<tr class="${row.changed ? "is-changed" : ""}"><td>${cell(row.current)}</td><td>${cell(row.saved)}</td></tr>`).join("")}</tbody></table>`;
     };
     document.querySelector("#palette-version").onchange=updateComparison;
@@ -307,7 +319,7 @@ function bind() {
   document.querySelector("#copy-hex").onclick=async()=>{
     try {
       if (!navigator.clipboard?.writeText) throw new Error("Clipboard is unavailable in this browser.");
-      await navigator.clipboard.writeText(selected().hex);
+      await navigator.clipboard.writeText(swatchCssColor(selected()));
       document.querySelector("#status").textContent=status=t("copied");
     } catch(error) { document.querySelector("#status").textContent=status=error.message; }
   };
