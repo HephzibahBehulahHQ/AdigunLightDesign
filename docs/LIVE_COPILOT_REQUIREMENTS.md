@@ -2,6 +2,16 @@
 
 Status: required, not implemented or accepted.
 
+Incremental implementation: `src/ai/live-copilot.js` provides a subscribed state
+feed, defensive snapshots and revision tracking. Editor renders publish current
+project, selection and playback-active state. The local analyzer reports actual
+unpatched fixtures as optional patch-review offers, never hardware faults, and
+asks a session goal when missing. The scheduler supports a 600 ms debounce,
+25-second minimum suggestion interval, two-minute suppression, typing/drag
+suppression and an off switch. Three automated tests cover those foundations.
+The scheduler is not yet mounted in the UI or driven by editor activity events;
+live suggestions, selected-object explanations and acceptance are not complete.
+
 This extends the original master specification and exact desktop visual target;
 it does not replace either. Authority: the user's attached continuation request,
 `1d470cdc-5ca2-4abd-b333-573b5fa7a2ad/Pasted text.txt`.

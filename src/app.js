@@ -38,6 +38,7 @@ import { temperaturePalette } from "./domain/temperature.js";
 import { stageSettings,updateStage } from "./domain/stage.js";
 import { createImageAssetStore } from "./domain/image-assets.js";
 import { createLuxServicePanel } from "./ui/lux-service.js";
+import { createCanvasStateFeed } from "./ai/live-copilot.js";
 import { canFullscreen,toggleViewportFullscreen } from "./ui/fullscreen.js";
 import { groupFixtures,saveFixtureGroup } from "./domain/fixture-groups.js";
 import { cueCsv, designTokenJson, paletteCss, paletteJson, paletteSvg, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
@@ -55,6 +56,7 @@ if (!Object.hasOwn(previewQualities,preferences.previewQuality)) preferences.pre
 let projectPersisted=false;
 let luxProposal=null;
 const imageAssets=createImageAssetStore();
+const liveCanvasFeed=createCanvasStateFeed();
 const luxService=createLuxServicePanel({getProject:()=>project,getLocale:()=>preferences.locale,translate,imageAssets,onPreview:(proposal)=>{luxProposal=proposal;render();},onError:(message)=>setStatus(message)});
 let project = loadProject();
 let undoStack = [], redoStack = [], status = "", renderer = null, playbackTimer = null, playbackClock = null;
@@ -228,6 +230,7 @@ function applyFixtureInspector() {
 }
 
 function render() {
+  liveCanvasFeed.publish(project,{selection:preferences.fixtureId ?? preferences.selected,playing:playbackTimer!==null});
   renderer?.destroy(); renderer = null;
   document.documentElement.lang = preferences.locale;
   document.documentElement.dataset.theme = preferences.theme;
