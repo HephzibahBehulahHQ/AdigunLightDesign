@@ -57,11 +57,17 @@ export function surfaceLighting(position, baseColour, lights) {
   }
   return result.map((value)=>Math.max(0,Math.min(1,value)));
 }
+export function surfaceGrid(origin, horizontal, vertical, colour, columns=20, rows=16) {
+  const data=[];
+  const point=(x,y)=>origin.map((value,axis)=>value+horizontal[axis]*x/columns+vertical[axis]*y/rows);
+  for (let row=0;row<rows;row+=1) for (let column=0;column<columns;column+=1) quad(data,point(column,row),point(column+1,row),point(column+1,row+1),point(column,row+1),colour);
+  return data;
+}
 export function sceneData(accent, fixtures) {
   const data=[],floor=hexVector("#172238"),wall=hexVector("#27324A"),couch=hexVector("#9C4F48"),wood=hexVector("#67442F"),metal=hexVector("#151D2D");
-  quad(data,[-5,0,-4],[5,0,-4],[5,0,4],[-5,0,4],floor);
-  quad(data,[-5,0,4],[5,0,4],[5,4,4],[-5,4,4],wall);
-  quad(data,[-5,0,-4],[-5,0,4],[-5,4,4],[-5,4,-4],hexVector("#132746"));
+  data.push(...surfaceGrid([-5,0,-4],[10,0,0],[0,0,8],floor));
+  data.push(...surfaceGrid([-5,0,4],[10,0,0],[0,4,0],wall));
+  data.push(...surfaceGrid([-5,0,-4],[0,0,8],[0,4,0],hexVector("#132746")));
   box(data,-2.1,.01,-.8,4.2,.02,3.5,hexVector("#665477"));
   box(data,-1.7,.25,1.4,3.4,.8,.75,couch);
   box(data,-1.45,1.05,1.55,2.9,.55,.35,couch.map((value)=>Math.min(1,value*1.2)));
@@ -79,7 +85,7 @@ export function sceneData(accent, fixtures) {
   const lights=virtualFixtureVisuals(fixtures,accent);
   for (let offset=0;offset<data.length;offset+=6) {
     const colour=surfaceLighting(data.slice(offset,offset+3),data.slice(offset+3,offset+6),lights);
-    data.splice(offset+3,3,...colour);
+    for (let channel=0;channel<3;channel+=1) data[offset+3+channel]=colour[channel];
   }
   lights.forEach((light)=>lightGeometry(data,light));
   return new Float32Array(data);

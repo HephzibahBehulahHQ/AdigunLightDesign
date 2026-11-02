@@ -1,5 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { surfaceGrid } from "../src/light-lab/renderer.js";
+test("surface grid includes interior vertices for localized illumination",()=>{
+  const data=surfaceGrid([0,0,0],[2,0,0],[0,0,2],[.2,.3,.4],2,2);
+  assert.equal(data.length,4*6*6);
+  const positions=Array.from({length:data.length/6},(_,index)=>data.slice(index*6,index*6+3));
+  assert.ok(positions.some((point)=>point[0]===1 && point[2]===1));
+  assert.ok(data.every(Number.isFinite));
+});
 test("surface light follows the beam target and excludes points outside its cone",()=>{
   const base=[.2,.2,.2],light={x:0,y:3,z:0,targetX:0,targetZ:0,spread:1,colour:[1,0,0]};
   const inside=surfaceLighting([0,.03,0],base,[light]);
