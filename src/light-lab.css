@@ -1,4 +1,7 @@
 .light-canvas { min-height:353px; }
+.viewport-exit-fullscreen { display:none; position:absolute; top:12px; right:12px; z-index:12; padding:8px 12px; color:var(--text); background:#262037; border:1px solid #a779d8; border-radius:7px; }
+.scene-preview:fullscreen { width:100vw; height:100vh; border-radius:0; }
+.scene-preview:fullscreen .viewport-exit-fullscreen { display:block; }
 .preview-quality { font-size:10px; color:var(--muted); }
 .preview-quality select { max-width:110px; padding:6px; }
 .lux-local-actions { margin:0 12px 12px; padding:10px; border:1px solid #614087; border-radius:10px; font-size:11px; }

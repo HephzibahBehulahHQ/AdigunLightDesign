@@ -37,6 +37,7 @@ import { previewQuality,previewQualities } from "./light-lab/quality.js";
 import { temperaturePalette } from "./domain/temperature.js";
 import { stageSettings,updateStage } from "./domain/stage.js";
 import { createImageAssetStore } from "./domain/image-assets.js";
+import { canFullscreen,toggleViewportFullscreen } from "./ui/fullscreen.js";
 import { groupFixtures,saveFixtureGroup } from "./domain/fixture-groups.js";
 import { cueCsv, designTokenJson, paletteCss, paletteJson, paletteSvg, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
 import { readProjectFile } from "./domain/import-project.js";
@@ -358,6 +359,7 @@ function render() {
     document.querySelector(".lux-message").insertAdjacentHTML("afterend", `<section class="lux-local-actions"><h3>${t("localPaletteAction")}</h3><button id="preview-lux-palette" ${project.fixtures.length ? "" : "disabled"}>${t("previewPaletteLighting")}</button>${luxProposal ? `<div class="lux-action-preview"><h4>${t("reviewChanges")}</h4><ul>${luxProposal.changes.map((change)=>`<li>${esc(change.after.name)}<br><span style="color:${colour(change.before)}">■</span> ${colour(change.before)} → <span style="color:${colour(change.after)}">■</span> ${colour(change.after)}</li>`).join("") || t("noActionChanges")}</ul><button id="confirm-lux-action" ${luxProposal.changes.length ? "" : "disabled"}>${t("confirmAction")}</button><button id="cancel-lux-action">${t("cancelAction")}</button></div>` : ""}</section>`);
   }
   const projectionButton=document.querySelector(".view-menu");
+  document.querySelector(".workspace-tabs").insertAdjacentHTML("beforeend", `<button id="viewport-fullscreen" class="view-menu" aria-label="${t("fullscreenViewport")}" title="${t("fullscreenViewport")}" ${canFullscreen(document.querySelector(".scene-preview"),document) ? "" : "disabled"}>${icon("fullscreen")}</button>`);
   projectionButton.insertAdjacentHTML("beforebegin", `<label class="preview-quality">${t("previewQuality")} <select id="preview-quality" ${preferences.view==="light" ? "" : "disabled"}>${Object.keys(previewQualities).map((key)=>`<option value="${key}" ${key===(preferences.previewQuality ?? "balanced") ? "selected" : ""}>${t(`quality_${key}`)}</option>`).join("")}</select></label>`);
   if (preferences.view==="light") document.querySelector(".scene-title small").textContent=`${t("webglPreview")} · ${phrase("previewFixtureCount",{shown:scene().visibility?.lighting===false ? 0 : Math.min(project.fixtures.length,previewQuality(preferences.previewQuality).fixtures),total:project.fixtures.length})}`;
   projectionButton.insertAdjacentHTML("afterend", `<button id="export-canvas" class="view-menu" ${preferences.view==="palette" ? "" : "disabled"}>↗ ${t("exportCanvas")}</button>`);
@@ -422,6 +424,7 @@ function render() {
     inspector.querySelector(".section-title h2").textContent=`${t("selectedFixtureTitle")}: ${selectedFixture().name}`;
     inspector.querySelector(".inspector-tabs").innerHTML=keys.map((key)=>`<button data-fixture-tab="${key}" aria-pressed="${key===activeTab}" class="${key===activeTab ? "is-active" : ""}">${t({fixture:"fixtureLabel",light:"lightTab",dmx:"dmxTab",effects:"effectsTab"}[key])}</button>`).join("");
   }
+  document.querySelector(".scene-preview").insertAdjacentHTML("beforeend", `<button id="viewport-exit-fullscreen" class="viewport-exit-fullscreen">${t("exitFullscreen")}</button>`);
   bind();
   if (preferences.view === "light") {
     renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {accent:scene().materialColor,room:scene().room,materials:scene().materials,stage:scene().stage,quality:preferences.previewQuality,projection:preferences.projection==="orthographic" ? "orthographic" : "perspective",visibility:scene().visibility,fixtures:project.fixtures.map((fixture)=>({...fixture,selected:fixture.id===selectedFixture()?.id})),onSelect(id){stopPlayback();preferences.fixtureId=id;preferences.inspectorMode="fixture";savePreferences();render();}});
@@ -439,6 +442,10 @@ function render() {
 }
 
 function bind() {
+  for(const id of ["viewport-fullscreen","viewport-exit-fullscreen"])document.querySelector(`#${id}`).onclick=async()=>{
+    try {await toggleViewportFullscreen(document.querySelector(".scene-preview"),document);}
+    catch {setStatus(t("fullscreenUnavailable"));}
+  };
   document.querySelector("#apply-stage").onclick=()=>{
     try {
       const settings={enabled:document.querySelector("#stage-enabled").checked,color:document.querySelector("#stage-color").value};

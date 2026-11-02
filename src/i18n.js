@@ -207,4 +207,8 @@ Object.assign(messages.en,{stagePlatform:"Stage platform",showStage:"Show stage"
 Object.assign(messages.de,{stagePlatform:"Bühnenpodest",showStage:"Podest anzeigen"});
 Object.assign(messages.yo,{stagePlatform:"Pẹpẹ ìtàgé",showStage:"Fi pẹpẹ hàn"});
 Object.assign(messages.pcm,{stagePlatform:"Stage platform",showStage:"Show stage"});
+Object.assign(messages.en,{fullscreenViewport:"Fullscreen viewport",exitFullscreen:"Exit fullscreen",fullscreenUnavailable:"Fullscreen could not be opened in this browser."});
+Object.assign(messages.de,{fullscreenViewport:"Ansicht im Vollbild",exitFullscreen:"Vollbild beenden",fullscreenUnavailable:"Vollbild konnte in diesem Browser nicht geöffnet werden."});
+Object.assign(messages.yo,{fullscreenViewport:"Àfihàn gbogbo ojú ìbojú",exitFullscreen:"Jáde kúrò ní gbogbo ojú ìbojú",fullscreenUnavailable:"A kò lè ṣí àfihàn gbogbo ojú ìbojú nínú aṣàwákiri yìí."});
+Object.assign(messages.pcm,{fullscreenViewport:"Show viewport for full screen",exitFullscreen:"Leave full screen",fullscreenUnavailable:"Full screen no fit open for this browser."});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }
