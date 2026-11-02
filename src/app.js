@@ -103,7 +103,10 @@ function applyFixtureInspector() {
   try {
     const changes={
       name:document.querySelector("#fixture-name").value,
-      properties:{dimmer:value("#fixture-dimmer"),beam:value("#fixture-beam")},
+      properties:{dimmer:value("#fixture-dimmer"),beam:value("#fixture-beam"),...(()=>{
+        const rgb=hexToRgb(document.querySelector("#fixture-colour").value);
+        return {red:rgb.r,green:rgb.g,blue:rgb.b};
+      })()},
       universe:value("#fixture-universe"),startAddress:value("#fixture-address")
     };
     commitProjectChange("fixture-update",(draft)=>{draft.fixtures=updateFixture(draft.fixtures,fixture.id,changes);});
@@ -166,6 +169,11 @@ function render() {
   if (activeCue) {
     const index=project.cues.indexOf(activeCue);
     document.querySelector("#edit-cue").insertAdjacentHTML("afterend", `<button data-move-cue="-1" ${index === 0 ? "disabled" : ""}>← ${t("earlier")}</button><button data-move-cue="1" ${index === project.cues.length - 1 ? "disabled" : ""}>${t("later")} →</button>`);
+  }
+  if (document.querySelector(".fixture-inspector")) {
+    const properties=selectedFixture().properties;
+    const color=rgbToHex({r:properties.red ?? 0,g:properties.green ?? 0,b:properties.blue ?? 0});
+    document.querySelector("#apply-fixture").insertAdjacentHTML("beforebegin", `<label>${t("selectedColour")}<input id="fixture-colour" type="color" value="${color}" /></label>`);
   }
   bind();
   if (preferences.view === "light") {
