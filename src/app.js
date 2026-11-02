@@ -3,7 +3,7 @@ import { contrastResult, hexToRgb, isSrgbGamut, normalizeHex, rgbToHex, rgbToHsl
 import { paletteCssVariables, rerollUnlocked, starterPalette, updateSwatch } from "./domain/palette-store.js";
 import { supportedLocales, translate } from "./i18n.js";
 import { createLightLabRenderer } from "./light-lab/renderer.js";
-import { blackout, createFixture, dmxFrame, patchFixture } from "./dmx/engine.js";
+import { blackout, createFixture, dmxFrame, fixtureProfiles, patchFixture } from "./dmx/engine.js";
 import { createCue, evaluateCue } from "./timeline/engine.js";
 import { cueCsv, paletteCss, paletteJson, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
 import { readProjectFile } from "./domain/import-project.js";
@@ -30,7 +30,7 @@ function t(key) { return translate(preferences.locale, key); }
 function palette() { return project.palettes[0]; }
 function selected() { return palette().colors.find((swatch) => swatch.id === preferences.selected) ?? palette().colors[0]; }
 function scene() { if (!project.scenes[0]) project.scenes.push({ id:"studio-room", name:"Studio room", materialColor:"#C21888" }); return project.scenes[0]; }
-function addVirtualFixture() { const fixture=createFixture(project.fixtures.length+1); commitProjectChange("fixture-add",(draft)=>{draft.fixtures=patchFixture([...draft.fixtures,fixture],fixture.id);}); status=`${fixture.name} patched to Universe 1 / ${fixture.patchAssignment?.startAddress ?? 1}.`; }
+function addVirtualFixture(profileId) { const fixture=createFixture(project.fixtures.length+1,profileId); commitProjectChange("fixture-add",(draft)=>{draft.fixtures=patchFixture([...draft.fixtures,fixture],fixture.id);}); const patch=project.fixtures.find((item)=>item.id===fixture.id)?.patchAssignment; status=`${fixture.name} patched to Universe 1 / ${patch?.startAddress ?? 1}.`; }
 function activateBlackout() { commitProjectChange("dmx-blackout",(draft)=>{draft.fixtures=blackout(draft.fixtures);}); status="Virtual blackout applied. Physical output remains disabled."; }
 function applyPaletteToVirtualFixtures() { const rgb=hexToRgb(selected().hex); commitProjectChange("palette-to-fixtures",(draft)=>{draft.fixtures=draft.fixtures.map((fixture)=>({ ...fixture, properties:{ ...fixture.properties, red:rgb.r, green:rgb.g, blue:rgb.b } }));}); updateRendererFromFixtures(); status=`${selected().hex} applied to ${project.fixtures.length} virtual fixture(s).`; }
 function createCueSnapshot() { let cue; commitProjectChange("cue-create",(draft)=>{cue=createCue(draft.fixtures,{name:`Look ${draft.cues.length+1}`});draft.cues=[...draft.cues,cue];}); status=`${cue.name} captured with ${cue.targets.length} fixture target(s).`; }
@@ -51,6 +51,7 @@ function esc(value) { return String(value).replace(/[&<>"]/g, (char) => ({"&":"&
 function disabled(title) { return `disabled title="${esc(title)}"`; }
 function compact(value, digits = 1) { return Number(value).toFixed(digits); }
 function colourSpaceMarkup(hex) { const rgb=hexToRgb(hex),hsl=rgbToHsl(rgb),hsv=rgbToHsv(rgb),lab=rgbToLab(rgb),oklab=rgbToOklab(rgb); return `<section class="colour-space-card" aria-label="Color-space values"><h3>Color spaces</h3><dl><div><dt>sRGB</dt><dd>${Math.round(rgb.r)}, ${Math.round(rgb.g)}, ${Math.round(rgb.b)}</dd></div><div><dt>HSL</dt><dd>${compact(hsl.h)}° · ${compact(hsl.s*100)}% · ${compact(hsl.l*100)}%</dd></div><div><dt>HSV</dt><dd>${compact(hsv.h)}° · ${compact(hsv.s*100)}% · ${compact(hsv.v*100)}%</dd></div><div><dt>CIELAB</dt><dd>${compact(lab.l)}, ${compact(lab.a)}, ${compact(lab.b)}</dd></div><div><dt>OKLab</dt><dd>${compact(oklab.l,3)}, ${compact(oklab.a,3)}, ${compact(oklab.b,3)}</dd></div></dl><small class="${isSrgbGamut(rgb)?"pass":"fail"}">${isSrgbGamut(rgb)?"In sRGB gamut":"Outside sRGB gamut"}</small></section>`; }
+function fixtureLibraryMarkup() { return fixtureProfiles.map((profile)=>`<article><b>${esc(profile.model)}</b><small>${esc(profile.type)} · ${profile.modes[0].channels.length} CH</small><p>${esc(profile.validationStatus)} · ${esc(profile.provenance)}</p><button data-profile="${profile.id}">Add to virtual patch</button></article>`).join(""); }
 
 function render() {
   renderer?.destroy(); renderer = null;
@@ -60,7 +61,7 @@ function render() {
   const contrast = contrastResult(active.hex, "#0B1220");
   const colourSpaces = colourSpaceMarkup(active.hex);
   const nav = [
-    ["canvas", "⌂", true], ["palette", "◉", true], ["light", "☼", true], ["copilot", "◌", true], ["library", "▱", false], ["export", "↗", true], ["community", "♧", false]
+    ["canvas", "⌂", true], ["palette", "◉", true], ["light", "☼", true], ["copilot", "◌", true], ["library", "▱", true], ["export", "↗", true], ["community", "♧", false]
   ].map(([key, icon, enabled]) => `<button class="module ${preferences.module === key ? "is-active" : ""}" data-module="${key}" ${enabled ? "" : disabled(`${t(key)} ${t("availableLater")}`)}><span>${icon}</span>${t(key)}</button>`).join("");
   const tools = [["select","↖",true],["paletteBrush","◉",true],["fixture","☀",true],["material","◆",true],["shapes","□",false],["text","T",false],["measure","⌗",false],["orbit","◎",true],["aiPin","✦",false]].map(([key, icon, enabled]) => `<button class="tool ${preferences.tool === key ? "is-active" : ""}" data-tool="${key}" ${enabled ? "" : disabled(`${t(key)} ${t("availableLater")}`)}><span>${icon}</span>${t(key)}</button>`).join("");
   const swatches = palette().colors.map((swatch) => `<button class="swatch ${active.id === swatch.id ? "is-selected" : ""}" data-swatch="${swatch.id}" aria-label="${esc(swatch.name)} ${swatch.hex}"><span style="background:${swatch.hex}"></span><b>${esc(swatch.name)}</b><small>${swatch.hex}</small>${swatch.locked ? "<em>⌁</em>" : ""}</button>`).join("");
@@ -96,6 +97,7 @@ function render() {
     <footer><span>${t("footer")}</span><span id="status" role="status" aria-live="polite">${status}</span><div><button id="save">${t("save")}</button><button id="undo" ${undoStack.length ? "" : "disabled"}>↶ ${t("undo")}</button><button id="redo" ${redoStack.length ? "" : "disabled"}>↷ ${t("redo")}</button></div></footer>`;
   bind();
   document.querySelector(".contrast-card").insertAdjacentHTML("beforebegin", colourSpaces);
+  if (preferences.module === "library") { const drawer=document.createElement("section"); drawer.className="library-drawer panel"; drawer.setAttribute("aria-label",t("library")); drawer.innerHTML=`<div class="section-title"><h2>▱ ${t("library")}</h2><button id="close-library" class="subtle" aria-label="${t("close")}">×</button></div><p>Small virtual starter profiles only. They are not manufacturer or hardware validated.</p><div class="fixture-library">${fixtureLibraryMarkup()}</div>`; app.insertBefore(drawer,app.querySelector("footer")); }
   if (preferences.view === "light") renderer = createLightLabRenderer(document.querySelector("#light-canvas"), { accent:scene().materialColor });
 }
 
@@ -128,6 +130,8 @@ function bind() {
   document.querySelectorAll("[data-export]").forEach((button) => button.onclick = () => exportFile(button.dataset.export));
   const closeExports = document.querySelector("#close-exports"); if (closeExports) closeExports.onclick = () => { preferences.module="canvas"; render(); };
   const importButton=document.querySelector("#import-project"), projectFile=document.querySelector("#project-file"); if(importButton&&projectFile){importButton.onclick=()=>projectFile.click();projectFile.onchange=()=>{const [file]=projectFile.files;if(file) importNativeProject(file);};}
+  document.querySelectorAll("[data-profile]").forEach((button)=>button.onclick=()=>{addVirtualFixture(button.dataset.profile);render();});
+  const closeLibrary=document.querySelector("#close-library"); if(closeLibrary) closeLibrary.onclick=()=>{preferences.module="canvas";render();};
   const form = document.querySelector("#lux-form"); if (form) form.onsubmit = (event) => { event.preventDefault(); setStatus(t("luxUnavailable")); };
 }
 function downloadCss() { const file = new Blob([paletteCssVariables(palette().colors)], { type:"text/css" }); const link = document.createElement("a"); link.href = URL.createObjectURL(file); link.download = `${project.name.toLowerCase().replace(/[^a-z0-9]+/gi, "-")}-palette.css`; link.click(); URL.revokeObjectURL(link.href); setStatus(t("statusExport")); }
