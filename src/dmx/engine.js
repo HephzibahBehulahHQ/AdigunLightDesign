@@ -17,7 +17,7 @@ export const fixtureProfiles = [
 export function getFixtureProfile(profileId) { return fixtureProfiles.find((profile) => profile.id === profileId) ?? genericRgbWash; }
 
 export function fixtureFootprint(profile = genericRgbWash, modeId = "rgb-6") { return profile.modes.find((mode) => mode.id === modeId)?.channels.length ?? 0; }
-export function createFixture(index = 1, profileId = genericRgbWash.id) { const profile=getFixtureProfile(profileId),mode=profile.modes[0],properties=Object.fromEntries(mode.channels.map((channel)=>[channel,0])); Object.assign(properties,{dimmer:255,red:33,green:150,blue:243,white:0,strobe:0,beam:128,pan:127,tilt:127,gobo:0}); return { id:crypto.randomUUID(), profileId:profile.id, modeId:mode.id, name:`${profile.model.replace(" (virtual)","")} ${index}`, transform:{ x:0,y:3,z:0,rotation:0 }, properties, patchAssignment:null }; }
+export function createFixture(index = 1, profileId = genericRgbWash.id) { const profile=getFixtureProfile(profileId),mode=profile.modes[0],properties=Object.fromEntries(mode.channels.map((channel)=>[channel,0])); Object.assign(properties,{dimmer:255,red:33,green:150,blue:243,white:0,strobe:0,beam:128,pan:127,tilt:127,gobo:0}); return { id:crypto.randomUUID(), profileId:profile.id, modeId:mode.id, name:`${profile.model.replace(" (virtual)","")} ${index}`, transform:{ x:(index - 2) * 2.5,y:3.65,z:.45,rotation:0 }, properties, patchAssignment:null }; }
 export function patchRange(patch) { return { start:patch.startAddress, end:patch.startAddress + patch.channelFootprint - 1 }; }
 export function validatePatch(candidate, fixtures) {
   const errors=[]; const footprint=candidate.channelFootprint;

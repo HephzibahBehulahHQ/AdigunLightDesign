@@ -34,7 +34,7 @@ function addVirtualFixture(profileId) { const fixture=createFixture(project.fixt
 function activateBlackout() { commitProjectChange("dmx-blackout",(draft)=>{draft.fixtures=blackout(draft.fixtures);}); status="Virtual blackout applied. Physical output remains disabled."; }
 function applyPaletteToVirtualFixtures() { const rgb=hexToRgb(selected().hex); commitProjectChange("palette-to-fixtures",(draft)=>{draft.fixtures=draft.fixtures.map((fixture)=>({ ...fixture, properties:{ ...fixture.properties, red:rgb.r, green:rgb.g, blue:rgb.b } }));}); updateRendererFromFixtures(); status=`${selected().hex} applied to ${project.fixtures.length} virtual fixture(s).`; }
 function createCueSnapshot() { let cue; commitProjectChange("cue-create",(draft)=>{cue=createCue(draft.fixtures,{name:`Look ${draft.cues.length+1}`});draft.cues=[...draft.cues,cue];}); status=`${cue.name} captured with ${cue.targets.length} fixture target(s).`; }
-function updateRendererFromFixtures() { const fixture=project.fixtures[0]; if(fixture) renderer?.setAccent(rgbToHex({r:fixture.properties.red,g:fixture.properties.green,b:fixture.properties.blue})); }
+function updateRendererFromFixtures() { const fixture=project.fixtures[0]; if(fixture) renderer?.setAccent(rgbToHex({r:fixture.properties.red,g:fixture.properties.green,b:fixture.properties.blue})); renderer?.setFixtures(project.fixtures); }
 function stopPlayback(message="Cue playback stopped.") { if(playbackTimer){clearInterval(playbackTimer);playbackTimer=null;} status=message; }
 function playLatestCue() { const cue=project.cues.at(-1); if(!cue) return; stopPlayback(); const source=structuredClone(project.fixtures),started=performance.now(); playbackTimer=setInterval(()=>{const elapsed=(performance.now()-started)/1000;project.fixtures=evaluateCue(source,cue,elapsed);updateRendererFromFixtures();document.querySelector("#status").textContent=`Playing ${cue.name} · ${(Math.min(elapsed,cue.duration)).toFixed(1)}s / ${cue.duration}s`;if(elapsed>=cue.duration){stopPlayback(`${cue.name} completed in virtual simulation.`);saveProject();render();}},100); }
 function downloadText(content, filename, type) { const file=new Blob([content],{type}); const link=document.createElement("a"); link.href=URL.createObjectURL(file); link.download=filename; link.click(); URL.revokeObjectURL(link.href); }
@@ -102,7 +102,7 @@ function render() {
   if (preferences.view === "light" && project.fixtures.length) document.querySelector(".selected-preview").insertAdjacentHTML("afterend", fixtureInspectorMarkup());
   if (preferences.module === "library") { const drawer=document.createElement("section"); drawer.className="library-drawer panel"; drawer.setAttribute("aria-label",t("library")); drawer.innerHTML=`<div class="section-title"><h2>▱ ${t("library")}</h2><button id="close-library" class="subtle" aria-label="${t("close")}">×</button></div><p>Small virtual starter profiles only. They are not manufacturer or hardware validated.</p><div class="fixture-library">${fixtureLibraryMarkup()}</div>`; app.insertBefore(drawer,app.querySelector("footer")); }
   bind();
-  if (preferences.view === "light") renderer = createLightLabRenderer(document.querySelector("#light-canvas"), { accent:scene().materialColor });
+  if (preferences.view === "light") renderer = createLightLabRenderer(document.querySelector("#light-canvas"), { accent:scene().materialColor, fixtures:project.fixtures });
 }
 
 function bind() {
