@@ -26,6 +26,7 @@ import { duplicateFixture,deleteFixture } from "./domain/fixture-operations.js";
 import { readBrowserStorage,writeBrowserStorage } from "./domain/browser-storage.js";
 import { applySceneMaterial } from "./domain/scene-materials.js";
 import { escapeHtml as esc,fixtureOptions,swatchButton } from "./ui/html.js";
+import { virtualDmxPreview } from "./dmx/preview.js";
 import { groupFixtures,saveFixtureGroup } from "./domain/fixture-groups.js";
 import { cueCsv, designTokenJson, paletteCss, paletteJson, paletteSvg, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
 import { readProjectFile } from "./domain/import-project.js";
@@ -72,6 +73,13 @@ function createCueSnapshot() {
   } catch(error) { document.querySelector("#status").textContent=status=error.message; }
 }
 function updateRendererFromFixtures() { renderer?.setFixtures(project.fixtures); }
+function updateDmxFeedback(fixtures) {
+  const snapshot=virtualDmxPreview(fixtures,preferences.fixtureId);
+  const monitor=document.querySelector("#virtual-dmx-monitor"),summary=document.querySelector(".timeline .dmx-actions span");
+  if (monitor) monitor.textContent=`${t("universe")} ${snapshot.universe}\n${snapshot.channels.map((channel)=>`${String(channel.address).padStart(3,"0")} · ${channel.name}: ${channel.value}`).join("\n")}`;
+  if (summary) summary.textContent=`U${snapshot.universe} · CH 1: ${snapshot.frame[0]} · ${t("outputDisabled")}`;
+}
+function previewFixtures(fixtures) {renderer?.setFixtures(fixtures);updateDmxFeedback(fixtures);}
 function stopPlayback(message="Cue playback stopped.") { if(playbackTimer){clearInterval(playbackTimer);playbackTimer=null;} playbackClock=null; status=message; }
 function togglePlaybackPause() {
   if (!playbackClock) return;
@@ -93,7 +101,7 @@ function playEffect() {
   playbackClock=createPlaybackClock(performance.now());
   preferences.view="light";
   playbackTimer=setInterval(()=>{
-    renderer?.setFixtures(evaluateEffect(source,settings,playbackClock.elapsed(performance.now())));
+    previewFixtures(evaluateEffect(source,settings,playbackClock.elapsed(performance.now())));
     document.querySelector("#status").textContent=`${t("virtualEffect")} · ${t(settings.type)}`;
   },100);
   render();
@@ -110,7 +118,7 @@ function playSequence({seek=0,paused=false}={}) {
   playbackTimer=setInterval(()=>{
     const position=playbackPosition(playbackClock.elapsed(performance.now()),duration,Boolean(preferences.loopSequence));
     const frame=evaluateSequence(source,cues,position.time);
-    renderer?.setFixtures(frame.fixtures);
+    previewFixtures(frame.fixtures);
     const scrub=document.querySelector("#sequence-seek");
     if (scrub && document.activeElement!==scrub) scrub.value=String(position.time);
     document.querySelector("#sequence-position").textContent=`${position.time.toFixed(1)} / ${duration.toFixed(1)} s`;
@@ -129,7 +137,7 @@ function playLatestCue() {
   preferences.view="light";
   playbackTimer=setInterval(()=>{
     const elapsed=playbackClock.elapsed(performance.now());
-    renderer?.setFixtures(evaluateCue(source,cue,elapsed));
+    previewFixtures(evaluateCue(source,cue,elapsed));
     document.querySelector("#status").textContent=`Playing ${cue.name} · ${(Math.min(elapsed,cue.duration)).toFixed(1)}s / ${cue.duration}s`;
     if (elapsed>=cue.duration) { stopPlayback(`${cue.name} completed in virtual simulation.`); render(); }
   },100);
@@ -144,7 +152,7 @@ function playArrangement({seek=0,paused=false}={}) {
   if (paused) playbackClock.pause(performance.now());
   playbackTimer=setInterval(()=>{
     const position=playbackPosition(playbackClock.elapsed(performance.now()),duration,Boolean(preferences.loopSequence));
-    renderer?.setFixtures(evaluateTracks(source,cues,position.time));
+    previewFixtures(evaluateTracks(source,cues,position.time));
     document.querySelector("#arrangement-playhead").style.left=`${position.time/Math.max(30,duration)*100}%`;
     const slider=document.querySelector("#arrangement-seek");
     if (document.activeElement!==slider) slider.value=String(position.time);
@@ -340,6 +348,8 @@ function render() {
   timingSummary.textContent=t("cueSettings");timingDetails.append(timingSummary);
   document.querySelectorAll(".cue-timing").forEach((node)=>timingDetails.append(node));
   document.querySelector(".timeline").append(timingDetails);
+  document.querySelector(".timeline").insertAdjacentHTML("beforeend", `<details class="fixture-group-editor"><summary>${t("virtualDmx")} · ${t("outputDisabled")}</summary><pre id="virtual-dmx-monitor"></pre></details>`);
+  updateDmxFeedback(project.fixtures);
   const room=roomDimensions(scene().room);
   document.querySelector(".left-rail").insertAdjacentHTML("beforeend", `<details class="fixture-group-editor"><summary>${t("roomDimensions")}</summary>${["width","height","depth"].map((key)=>`<label>${t(key)} (m)<input id="room-${key}" type="number" required min="2" max="${key==="height" ? 20 : 50}" step="any" value="${room[key]}"></label>`).join("")}<button id="apply-room">${t("apply")}</button></details>`);
   for (const [index,key] of ["lighting","palette","props"].entries()) {

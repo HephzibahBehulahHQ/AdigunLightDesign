@@ -1,5 +1,7 @@
 # Cue timeline
 
+The virtual DMX monitor now consumes the same evaluated fixture snapshot as the renderer during cue, sequence, track and effect preview. It shows the selected fixture's universe, absolute channel addresses and current virtual values; Stop restores saved values when the editor rerenders. These readouts do not mutate fixture inputs or transmit hardware output. Interpolation-to-frame mapping has tests; browser updating remains unverified.
+
 Effect eligibility uses each fixture profile's active mode channels, including for legacy files with extra stored properties. Fixed wash/strip modes do not acquire motion from stale pan/tilt properties. Newly created fixtures initialize only their declared channels. These are application-authored virtual modes, not verified manufacturer profiles.
 
 Channel keyframes are optional `{fixtureId, property, time, value}` records in `channelKeyframes`. The editor adds/replaces a channel's frame at a time or deletes an entry. Only channels already captured in the cue are allowed. Times must lie within the cue and values must be integer DMX bytes; duplicate channel/time records and more than 4096 entries are rejected. Frames interpolate linearly from the source value at time zero, or snap to an explicit zero-time frame, then hold the final value. A channel with frames overrides its default fade/hold/fade-out envelope; other channels keep that envelope. These edits are undoable and native imports preserve them. Curve handles and drag editing remain unimplemented; browser interaction remains unverified.
@@ -22,7 +24,7 @@ Virtual effect previews provide a cosine dimmer pulse and an ordered dimmer chas
 
 M5 stores cue snapshots separately from renderer state. A cue records fixture property targets, duration, delay, fade metadata and keyframe boundary records. Playback interpolates from a snapshot of the current fixtures to the stored target and sends preview values to the renderer. Playback does not overwrite or save the project's fixture values. Stop and completion restore the saved scene on the next render.
 
-The controls capture cues with editable duration, fade and delay, select a cue, edit its name and timing, play it, and stop it. Cue edits preserve captured fixture targets and use project undo/redo. Import, undo, redo and document mutations stop playback. Delay holds the starting values; a zero-length fade switches at the scheduled delay. Timing must fit within the cue duration. The displayed virtual DMX frame represents saved fixture values, not the animated preview.
+The controls capture cues with editable duration, fade and delay, select a cue, edit its name and timing, play it, and stop it. Cue edits preserve captured fixture targets and use project undo/redo. Import, undo, redo and document mutations stop playback. Delay holds the starting values; a zero-length fade switches at the scheduled delay. Timing must fit within the cue duration. The virtual DMX monitor follows animated preview values during playback and saved values after Stop.
 
 Play sequence opens the 3D preview and evaluates cues in their stored order. Each cue starts from the previous cue's completed fixture values. Boundary transitions, completion, empty sequences and preservation of source data have automated coverage. Stop cancels the sequence and restores the saved scene.
 
