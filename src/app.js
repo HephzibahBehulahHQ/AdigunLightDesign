@@ -394,6 +394,22 @@ function render() {
   palettePanel.hidden=mode!=="palette";
   if (fixturePanel) {fixturePanel.id="fixture-inspector-panel";fixturePanel.hidden=mode!=="fixture";}
   inspector.querySelector(".inspector-tabs").innerHTML=`<button data-inspector="fixture" aria-pressed="${mode==="fixture"}" class="${mode==="fixture" ? "is-active" : ""}" ${fixturePanel ? "" : "disabled"}>${t("fixtureLabel")}</button><button data-inspector="palette" aria-pressed="${mode==="palette"}" class="${mode==="palette" ? "is-active" : ""}">${t("palette")}</button>`;
+  if (fixturePanel && mode==="fixture") {
+    const keys=["fixture","light","dmx","effects"],activeTab=keys.includes(preferences.fixtureTab) ? preferences.fixtureTab : "fixture";
+    const bodies=Object.fromEntries(keys.map((key)=>{const body=document.createElement("div");body.hidden=key!==activeTab;body.className="fixture-tab-body";return [key,body];}));
+    for (const id of ["fixture-dimmer","fixture-beam","fixture-colour","fixture-white","fixture-pan","fixture-tilt"]) {
+      const input=fixturePanel.querySelector(`#${id}`);if(input)bodies.light.append(input.closest("label"));
+    }
+    for (const id of ["fixture-universe","fixture-address"]) bodies.dmx.append(fixturePanel.querySelector(`#${id}`).closest("label"));
+    const apply=fixturePanel.querySelector("#apply-fixture"),actions=fixturePanel.querySelector(".dmx-actions");
+    for (const node of [...fixturePanel.children]) if(node!==apply && node!==actions)bodies.fixture.append(node);
+    const effectControls=document.querySelector("#effect-type").closest(".dmx-actions");
+    const effectScope=document.createElement("p");effectScope.textContent=t("allVirtualFixtures");bodies.effects.append(effectScope,effectControls);
+    fixturePanel.append(...Object.values(bodies),apply,actions);
+    apply.hidden=activeTab==="effects";actions.hidden=activeTab!=="fixture";
+    inspector.querySelector(".section-title h2").textContent=`${t("selectedFixtureTitle")}: ${selectedFixture().name}`;
+    inspector.querySelector(".inspector-tabs").innerHTML=keys.map((key)=>`<button data-fixture-tab="${key}" aria-pressed="${key===activeTab}" class="${key===activeTab ? "is-active" : ""}">${t({fixture:"fixtureLabel",light:"lightTab",dmx:"dmxTab",effects:"effectsTab"}[key])}</button>`).join("");
+  }
   bind();
   if (preferences.view === "light") {
     renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {accent:scene().materialColor,room:scene().room,materials:scene().materials,projection:preferences.projection==="orthographic" ? "orthographic" : "perspective",visibility:scene().visibility,fixtures:project.fixtures.map((fixture)=>({...fixture,selected:fixture.id===selectedFixture()?.id})),onSelect(id){stopPlayback();preferences.fixtureId=id;preferences.inspectorMode="fixture";savePreferences();render();}});
@@ -410,6 +426,7 @@ function render() {
 }
 
 function bind() {
+  document.querySelectorAll("[data-fixture-tab]").forEach((button)=>button.onclick=()=>{preferences.fixtureTab=button.dataset.fixtureTab;preferences.inspectorMode="fixture";savePreferences();render();});
   const previewLux=document.querySelector("#preview-lux-palette");if(previewLux)previewLux.onclick=()=>{
     try {luxProposal=previewNativeToolAction(project,{type:"adigunlightdesign.tool-call",version:1,name:"apply_palette_to_lights",payload:{paletteId:palette().id}});render();}catch(error){setStatus(error.message);}
   };

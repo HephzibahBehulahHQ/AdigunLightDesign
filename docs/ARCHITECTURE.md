@@ -37,6 +37,8 @@ Direct editor mutations use document transactions. Each committed operation snap
 
 ## Visual acceptance
 
+The fixture inspector groups existing controls into Fixture (identity/placement), Light (color/intensity/aiming), DMX (patching) and Effects tabs. Effects are explicitly labeled as applying to all virtual fixtures. Selecting a palette swatch opens palette controls instead; the fixture layer list returns to fixture inspection. Tabs reuse the existing validated actions. Their browser interaction and exact layout remain unverified.
+
 The 2D shape selector creates rectangles or ellipses; both use editable bounding-box position and dimensions. Object duplication creates an independent copy offset by 20 canvas units. Backward/Forward moves change saved stacking order one step at a time and are undoable. SVG export preserves these shapes and order. Geometry/copy/order tests do not verify browser interaction.
 
 2D objects support pointer dragging. SVG screen-coordinate transforms account for scaling and letterboxing; movement previews locally and commits one undoable position change on release. Pointer cancellation restores the original transform without saving. Numeric fields remain available for keyboard positioning. Mocked interaction tests cover scaled movement, cancellation and click selection; real browser pointer behavior remains unverified.
