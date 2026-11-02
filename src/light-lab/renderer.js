@@ -61,13 +61,20 @@ export function fixtureHousing(light){
   for(const x of [light.x-.27,light.x+.21])box(data,x,light.y-.24,light.z-.05,.06,.24,.10,[.10,.11,.13]);
   return data;
 }
+export function fixtureSelectionBounds(housing){
+  const min=[Infinity,Infinity,Infinity],max=[-Infinity,-Infinity,-Infinity];
+  for(let offset=0;offset<housing.length;offset+=6)for(let axis=0;axis<3;axis++){
+    min[axis]=Math.min(min[axis],housing[offset+axis]-.04);max[axis]=Math.max(max[axis],housing[offset+axis]+.04);
+  }
+  return {min,max};
+}
 function lightGeometry(data, light,includeBeams=true) {
-  data.push(...fixtureHousing(light));
+  const housing=fixtureHousing(light);data.push(...housing);
   if (light.selected) {
-    const colour=hexVector("#22D3EE"),x=light.x-.23,y=light.y-.16,z=light.z-.23;
-    for (const dy of [0,.28]) for (const dz of [0,.46]) box(data,x,y+dy,z+dz,.48,.015,.015,colour);
-    for (const dx of [0,.46]) for (const dz of [0,.46]) box(data,x+dx,y,z+dz,.015,.29,.015,colour);
-    for (const dx of [0,.46]) for (const dy of [0,.28]) box(data,x+dx,y+dy,z,.015,.015,.48,colour);
+    const colour=hexVector("#22D3EE"),{min,max}=fixtureSelectionBounds(housing),[x,y,z]=min,[w,h,d]=max.map((value,axis)=>value-min[axis]);
+    for (const dy of [0,h]) for (const dz of [0,d]) box(data,x,y+dy,z+dz,w+.015,.015,.015,colour);
+    for (const dx of [0,w]) for (const dz of [0,d]) box(data,x+dx,y,z+dz,.015,h+.015,.015,colour);
+    for (const dx of [0,w]) for (const dy of [0,h]) box(data,x+dx,y+dy,z,.015,.015,d+.015,colour);
   }
   if (includeBeams && light.colour.some((value)=>value>0)) data.push(...beamVolume(light));
 }
