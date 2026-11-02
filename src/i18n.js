@@ -118,4 +118,8 @@ Object.assign(messages.en,{tracks:"Scheduled tracks",playTracks:"Play tracks",tr
 Object.assign(messages.de,{tracks:"Geplante Spuren",playTracks:"Spuren abspielen",trackName:"Spurname",startTime:"Start (Sekunden)",scheduleCue:"Cue einplanen"});
 Object.assign(messages.yo,{tracks:"Àwọn orin cue tí a ṣètò",playTracks:"Ṣeré àwọn orin cue",trackName:"Orúkọ orin cue",startTime:"Ìbẹ̀rẹ̀ (ìṣẹ́jú àáyá)",scheduleCue:"Ṣètò cue"});
 Object.assign(messages.pcm,{tracks:"Scheduled tracks",playTracks:"Play tracks",trackName:"Track name",startTime:"Start (seconds)",scheduleCue:"Schedule cue"});
+Object.assign(messages.en,{seekTracks:"Seek tracks",cueSettings:"Cue timing and scheduling"});
+Object.assign(messages.de,{seekTracks:"Spurposition",cueSettings:"Cue-Zeiten und Planung"});
+Object.assign(messages.yo,{seekTracks:"Yan ipò àwọn orin cue",cueSettings:"Àkókò àti ìṣètò cue"});
+Object.assign(messages.pcm,{seekTracks:"Choose tracks position",cueSettings:"Cue timing and scheduling"});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }

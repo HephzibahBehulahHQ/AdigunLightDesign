@@ -126,15 +126,20 @@ function playLatestCue() {
   },100);
   render();
 }
-function playArrangement() {
+function playArrangement({seek=0,paused=false}={}) {
   if (!project.cues.length) return;
   stopPlayback();
   const source=structuredClone(project.fixtures),cues=structuredClone(project.cues),duration=arrangementDuration(cues);
   playbackClock=createPlaybackClock(performance.now());preferences.view="light";
+  playbackClock.seek(seek,performance.now());
+  if (paused) playbackClock.pause(performance.now());
   playbackTimer=setInterval(()=>{
     const position=playbackPosition(playbackClock.elapsed(performance.now()),duration,Boolean(preferences.loopSequence));
     renderer?.setFixtures(evaluateTracks(source,cues,position.time));
     document.querySelector("#arrangement-playhead").style.left=`${position.time/Math.max(30,duration)*100}%`;
+    const slider=document.querySelector("#arrangement-seek");
+    if (document.activeElement!==slider) slider.value=String(position.time);
+    document.querySelector("#arrangement-position").textContent=`${position.time.toFixed(1)} / ${duration.toFixed(1)} s`;
     document.querySelector("#status").textContent=`${t("playTracks")} · ${position.time.toFixed(1)} s`;
     if (position.complete && !playbackClock.paused) {stopPlayback();render();}
   },100);
@@ -303,6 +308,14 @@ function render() {
   }
   document.querySelector(".selected-preview").style.background=swatchCssColor(active);
   document.querySelector(".palette-panel").insertAdjacentHTML("beforeend", `<div class="palette-actions"><label>${t("hueSpacing")}<input id="custom-spacing" type="number" min="-360" max="360" step="any" value="30" /></label><button id="custom-hues">${t("customHues")}</button><button id="perceptual-scale">${t("perceptualScale")}</button></div>`);
+  const arrangementEnd=arrangementDuration(project.cues);
+  document.querySelector("#play-tracks").insertAdjacentHTML("afterend", `<label>${t("seekTracks")} <input id="arrangement-seek" type="range" min="0" max="${arrangementEnd}" step="0.1" value="0" ${arrangementEnd ? "" : "disabled"}></label><output id="arrangement-position">0 / ${arrangementEnd.toFixed(1)} s</output>`);
+  const timingDetails=document.createElement("details");
+  timingDetails.className="fixture-group-editor";
+  const timingSummary=document.createElement("summary");
+  timingSummary.textContent=t("cueSettings");timingDetails.append(timingSummary);
+  document.querySelectorAll(".cue-timing").forEach((node)=>timingDetails.append(node));
+  document.querySelector(".timeline").append(timingDetails);
   bind();
   if (preferences.view === "light") {
     renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {accent:scene().materialColor,fixtures:project.fixtures.map((fixture)=>({...fixture,selected:fixture.id===selectedFixture()?.id}))});
@@ -458,6 +471,7 @@ function bind() {
   document.querySelector("#sequence-seek").onchange=(event)=>playSequence({seek:Number(event.target.value),paused:true});
   document.querySelector("#play-effect").onclick=playEffect;
   document.querySelector("#play-tracks").onclick=playArrangement;
+  document.querySelector("#arrangement-seek").onchange=(event)=>playArrangement({seek:Number(event.target.value),paused:true});
   const scheduleButton=document.querySelector("#schedule-cue");
   if (scheduleButton) scheduleButton.onclick=()=>{
     try {

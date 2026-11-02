@@ -38,3 +38,11 @@ test("native project validation retains valid scheduling and rejects imported ov
   project.cues[1].startTime=1;
   assert.equal(validateProject(project).valid,false);
 });
+test("seeking is independent of evaluation order and holds values in track gaps",()=>{
+  const cues=[cue("one","a",200,"Key",0),cue("two","a",0,"Key",8)];
+  assert.equal(evaluateTracks(source,cues,6)[0].properties.red,200);
+  assert.equal(evaluateTracks(source,cues,9)[0].properties.red,100);
+  evaluateTracks(source,cues,12);
+  assert.equal(evaluateTracks(source,cues,1)[0].properties.red,100);
+  assert.equal(evaluateTracks(source,cues,9)[0].properties.red,100);
+});

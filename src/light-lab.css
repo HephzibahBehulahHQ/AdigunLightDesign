@@ -26,6 +26,12 @@
 .timeline-scale { position:relative; flex:1 0 360px; margin:0 12px; }
 .fixture-group-editor { margin:8px 12px; font-size:11px; }
 .fixture-group-editor label { display:block; margin:5px 0; }
+.fixture-group-editor summary { cursor:pointer; padding:6px 0; color:var(--text); font-weight:700; }
+.fixture-group-editor input[type="range"] { max-width:100%; vertical-align:middle; }
+.fixture-group-editor .cue-timing { margin:6px 0; flex-wrap:wrap; }
+.track-name { padding:4px 0; font-size:10px; color:var(--muted); }
+.timeline-lane:nth-of-type(4n) .cue-block { background:linear-gradient(90deg,#1767ad,#2196f3); border-color:#65b8ff; }
+.timeline-lane:nth-of-type(6n) .cue-block { background:linear-gradient(90deg,#236e47,#39a76a); border-color:#73d797; }
 .fixture-group-editor button { padding:5px 8px; border-radius:5px; background:#493275; }
 .timeline-ruler { position:relative; height:24px; border-bottom:1px solid var(--line); }
 .timeline-ruler span { position:absolute; top:0; transform:translateX(-50%); color:var(--muted); font-size:10px; }
