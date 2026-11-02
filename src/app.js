@@ -34,6 +34,7 @@ import { bindCanvasDrag } from "./ui/canvas-drag.js";
 import { previewNativeToolAction,confirmNativeToolAction } from "./ai/action-preview.js";
 import { icon } from "./ui/icons.js";
 import { previewQuality,previewQualities } from "./light-lab/quality.js";
+import { temperaturePalette } from "./domain/temperature.js";
 import { groupFixtures,saveFixtureGroup } from "./domain/fixture-groups.js";
 import { cueCsv, designTokenJson, paletteCss, paletteJson, paletteSvg, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
 import { readProjectFile } from "./domain/import-project.js";
@@ -342,6 +343,7 @@ function render() {
   document.querySelector(".selected-preview").style.background=swatchCssColor(active);
   document.querySelector(".palette-panel").insertAdjacentHTML("beforeend", `<div class="palette-actions"><label>${t("hueSpacing")}<input id="custom-spacing" type="number" min="-360" max="360" step="any" value="30" /></label><button id="custom-hues">${t("customHues")}</button><button id="perceptual-scale">${t("perceptualScale")}</button></div>`);
   const arrangementEnd=arrangementDuration(project.cues);
+  document.querySelector(".palette-panel").insertAdjacentHTML("beforeend", `<div class="palette-actions"><label>${t("temperatureStrength")} (%)<input id="temperature-strength" type="number" min="0" max="100" step="1" required value="20"></label><button data-temperature="warm">${t("warmPalette")}</button><button data-temperature="cool">${t("coolPalette")}</button></div>`);
   document.querySelectorAll("[data-module]").forEach((button)=>{button.querySelector("span").innerHTML=icon(button.dataset.module);});
   document.querySelectorAll("[data-tool]").forEach((button)=>{button.querySelector("span").innerHTML=icon(button.dataset.tool);});
   document.querySelector(".language > span").innerHTML=icon("globe");
@@ -432,6 +434,11 @@ function render() {
 }
 
 function bind() {
+  document.querySelectorAll("[data-temperature]").forEach((button)=>button.onclick=()=>{
+    const input=document.querySelector("#temperature-strength");
+    if(!input.value.trim() || !input.checkValidity())return input.reportValidity();
+    mutateColours((colors)=>temperaturePalette(colors,button.dataset.temperature,Number(input.value)/100));
+  });
   document.querySelector("#preview-quality").onchange=(event)=>{preferences.previewQuality=event.target.value;savePreferences();render();};
   document.querySelectorAll("[data-fixture-tab]").forEach((button)=>button.onclick=()=>{preferences.fixtureTab=button.dataset.fixtureTab;preferences.inspectorMode="fixture";savePreferences();render();});
   const previewLux=document.querySelector("#preview-lux-palette");if(previewLux)previewLux.onclick=()=>{

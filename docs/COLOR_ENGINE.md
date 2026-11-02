@@ -1,5 +1,7 @@
 # Color engine
 
+Warm/cool variations move OKLCH hue along the shortest arc toward 75°/250°, with an editable 0–100% strength. They preserve requested perceptual lightness/chroma before explicit sRGB chroma mapping and HEX quantization. Neutral swatches stay neutral; locks, opacity and order are preserved. These are artistic hue variations, not correlated color-temperature or Kelvin calculations. Domain tests cover determinism and measured lightness tolerance; browser appearance remains unverified.
+
 Swatches support optional opacity from 0 to 1 (default 1). The inspector, clipboard, CSS/SVG and token exports preserve alpha; JSON snapshots retain the numeric value. Contrast composites the swatch over the selected opaque background before measuring. Suggestions currently apply only to opaque swatches. Palette-to-DMX and scene-material mapping currently use RGB only; opacity does not imply a physical fixture dimmer setting.
 
 The inspector supports direct HSL and OKLCH editing through undoable palette transactions. OKLCH values outside sRGB reduce chroma using a 24-step binary search while keeping lightness and hue; application reports the resulting chroma. Stored swatches remain rounded six-digit sRGB HEX colors. This is an application-defined mapping, not a claim of conformance to a particular CSS gamut-mapping algorithm or Display-P3 support. Browser control behavior remains unverified.

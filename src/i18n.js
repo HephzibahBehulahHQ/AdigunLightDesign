@@ -199,4 +199,8 @@ Object.assign(messages.en,{previewQuality:"Preview",quality_performance:"Perform
 Object.assign(messages.de,{previewQuality:"Vorschau",quality_performance:"Leistung",quality_balanced:"Ausgewogen",quality_quality:"Qualität",previewFixtureCount:"{shown}/{total} Geräte dargestellt"});
 Object.assign(messages.yo,{previewQuality:"Àfihàn",quality_performance:"Ìṣiṣẹ́",quality_balanced:"Dídọ́gba",quality_quality:"Dídára",previewFixtureCount:"A fi fìtílà {shown}/{total} hàn"});
 Object.assign(messages.pcm,{previewQuality:"Preview",quality_performance:"Performance",quality_balanced:"Balanced",quality_quality:"Quality",previewFixtureCount:"{shown}/{total} fixtures dey show"});
+Object.assign(messages.en,{warmPalette:"Warmer palette",coolPalette:"Cooler palette",temperatureStrength:"Hue shift strength"});
+Object.assign(messages.de,{warmPalette:"Wärmere Palette",coolPalette:"Kühlere Palette",temperatureStrength:"Stärke der Farbtonverschiebung"});
+Object.assign(messages.yo,{warmPalette:"Paleti gbígbóná",coolPalette:"Paleti tútù",temperatureStrength:"Agbára yíyí irú àwọ̀"});
+Object.assign(messages.pcm,{warmPalette:"Warmer palette",coolPalette:"Cooler palette",temperatureStrength:"Hue shift strength"});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }
