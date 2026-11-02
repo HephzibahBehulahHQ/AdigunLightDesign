@@ -41,6 +41,7 @@ import { createLuxServicePanel } from "./ui/lux-service.js";
 import { createCanvasStateFeed } from "./ai/live-copilot.js";
 import { createLiveCopilotPanel } from "./ui/live-copilot-panel.js";
 import { projectOverview } from "./ui/project-overview.js";
+import { arrangementTimelineMarkup } from "./ui/arrangement-timeline.js";
 import { canFullscreen,toggleViewportFullscreen } from "./ui/fullscreen.js";
 import { groupFixtures,saveFixtureGroup } from "./domain/fixture-groups.js";
 import { cueCsv, designTokenJson, paletteCss, paletteJson, paletteSvg, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
@@ -148,6 +149,7 @@ function playSequence({seek=0,paused=false}={}) {
     if (position.complete && !playbackClock.paused) { stopPlayback(); render(); }
   },100);
   render();
+  document.querySelector("#sequence-preview-details").open=true;
 }
 function playLatestCue() {
   const cue=project.cues.find((item)=>item.id===preferences.cueId) ?? project.cues.at(-1);
@@ -293,8 +295,13 @@ function render() {
   document.querySelector(".dmx-actions").insertAdjacentHTML("beforeend", `<button id="play-sequence" ${project.cues.length ? "" : "disabled"}>▶ ${t("playSequence")}</button>`);
   document.querySelector("#stop-cue").insertAdjacentHTML("beforebegin", `<button id="pause-playback" aria-pressed="${Boolean(playbackClock?.paused)}" ${playbackTimer ? "" : "disabled"}>${t(playbackClock?.paused ? "resumePlayback" : "pausePlayback")}</button>`);
   const sequenceDuration=project.cues.reduce((sum,cue)=>sum+cue.duration,0);
-  const tracks=arrangeTracks(project.cues),trackSpan=Math.max(30,arrangementDuration(project.cues));
-  document.querySelector(".timeline").insertAdjacentHTML("beforeend", `<details class="fixture-group-editor" open><summary>${t("tracks")}</summary><button id="play-tracks" ${project.cues.length ? "" : "disabled"}>▶ ${t("playTracks")}</button><div class="cue-track"><div class="timeline-scale">${tracks.map((track)=>`<div class="track-name">${esc(track.id)}</div><div class="timeline-lane">${track.entries.map(({cue,start})=>`<button class="cue-block" data-cue="${esc(cue.id)}" aria-pressed="${cue.id===activeCue?.id}" title="${esc(cue.name)} · ${start}s" style="left:${start/trackSpan*100}%;width:${cue.duration/trackSpan*100}%">${esc(cue.name)}</button>`).join("")}</div>`).join("")}<div id="arrangement-playhead" class="timeline-playhead" aria-hidden="true"></div></div></div></details>`);
+  const tracks=arrangeTracks(project.cues);
+  const sequenceTrack=document.querySelector(".timeline > .cue-track");
+  sequenceTrack.insertAdjacentHTML("beforebegin",arrangementTimelineMarkup(project.cues,activeCue?.id,t("noCues")));
+  const sequenceDetails=document.createElement("details");sequenceDetails.className="fixture-group-editor";sequenceDetails.id="sequence-preview-details";
+  sequenceDetails.innerHTML=`<summary>${t("playSequence")}</summary>`;
+  sequenceTrack.replaceWith(sequenceDetails);sequenceDetails.append(sequenceTrack);
+  document.querySelector("#stop-cue").insertAdjacentHTML("beforebegin",`<button id="play-tracks" ${project.cues.length ? "" : "disabled"}>▶ ${t("playTracks")}</button>`);
   document.querySelector("#create-cue").insertAdjacentHTML("beforebegin", `<label>${t("captureGroup")} <select id="cue-group"><option value="">${t("allFixtures")}</option>${(project.fixtureGroups ?? []).map((group)=>`<option value="${esc(group.id)}">${esc(group.name)}</option>`).join("")}</select></label>`);
   document.querySelector(".timeline").insertAdjacentHTML("beforeend", `<details class="fixture-group-editor"><summary>${t("fixtureGroups")}</summary><label>${t("groupName")} <input id="group-name" maxlength="120"></label><div>${project.fixtures.map((fixture)=>`<label><input type="checkbox" data-group-member value="${esc(fixture.id)}"> ${esc(fixture.name)}</label>`).join("")}</div><button id="save-group">${t("saveGroup")}</button>${(project.fixtureGroups ?? []).map((group)=>`<p>${esc(group.name)} · ${group.fixtureIds.length} <button data-delete-group="${esc(group.id)}">${t("deleteGroup")}</button></p>`).join("")}</details>`);
   document.querySelector(".timeline").insertAdjacentHTML("beforeend", `<div class="dmx-actions"><label><input id="sequence-loop" type="checkbox" ${preferences.loopSequence ? "checked" : ""}> ${t("loopSequence")}</label><label>${t("seekSequence")} <input id="sequence-seek" type="range" min="0" max="${sequenceDuration}" step="0.1" value="0" ${sequenceDuration ? "" : "disabled"}></label><output id="sequence-position">0 / ${sequenceDuration.toFixed(1)} s</output></div>`);

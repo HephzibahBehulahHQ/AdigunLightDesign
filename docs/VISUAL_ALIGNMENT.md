@@ -24,3 +24,10 @@ flags still replace that selection; removal drops the missing fixture naturally.
 A mocked WebGL regression checks retained outline geometry, explicit deselection
 and absence of mutation in source fixtures. This does not verify the outline's
 browser appearance against the reference.
+
+The primary timeline now displays the existing scheduled track arrangement,
+including its actual cue start times, independent colored lanes and a time ruler.
+The sequential view remains in an expandable section and opens when sequence
+playback starts. Both playheads and playback controls remain present. Markup
+tests cover track separation, scheduled proportions, selected cues, empty state
+and escaping. Browser interaction and reference matching remain unverified.
