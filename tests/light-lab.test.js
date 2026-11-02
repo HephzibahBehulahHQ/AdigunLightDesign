@@ -1,5 +1,15 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { surfaceLighting } from "../src/light-lab/renderer.js";
+test("artistic surface spill follows fixture colour, distance and blackout",()=>{
+  const base=[.2,.2,.2],light={x:0,y:3,z:0,colour:[1,0,0]};
+  const near=surfaceLighting([0,0,0],base,[light]);
+  const far=surfaceLighting([20,0,0],base,[light]);
+  assert.ok(near[0]>near[1]);
+  assert.ok(near[0]>far[0]);
+  assert.deepEqual(surfaceLighting([0,0,0],base,[{...light,colour:[0,0,0]}]),base.map((value)=>value*.7));
+  assert.deepEqual(base,[.2,.2,.2]);
+});
 import { sceneData } from "../src/light-lab/renderer.js";
 test("studio furniture produces finite interleaved triangle geometry",()=>{
   const data=sceneData([.5,.1,.7],[]);

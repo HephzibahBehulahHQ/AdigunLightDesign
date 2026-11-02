@@ -25,6 +25,16 @@ function lightGeometry(data, light) {
   box(data,light.x-.18,light.y-.11,light.z-.18,.36,.18,.36,fixtureColour);
   if (light.colour.some((value)=>value>0)) data.push(...beamVolume(light));
 }
+export function surfaceLighting(position, baseColour, lights) {
+  const result=baseColour.map((value)=>value*.7);
+  for (const light of lights) {
+    const distance=Math.hypot(position[0]-light.x,position[1]-light.y,position[2]-light.z);
+    const below=position[1] <= light.y ? 1 : .15;
+    const strength=below / (1 + distance * distance * .12);
+    for (let channel=0;channel<3;channel+=1) result[channel]+=light.colour[channel]*strength*(.25 + baseColour[channel]*.5);
+  }
+  return result.map((value)=>Math.max(0,Math.min(1,value)));
+}
 export function sceneData(accent, fixtures) {
   const data=[],floor=hexVector("#172238"),wall=hexVector("#27324A"),couch=hexVector("#9C4F48"),wood=hexVector("#67442F"),metal=hexVector("#151D2D");
   quad(data,[-5,0,-4],[5,0,-4],[5,0,4],[-5,0,4],floor);
@@ -44,7 +54,12 @@ export function sceneData(accent, fixtures) {
   box(data,-.7,2.1,3.78,1.4,.75,.08,accent);
   for (const y of [3.7,3.95]) box(data,-4,y,.4,8,.06,.06,metal);
   for (let x=-4;x<=4;x+=.5) box(data,x,3.7,.4,.04,.3,.06,metal);
-  virtualFixtureVisuals(fixtures,accent).forEach((light)=>lightGeometry(data,light));
+  const lights=virtualFixtureVisuals(fixtures,accent);
+  for (let offset=0;offset<data.length;offset+=6) {
+    const colour=surfaceLighting(data.slice(offset,offset+3),data.slice(offset+3,offset+6),lights);
+    data.splice(offset+3,3,...colour);
+  }
+  lights.forEach((light)=>lightGeometry(data,light));
   return new Float32Array(data);
 }
 
