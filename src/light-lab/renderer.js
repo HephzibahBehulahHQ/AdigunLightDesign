@@ -94,6 +94,23 @@ export function studioPlant(x,z,height=2.1) {
   }
   return data;
 }
+export function roundTableTop(x,y,z,radius,thickness,colour,segments=32){
+  if(![x,y,z,radius,thickness].every(Number.isFinite) || radius<=0 || thickness<=0 || !Number.isInteger(segments) || segments<8 || segments>64)throw new Error("Invalid table geometry.");
+  const data=[];
+  for(let index=0;index<segments;index++){
+    const a=index/segments*Math.PI*2,b=(index+1)/segments*Math.PI*2;
+    const p=[x+Math.cos(a)*radius,y,z+Math.sin(a)*radius],q=[x+Math.cos(b)*radius,y,z+Math.sin(b)*radius];
+    const upperP=[p[0],y+thickness,p[2]],upperQ=[q[0],y+thickness,q[2]];
+    quad(data,p,q,upperQ,upperP,colour);
+    for(const vertex of [[x,y+thickness,z],upperP,upperQ,[x,y,z],q,p])data.push(...vertex,...colour);
+  }
+  return data;
+}
+export function acousticSlats(room,colour){
+  const {width,height,depth}=roomDimensions(room),data=[],count=Math.min(48,Math.max(8,Math.round(depth/.16)));
+  for(let index=0;index<count;index++)box(data,width/2-.09,0,-depth/2+index*depth/count,.075,height,Math.min(.065,depth/count*.5),colour);
+  return data;
+}
 export function sceneData(accent, fixtures, visibility={}, room,includeBeams=true,materials={},quality="balanced",stage) {
   const data=[],floor=hexVector(materials.floor ?? "#172238"),wall=hexVector(materials.wall ?? "#27324A"),couch=hexVector("#9C4F48"),wood=hexVector("#67442F"),metal=hexVector("#151D2D");
   const {width,height,depth}=roomDimensions(room);
@@ -103,6 +120,7 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
   data.push(...surfaceGrid([-width/2,0,-depth/2],[0,0,depth],[0,height,0],materials.wall ? wall : hexVector("#132746"),budget.columns,budget.rows));
   data.push(...surfaceGrid([-width/2,height,-depth/2],[width,0,0],[0,0,depth],hexVector(materials.ceiling ?? "#101726"),budget.columns,budget.rows));
   if (visibility.props!==false) {
+  data.push(...acousticSlats(room,wood));
   const platform=stageSettings(stage);
   if(platform.enabled)box(data,platform.x,platform.y,platform.z,platform.width,platform.height,platform.depth,hexVector(platform.color));
   box(data,-2.1,.01,-.8,4.2,.02,3.5,hexVector("#665477"));
@@ -110,8 +128,13 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
   box(data,-1.45,1.05,1.55,2.9,.55,.35,couch.map((value)=>Math.min(1,value*1.2)));
   box(data,-1.9,.25,1.3,.3,1,.95,couch);
   box(data,1.6,.25,1.3,.3,1,.95,couch);
-  box(data,-1,.65,-.25,2,.09,1,wood);
-  for (const x of [-.85,.75]) for (const z of [-.1,.55]) box(data,x,.04,z,.07,.61,.07,metal);
+  data.push(...roundTableTop(-.2,.65,.25,.85,.055,metal));
+  data.push(...roundTableTop(.75,.5,-.15,.45,.045,metal));
+  for (const x of [-.75,.3]) for (const z of [-.15,.65]) box(data,x,.04,z,.035,.61,.035,metal);
+  for (const x of [.5,.95]) for (const z of [-.35,.05]) box(data,x,.04,z,.03,.46,.03,metal);
+  for(let index=0;index<3;index++)box(data,-1.55+index*1.03,.97,1.32,.95,.12,.72,couch.map(value=>Math.min(1,value*1.12)));
+  box(data,-1.45,1.15,1.33,.45,.42,.18,hexVector("#E5AE66"));
+  box(data,1,1.15,1.33,.45,.42,.18,accent);
   for (const x of [3.6,4.7]) box(data,x,0,2.5,.08,2.8,.45,wood);
   for (const y of [.1,.8,1.5,2.2,2.75]) box(data,3.6,y,2.5,1.18,.07,.45,wood);
   for (let index=0;index<4;index+=1) box(data,3.85+index*.16,.87,2.6,.1,.4,.22,index%2 ? accent : hexVector("#D4AF37"));

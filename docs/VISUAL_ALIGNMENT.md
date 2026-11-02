@@ -52,3 +52,10 @@ actions. Enabled tools expose `aria-keyshortcuts` and shortcut tooltips. Text
 editing, composition, modifier combinations, handled events and repeated
 keydowns are excluded. Disabled AI Pin stays unavailable. Focused shortcut
 tests passed; real-browser keyboard/focus acceptance remains pending.
+
+Studio props now include nested round coffee tables, sofa seat/cushion detail
+and vertical acoustic slats following the configured right-wall dimensions.
+They are native scene geometry receiving the existing artistic lighting and
+obey the props visibility control. Geometry tests cover finite bounds, closed
+table topology, room-sized slats and lighting response. No photorealistic
+materials, calibrated reflections or exact reference appearance is established.
