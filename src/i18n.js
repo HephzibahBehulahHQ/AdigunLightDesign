@@ -151,4 +151,8 @@ Object.assign(messages.en,{orthographic:"Orthographic",switchProjection:"Switch 
 Object.assign(messages.de,{orthographic:"Orthografisch",switchProjection:"Perspektivische / orthografische Projektion wechseln"});
 Object.assign(messages.yo,{orthographic:"Àfihàn aláfarawé",switchProjection:"Yí irú àfihàn kámẹ́rà padà"});
 Object.assign(messages.pcm,{orthographic:"Orthographic",switchProjection:"Switch perspective / orthographic view"});
+Object.assign(messages.en,{exportViewport:"Viewport PNG",viewportExported:"Viewport PNG download requested."});
+Object.assign(messages.de,{exportViewport:"Ansicht als PNG",viewportExported:"PNG-Download der Ansicht angefordert."});
+Object.assign(messages.yo,{exportViewport:"PNG àfihàn 3D",viewportExported:"A ti béèrè ìgbàsílẹ̀ PNG àfihàn 3D."});
+Object.assign(messages.pcm,{exportViewport:"Viewport PNG",viewportExported:"Viewport PNG download don start."});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }

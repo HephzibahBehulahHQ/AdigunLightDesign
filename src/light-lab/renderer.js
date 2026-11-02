@@ -1,4 +1,5 @@
 import { cameraMatrix, hexVector, multiply, viewportProjection } from "./math.js";
+import { viewportPng } from "../export/viewport.js";
 
 const vertexSource = `attribute vec3 p;attribute vec3 c;uniform mat4 m;varying vec3 v;void main(){gl_Position=m*vec4(p,1.0);v=c;}`;
 const fragmentSource = `precision mediump float;varying vec3 v;void main(){gl_FragColor=vec4(v,1.0);}`;
@@ -165,5 +166,5 @@ export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = 
   canvas.addEventListener("wheel",wheel,{passive:false});
   canvas.addEventListener("pointercancel",up);
   canvas.addEventListener("lostpointercapture",up);
-  return { supported:true, setAccent(value){selectedAccent=value;geometry=null;draw();}, setFixtures(value){virtualFixtures=value;geometry=null;draw();}, reset(){yaw=-.25;pitch=.1;distance=11;draw();}, destroy(){resize.disconnect();canvas.removeEventListener("wheel",wheel);canvas.removeEventListener("keydown",keydown);canvas.removeEventListener("pointercancel",up);canvas.removeEventListener("lostpointercapture",up);canvas.removeEventListener("pointerdown",down);canvas.removeEventListener("pointermove",move);canvas.removeEventListener("pointerup",up);geometry=null;gl.deleteBuffer(buffer);gl.deleteProgram(program);} };
+  return { supported:true, capturePng(){return viewportPng(canvas,draw);}, setAccent(value){selectedAccent=value;geometry=null;draw();}, setFixtures(value){virtualFixtures=value;geometry=null;draw();}, reset(){yaw=-.25;pitch=.1;distance=11;draw();}, destroy(){resize.disconnect();canvas.removeEventListener("wheel",wheel);canvas.removeEventListener("keydown",keydown);canvas.removeEventListener("pointercancel",up);canvas.removeEventListener("lostpointercapture",up);canvas.removeEventListener("pointerdown",down);canvas.removeEventListener("pointermove",move);canvas.removeEventListener("pointerup",up);geometry=null;gl.deleteBuffer(buffer);gl.deleteProgram(program);} };
 }

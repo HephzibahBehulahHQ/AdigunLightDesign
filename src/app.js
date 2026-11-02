@@ -312,6 +312,7 @@ function render() {
   document.querySelector(".palette-panel").insertAdjacentHTML("beforeend", `<div class="palette-actions"><label>${t("hueSpacing")}<input id="custom-spacing" type="number" min="-360" max="360" step="any" value="30" /></label><button id="custom-hues">${t("customHues")}</button><button id="perceptual-scale">${t("perceptualScale")}</button></div>`);
   const arrangementEnd=arrangementDuration(project.cues);
   const projectionButton=document.querySelector(".view-menu");
+  projectionButton.insertAdjacentHTML("afterend", `<button id="export-viewport" class="view-menu" ${preferences.view==="light" ? "" : "disabled"}>▣ ${t("exportViewport")}</button>`);
   projectionButton.textContent=`${t(preferences.projection==="orthographic" ? "orthographic" : "perspective")} ⌄`;
   projectionButton.setAttribute("aria-label",t("switchProjection"));
   document.querySelector("#effect-type").insertAdjacentHTML("beforeend", `<option value="panTilt">${t("panTilt")}</option>`);
@@ -353,11 +354,21 @@ function render() {
       note.textContent=t("webglUnavailable");
       document.querySelector("#light-canvas").replaceWith(note);
       document.querySelector("#reset-camera").disabled=true;
+      document.querySelector("#export-viewport").disabled=true;
     }
   }
 }
 
 function bind() {
+  document.querySelector("#export-viewport").onclick=async()=>{
+    if (!renderer?.supported) return;
+    try {
+      const blob=await renderer.capturePng(),url=URL.createObjectURL(blob);
+      try {const link=document.createElement("a");link.href=url;link.download=`${safeFileStem(project.name)}-viewport.png`;link.click();}
+      finally {URL.revokeObjectURL(url);}
+      setStatus(t("viewportExported"));
+    } catch(error) {setStatus(error.message);}
+  };
   document.querySelector(".view-menu").onclick=()=>{preferences.projection=preferences.projection==="orthographic" ? "perspective" : "orthographic";savePreferences();render();};
   document.querySelectorAll("[data-layer-visibility]").forEach((button)=>button.onclick=()=>{
     const key=button.dataset.layerVisibility;
