@@ -7,6 +7,7 @@ import { blackout, createFixture, dmxFrame, patchFixture } from "./dmx/engine.js
 import { createCue, evaluateCue } from "./timeline/engine.js";
 import { cueCsv, paletteCss, paletteJson, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
 import { readProjectFile } from "./domain/import-project.js";
+import { editorShortcut, isEditableTarget } from "./accessibility/shortcuts.js";
 
 const storageKey = "adigunlightdesign/project-v1";
 const preferencesKey = "adigunlightdesign/preferences-v1";
@@ -125,4 +126,5 @@ function bind() {
   const form = document.querySelector("#lux-form"); if (form) form.onsubmit = (event) => { event.preventDefault(); setStatus(t("luxUnavailable")); };
 }
 function downloadCss() { const file = new Blob([paletteCssVariables(palette().colors)], { type:"text/css" }); const link = document.createElement("a"); link.href = URL.createObjectURL(file); link.download = `${project.name.toLowerCase().replace(/[^a-z0-9]+/gi, "-")}-palette.css`; link.click(); URL.revokeObjectURL(link.href); setStatus(t("statusExport")); }
+window.addEventListener("keydown", (event) => { if (isEditableTarget(event.target)) return; const shortcut=editorShortcut(event); if (!shortcut) return; event.preventDefault(); if (shortcut === "save") { saveProject(); render(); } else if (shortcut === "undo") undo(); else redo(); });
 render();

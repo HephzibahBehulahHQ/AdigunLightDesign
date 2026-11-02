@@ -34,6 +34,7 @@ npm run build
 - [Cue timeline](docs/TIMELINE.md)
 - [Export formats](docs/EXPORT_FORMATS.md)
 - [Lux action contract](docs/AI_TOOLS.md)
+- [Accessibility](docs/ACCESSIBILITY.md)
 
 ## Honest integration status
 
