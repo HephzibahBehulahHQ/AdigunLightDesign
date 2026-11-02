@@ -33,6 +33,7 @@ import { canvasSvg } from "./export/canvas.js";
 import { bindCanvasDrag } from "./ui/canvas-drag.js";
 import { previewNativeToolAction,confirmNativeToolAction } from "./ai/action-preview.js";
 import { icon } from "./ui/icons.js";
+import { previewQuality,previewQualities } from "./light-lab/quality.js";
 import { groupFixtures,saveFixtureGroup } from "./domain/fixture-groups.js";
 import { cueCsv, designTokenJson, paletteCss, paletteJson, paletteSvg, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
 import { readProjectFile } from "./domain/import-project.js";
@@ -45,6 +46,7 @@ const app = document.querySelector("#app");
 const defaults = { locale:"en", theme:"dark", module:"canvas", view:"light", tool:"select", selected:"deep-blue", luxOpen:true, harmony:"analogous", seed:"#2196F3" };
 const preferences = { ...defaults, ...safeParse(readBrowserStorage(preferencesKey).value) };
 preferences.seed=normalizeHex(preferences.seed) ?? defaults.seed;
+if (!Object.hasOwn(previewQualities,preferences.previewQuality)) preferences.previewQuality="balanced";
 let projectPersisted=false;
 let luxProposal=null;
 let project = loadProject();
@@ -351,6 +353,8 @@ function render() {
     document.querySelector(".lux-message").insertAdjacentHTML("afterend", `<section class="lux-local-actions"><h3>${t("localPaletteAction")}</h3><button id="preview-lux-palette" ${project.fixtures.length ? "" : "disabled"}>${t("previewPaletteLighting")}</button>${luxProposal ? `<div class="lux-action-preview"><h4>${t("reviewChanges")}</h4><ul>${luxProposal.changes.map((change)=>`<li>${esc(change.after.name)}<br><span style="color:${colour(change.before)}">■</span> ${colour(change.before)} → <span style="color:${colour(change.after)}">■</span> ${colour(change.after)}</li>`).join("") || t("noActionChanges")}</ul><button id="confirm-lux-action" ${luxProposal.changes.length ? "" : "disabled"}>${t("confirmAction")}</button><button id="cancel-lux-action">${t("cancelAction")}</button></div>` : ""}</section>`);
   }
   const projectionButton=document.querySelector(".view-menu");
+  projectionButton.insertAdjacentHTML("beforebegin", `<label class="preview-quality">${t("previewQuality")} <select id="preview-quality" ${preferences.view==="light" ? "" : "disabled"}>${Object.keys(previewQualities).map((key)=>`<option value="${key}" ${key===(preferences.previewQuality ?? "balanced") ? "selected" : ""}>${t(`quality_${key}`)}</option>`).join("")}</select></label>`);
+  if (preferences.view==="light") document.querySelector(".scene-title small").textContent=`${t("webglPreview")} · ${phrase("previewFixtureCount",{shown:scene().visibility?.lighting===false ? 0 : Math.min(project.fixtures.length,previewQuality(preferences.previewQuality).fixtures),total:project.fixtures.length})}`;
   projectionButton.insertAdjacentHTML("afterend", `<button id="export-canvas" class="view-menu" ${preferences.view==="palette" ? "" : "disabled"}>↗ ${t("exportCanvas")}</button>`);
   const materialButton=document.querySelector("#apply-scene");
   if (materialButton) materialButton.insertAdjacentHTML("beforebegin", `<label>${t("materialTarget")} <select id="material-target">${["accent","wall","floor","ceiling"].map((target)=>`<option value="${target}" ${preferences.materialTarget===target ? "selected" : ""}>${t(`surface_${target}`)}</option>`).join("")}</select></label>`);
@@ -413,8 +417,9 @@ function render() {
   }
   bind();
   if (preferences.view === "light") {
-    renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {accent:scene().materialColor,room:scene().room,materials:scene().materials,projection:preferences.projection==="orthographic" ? "orthographic" : "perspective",visibility:scene().visibility,fixtures:project.fixtures.map((fixture)=>({...fixture,selected:fixture.id===selectedFixture()?.id})),onSelect(id){stopPlayback();preferences.fixtureId=id;preferences.inspectorMode="fixture";savePreferences();render();}});
+    renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {accent:scene().materialColor,room:scene().room,materials:scene().materials,quality:preferences.previewQuality,projection:preferences.projection==="orthographic" ? "orthographic" : "perspective",visibility:scene().visibility,fixtures:project.fixtures.map((fixture)=>({...fixture,selected:fixture.id===selectedFixture()?.id})),onSelect(id){stopPlayback();preferences.fixtureId=id;preferences.inspectorMode="fixture";savePreferences();render();}});
     if (!renderer.supported) {
+      document.querySelector(".scene-title small").textContent=phrase("previewFixtureCount",{shown:0,total:project.fixtures.length});
       const note=document.createElement("p");
       note.className="webgl-unavailable";
       note.setAttribute("role","status");
@@ -427,6 +432,7 @@ function render() {
 }
 
 function bind() {
+  document.querySelector("#preview-quality").onchange=(event)=>{preferences.previewQuality=event.target.value;savePreferences();render();};
   document.querySelectorAll("[data-fixture-tab]").forEach((button)=>button.onclick=()=>{preferences.fixtureTab=button.dataset.fixtureTab;preferences.inspectorMode="fixture";savePreferences();render();});
   const previewLux=document.querySelector("#preview-lux-palette");if(previewLux)previewLux.onclick=()=>{
     try {luxProposal=previewNativeToolAction(project,{type:"adigunlightdesign.tool-call",version:1,name:"apply_palette_to_lights",payload:{paletteId:palette().id}});render();}catch(error){setStatus(error.message);}

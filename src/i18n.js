@@ -195,4 +195,8 @@ Object.assign(messages.en,{fixtureRotation:"Fixture yaw"});
 Object.assign(messages.de,{fixtureRotation:"Gerätedrehung"});
 Object.assign(messages.yo,{fixtureRotation:"Ìyí fìtílà"});
 Object.assign(messages.pcm,{fixtureRotation:"Fixture turn"});
+Object.assign(messages.en,{previewQuality:"Preview",quality_performance:"Performance",quality_balanced:"Balanced",quality_quality:"Quality",previewFixtureCount:"{shown}/{total} fixtures rendered"});
+Object.assign(messages.de,{previewQuality:"Vorschau",quality_performance:"Leistung",quality_balanced:"Ausgewogen",quality_quality:"Qualität",previewFixtureCount:"{shown}/{total} Geräte dargestellt"});
+Object.assign(messages.yo,{previewQuality:"Àfihàn",quality_performance:"Ìṣiṣẹ́",quality_balanced:"Dídọ́gba",quality_quality:"Dídára",previewFixtureCount:"A fi fìtílà {shown}/{total} hàn"});
+Object.assign(messages.pcm,{previewQuality:"Preview",quality_performance:"Performance",quality_balanced:"Balanced",quality_quality:"Quality",previewFixtureCount:"{shown}/{total} fixtures dey show"});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }

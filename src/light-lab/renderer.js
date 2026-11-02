@@ -3,6 +3,7 @@ import { viewportPng } from "../export/viewport.js";
 import { pickScenePoint } from "./picking.js";
 import { roomDimensions } from "../domain/room.js";
 import { getFixtureProfile } from "../dmx/engine.js";
+import { previewQuality } from "./quality.js";
 
 const vertexSource = `attribute vec3 p;attribute vec3 c;uniform mat4 m;varying vec3 v;void main(){gl_Position=m*vec4(p,1.0);v=c;}`;
 const fragmentSource = `precision mediump float;varying vec3 v;uniform float opacity;void main(){gl_FragColor=vec4(v,opacity);}`;
@@ -11,8 +12,8 @@ function compile(gl, type, source) { const value = gl.createShader(type); gl.sha
 function quad(target, a, b, c, d, colour) { for (const point of [a,b,c,a,c,d]) target.push(...point, ...colour); }
 function box(target, x, y, z, w, h, d, colour) { const X=x+w,Y=y+h,Z=z+d, shade=colour.map((value)=>value*.55),mid=colour.map((value)=>value*.78); quad(target,[x,y,z],[X,y,z],[X,Y,z],[x,Y,z],colour);quad(target,[X,y,Z],[x,y,Z],[x,Y,Z],[X,Y,Z],shade);quad(target,[x,y,Z],[X,y,Z],[X,y,z],[x,y,z],mid);quad(target,[x,Y,z],[X,Y,z],[X,Y,Z],[x,Y,Z],colour);quad(target,[x,y,Z],[x,y,z],[x,Y,z],[x,Y,Z],shade);quad(target,[X,y,z],[X,y,Z],[X,Y,Z],[X,Y,z],mid); }
 const channel = (value) => Math.max(0, Math.min(255, Number(value) || 0)) / 255;
-export function virtualFixtureVisuals(fixtures = []) {
-  return fixtures.slice(0,12).map((fixture,index)=>{
+export function virtualFixtureVisuals(fixtures = [],limit=12) {
+  return fixtures.slice(0,limit).map((fixture,index)=>{
     const stored=fixture.properties ?? {},channels=fixture.profileId ? getFixtureProfile(fixture.profileId).modes.find((mode)=>mode.id===fixture.modeId)?.channels ?? [] : Object.keys(stored);
     const properties=Object.fromEntries(channels.map((key)=>[key,stored[key]])),white=channel(properties.white),dimmer=channel(properties.dimmer),transform=fixture.transform ?? {};
     const x=Number.isFinite(transform.x) ? transform.x : (index-1)*2.5;
@@ -92,13 +93,14 @@ export function studioPlant(x,z,height=2.1) {
   }
   return data;
 }
-export function sceneData(accent, fixtures, visibility={}, room,includeBeams=true,materials={}) {
+export function sceneData(accent, fixtures, visibility={}, room,includeBeams=true,materials={},quality="balanced") {
   const data=[],floor=hexVector(materials.floor ?? "#172238"),wall=hexVector(materials.wall ?? "#27324A"),couch=hexVector("#9C4F48"),wood=hexVector("#67442F"),metal=hexVector("#151D2D");
   const {width,height,depth}=roomDimensions(room);
-  data.push(...surfaceGrid([-width/2,0,-depth/2],[width,0,0],[0,0,depth],floor));
-  data.push(...surfaceGrid([-width/2,0,depth/2],[width,0,0],[0,height,0],wall));
-  data.push(...surfaceGrid([-width/2,0,-depth/2],[0,0,depth],[0,height,0],materials.wall ? wall : hexVector("#132746")));
-  data.push(...surfaceGrid([-width/2,height,-depth/2],[width,0,0],[0,0,depth],hexVector(materials.ceiling ?? "#101726")));
+  const budget=previewQuality(quality);
+  data.push(...surfaceGrid([-width/2,0,-depth/2],[width,0,0],[0,0,depth],floor,budget.columns,budget.rows));
+  data.push(...surfaceGrid([-width/2,0,depth/2],[width,0,0],[0,height,0],wall,budget.columns,budget.rows));
+  data.push(...surfaceGrid([-width/2,0,-depth/2],[0,0,depth],[0,height,0],materials.wall ? wall : hexVector("#132746"),budget.columns,budget.rows));
+  data.push(...surfaceGrid([-width/2,height,-depth/2],[width,0,0],[0,0,depth],hexVector(materials.ceiling ?? "#101726"),budget.columns,budget.rows));
   if (visibility.props!==false) {
   box(data,-2.1,.01,-.8,4.2,.02,3.5,hexVector("#665477"));
   box(data,-1.7,.25,1.4,3.4,.8,.75,couch);
@@ -124,7 +126,7 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
   }
   for (const y of [3.7,3.95]) box(data,-4,y,.4,8,.06,.06,metal);
   for (let x=-4;x<=4;x+=.5) box(data,x,3.7,.4,.04,.3,.06,metal);
-  const lights=virtualFixtureVisuals(visibility.lighting===false ? [] : fixtures,accent);
+  const lights=virtualFixtureVisuals(visibility.lighting===false ? [] : fixtures,budget.fixtures);
   for (let offset=0;offset<data.length;offset+=6) {
     const colour=surfaceLighting(data.slice(offset,offset+3),data.slice(offset+3,offset+6),lights);
     for (let channel=0;channel<3;channel+=1) data[offset+3+channel]=colour[channel];
@@ -133,15 +135,15 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
   return new Float32Array(data);
 }
 
-export function sceneBuffers(accent,fixtures,visibility={},room,materials={}) {
-  const opaque=sceneData(accent,fixtures,visibility,room,false,materials);
-  const beams=virtualFixtureVisuals(visibility.lighting===false ? [] : fixtures).filter((light)=>light.colour.some((value)=>value>0)).flatMap((light)=>beamVolume(light));
+export function sceneBuffers(accent,fixtures,visibility={},room,materials={},quality="balanced") {
+  const opaque=sceneData(accent,fixtures,visibility,room,false,materials,quality);
+  const beams=virtualFixtureVisuals(visibility.lighting===false ? [] : fixtures,previewQuality(quality).fixtures).filter((light)=>light.colour.some((value)=>value>0)).flatMap((light)=>beamVolume(light));
   const data=new Float32Array(opaque.length+beams.length);
   data.set(opaque);data.set(beams,opaque.length);
   return {data,opaqueVertices:opaque.length/6};
 }
 
-export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = [], visibility = {}, room, materials={}, projection = "perspective", onSelect=()=>{} } = {}) {
+export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = [], visibility = {}, room, materials={}, quality="balanced", projection = "perspective", onSelect=()=>{} } = {}) {
   const gl = canvas.getContext("webgl", { antialias:true, alpha:false });
   if (!gl) return { supported:false, destroy(){}, reset(){}, setAccent(){}, setFixtures(){} };
   const program=gl.createProgram(),vertexShader=compile(gl,gl.VERTEX_SHADER,vertexSource),fragmentShader=compile(gl,gl.FRAGMENT_SHADER,fragmentSource);
@@ -152,13 +154,14 @@ export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = 
   const buffer=gl.createBuffer(),position=gl.getAttribLocation(program,"p"),colour=gl.getAttribLocation(program,"c"),matrix=gl.getUniformLocation(program,"m"),opacity=gl.getUniformLocation(program,"opacity");let selectedAccent=accent,virtualFixtures=fixtures,yaw=-.25,pitch=.1,distance=11,drag;
   let geometry=null,viewProjection=null;
   function draw() {
-    const ratio=Math.min(window.devicePixelRatio||1,2),width=Math.max(1,canvas.clientWidth),height=Math.max(1,canvas.clientHeight);
+    const ratio=Math.min(window.devicePixelRatio||1,previewQuality(quality).pixelRatio),width=Math.max(1,canvas.clientWidth),height=Math.max(1,canvas.clientHeight);
     gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
     if (!geometry) {
-      geometry=sceneBuffers(hexVector(selectedAccent),virtualFixtures,visibility,room,materials);
+      geometry=sceneBuffers(hexVector(selectedAccent),virtualFixtures,visibility,room,materials,quality);
       gl.bufferData(gl.ARRAY_BUFFER,geometry.data,gl.STATIC_DRAW);
     }
-    if(canvas.width!==width*ratio||canvas.height!==height*ratio){canvas.width=width*ratio;canvas.height=height*ratio;}
+    const pixelWidth=Math.max(1,Math.round(width*ratio)),pixelHeight=Math.max(1,Math.round(height*ratio));
+    if(canvas.width!==pixelWidth||canvas.height!==pixelHeight){canvas.width=pixelWidth;canvas.height=pixelHeight;}
     gl.viewport(0,0,canvas.width,canvas.height);gl.enable(gl.DEPTH_TEST);gl.clearColor(.025,.045,.09,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);
     gl.vertexAttribPointer(position,3,gl.FLOAT,false,24,0);gl.enableVertexAttribArray(position);gl.vertexAttribPointer(colour,3,gl.FLOAT,false,24,12);gl.enableVertexAttribArray(colour);
     viewProjection=multiply(viewportProjection(projection,width/height,distance),cameraMatrix({yaw,pitch,distance}));
@@ -185,7 +188,7 @@ export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = 
     drag=undefined;
     if (!click || visibility.lighting===false) return;
     const bounds=canvas.getBoundingClientRect();
-    const candidates=virtualFixtureVisuals(virtualFixtures).map((point,index)=>({...point,id:virtualFixtures[index].id}));
+    const candidates=virtualFixtureVisuals(virtualFixtures,previewQuality(quality).fixtures).map((point,index)=>({...point,id:virtualFixtures[index].id}));
     const id=pickScenePoint(candidates,viewProjection,bounds.width,bounds.height,event.clientX-bounds.left,event.clientY-bounds.top);
     if (id) onSelect(id);
   };

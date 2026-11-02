@@ -1,4 +1,6 @@
 .light-canvas { min-height:353px; }
+.preview-quality { font-size:10px; color:var(--muted); }
+.preview-quality select { max-width:110px; padding:6px; }
 .lux-local-actions { margin:0 12px 12px; padding:10px; border:1px solid #614087; border-radius:10px; font-size:11px; }
 .lux-local-actions h3,.lux-local-actions h4 { margin:0 0 8px; font-size:12px; }
 .lux-local-actions button { padding:7px 9px; margin:3px; border-radius:6px; background:linear-gradient(135deg,#7133af,#6745bd); }
