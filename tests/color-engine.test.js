@@ -1,5 +1,16 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { suggestContrast } from "../src/domain/color-engine.js";
+test("contrast suggestions meet their measured target or report no solution",()=>{
+  for (const [foreground,background] of [["#777777","#FFFFFF"],["#333333","#0B1220"],["#FF0000","#FFFFFF"]]) {
+    const candidate=suggestContrast(foreground,background);
+    assert.ok(candidate);
+    assert.equal(contrastResult(candidate,background).aa,true);
+  }
+  assert.equal(suggestContrast("#000000","#FFFFFF"),"#000000");
+  assert.equal(suggestContrast("#777777","#777777",21),null);
+  assert.throws(()=>suggestContrast("invalid","#FFFFFF"));
+});
 import { contrastResult, harmony, hexToRgb, hsvToRgb, isSrgbGamut, labToRgb, normalizeHex, rgbToHsv, rgbToLab, rgbToOklab, shiftHue } from "../src/domain/color-engine.js";
 import { paletteCssVariables, rerollUnlocked, starterPalette } from "../src/domain/palette-store.js";
 

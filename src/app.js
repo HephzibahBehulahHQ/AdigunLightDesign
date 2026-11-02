@@ -4,6 +4,7 @@ import { moveSwatch, removeSwatch, reorderSwatch } from "./domain/palette-store.
 import { readImagePalette } from "./domain/image-file.js";
 import { paletteRaster } from "./export/raster.js";
 import { hslToRgb } from "./domain/color-engine.js";
+import { suggestContrast } from "./domain/color-engine.js";
 import { createStudioMoodProject } from "./domain/studio-mood.js";
 import { contrastResult, hexToRgb, isSrgbGamut, normalizeHex, rgbToHex, rgbToHsl, rgbToHsv, rgbToLab, rgbToOklab } from "./domain/color-engine.js";
 import { paletteCssVariables, rerollUnlocked, starterPalette, updateSwatch } from "./domain/palette-store.js";
@@ -217,6 +218,8 @@ function render() {
   const contrastCard=document.querySelector(".contrast-card");
   contrastCard.querySelector("small").textContent=contrastBackground;
   contrastCard.insertAdjacentHTML("beforeend", `<label>${t("contrastBackground")}<input id="contrast-background" type="color" value="${contrastBackground}" /></label><dl>${[["normalText","AA",contrast.aa],["normalText","AAA",contrast.aaa],["largeText","AA",contrast.largeAa],["largeText","AAA",contrast.largeAaa]].map(([key,level,pass])=>`<div><dt>${t(key)} ${level}</dt><dd class="${pass ? "pass" : "fail"}">${t(pass ? "passes" : "fails")}</dd></div>`).join("")}</dl>`);
+  const contrastSuggestion=contrast.aa ? null : suggestContrast(active.hex,contrastBackground);
+  if (contrastSuggestion) contrastCard.insertAdjacentHTML("beforeend", `<button id="apply-contrast" class="wide">${t("improveContrast")} ${contrastSuggestion}</button>`);
   bind();
   if (preferences.view === "light") {
     renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {accent:scene().materialColor,fixtures:project.fixtures.map((fixture)=>({...fixture,selected:fixture.id===selectedFixture()?.id}))});
@@ -232,6 +235,12 @@ function render() {
 }
 
 function bind() {
+  const contrastButton=document.querySelector("#apply-contrast");
+  if (contrastButton) contrastButton.onclick=()=>{
+    const background=normalizeHex(preferences.contrastBackground) ?? "#0B1220";
+    const hex=suggestContrast(selected().hex,background);
+    if (hex) mutateColours((colors)=>updateSwatch(colors,selected().id,{hex}));
+  };
   document.querySelector("#contrast-background").onchange=(event)=>{preferences.contrastBackground=event.target.value;savePreferences();render();};
   document.querySelectorAll("[data-raster]").forEach((button)=>button.onclick=async()=>{
     button.disabled=true;

@@ -6,4 +6,4 @@ The deterministic engine accepts HEX values; converts RGB, HSL, HSV, XYZ, CIELAB
 
 Locked swatches are preserved during reroll. CSS export is native and local. Display-P3 conversion, color-vision-deficiency simulation and AI suggestions remain future additions with separate validation.
 
-AA labels represent the current selected swatch against the displayed background only. They do not certify an entire palette.
+Contrast results cover the selected swatch against the editable background, with separate normal/large-text AA/AAA outcomes. Suggestions search HSL lightness in 0.001 increments while retaining hue and saturation, then measure the resulting rounded sRGB HEX value. Applying a suggestion is explicit and undoable. A missing solution is reported by the engine rather than claimed as a pass. These pairwise results do not certify an entire palette or application.

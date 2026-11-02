@@ -70,4 +70,8 @@ Object.assign(messages.en,{contrastBackground:"Contrast background",normalText:"
 Object.assign(messages.de,{contrastBackground:"Kontrasthintergrund",normalText:"Normaler Text",largeText:"Großer Text",passes:"Bestanden",fails:"Nicht bestanden"});
 Object.assign(messages.yo,{contrastBackground:"Àbẹ́lẹ̀ ìyàtọ̀",normalText:"Ọ̀rọ̀ déédéé",largeText:"Ọ̀rọ̀ ńlá",passes:"Ó kọjá",fails:"Kò kọjá"});
 Object.assign(messages.pcm,{contrastBackground:"Contrast background",normalText:"Normal text",largeText:"Big text",passes:"Pass",fails:"Fail"});
+Object.assign(messages.en,{improveContrast:"Apply AA suggestion"});
+Object.assign(messages.de,{improveContrast:"AA-Vorschlag anwenden"});
+Object.assign(messages.yo,{improveContrast:"Lo àbá AA"});
+Object.assign(messages.pcm,{improveContrast:"Apply AA suggestion"});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }
