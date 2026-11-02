@@ -1,6 +1,7 @@
 import { cameraMatrix, hexVector, multiply, viewportProjection } from "./math.js";
 import { viewportPng } from "../export/viewport.js";
 import { pickScenePoint } from "./picking.js";
+import { roomDimensions } from "../domain/room.js";
 
 const vertexSource = `attribute vec3 p;attribute vec3 c;uniform mat4 m;varying vec3 v;void main(){gl_Position=m*vec4(p,1.0);v=c;}`;
 const fragmentSource = `precision mediump float;varying vec3 v;void main(){gl_FragColor=vec4(v,1.0);}`;
@@ -87,11 +88,13 @@ export function studioPlant(x,z,height=2.1) {
   }
   return data;
 }
-export function sceneData(accent, fixtures, visibility={}) {
+export function sceneData(accent, fixtures, visibility={}, room) {
   const data=[],floor=hexVector("#172238"),wall=hexVector("#27324A"),couch=hexVector("#9C4F48"),wood=hexVector("#67442F"),metal=hexVector("#151D2D");
-  data.push(...surfaceGrid([-5,0,-4],[10,0,0],[0,0,8],floor));
-  data.push(...surfaceGrid([-5,0,4],[10,0,0],[0,4,0],wall));
-  data.push(...surfaceGrid([-5,0,-4],[0,0,8],[0,4,0],hexVector("#132746")));
+  const {width,height,depth}=roomDimensions(room);
+  data.push(...surfaceGrid([-width/2,0,-depth/2],[width,0,0],[0,0,depth],floor));
+  data.push(...surfaceGrid([-width/2,0,depth/2],[width,0,0],[0,height,0],wall));
+  data.push(...surfaceGrid([-width/2,0,-depth/2],[0,0,depth],[0,height,0],hexVector("#132746")));
+  data.push(...surfaceGrid([-width/2,height,-depth/2],[width,0,0],[0,0,depth],hexVector("#101726")));
   if (visibility.props!==false) {
   box(data,-2.1,.01,-.8,4.2,.02,3.5,hexVector("#665477"));
   box(data,-1.7,.25,1.4,3.4,.8,.75,couch);
@@ -126,7 +129,7 @@ export function sceneData(accent, fixtures, visibility={}) {
   return new Float32Array(data);
 }
 
-export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = [], visibility = {}, projection = "perspective", onSelect=()=>{} } = {}) {
+export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = [], visibility = {}, room, projection = "perspective", onSelect=()=>{} } = {}) {
   const gl = canvas.getContext("webgl", { antialias:true, alpha:false });
   if (!gl) return { supported:false, destroy(){}, reset(){}, setAccent(){}, setFixtures(){} };
   const program=gl.createProgram(),vertexShader=compile(gl,gl.VERTEX_SHADER,vertexSource),fragmentShader=compile(gl,gl.FRAGMENT_SHADER,fragmentSource);
@@ -140,7 +143,7 @@ export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = 
     const ratio=Math.min(window.devicePixelRatio||1,2),width=Math.max(1,canvas.clientWidth),height=Math.max(1,canvas.clientHeight);
     gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
     if (!geometry) {
-      geometry=sceneData(hexVector(selectedAccent),virtualFixtures,visibility);
+      geometry=sceneData(hexVector(selectedAccent),virtualFixtures,visibility,room);
       gl.bufferData(gl.ARRAY_BUFFER,geometry,gl.STATIC_DRAW);
     }
     if(canvas.width!==width*ratio||canvas.height!==height*ratio){canvas.width=width*ratio;canvas.height=height*ratio;}

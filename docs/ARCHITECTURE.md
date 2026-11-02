@@ -35,6 +35,8 @@ Direct editor mutations use document transactions. Each committed operation snap
 
 ## Visual acceptance
 
+Room dimensions are optional `scene.room` values in meters: width/depth 2–50 and height 2–20, with legacy defaults 10 × 4 × 8. Undoable controls resize the cutaway floor, two walls and ceiling. Fixtures, rig and furniture retain their world coordinates; no automatic arrangement, collision checking or room-fit guarantee is claimed. The remaining sides stay open for viewing. Native validation rejects malformed dimensions. Geometry bounds and persistence have tests; rendered appearance is unverified.
+
 Clicking near a projected fixture center selects it and opens its inspector. Dragging continues to orbit; pointer cancellation does not select. Picking considers the first 12 rendered fixtures, rejects clipped points, and uses a 28 CSS-pixel hit radius with depth tie-breaking. It does not perform mesh raycasting or prop occlusion testing. Layer-list selection remains the keyboard-accessible alternative. Projection tests do not establish browser interaction acceptance.
 
 The viewport projection control toggles perspective and orthographic modes and persists the choice locally. Both retain orbit and zoom; changing mode rebuilds the viewport at its default camera pose. Orthographic zoom changes the view volume, preserving depth-independent object size. Matrix behavior has automated coverage; actual browser appearance remains unverified.

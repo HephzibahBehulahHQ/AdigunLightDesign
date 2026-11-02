@@ -21,6 +21,7 @@ import { createPlaybackClock, playbackPosition } from "./timeline/playback-clock
 import { timelineLayout } from "./timeline/layout.js";
 import { arrangeTracks,arrangementDuration,evaluateTracks,scheduleCue } from "./timeline/tracks.js";
 import { setChannelKeyframe } from "./timeline/keyframes.js";
+import { roomDimensions } from "./domain/room.js";
 import { groupFixtures,saveFixtureGroup } from "./domain/fixture-groups.js";
 import { cueCsv, designTokenJson, paletteCss, paletteJson, paletteSvg, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
 import { readProjectFile } from "./domain/import-project.js";
@@ -325,6 +326,8 @@ function render() {
   timingSummary.textContent=t("cueSettings");timingDetails.append(timingSummary);
   document.querySelectorAll(".cue-timing").forEach((node)=>timingDetails.append(node));
   document.querySelector(".timeline").append(timingDetails);
+  const room=roomDimensions(scene().room);
+  document.querySelector(".left-rail").insertAdjacentHTML("beforeend", `<details class="fixture-group-editor"><summary>${t("roomDimensions")}</summary>${["width","height","depth"].map((key)=>`<label>${t(key)} (m)<input id="room-${key}" type="number" required min="2" max="${key==="height" ? 20 : 50}" step="any" value="${room[key]}"></label>`).join("")}<button id="apply-room">${t("apply")}</button></details>`);
   for (const [index,key] of ["lighting","palette","props"].entries()) {
     const item=document.querySelectorAll(".layer-list li")[index],visible=scene().visibility?.[key]!==false;
     item.querySelector("span").outerHTML=`<button data-layer-visibility="${key}" aria-pressed="${visible}" aria-label="${t("layerVisibility")}: ${t(["layersLighting","layersPalette","layersScene"][index])}">${visible ? "◉" : "○"}</button>`;
@@ -346,7 +349,7 @@ function render() {
   inspector.querySelector(".inspector-tabs").innerHTML=`<button data-inspector="fixture" aria-pressed="${mode==="fixture"}" class="${mode==="fixture" ? "is-active" : ""}" ${fixturePanel ? "" : "disabled"}>${t("fixtureLabel")}</button><button data-inspector="palette" aria-pressed="${mode==="palette"}" class="${mode==="palette" ? "is-active" : ""}">${t("palette")}</button>`;
   bind();
   if (preferences.view === "light") {
-    renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {accent:scene().materialColor,projection:preferences.projection==="orthographic" ? "orthographic" : "perspective",visibility:scene().visibility,fixtures:project.fixtures.map((fixture)=>({...fixture,selected:fixture.id===selectedFixture()?.id})),onSelect(id){stopPlayback();preferences.fixtureId=id;preferences.inspectorMode="fixture";savePreferences();render();}});
+    renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {accent:scene().materialColor,room:scene().room,projection:preferences.projection==="orthographic" ? "orthographic" : "perspective",visibility:scene().visibility,fixtures:project.fixtures.map((fixture)=>({...fixture,selected:fixture.id===selectedFixture()?.id})),onSelect(id){stopPlayback();preferences.fixtureId=id;preferences.inspectorMode="fixture";savePreferences();render();}});
     if (!renderer.supported) {
       const note=document.createElement("p");
       note.className="webgl-unavailable";
@@ -360,6 +363,18 @@ function render() {
 }
 
 function bind() {
+  document.querySelector("#apply-room").onclick=()=>{
+    try {
+      const values={};
+      for (const key of ["width","height","depth"]) {
+        const input=document.querySelector(`#room-${key}`);
+        if (!input.value.trim() || !input.checkValidity()) return input.reportValidity();
+        values[key]=Number(input.value);
+      }
+      const room=roomDimensions(values);
+      commitProjectChange("scene-room-resize",(draft)=>{draft.scenes[0].room=room;});render();
+    } catch(error) {setStatus(error.message);}
+  };
   document.querySelector("#export-viewport").onclick=async()=>{
     if (!renderer?.supported) return;
     try {

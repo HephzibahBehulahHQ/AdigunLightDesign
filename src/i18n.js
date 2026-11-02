@@ -155,4 +155,8 @@ Object.assign(messages.en,{exportViewport:"Viewport PNG",viewportExported:"Viewp
 Object.assign(messages.de,{exportViewport:"Ansicht als PNG",viewportExported:"PNG-Download der Ansicht angefordert."});
 Object.assign(messages.yo,{exportViewport:"PNG àfihàn 3D",viewportExported:"A ti béèrè ìgbàsílẹ̀ PNG àfihàn 3D."});
 Object.assign(messages.pcm,{exportViewport:"Viewport PNG",viewportExported:"Viewport PNG download don start."});
+Object.assign(messages.en,{roomDimensions:"Room dimensions",width:"Width",height:"Height",depth:"Depth"});
+Object.assign(messages.de,{roomDimensions:"Raumabmessungen",width:"Breite",height:"Höhe",depth:"Tiefe"});
+Object.assign(messages.yo,{roomDimensions:"Ìwọ̀n yàrá",width:"Ìbú",height:"Gíga",depth:"Ìjìnlẹ̀"});
+Object.assign(messages.pcm,{roomDimensions:"Room size",width:"Width",height:"Height",depth:"Depth"});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }
