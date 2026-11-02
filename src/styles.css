@@ -35,3 +35,28 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
 }
 @media (max-width:940px) { .lower-workspace { grid-template-columns:minmax(0,1fr); } }
 @media (max-width:670px) { .swatches { grid-template-columns:repeat(5,minmax(63px,1fr)); } }
+
+/* Desktop reference: toolbar spans viewport + inspector; palette/timeline share
+   that same width beneath them. Secondary controls scroll within their panels. */
+@media (min-width:1321px) and (min-height:700px) {
+  .editor-layout {
+    grid-template-columns:clamp(216px,15.3vw,255px) minmax(0,1fr) clamp(220px,14.5vw,250px) clamp(285px,20.4vw,340px);
+    grid-template-rows:46px minmax(300px,1fr) minmax(160px,200px);
+    height:calc(100vh - 164px);
+    min-height:0;
+    gap:8px 10px;
+  }
+  .work-area { display:contents; }
+  .left-rail { grid-column:1; grid-row:1 / 4; overflow-y:auto; }
+  .workspace-tabs { grid-column:2 / 4; grid-row:1; }
+  .scene-preview { grid-column:2; grid-row:2; min-height:0; }
+  .inspector { grid-column:3; grid-row:2; max-height:none; min-height:0; overflow-y:auto; }
+  .lower-workspace { grid-column:2 / 4; grid-row:3; min-height:0; grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr); }
+  .lower-workspace > .panel { min-height:0; overflow-y:auto; }
+  .lux-panel { grid-column:4; grid-row:1 / 4; position:static; min-height:0; overflow-y:auto; }
+  .lux-panel.is-collapsed { align-self:start; }
+  .timeline .section-title, .palette-panel .section-title { position:sticky; top:0; z-index:8; background:var(--panel); }
+  .timeline p { min-height:0; padding-top:4px; font-size:10px; }
+  .timeline .dmx-actions { gap:4px; padding-top:5px; padding-bottom:5px; }
+  .swatch span { height:44px; }
+}
