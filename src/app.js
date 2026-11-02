@@ -1,4 +1,5 @@
-import { createProject, validateProject } from "./domain/project.js";
+import { validateProject } from "./domain/project.js";
+import { createStudioMoodProject } from "./domain/studio-mood.js";
 import { contrastResult, hexToRgb, isSrgbGamut, normalizeHex, rgbToHex, rgbToHsl, rgbToHsv, rgbToLab, rgbToOklab } from "./domain/color-engine.js";
 import { paletteCssVariables, rerollUnlocked, starterPalette, updateSwatch } from "./domain/palette-store.js";
 import { supportedLocales, translate } from "./i18n.js";
@@ -22,9 +23,7 @@ function safeParse(value) { try { return JSON.parse(value) ?? {}; } catch { retu
 function loadProject() {
   const loaded = safeParse(localStorage.getItem(storageKey));
   if (validateProject(loaded).valid && loaded.palettes?.[0]?.colors) return loaded;
-  const fresh = createProject({ name:"Studio Mood" });
-  fresh.palettes = [{ id:"studio-modern", name:"Studio Modern", harmonyType:"analogous", colors:starterPalette }];
-  return fresh;
+  return createStudioMoodProject();
 }
 function t(key) { return translate(preferences.locale, key); }
 function palette() { return project.palettes[0]; }
