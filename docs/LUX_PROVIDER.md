@@ -1,5 +1,7 @@
 # Server-side Lux provider adapter
 
+The browser transport module requires an explicit HTTPS endpoint (or loopback HTTP `/api/lux`), a session-held service access token and per-request consent. It omits ambient cookies, rejects redirects and validates suggestion envelopes. `buildLuxProjectContext` provides bounded palette/fixture/scene/cue summaries with total counts and explicit inclusion limits; raw images, history, credentials, description and canvas artwork are excluded. The transport stores no credentials. These modules are not connected to the browser settings/chat UI yet; mocked client tests do not establish a live provider or browser connection.
+
 ## Running the optional API host
 
 Use Node 24 or newer and run `npm run serve:lux` after configuring server environment variables:
