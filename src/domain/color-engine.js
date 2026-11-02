@@ -40,6 +40,32 @@ export function hslToRgb({ h, s, l }) {
   return { r: (r + m) * 255, g: (g + m) * 255, b: (b + m) * 255 };
 }
 
+export function rgbToHsv(rgb) {
+  const r=rgb.r/255,g=rgb.g/255,b=rgb.b/255,max=Math.max(r,g,b),min=Math.min(r,g,b),delta=max-min;
+  let h=0; if(delta){if(max===r)h=60*mod((g-b)/delta,6);else if(max===g)h=60*((b-r)/delta+2);else h=60*((r-g)/delta+4);}
+  return { h, s:max===0?0:delta/max, v:max };
+}
+
+export function hsvToRgb({ h, s, v }) { const chroma=v*s,x=chroma*(1-Math.abs(mod(h/60,2)-1)),m=v-chroma;const [r,g,b]=h<60?[chroma,x,0]:h<120?[x,chroma,0]:h<180?[0,chroma,x]:h<240?[0,x,chroma]:h<300?[x,0,chroma]:[chroma,0,x];return {r:(r+m)*255,g:(g+m)*255,b:(b+m)*255}; }
+
+const linearRgb = (channel) => { const value=channel/255; return value<=.04045?value/12.92:((value+.055)/1.055)**2.4; };
+const displayRgb = (channel) => 255*(channel<=.0031308?12.92*channel:1.055*channel**(1/2.4)-.055);
+export function rgbToXyz({ r, g, b }) { const R=linearRgb(r),G=linearRgb(g),B=linearRgb(b); return { x:.4124564*R+.3575761*G+.1804375*B, y:.2126729*R+.7151522*G+.072175*B, z:.0193339*R+.119192*G+.9503041*B }; }
+export function xyzToRgb({ x, y, z }) { return { r:displayRgb(3.2404542*x-1.5371385*y-.4985314*z), g:displayRgb(-.969266*x+1.8760108*y+.041556*z), b:displayRgb(.0556434*x-.2040259*y+1.0572252*z) }; }
+const labPivot = (value) => value>.008856?value**(1/3):(7.787*value)+16/116;
+const labPivotInverse = (value) => { const cube=value**3; return cube>.008856?cube:(value-16/116)/7.787; };
+export function xyzToLab({ x, y, z }) { const fx=labPivot(x/.95047),fy=labPivot(y),fz=labPivot(z/1.08883); return { l:116*fy-16, a:500*(fx-fy), b:200*(fy-fz) }; }
+export function labToXyz({ l, a, b }) { const fy=(l+16)/116; return { x:.95047*labPivotInverse(fy+a/500), y:labPivotInverse(fy), z:1.08883*labPivotInverse(fy-b/200) }; }
+export function rgbToLab(rgb) { return xyzToLab(rgbToXyz(rgb)); }
+export function labToRgb(lab) { return xyzToRgb(labToXyz(lab)); }
+export function labToLch({ l, a, b }) { return { l, c:Math.hypot(a,b), h:mod(Math.atan2(b,a)*180/Math.PI,360) }; }
+export function lchToLab({ l, c, h }) { const angle=h*Math.PI/180; return { l, a:c*Math.cos(angle), b:c*Math.sin(angle) }; }
+export function rgbToOklab({ r, g, b }) { const R=linearRgb(r),G=linearRgb(g),B=linearRgb(b),l=Math.cbrt(.4122214708*R+.5363325363*G+.0514459929*B),m=Math.cbrt(.2119034982*R+.6806995451*G+.1073969566*B),s=Math.cbrt(.0883024619*R+.2817188376*G+.6299787005*B); return { l:.2104542553*l+.793617785*m-.0040720468*s, a:1.9779984951*l-2.428592205*m+.4505937099*s, b:.0259040371*l+.7827717662*m-.808675766*s }; }
+export function oklabToRgb({ l, a, b }) { const L=(l+.3963377774*a+.2158037573*b)**3,M=(l-.1055613458*a-.0638541728*b)**3,S=(l-.0894841775*a-1.291485548*b)**3;return {r:displayRgb(4.0767416621*L-3.3077115913*M+.2309699292*S),g:displayRgb(-1.2684380046*L+2.6097574011*M-.3413193965*S),b:displayRgb(-.0041960863*L-.7034186147*M+1.707614701*S)}; }
+export function oklabToOklch({ l, a, b }) { return { l, c:Math.hypot(a,b), h:mod(Math.atan2(b,a)*180/Math.PI,360) }; }
+export function oklchToOklab({ l, c, h }) { const angle=h*Math.PI/180; return {l,a:c*Math.cos(angle),b:c*Math.sin(angle)}; }
+export function isSrgbGamut(rgb) { return [rgb.r,rgb.g,rgb.b].every((channel)=>Number.isFinite(channel)&&channel>=0&&channel<=255); }
+
 export function shiftHue(hex, degrees, { saturation, lightness } = {}) {
   const rgb = hexToRgb(hex); if (!rgb) throw new Error("A valid HEX colour is required.");
   const hsl = rgbToHsl(rgb);
@@ -51,7 +77,6 @@ export function harmony(seed, type = "analogous") {
   return steps.map((step, index) => type === "monochromatic" ? shiftHue(seed, 0, { lightness: [0.2, 0.35, 0.5, 0.65, 0.8][index] }) : shiftHue(seed, step));
 }
 
-function linear(channel) { const c = channel / 255; return c <= .04045 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4; }
-export function luminance(hex) { const rgb = hexToRgb(hex); if (!rgb) return null; return .2126 * linear(rgb.r) + .7152 * linear(rgb.g) + .0722 * linear(rgb.b); }
+export function luminance(hex) { const rgb = hexToRgb(hex); if (!rgb) return null; return .2126 * linearRgb(rgb.r) + .7152 * linearRgb(rgb.g) + .0722 * linearRgb(rgb.b); }
 export function contrastRatio(a, b) { const l1 = luminance(a), l2 = luminance(b); if (l1 === null || l2 === null) return null; return (Math.max(l1, l2) + .05) / (Math.min(l1, l2) + .05); }
 export function contrastResult(a, b) { const ratio = contrastRatio(a, b); return { ratio, aa: ratio >= 4.5, aaa: ratio >= 7, largeAa: ratio >= 3 }; }
