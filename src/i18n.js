@@ -22,8 +22,8 @@ Object.assign(messages.de, { colorSpaces:"Farbräume", inSrgb:"Im sRGB-Farbraum"
 Object.assign(messages.yo, { colorSpaces:"Àwọn ààyè àwọ̀", inSrgb:"Ó wà nínú sRGB gamut", outsideSrgb:"Ó wà lóde sRGB gamut", virtualFixture:"Ẹ̀rọ ìmọ́lẹ̀ àfojúsùn", fixtureLabel:"Ẹ̀rọ ìmọ́lẹ̀", universe:"Yúnífásì", address:"Àdírẹ́sì", dimmer:"Dímà", beam:"Ìtànná", applyFixturePatch:"Lo ẹ̀rọ ìmọ́lẹ̀ & patch", addToVirtualPatch:"Fi kún patch àfojúsùn", virtualLibraryNote:"Àwọn profaili ìbẹ̀rẹ̀ àfojúsùn kékeré nìkan. A kò fìdí wọn múlẹ̀ fún olupese tàbí hardware.", fixturePatched:"A ti patch {name} sí Yúnífásì {universe} / {address}.", fixtureUpdated:"A ti tún {name} ṣe.", virtualFixtures:"àwọn ẹ̀rọ ìmọ́lẹ̀ àfojúsùn", fixturesPatched:"a ti patch àwọn ẹ̀rọ ìmọ́lẹ̀", activeChannels:"àwọn chánẹ́lì tó ń ṣiṣẹ́", previewLabel:"Àfihàn yàrá 3D tó lè ṣiṣẹ́; fà á láti yí kámẹ́rà" });
 Object.assign(messages.pcm, { colorSpaces:"Colour spaces", inSrgb:"E dey sRGB gamut", outsideSrgb:"E dey outside sRGB gamut", virtualFixture:"Virtual fixture", fixtureLabel:"Fixture", universe:"Universe", address:"Address", dimmer:"Dimmer", beam:"Beam", applyFixturePatch:"Apply fixture & patch", addToVirtualPatch:"Add to virtual patch", virtualLibraryNote:"Na small virtual starter profiles only. Manufacturer or hardware never validate am.", fixturePatched:"{name} don patch to Universe {universe} / {address}.", fixtureUpdated:"{name} don update.", virtualFixtures:"virtual fixtures", fixturesPatched:"fixtures don patch", activeChannels:"active channels", previewLabel:"Interactive 3D studio preview; drag am to turn camera" });
 
-Object.assign(messages.en,{duration:"Duration",fade:"Fade",delay:"Delay"});
-Object.assign(messages.de,{duration:"Dauer",fade:"Überblendung",delay:"Verzögerung"});
-Object.assign(messages.yo,{duration:"Àkókò",fade:"Ìyípadà díẹ̀díẹ̀",delay:"Ìdádúró"});
-Object.assign(messages.pcm,{duration:"How long",fade:"Fade",delay:"Wait time"});
+Object.assign(messages.en,{duration:"Duration",fade:"Fade",delay:"Delay",blackout:"Virtual blackout"});
+Object.assign(messages.de,{duration:"Dauer",fade:"Überblendung",delay:"Verzögerung",blackout:"Virtuelle Verdunkelung"});
+Object.assign(messages.yo,{duration:"Àkókò",fade:"Ìyípadà díẹ̀díẹ̀",delay:"Ìdádúró",blackout:"Pa ìmọ́lẹ̀ àfojúsùn"});
+Object.assign(messages.pcm,{duration:"How long",fade:"Fade",delay:"Wait time",blackout:"Off virtual lights"});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }
