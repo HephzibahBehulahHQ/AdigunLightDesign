@@ -10,4 +10,4 @@ Play sequence opens the 3D preview and evaluates cues in their stored order. Eac
 
 Earlier/Later controls move the selected cue one position in the stored sequence. Boundary controls are disabled. Reordering is undoable, preserves cue snapshots and stops any running preview.
 
-Pause/resume, scrubbing and hardware output remain unimplemented. The implementation does not send DMX to physical devices, synchronize a console or claim real-time hardware timing. Browser interaction and visual acceptance remain unverified; domain timing and snapshot behavior have automated coverage.
+Pause/resume freezes the elapsed playback clock for cues, sequences and effect previews. Resume excludes paused wall time; repeated pause/resume requests do not shift timing. Stop still restores saved fixture values. Domain clock behavior has automated coverage. Scrubbing and hardware output remain unimplemented. The implementation does not send DMX to physical devices, synchronize a console or claim real-time hardware timing. Browser interaction and visual acceptance remain unverified.

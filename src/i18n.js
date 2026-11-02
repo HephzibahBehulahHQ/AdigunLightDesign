@@ -98,4 +98,8 @@ Object.assign(messages.en,{virtualEffect:"Virtual effect",pulse:"Dimmer pulse",c
 Object.assign(messages.de,{virtualEffect:"Virtueller Effekt",pulse:"Dimmerpuls",chase:"Dimmer-Lauflicht",effectPeriod:"Zyklus (Sekunden)"});
 Object.assign(messages.yo,{virtualEffect:"Ipa àfojúsùn",pulse:"Ìmọ́lẹ̀ tó ń lu",chase:"Ìmọ́lẹ̀ tó ń tẹ̀lé ara wọn",effectPeriod:"Ìyípo (ìṣẹ́jú àáyá)"});
 Object.assign(messages.pcm,{virtualEffect:"Virtual effect",pulse:"Dimmer pulse",chase:"Dimmer chase",effectPeriod:"Cycle (seconds)"});
+Object.assign(messages.en,{pausePlayback:"Pause",resumePlayback:"Resume"});
+Object.assign(messages.de,{pausePlayback:"Pause",resumePlayback:"Fortsetzen"});
+Object.assign(messages.yo,{pausePlayback:"Dá dúró díẹ̀",resumePlayback:"Tẹ̀síwájú"});
+Object.assign(messages.pcm,{pausePlayback:"Pause",resumePlayback:"Continue"});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }

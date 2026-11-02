@@ -17,6 +17,7 @@ import { createLightLabRenderer } from "./light-lab/renderer.js";
 import { blackout, createFixture, dmxFrame, fixtureProfiles, getFixtureProfile, patchFixture, updateFixture } from "./dmx/engine.js";
 import { createCue, editCue, evaluateCue, evaluateSequence, moveCue } from "./timeline/engine.js";
 import { evaluateEffect } from "./timeline/effects.js";
+import { createPlaybackClock } from "./timeline/playback-clock.js";
 import { cueCsv, designTokenJson, paletteCss, paletteJson, paletteSvg, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
 import { readProjectFile } from "./domain/import-project.js";
 import { editorShortcut, isEditableTarget } from "./accessibility/shortcuts.js";
@@ -28,7 +29,7 @@ const app = document.querySelector("#app");
 const defaults = { locale:"en", theme:"dark", module:"canvas", view:"light", tool:"select", selected:"deep-blue", luxOpen:true, harmony:"analogous", seed:"#2196F3" };
 const preferences = { ...defaults, ...safeParse(localStorage.getItem(preferencesKey)) };
 let project = loadProject();
-let undoStack = [], redoStack = [], status = "", renderer = null, playbackTimer = null;
+let undoStack = [], redoStack = [], status = "", renderer = null, playbackTimer = null, playbackClock = null;
 
 function safeParse(value) { try { return JSON.parse(value) ?? {}; } catch { return {}; } }
 function loadProject() {
@@ -59,7 +60,15 @@ function createCueSnapshot() {
   } catch(error) { document.querySelector("#status").textContent=status=error.message; }
 }
 function updateRendererFromFixtures() { const fixture=project.fixtures[0]; if(fixture) renderer?.setAccent(rgbToHex({r:fixture.properties.red,g:fixture.properties.green,b:fixture.properties.blue})); renderer?.setFixtures(project.fixtures); }
-function stopPlayback(message="Cue playback stopped.") { if(playbackTimer){clearInterval(playbackTimer);playbackTimer=null;} status=message; }
+function stopPlayback(message="Cue playback stopped.") { if(playbackTimer){clearInterval(playbackTimer);playbackTimer=null;} playbackClock=null; status=message; }
+function togglePlaybackPause() {
+  if (!playbackClock) return;
+  if (playbackClock.paused) playbackClock.resume(performance.now());
+  else playbackClock.pause(performance.now());
+  const button=document.querySelector("#pause-playback");
+  button.textContent=t(playbackClock.paused ? "resumePlayback" : "pausePlayback");
+  button.setAttribute("aria-pressed",String(playbackClock.paused));
+}
 function playEffect() {
   const input=document.querySelector("#effect-period");
   if (!input.value.trim() || !input.checkValidity()) return input.reportValidity();
@@ -68,10 +77,10 @@ function playEffect() {
   if (!source.length) return;
   evaluateEffect(source,settings,0);
   stopPlayback();
-  const started=performance.now();
+  playbackClock=createPlaybackClock(performance.now());
   preferences.view="light";
   playbackTimer=setInterval(()=>{
-    renderer?.setFixtures(evaluateEffect(source,settings,(performance.now()-started)/1000));
+    renderer?.setFixtures(evaluateEffect(source,settings,playbackClock.elapsed(performance.now())));
     document.querySelector("#status").textContent=`${t("virtualEffect")} · ${t(settings.type)}`;
   },100);
   render();
@@ -79,10 +88,11 @@ function playEffect() {
 function playSequence() {
   if (!project.cues.length) return;
   stopPlayback();
-  const source=structuredClone(project.fixtures),cues=structuredClone(project.cues),started=performance.now();
+  const source=structuredClone(project.fixtures),cues=structuredClone(project.cues);
+  playbackClock=createPlaybackClock(performance.now());
   preferences.view="light";
   playbackTimer=setInterval(()=>{
-    const frame=evaluateSequence(source,cues,(performance.now()-started)/1000);
+    const frame=evaluateSequence(source,cues,playbackClock.elapsed(performance.now()));
     renderer?.setFixtures(frame.fixtures);
     document.querySelector("#status").textContent=`${t("playSequence")} · ${frame.index + 1}/${cues.length}`;
     if (frame.complete) { stopPlayback(); render(); }
@@ -93,9 +103,11 @@ function playLatestCue() {
   const cue=project.cues.find((item)=>item.id===preferences.cueId) ?? project.cues.at(-1);
   if (!cue) return;
   stopPlayback();
-  const source=structuredClone(project.fixtures),started=performance.now();
+  const source=structuredClone(project.fixtures);
+  playbackClock=createPlaybackClock(performance.now());
+  preferences.view="light";
   playbackTimer=setInterval(()=>{
-    const elapsed=(performance.now()-started)/1000;
+    const elapsed=playbackClock.elapsed(performance.now());
     renderer?.setFixtures(evaluateCue(source,cue,elapsed));
     document.querySelector("#status").textContent=`Playing ${cue.name} · ${(Math.min(elapsed,cue.duration)).toFixed(1)}s / ${cue.duration}s`;
     if (elapsed>=cue.duration) { stopPlayback(`${cue.name} completed in virtual simulation.`); render(); }
@@ -197,6 +209,7 @@ function render() {
   if (activeCue) document.querySelector(".cue-track").insertAdjacentHTML("beforebegin", `<div class="cue-timing"><label>${t("timeline")}<input id="edit-cue-name" value="${esc(activeCue.name)}" /></label>${["duration","fade","delay"].map((key)=>`<label>${t(key)} (s)<input id="edit-cue-${key}" type="number" required min="0" step=".1" value="${activeCue[key] ?? 0}" /></label>`).join("")}<button id="edit-cue">${t("apply")}</button></div>`);
   document.querySelector(".dmx-actions").insertAdjacentHTML("beforeend", `<button id="blackout" ${project.fixtures.length ? "" : "disabled"}>${t("blackout")}</button>`);
   document.querySelector(".dmx-actions").insertAdjacentHTML("beforeend", `<button id="play-sequence" ${project.cues.length ? "" : "disabled"}>▶ ${t("playSequence")}</button>`);
+  document.querySelector("#stop-cue").insertAdjacentHTML("beforebegin", `<button id="pause-playback" aria-pressed="${Boolean(playbackClock?.paused)}" ${playbackTimer ? "" : "disabled"}>${t(playbackClock?.paused ? "resumePlayback" : "pausePlayback")}</button>`);
   document.querySelector(".timeline").insertAdjacentHTML("beforeend", `<div class="dmx-actions"><label>${t("virtualEffect")} <select id="effect-type"><option value="pulse">${t("pulse")}</option><option value="chase">${t("chase")}</option></select></label><label>${t("effectPeriod")} <input id="effect-period" type="number" min="0.1" max="120" step="0.1" value="2"></label><button id="play-effect" ${project.fixtures.length ? "" : "disabled"}>▶ ${t("play")}</button></div>`);
   if (activeCue) {
     const index=project.cues.indexOf(activeCue);
@@ -404,6 +417,7 @@ function bind() {
     render();
   });
   document.querySelector("#play-sequence").onclick=playSequence;
+  document.querySelector("#pause-playback").onclick=togglePlaybackPause;
   document.querySelector("#play-effect").onclick=playEffect;
   const editButton=document.querySelector("#edit-cue");
   if (editButton) editButton.onclick=()=>{
