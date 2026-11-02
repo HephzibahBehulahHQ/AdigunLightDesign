@@ -8,6 +8,7 @@ import { createCue, evaluateCue } from "./timeline/engine.js";
 import { cueCsv, paletteCss, paletteJson, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
 import { readProjectFile } from "./domain/import-project.js";
 import { editorShortcut, isEditableTarget } from "./accessibility/shortcuts.js";
+import { commitTransaction, redoTransaction, undoTransaction } from "./domain/history.js";
 
 const storageKey = "adigunlightdesign/project-v1";
 const preferencesKey = "adigunlightdesign/preferences-v1";
@@ -29,10 +30,10 @@ function t(key) { return translate(preferences.locale, key); }
 function palette() { return project.palettes[0]; }
 function selected() { return palette().colors.find((swatch) => swatch.id === preferences.selected) ?? palette().colors[0]; }
 function scene() { if (!project.scenes[0]) project.scenes.push({ id:"studio-room", name:"Studio room", materialColor:"#C21888" }); return project.scenes[0]; }
-function addVirtualFixture() { const fixture=createFixture(project.fixtures.length+1); project.fixtures=patchFixture([...project.fixtures,fixture],fixture.id); saveProject(); status=`${fixture.name} patched to Universe 1 / ${fixture.patchAssignment?.startAddress ?? 1}.`; }
-function activateBlackout() { project.fixtures=blackout(project.fixtures); saveProject(); status="Virtual blackout applied. Physical output remains disabled."; }
-function applyPaletteToVirtualFixtures() { const rgb=hexToRgb(selected().hex); project.fixtures=project.fixtures.map((fixture)=>({ ...fixture, properties:{ ...fixture.properties, red:rgb.r, green:rgb.g, blue:rgb.b } })); saveProject(); updateRendererFromFixtures(); status=`${selected().hex} applied to ${project.fixtures.length} virtual fixture(s).`; }
-function createCueSnapshot() { const cue=createCue(project.fixtures,{name:`Look ${project.cues.length+1}`}); project.cues=[...project.cues,cue]; saveProject(); status=`${cue.name} captured with ${cue.targets.length} fixture target(s).`; }
+function addVirtualFixture() { const fixture=createFixture(project.fixtures.length+1); commitProjectChange("fixture-add",(draft)=>{draft.fixtures=patchFixture([...draft.fixtures,fixture],fixture.id);}); status=`${fixture.name} patched to Universe 1 / ${fixture.patchAssignment?.startAddress ?? 1}.`; }
+function activateBlackout() { commitProjectChange("dmx-blackout",(draft)=>{draft.fixtures=blackout(draft.fixtures);}); status="Virtual blackout applied. Physical output remains disabled."; }
+function applyPaletteToVirtualFixtures() { const rgb=hexToRgb(selected().hex); commitProjectChange("palette-to-fixtures",(draft)=>{draft.fixtures=draft.fixtures.map((fixture)=>({ ...fixture, properties:{ ...fixture.properties, red:rgb.r, green:rgb.g, blue:rgb.b } }));}); updateRendererFromFixtures(); status=`${selected().hex} applied to ${project.fixtures.length} virtual fixture(s).`; }
+function createCueSnapshot() { let cue; commitProjectChange("cue-create",(draft)=>{cue=createCue(draft.fixtures,{name:`Look ${draft.cues.length+1}`});draft.cues=[...draft.cues,cue];}); status=`${cue.name} captured with ${cue.targets.length} fixture target(s).`; }
 function updateRendererFromFixtures() { const fixture=project.fixtures[0]; if(fixture) renderer?.setAccent(rgbToHex({r:fixture.properties.red,g:fixture.properties.green,b:fixture.properties.blue})); }
 function stopPlayback(message="Cue playback stopped.") { if(playbackTimer){clearInterval(playbackTimer);playbackTimer=null;} status=message; }
 function playLatestCue() { const cue=project.cues.at(-1); if(!cue) return; stopPlayback(); const source=structuredClone(project.fixtures),started=performance.now(); playbackTimer=setInterval(()=>{const elapsed=(performance.now()-started)/1000;project.fixtures=evaluateCue(source,cue,elapsed);updateRendererFromFixtures();document.querySelector("#status").textContent=`Playing ${cue.name} · ${(Math.min(elapsed,cue.duration)).toFixed(1)}s / ${cue.duration}s`;if(elapsed>=cue.duration){stopPlayback(`${cue.name} completed in virtual simulation.`);saveProject();render();}},100); }
@@ -41,10 +42,10 @@ function exportFile(kind) { const stem=safeFileStem(project.name); const exports
 async function importNativeProject(file) { const result=await readProjectFile(file); if(!result.valid) return setStatus(result.errors.join(" ")); project=result.project; undoStack=[];redoStack=[];saveProject();status=`${project.name} imported locally.`;render(); }
 function savePreferences() { localStorage.setItem(preferencesKey, JSON.stringify(preferences)); }
 function saveProject() { project.updatedAt = new Date().toISOString(); localStorage.setItem(storageKey, JSON.stringify(project)); status = t("statusSaved"); }
-function pushChange(nextColours) { undoStack.push(structuredClone(palette().colors)); redoStack = []; palette().colors = nextColours; saveProject(); }
-function mutateColours(fn) { pushChange(fn(structuredClone(palette().colors))); render(); }
-function undo() { if (!undoStack.length) return setStatus(t("noUndo")); redoStack.push(structuredClone(palette().colors)); palette().colors = undoStack.pop(); saveProject(); status = t("statusUndo"); render(); }
-function redo() { if (!redoStack.length) return setStatus(t("noRedo")); undoStack.push(structuredClone(palette().colors)); palette().colors = redoStack.pop(); saveProject(); status = t("statusRedo"); render(); }
+function commitProjectChange(label, mutate) { const next=commitTransaction({project,undoStack,redoStack},label,mutate); project=next.project;undoStack=next.undoStack;redoStack=next.redoStack;saveProject(); }
+function mutateColours(fn) { commitProjectChange("palette-update",(draft)=>{draft.palettes[0].colors=fn(structuredClone(draft.palettes[0].colors));}); render(); }
+function undo() { if (!undoStack.length) return setStatus(t("noUndo")); const next=undoTransaction({project,undoStack,redoStack});project=next.project;undoStack=next.undoStack;redoStack=next.redoStack;saveProject();status=t("statusUndo");render(); }
+function redo() { if (!redoStack.length) return setStatus(t("noRedo")); const next=redoTransaction({project,undoStack,redoStack});project=next.project;undoStack=next.undoStack;redoStack=next.redoStack;saveProject();status=t("statusRedo");render(); }
 function setStatus(value) { status = value; render(); }
 function esc(value) { return String(value).replace(/[&<>"]/g, (char) => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"})[char]); }
 function disabled(title) { return `disabled title="${esc(title)}"`; }
@@ -101,7 +102,7 @@ function bind() {
   document.querySelectorAll("[data-view]").forEach((button) => button.onclick = () => { preferences.view = button.dataset.view; savePreferences(); render(); });
   document.querySelectorAll("[data-tool]").forEach((button) => button.onclick = () => { preferences.tool = button.dataset.tool; status = t("statusTool") + button.textContent.trim(); render(); });
   document.querySelectorAll("[data-swatch]").forEach((button) => button.onclick = () => { preferences.selected = button.dataset.swatch; render(); });
-  document.querySelector("#project-name").onchange = (event) => { project.name = event.target.value.trim() || project.name; saveProject(); render(); };
+  document.querySelector("#project-name").onchange = (event) => { const name=event.target.value.trim(); if(name&&name!==project.name) commitProjectChange("project-rename",(draft)=>{draft.name=name;}); render(); };
   document.querySelector("#seed").onchange = (event) => { const hex = normalizeHex(event.target.value); if (hex) preferences.seed = hex; event.target.value = preferences.seed; savePreferences(); };
   document.querySelector("#harmony").onchange = (event) => { preferences.harmony = event.target.value; savePreferences(); };
   document.querySelector("#reroll").onclick = () => mutateColours((colours) => rerollUnlocked(colours, preferences.seed, preferences.harmony));
@@ -112,7 +113,7 @@ function bind() {
   document.querySelector("#save").onclick = () => { saveProject(); render(); };
   document.querySelector("#undo").onclick = undo; document.querySelector("#redo").onclick = redo;
   document.querySelector("#toggle-lux").onclick = () => { preferences.luxOpen = !preferences.luxOpen; savePreferences(); render(); };
-  const applyScene = document.querySelector("#apply-scene"); if (applyScene) applyScene.onclick = () => { scene().materialColor = selected().hex; saveProject(); renderer.setAccent(selected().hex); status = `${t("apply")} ${selected().hex}`; document.querySelector("#status").textContent = status; };
+  const applyScene = document.querySelector("#apply-scene"); if (applyScene) applyScene.onclick = () => { commitProjectChange("scene-material",(draft)=>{if(!draft.scenes[0])draft.scenes.push({id:"studio-room",name:"Studio room",materialColor:selected().hex});else draft.scenes[0].materialColor=selected().hex;}); renderer.setAccent(selected().hex); status = `${t("apply")} ${selected().hex}`; document.querySelector("#status").textContent = status; };
   const resetCamera = document.querySelector("#reset-camera"); if (resetCamera) resetCamera.onclick = () => renderer.reset();
   document.querySelector("#add-fixture").onclick = () => { addVirtualFixture(); render(); };
   const blackoutButton = document.querySelector("#blackout"); if (blackoutButton) blackoutButton.onclick = () => { activateBlackout(); render(); };

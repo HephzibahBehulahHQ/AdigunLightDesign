@@ -16,6 +16,8 @@ storage renderer  library    bridge   export / AI adapters
 
 The project document is authoritative. The timeline, inspector and eventual 3D viewport never own competing fixture state. A cue evaluates to a virtual DMX frame and a renderer consumes that result. A hardware bridge, when implemented, is an explicit consumer of virtual DMX state and not a browser-native promise.
 
+Direct editor mutations use document transactions. Each committed operation snapshots the full project document, records a bounded audit label, clears stale redo state and supports project-wide undo/redo. This applies to palette, scene, fixture, DMX, cue and project-name edits; live cue simulation remains explicitly separate from external output.
+
 ## Versioned project format
 
 `Project` will include `id`, `schemaVersion`, identity metadata, preferences, palettes, scenes, fixtures, patches, cues, assets and history. Import validates before conversion, retains unsupported data in a documented extension bag, and never silently drops values. Every schema revision requires a migration and a serialization test.
