@@ -13,8 +13,16 @@ function harness(data=new Map(),width=1440){
   const windowRef={innerWidth:width,innerHeight:900,addEventListener:(name,handler)=>listeners.set(name,handler),removeEventListener:name=>listeners.delete(name)};
   const bot=createFloatingBot({getProjectId:()=>"project",getLocale:()=>"en",translate,documentRef,windowRef,storage:()=>({getItem:key=>data.get(key),setItem:(key,value)=>data.set(key,value)})});bot.mount(host);
   const pointer=(target,type,x,y)=>target[`on${type}`]({type,button:0,pointerId:1,clientX:x,clientY:y,target:{closest:()=>null},preventDefault(){}});
-  return {bot,host,header,input,ai,status,data,pointer,close,resize:host.children.find(child=>child.className==="bot-resize-handle"),maximize:host.querySelector("[data-bot-maximize]"),minimize:host.querySelector("[data-bot-minimize]"),listeners,get focused(){return documentRef.activeElement;}};
+  return {bot,host,header,input,ai,status,data,pointer,close,body:documentRef.body,resize:host.children.find(child=>child.className==="bot-resize-handle"),maximize:host.querySelector("[data-bot-maximize]"),minimize:host.querySelector("[data-bot-minimize]"),listeners,get focused(){return documentRef.activeElement;}};
 }
+
+test("normal assistant reserves desktop space and releases it for other window states",()=>{
+  const h=harness(),reserved=()=>h.body.classList.has("has-open-floating-bot");
+  assert.equal(reserved(),true);h.minimize.onclick();assert.equal(reserved(),false);
+  h.minimize.onclick();assert.equal(reserved(),true);h.maximize.onclick();assert.equal(reserved(),false);
+  h.maximize.onclick();assert.equal(reserved(),true);h.close.onclick();assert.equal(reserved(),false);
+  h.bot.open();assert.equal(reserved(),true);h.bot.dispose();assert.equal(reserved(),false);
+});
 test("floating controls move resize persist maximize/restore and restore after canceled movement",()=>{
   const h=harness(),originalX=parseFloat(h.host.style.left);
   h.pointer(h.header,"pointerdown",100,100);h.pointer(h.header,"pointerup",0,120);assert.equal(parseFloat(h.host.style.left),originalX-100);

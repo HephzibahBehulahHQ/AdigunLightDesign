@@ -7,6 +7,7 @@ export function createFloatingBot({getProjectId,getLocale,translate,getUserId=()
   function paint(){
     if(!host || !store)return;
     const state=store.state,rect=botWindowRect(state,viewport());host.hidden=!state.open;
+    documentRef.body.classList.toggle("has-open-floating-bot",state.open && state.mode==="normal");
     host.classList.toggle("is-minimized",state.mode==="minimized");
     for(const [key,value] of Object.entries({left:rect.x,top:rect.y,width:rect.width,height:rect.height}))host.style[key]=`${value}px`;
     const maximize=host.querySelector("[data-bot-maximize]");maximize.textContent=state.mode==="maximized" ? "❐" : "□";maximize.title=t(state.mode==="maximized" ? "botRestore" : "botMaximize");maximize.setAttribute("aria-label",maximize.title);
@@ -42,6 +43,6 @@ export function createFloatingBot({getProjectId,getLocale,translate,getUserId=()
     },
     open(){if(!store)return;dispatch({type:"open"});host.querySelector('[data-lux-request] textarea')?.focus();},
     notify(){if(!store)return;const reading=store.state.open && store.state.mode!=="minimized" && host.contains(documentRef.activeElement);dispatch({type:"unread",value:!reading});const status=documentRef.querySelector("#status");if(status)status.textContent=t("botNewSuggestion");},
-    dispose(){windowRef.removeEventListener("resize",onResize);host=null;drag=null;}
+    dispose(){windowRef.removeEventListener("resize",onResize);documentRef.body.classList.toggle("has-open-floating-bot",false);host=null;drag=null;}
   };
 }

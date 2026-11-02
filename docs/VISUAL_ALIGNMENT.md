@@ -86,3 +86,5 @@ They are native scene geometry receiving the existing artistic lighting and
 obey the props visibility control. Geometry tests cover finite bounds, closed
 table topology, room-sized slats and lighting response. No photorealistic
 materials, calibrated reflections or exact reference appearance is established.
+
+At desktop widths above 1320px and heights at least 700px, the normal open floating Bot now reserves 350px beside the editor. Closing, minimizing or maximizing releases that space; dragging and resizing remain available. This protects the default inspector from the assistant overlay while retaining the requested floating behavior. Resized or moved windows may intentionally overlay the workspace. State-transition tests cover reservation release/restoration and disposal; rendered desktop/mobile acceptance remains pending.
