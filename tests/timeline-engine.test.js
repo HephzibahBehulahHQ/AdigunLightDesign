@@ -1,5 +1,17 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { editCue } from "../src/timeline/engine.js";
+test("editing cue metadata preserves its captured targets and rejects invalid timing", () => {
+  const cue=createCue([{id:"f",properties:{dimmer:72}}]);
+  const edited=editCue(cue,{name:" Intro ",duration:8,delay:2,fade:3});
+  assert.equal(edited.id,cue.id);
+  assert.equal(edited.name,"Intro");
+  assert.deepEqual(edited.targets,cue.targets);
+  edited.targets[0].properties.dimmer=0;
+  assert.equal(cue.targets[0].properties.dimmer,72);
+  assert.throws(()=>editCue(cue,{duration:0}));
+  assert.throws(()=>editCue(cue,{name:" "}));
+});
 import { createCue, cueProgress, evaluateCue, interpolate } from "../src/timeline/engine.js";
 
 test("interpolates numeric lighting values deterministically", () => { assert.equal(interpolate(0,255,.5),127.5); assert.equal(interpolate(0,255,2),255); });

@@ -5,7 +5,7 @@ import { paletteCssVariables, rerollUnlocked, starterPalette, updateSwatch } fro
 import { supportedLocales, translate } from "./i18n.js";
 import { createLightLabRenderer } from "./light-lab/renderer.js";
 import { blackout, createFixture, dmxFrame, fixtureProfiles, getFixtureProfile, patchFixture, updateFixture } from "./dmx/engine.js";
-import { createCue, evaluateCue } from "./timeline/engine.js";
+import { createCue, editCue, evaluateCue } from "./timeline/engine.js";
 import { cueCsv, paletteCss, paletteJson, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
 import { readProjectFile } from "./domain/import-project.js";
 import { editorShortcut, isEditableTarget } from "./accessibility/shortcuts.js";
@@ -147,11 +147,26 @@ function render() {
   if (preferences.view === "light" && project.fixtures.length) document.querySelector(".selected-preview").insertAdjacentHTML("afterend", fixtureInspectorMarkup());
   if (preferences.module === "library") { const drawer=document.createElement("section"); drawer.className="library-drawer panel"; drawer.setAttribute("aria-label",t("library")); drawer.innerHTML=`<div class="section-title"><h2>▱ ${t("library")}</h2><button id="close-library" class="subtle" aria-label="${t("close")}">×</button></div><p>${t("virtualLibraryNote")}</p><div class="fixture-library">${fixtureLibraryMarkup()}</div>`; app.insertBefore(drawer,app.querySelector("footer")); }
   document.querySelector(".cue-track").insertAdjacentHTML("beforebegin", `<div class="cue-timing">${["duration","fade","delay"].map((key)=>`<label>${t(key)} (s)<input id="cue-${key}" type="number" required min="${key === "duration" ? ".1" : "0"}" step=".1" value="${key === "duration" ? "5" : key === "fade" ? "1" : "0"}" /></label>`).join("")}</div>`);
+  if (activeCue) document.querySelector(".cue-track").insertAdjacentHTML("beforebegin", `<div class="cue-timing"><label>${t("timeline")}<input id="edit-cue-name" value="${esc(activeCue.name)}" /></label>${["duration","fade","delay"].map((key)=>`<label>${t(key)} (s)<input id="edit-cue-${key}" type="number" required min="0" step=".1" value="${activeCue[key] ?? 0}" /></label>`).join("")}<button id="edit-cue">${t("apply")}</button></div>`);
   bind();
   if (preferences.view === "light") renderer = createLightLabRenderer(document.querySelector("#light-canvas"), { accent:scene().materialColor, fixtures:project.fixtures });
 }
 
 function bind() {
+  const editButton=document.querySelector("#edit-cue");
+  if (editButton) editButton.onclick=()=>{
+    try {
+      const changes={name:document.querySelector("#edit-cue-name").value};
+      for (const key of ["duration","fade","delay"]) {
+        const input=document.querySelector(`#edit-cue-${key}`);
+        if (!input.value.trim() || !input.checkValidity()) throw new Error(`${t(key)}: enter a valid value.`);
+        changes[key]=Number(input.value);
+      }
+      const cue=project.cues.find((item)=>item.id===preferences.cueId) ?? project.cues.at(-1);
+      commitProjectChange("cue-edit",(draft)=>{draft.cues=draft.cues.map((item)=>item.id===cue.id ? editCue(item,changes) : item);});
+      render();
+    } catch(error) { document.querySelector("#status").textContent=status=error.message; }
+  };
   document.querySelectorAll("[data-cue]").forEach((button)=>button.onclick=()=>{
     stopPlayback();
     preferences.cueId=button.dataset.cue;
