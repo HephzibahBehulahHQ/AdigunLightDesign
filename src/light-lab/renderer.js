@@ -43,7 +43,16 @@ export function surfaceLighting(position, baseColour, lights) {
   for (const light of lights) {
     const distance=Math.hypot(position[0]-light.x,position[1]-light.y,position[2]-light.z);
     const below=position[1] <= light.y ? 1 : .15;
-    const strength=below / (1 + distance * distance * .12);
+    let cone=1;
+    if (Number.isFinite(light.targetX) && Number.isFinite(light.targetZ)) {
+      const direction=[light.targetX-light.x,.03-light.y,light.targetZ-light.z];
+      const length=Math.hypot(...direction);
+      const ray=position.map((value,index)=>value-[light.x,light.y,light.z][index]);
+      const cosine=ray.reduce((sum,value,index)=>sum+value*direction[index],0)/Math.max(.0001,distance*length);
+      const edge=length/Math.hypot(length,light.spread);
+      cone=Math.max(0,Math.min(1,(cosine-edge)/Math.max(.0001,1-edge)));
+    }
+    const strength=below * cone / (1 + distance * distance * .12);
     for (let channel=0;channel<3;channel+=1) result[channel]+=light.colour[channel]*strength*(.25 + baseColour[channel]*.5);
   }
   return result.map((value)=>Math.max(0,Math.min(1,value)));

@@ -1,5 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+test("surface light follows the beam target and excludes points outside its cone",()=>{
+  const base=[.2,.2,.2],light={x:0,y:3,z:0,targetX:0,targetZ:0,spread:1,colour:[1,0,0]};
+  const inside=surfaceLighting([0,.03,0],base,[light]);
+  const outside=surfaceLighting([3,.03,0],base,[light]);
+  assert.ok(inside[0]>outside[0]);
+  assert.deepEqual(outside,base.map((value)=>value*.7));
+  const moved=surfaceLighting([0,.03,0],base,[{...light,targetX:3}]);
+  assert.ok(moved[0]<inside[0]);
+});
 test("virtual pan and tilt move beam targets without changing fixture positions",()=>{
   const neutral=virtualFixtureVisuals([{transform:{x:1,y:3,z:2},properties:{pan:127,tilt:127}}])[0];
   const aimed=virtualFixtureVisuals([{transform:{x:1,y:3,z:2},properties:{pan:255,tilt:255}}])[0];
