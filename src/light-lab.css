@@ -1,4 +1,8 @@
 .light-canvas { min-height:353px; }
+.fixture-layer-list { list-style:none; padding:0 10px 10px 22px; margin:0; max-height:180px; overflow:auto; }
+.fixture-layer-list button { width:100%; padding:6px; text-align:left; background:transparent; border-radius:5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:11px; }
+.fixture-layer-list button[aria-pressed="true"] { background:#6138d944; box-shadow:inset 2px 0 var(--cyan); }
+.fixture-layer-list span { color:var(--cyan); }
 .fixture-inspector input[type="range"] { padding:0; accent-color:#c084fc; width:100%; }
 .fixture-inspector output { color:var(--text); text-align:right; font-variant-numeric:tabular-nums; }
 .fixture-inspector input[type="color"] { height:32px; padding:2px; }

@@ -200,6 +200,7 @@ function render() {
     input.oninput=update;
     update();
   }
+  if (project.fixtures.length) document.querySelector(".layer-list").insertAdjacentHTML("afterend", `<ul class="fixture-layer-list" aria-label="${t("layersLighting")}">${project.fixtures.map((fixture)=>`<li><button data-layer-fixture="${esc(fixture.id)}" aria-pressed="${fixture.id===selectedFixture()?.id}"><span>☼</span> ${esc(fixture.name)}</button></li>`).join("")}</ul>`);
   bind();
   if (preferences.view === "light") {
     renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {accent:scene().materialColor,fixtures:project.fixtures});
@@ -215,6 +216,15 @@ function render() {
 }
 
 function bind() {
+  document.querySelectorAll("[data-layer-fixture]").forEach((button)=>button.onclick=()=>{
+    stopPlayback();
+    preferences.fixtureId=button.dataset.layerFixture;
+    preferences.view="light";
+    preferences.module="canvas";
+    savePreferences();
+    render();
+    document.querySelector("#fixture-select")?.focus();
+  });
   document.querySelectorAll("[data-move-cue]").forEach((button)=>button.onclick=()=>{
     const cue=project.cues.find((item)=>item.id===preferences.cueId) ?? project.cues.at(-1);
     commitProjectChange("cue-reorder",(draft)=>{draft.cues=moveCue(draft.cues,cue.id,Number(button.dataset.moveCue));});
