@@ -54,4 +54,8 @@ Object.assign(messages.en,{designTokens:"Design-token JSON"});
 Object.assign(messages.de,{designTokens:"Design-Token-JSON"});
 Object.assign(messages.yo,{designTokens:"JSON tóókìn àpẹrẹ"});
 Object.assign(messages.pcm,{designTokens:"Design-token JSON"});
+Object.assign(messages.en,{extractImage:"Colors from image"});
+Object.assign(messages.de,{extractImage:"Farben aus Bild"});
+Object.assign(messages.yo,{extractImage:"Àwọ̀ láti àwòrán"});
+Object.assign(messages.pcm,{extractImage:"Get colours from image"});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }
