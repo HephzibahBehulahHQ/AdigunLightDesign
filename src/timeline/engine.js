@@ -39,14 +39,15 @@ export function editCue(cue, changes) {
   return {...cue,...revised,targets:structuredClone(cue.targets)};
 }
 
-export function createCue(fixtures, { id = crypto.randomUUID(), name = `Look ${Date.now()}`, duration = 5, fade = 1, delay = 0 } = {}) {
-  if (![duration,fade,delay].every(Number.isFinite) || duration <= 0 || fade < 0 || delay < 0 || delay + fade > duration) throw new Error("Cue timing requires a positive duration and nonnegative delay/fade fitting within it.");
-  return { id, name, duration, fade, delay, targets:fixtures.map((fixture) => ({ fixtureId:fixture.id, properties:structuredClone(fixture.properties) })), keyframes:[{ time:delay, value:"start" }, { time:delay + fade, value:"target" }] };
+export function createCue(fixtures, { id = crypto.randomUUID(), name = `Look ${Date.now()}`, duration = 5, fade = 1, delay = 0, fadeOut = 0 } = {}) {
+  if (![duration,fade,delay,fadeOut].every(Number.isFinite) || duration <= 0 || fade < 0 || delay < 0 || fadeOut<0 || delay + fade + fadeOut > duration) throw new Error("Cue timing requires a positive duration and nonnegative delay/fades fitting within it.");
+  return { id, name, duration, fade, delay, fadeOut, targets:fixtures.map((fixture) => ({ fixtureId:fixture.id, properties:structuredClone(fixture.properties) })), keyframes:[{ time:delay, value:"start" }, { time:delay + fade, value:"target" },...(fadeOut ? [{time:duration-fadeOut,value:"hold-end"},{time:duration,value:"source"}] : [])] };
 }
 
 export function evaluateCue(sourceFixtures, cue, elapsedSeconds) {
   const localTime=elapsedSeconds - (cue.delay ?? 0);
-  const progress = localTime < 0 ? 0 : cue.fade <= 0 ? 1 : clamp(localTime / cue.fade);
+  const fadeOut=cue.fadeOut ?? 0;
+  const progress = fadeOut>0 && elapsedSeconds>cue.duration-fadeOut ? 1-clamp((elapsedSeconds-(cue.duration-fadeOut))/fadeOut) : localTime < 0 ? 0 : cue.fade <= 0 ? 1 : clamp(localTime / cue.fade);
   return sourceFixtures.map((fixture) => {
     const target = cue.targets.find((entry) => entry.fixtureId === fixture.id);
     if (!target) return fixture;

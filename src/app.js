@@ -51,7 +51,7 @@ function applyPaletteToVirtualFixtures() { const rgb=hexToRgb(selected().hex); c
 function createCueSnapshot() {
   try {
     const timing={};
-    for (const key of ["duration","fade","delay"]) {
+    for (const key of ["duration","fade","delay","fadeOut"]) {
       const input=document.querySelector(`#cue-${key}`);
       if (!input.value.trim() || !input.checkValidity()) throw new Error(`${t(key)}: enter a valid value.`);
       timing[key]=Number(input.value);
@@ -313,6 +313,8 @@ function render() {
   document.querySelector("#effect-type").insertAdjacentHTML("beforeend", `<option value="panTilt">${t("panTilt")}</option>`);
   document.querySelector("#play-tracks").insertAdjacentHTML("afterend", `<label>${t("seekTracks")} <input id="arrangement-seek" type="range" min="0" max="${arrangementEnd}" step="0.1" value="0" ${arrangementEnd ? "" : "disabled"}></label><output id="arrangement-position">0 / ${arrangementEnd.toFixed(1)} s</output>`);
   const timingDetails=document.createElement("details");
+  document.querySelector("#cue-delay").parentElement.insertAdjacentHTML("afterend", `<label>${t("fadeOut")} (s)<input id="cue-fadeOut" type="number" min="0" step="0.1" required value="0"></label>`);
+  if (activeCue) document.querySelector("#edit-cue-delay").parentElement.insertAdjacentHTML("afterend", `<label>${t("fadeOut")} (s)<input id="edit-cue-fadeOut" type="number" min="0" step="0.1" required value="${activeCue.fadeOut ?? 0}"></label><small>${t("holdTime")}: ${Math.max(0,activeCue.duration-(activeCue.delay ?? 0)-activeCue.fade-(activeCue.fadeOut ?? 0)).toFixed(1)} s</small>`);
   timingDetails.className="fixture-group-editor";
   const timingSummary=document.createElement("summary");
   timingSummary.textContent=t("cueSettings");timingDetails.append(timingSummary);
@@ -541,7 +543,7 @@ function bind() {
   if (editButton) editButton.onclick=()=>{
     try {
       const changes={name:document.querySelector("#edit-cue-name").value};
-      for (const key of ["duration","fade","delay"]) {
+      for (const key of ["duration","fade","delay","fadeOut"]) {
         const input=document.querySelector(`#edit-cue-${key}`);
         if (!input.value.trim() || !input.checkValidity()) throw new Error(`${t(key)}: enter a valid value.`);
         changes[key]=Number(input.value);

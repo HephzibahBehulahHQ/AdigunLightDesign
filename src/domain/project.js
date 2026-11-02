@@ -49,7 +49,8 @@ export function validateProject(project) {
       if (!cue) continue;
       ids.add(cue.id);
       const delay=cue.delay ?? 0;
-      if (![cue.duration,cue.fade,delay].every(Number.isFinite) || cue.duration <= 0 || cue.fade < 0 || delay < 0 || delay + cue.fade > cue.duration) errors.push("Cue timing is invalid.");
+      const fadeOut=cue.fadeOut ?? 0;
+      if (![cue.duration,cue.fade,delay,fadeOut].every(Number.isFinite) || cue.duration <= 0 || cue.fade < 0 || delay < 0 || fadeOut<0 || delay + cue.fade + fadeOut > cue.duration) errors.push("Cue timing is invalid.");
       if (!Array.isArray(cue.targets)) { errors.push("Cue targets must be an array."); continue; }
       for (const target of cue.targets) {
         if (!target || typeof target.fixtureId !== "string" || !target.properties || typeof target.properties !== "object" || Array.isArray(target.properties) || !Object.values(target.properties).every((value)=>Number.isInteger(value) && value >= 0 && value <= 255)) errors.push("Cue targets require fixture ids and DMX channel values from 0 to 255.");

@@ -135,4 +135,8 @@ Object.assign(messages.en,{panTilt:"Virtual pan/tilt circle"});
 Object.assign(messages.de,{panTilt:"Virtueller Pan/Tilt-Kreis"});
 Object.assign(messages.yo,{panTilt:"Ìyí àti ìtẹ̀ àfojúsùn ní àyíká"});
 Object.assign(messages.pcm,{panTilt:"Virtual pan/tilt circle"});
+Object.assign(messages.en,{fadeOut:"Fade back to source",holdTime:"Hold"});
+Object.assign(messages.de,{fadeOut:"Zurück zum Ausgangswert blenden",holdTime:"Haltezeit"});
+Object.assign(messages.yo,{fadeOut:"Dín ìmọ́lẹ̀ padà sí ìbẹ̀rẹ̀",holdTime:"Àkókò dídúró"});
+Object.assign(messages.pcm,{fadeOut:"Fade back to starting values",holdTime:"Hold"});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }
