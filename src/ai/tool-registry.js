@@ -9,7 +9,7 @@ export const toolRegistry = {
 export function validateToolCall(call) {
   const errors=[];
   if (!object(call) || call.type !== "adigunlightdesign.tool-call" || call.version !== 1) errors.push("Tool call must use the v1 AdigunLightDesign envelope.");
-  const definition=toolRegistry[call?.name]; if (!definition) errors.push("Tool is not registered.");
+  const definition=typeof call?.name==="string" && Object.hasOwn(toolRegistry,call.name) ? toolRegistry[call.name] : null; if (!definition) errors.push("Tool is not registered.");
   if (!object(call?.payload)) errors.push("Tool payload must be an object.");
   if (definition && object(call?.payload)) for (const [key, valid] of Object.entries(definition.required)) if (!valid(call.payload[key])) errors.push(`Invalid ${key}.`);
   return { valid:errors.length===0, errors };

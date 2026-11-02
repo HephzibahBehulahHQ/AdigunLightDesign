@@ -1,5 +1,7 @@
 # Lux action contract
 
+A local native executor now supports seven registered actions: add/update/patch fixture, create/update cue, create scene and add a 2D object. It requires an explicit confirmation flag, uses project transactions and validation, and returns an undoable state plus a local receipt. Invalid operations leave the source unchanged. Other registered tools explicitly reject execution. This module is not wired to a provider or the Lux chat UI; it does not establish authentication, preview diffs, consent UX or server audit storage. Prototype-inherited names are rejected by registry validation.
+
 The browser contains a tested, non-executing registry for the 16 required Lux tool names. Every proposed call has the envelope `{ type: "adigunlightdesign.tool-call", version: 1, name, payload }`; unregistered names and malformed required fields are rejected. Read-only/export previews do not need mutation confirmation; project-changing proposals are marked as requiring it.
 
 This is not an AI provider or backend. Lux remains offline because no authenticated server endpoint, provider credentials, user consent flow, rate limit or server-side audit store has been configured. The browser does not contain an API key and cannot execute generated JavaScript. Connecting an AI service requires a server-side adapter that validates this contract, provides an action diff, obtains explicit confirmation, invokes native project commands and records a receipt.
