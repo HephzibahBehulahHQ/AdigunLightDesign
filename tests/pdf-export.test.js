@@ -17,3 +17,10 @@ test('PDF validates the complete palette and rejects failed or incorrect raster 
  await assert.rejects(()=>palettePdf(palette,{raster:async()=>{throw Error('encoding unavailable');}}),/encoding unavailable/);
 });
 
+test('PDF shortening preserves Yoruba combining accents and emoji grapheme clusters',async()=>{
+ const cluster='o\u0323\u0300',emoji='👩🏾‍💻',calls=[];
+ const source={name:cluster.repeat(30),colors:[{hex:'#2196F3',name:cluster.repeat(14)},{hex:'#FFB347',name:emoji.repeat(14)}]};
+ await palettePdf(source,{raster:async p=>{calls.push(p);return new Blob([png],{type:'image/png'});}});
+ assert.equal(calls[0].name,cluster.repeat(27)+'…');assert.equal(calls[0].colors[0].name,cluster.repeat(11)+'…');
+ assert.equal(calls[0].colors[1].name,emoji.repeat(11)+'…');assert.equal(source.colors[0].name,cluster.repeat(14));
+});

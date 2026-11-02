@@ -9,7 +9,8 @@ export async function palettePdf(palette,{raster=paletteRaster}={}){
   const snapshot=structuredClone(palette),doc=await PDFDocument.create();
   doc.setCreator("AdigunLightDesign");doc.setTitle(String(snapshot.name ?? "Palette"));
   const font=await doc.embedFont(StandardFonts.Helvetica),count=Math.ceil(snapshot.colors.length/10);
-  const shorten=(value,max)=>{const text=Array.from(String(value ?? ""));return text.length>max?text.slice(0,max-1).join("")+"…":text.join("");};
+  const segmenter=new Intl.Segmenter("und",{granularity:"grapheme"});
+  const shorten=(value,max)=>{const text=Array.from(segmenter.segment(String(value ?? "")),item=>item.segment);return text.length>max?text.slice(0,max-1).join("")+"…":text.join("");};
   for(let index=0;index<count;index++){
     const colors=snapshot.colors.slice(index*10,index*10+10).map(color=>({...color,name:shorten(color.name,12)}));
     const imageBlob=await raster({...snapshot,name:shorten(snapshot.name,28),colors},"image/png");
