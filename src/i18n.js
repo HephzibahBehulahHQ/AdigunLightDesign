@@ -94,4 +94,8 @@ Object.assign(messages.en,{hueSpacing:"Hue spacing (°)",customHues:"Custom hues
 Object.assign(messages.de,{hueSpacing:"Farbtonabstand (°)",customHues:"Eigene Farbtöne",perceptualScale:"Wahrnehmungsskala"});
 Object.assign(messages.yo,{hueSpacing:"Ààyè irú àwọ̀ (°)",customHues:"Àwọn àwọ̀ àṣàyàn",perceptualScale:"Ìpele àwọ̀ ìmọ̀lára"});
 Object.assign(messages.pcm,{hueSpacing:"Hue spacing (°)",customHues:"Custom hues",perceptualScale:"Perceptual scale"});
+Object.assign(messages.en,{virtualEffect:"Virtual effect",pulse:"Dimmer pulse",chase:"Dimmer chase",effectPeriod:"Cycle (seconds)"});
+Object.assign(messages.de,{virtualEffect:"Virtueller Effekt",pulse:"Dimmerpuls",chase:"Dimmer-Lauflicht",effectPeriod:"Zyklus (Sekunden)"});
+Object.assign(messages.yo,{virtualEffect:"Ipa àfojúsùn",pulse:"Ìmọ́lẹ̀ tó ń lu",chase:"Ìmọ́lẹ̀ tó ń tẹ̀lé ara wọn",effectPeriod:"Ìyípo (ìṣẹ́jú àáyá)"});
+Object.assign(messages.pcm,{virtualEffect:"Virtual effect",pulse:"Dimmer pulse",chase:"Dimmer chase",effectPeriod:"Cycle (seconds)"});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }

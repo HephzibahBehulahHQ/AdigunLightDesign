@@ -16,6 +16,7 @@ import { supportedLocales, translate } from "./i18n.js";
 import { createLightLabRenderer } from "./light-lab/renderer.js";
 import { blackout, createFixture, dmxFrame, fixtureProfiles, getFixtureProfile, patchFixture, updateFixture } from "./dmx/engine.js";
 import { createCue, editCue, evaluateCue, evaluateSequence, moveCue } from "./timeline/engine.js";
+import { evaluateEffect } from "./timeline/effects.js";
 import { cueCsv, designTokenJson, paletteCss, paletteJson, paletteSvg, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
 import { readProjectFile } from "./domain/import-project.js";
 import { editorShortcut, isEditableTarget } from "./accessibility/shortcuts.js";
@@ -59,6 +60,22 @@ function createCueSnapshot() {
 }
 function updateRendererFromFixtures() { const fixture=project.fixtures[0]; if(fixture) renderer?.setAccent(rgbToHex({r:fixture.properties.red,g:fixture.properties.green,b:fixture.properties.blue})); renderer?.setFixtures(project.fixtures); }
 function stopPlayback(message="Cue playback stopped.") { if(playbackTimer){clearInterval(playbackTimer);playbackTimer=null;} status=message; }
+function playEffect() {
+  const input=document.querySelector("#effect-period");
+  if (!input.value.trim() || !input.checkValidity()) return input.reportValidity();
+  const settings={type:document.querySelector("#effect-type").value,period:Number(input.value)};
+  const source=structuredClone(project.fixtures);
+  if (!source.length) return;
+  evaluateEffect(source,settings,0);
+  stopPlayback();
+  const started=performance.now();
+  preferences.view="light";
+  playbackTimer=setInterval(()=>{
+    renderer?.setFixtures(evaluateEffect(source,settings,(performance.now()-started)/1000));
+    document.querySelector("#status").textContent=`${t("virtualEffect")} · ${t(settings.type)}`;
+  },100);
+  render();
+}
 function playSequence() {
   if (!project.cues.length) return;
   stopPlayback();
@@ -180,6 +197,7 @@ function render() {
   if (activeCue) document.querySelector(".cue-track").insertAdjacentHTML("beforebegin", `<div class="cue-timing"><label>${t("timeline")}<input id="edit-cue-name" value="${esc(activeCue.name)}" /></label>${["duration","fade","delay"].map((key)=>`<label>${t(key)} (s)<input id="edit-cue-${key}" type="number" required min="0" step=".1" value="${activeCue[key] ?? 0}" /></label>`).join("")}<button id="edit-cue">${t("apply")}</button></div>`);
   document.querySelector(".dmx-actions").insertAdjacentHTML("beforeend", `<button id="blackout" ${project.fixtures.length ? "" : "disabled"}>${t("blackout")}</button>`);
   document.querySelector(".dmx-actions").insertAdjacentHTML("beforeend", `<button id="play-sequence" ${project.cues.length ? "" : "disabled"}>▶ ${t("playSequence")}</button>`);
+  document.querySelector(".timeline").insertAdjacentHTML("beforeend", `<div class="dmx-actions"><label>${t("virtualEffect")} <select id="effect-type"><option value="pulse">${t("pulse")}</option><option value="chase">${t("chase")}</option></select></label><label>${t("effectPeriod")} <input id="effect-period" type="number" min="0.1" max="120" step="0.1" value="2"></label><button id="play-effect" ${project.fixtures.length ? "" : "disabled"}>▶ ${t("play")}</button></div>`);
   if (activeCue) {
     const index=project.cues.indexOf(activeCue);
     document.querySelector("#edit-cue").insertAdjacentHTML("afterend", `<button data-move-cue="-1" ${index === 0 ? "disabled" : ""}>← ${t("earlier")}</button><button data-move-cue="1" ${index === project.cues.length - 1 ? "disabled" : ""}>${t("later")} →</button>`);
@@ -386,6 +404,7 @@ function bind() {
     render();
   });
   document.querySelector("#play-sequence").onclick=playSequence;
+  document.querySelector("#play-effect").onclick=playEffect;
   const editButton=document.querySelector("#edit-cue");
   if (editButton) editButton.onclick=()=>{
     try {
