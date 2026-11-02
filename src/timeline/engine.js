@@ -1,3 +1,4 @@
+import { evaluateChannelKeyframes } from "./keyframes.js";
 const clamp = (value, minimum = 0, maximum = 1) => Math.min(maximum, Math.max(minimum, value));
 export const interpolate = (from, to, progress) => from + (to - from) * clamp(progress);
 
@@ -53,6 +54,10 @@ export function evaluateCue(sourceFixtures, cue, elapsedSeconds) {
     if (!target) return fixture;
     const properties = { ...fixture.properties };
     for (const [key, end] of Object.entries(target.properties)) properties[key] = Math.round(interpolate(fixture.properties[key] ?? 0, end, progress));
+    for (const key of Object.keys(target.properties)) {
+      const frames=(cue.channelKeyframes ?? []).filter((frame)=>frame.fixtureId===fixture.id && frame.property===key);
+      if (frames.length) properties[key]=evaluateChannelKeyframes(frames,fixture.properties[key] ?? 0,elapsedSeconds);
+    }
     return { ...fixture, properties };
   });
 }

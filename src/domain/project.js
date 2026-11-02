@@ -1,6 +1,7 @@
 import { fixtureProfiles } from "../dmx/engine.js";
 import { validateFixtureGroups } from "./fixture-groups.js";
 import { arrangeTracks } from "../timeline/tracks.js";
+import { validateChannelKeyframes } from "../timeline/keyframes.js";
 
 export const CURRENT_SCHEMA_VERSION = 1;
 
@@ -47,6 +48,7 @@ export function validateProject(project) {
     for (const cue of project.cues) {
       if (!cue || typeof cue.id !== "string" || !cue.id.trim() || ids.has(cue.id) || typeof cue.name !== "string" || !cue.name.trim()) errors.push("Cues require unique ids and nonempty names.");
       if (!cue) continue;
+      if (!validateChannelKeyframes(cue)) errors.push("Cue channel keyframes are invalid.");
       ids.add(cue.id);
       const delay=cue.delay ?? 0;
       const fadeOut=cue.fadeOut ?? 0;

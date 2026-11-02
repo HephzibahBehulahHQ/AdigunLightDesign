@@ -139,4 +139,8 @@ Object.assign(messages.en,{fadeOut:"Fade back to source",holdTime:"Hold"});
 Object.assign(messages.de,{fadeOut:"Zurück zum Ausgangswert blenden",holdTime:"Haltezeit"});
 Object.assign(messages.yo,{fadeOut:"Dín ìmọ́lẹ̀ padà sí ìbẹ̀rẹ̀",holdTime:"Àkókò dídúró"});
 Object.assign(messages.pcm,{fadeOut:"Fade back to starting values",holdTime:"Hold"});
+Object.assign(messages.en,{channelKeyframes:"Channel keyframes",channel:"Fixture channel",channelValue:"Value (0–255)",saveKeyframe:"Add / replace keyframe",removeKeyframe:"Remove keyframe"});
+Object.assign(messages.de,{channelKeyframes:"Kanal-Keyframes",channel:"Gerätekanal",channelValue:"Wert (0–255)",saveKeyframe:"Keyframe hinzufügen / ersetzen",removeKeyframe:"Keyframe entfernen"});
+Object.assign(messages.yo,{channelKeyframes:"Àwọn férémù pàtàkì chánẹ́lì",channel:"Chánẹ́lì fìtílà",channelValue:"Iye (0–255)",saveKeyframe:"Fi férémù kún / rọ́pò rẹ̀",removeKeyframe:"Yọ férémù kúrò"});
+Object.assign(messages.pcm,{channelKeyframes:"Channel keyframes",channel:"Fixture channel",channelValue:"Value (0–255)",saveKeyframe:"Add / replace keyframe",removeKeyframe:"Remove keyframe"});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }

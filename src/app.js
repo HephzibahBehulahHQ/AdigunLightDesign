@@ -20,6 +20,7 @@ import { evaluateEffect } from "./timeline/effects.js";
 import { createPlaybackClock, playbackPosition } from "./timeline/playback-clock.js";
 import { timelineLayout } from "./timeline/layout.js";
 import { arrangeTracks,arrangementDuration,evaluateTracks,scheduleCue } from "./timeline/tracks.js";
+import { setChannelKeyframe } from "./timeline/keyframes.js";
 import { groupFixtures,saveFixtureGroup } from "./domain/fixture-groups.js";
 import { cueCsv, designTokenJson, paletteCss, paletteJson, paletteSvg, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
 import { readProjectFile } from "./domain/import-project.js";
@@ -320,6 +321,10 @@ function render() {
   timingSummary.textContent=t("cueSettings");timingDetails.append(timingSummary);
   document.querySelectorAll(".cue-timing").forEach((node)=>timingDetails.append(node));
   document.querySelector(".timeline").append(timingDetails);
+  if (activeCue) {
+    const channels=activeCue.targets.flatMap((target)=>Object.keys(target.properties).map((property)=>({fixtureId:target.fixtureId,property})));
+    timingDetails.insertAdjacentHTML("beforeend", `<fieldset><legend>${t("channelKeyframes")}</legend><label>${t("channel")}<select id="keyframe-channel">${channels.map((channel)=>`<option value="${esc(JSON.stringify(channel))}">${esc(project.fixtures.find((fixture)=>fixture.id===channel.fixtureId)?.name ?? channel.fixtureId)} · ${esc(channel.property)}</option>`).join("")}</select></label><label>${t("startTime")}<input id="keyframe-time" type="number" min="0" max="${activeCue.duration}" step="0.1" value="0" required></label><label>${t("channelValue")}<input id="keyframe-value" type="number" min="0" max="255" step="1" value="127" required></label><button id="save-keyframe" ${channels.length ? "" : "disabled"}>${t("saveKeyframe")}</button>${(activeCue.channelKeyframes ?? []).map((frame,index)=>`<p>${esc(frame.fixtureId)} · ${esc(frame.property)} · ${frame.time}s → ${frame.value} <button data-remove-keyframe="${index}" aria-label="${t("removeKeyframe")}">×</button></p>`).join("")}</fieldset>`);
+  }
   const inspector=document.querySelector(".inspector"),fixturePanel=inspector.querySelector(".fixture-inspector");
   const mode=(preferences.inspectorMode ?? (preferences.view==="light" ? "fixture" : "palette"))==="fixture" && fixturePanel ? "fixture" : "palette";
   const palettePanel=document.createElement("div");palettePanel.id="palette-inspector-panel";
@@ -343,6 +348,19 @@ function render() {
 }
 
 function bind() {
+  const keyframeButton=document.querySelector("#save-keyframe");
+  if (keyframeButton) keyframeButton.onclick=()=>{
+    try {
+      const time=document.querySelector("#keyframe-time"),value=document.querySelector("#keyframe-value");
+      for (const input of [time,value]) if (!input.value.trim() || !input.checkValidity()) return input.reportValidity();
+      const channel=JSON.parse(document.querySelector("#keyframe-channel").value),cue=project.cues.find((item)=>item.id===preferences.cueId) ?? project.cues.at(-1);
+      commitProjectChange("cue-keyframe-save",(draft)=>{draft.cues=draft.cues.map((item)=>item.id===cue.id ? setChannelKeyframe(item,{...channel,time:Number(time.value),value:Number(value.value)}) : item);});render();
+    } catch(error) {setStatus(error.message);}
+  };
+  document.querySelectorAll("[data-remove-keyframe]").forEach((button)=>button.onclick=()=>{
+    const cue=project.cues.find((item)=>item.id===preferences.cueId) ?? project.cues.at(-1);
+    commitProjectChange("cue-keyframe-delete",(draft)=>{const target=draft.cues.find((item)=>item.id===cue.id);target.channelKeyframes.splice(Number(button.dataset.removeKeyframe),1);});render();
+  });
   document.querySelectorAll("[data-inspector]").forEach((button)=>button.onclick=()=>{preferences.inspectorMode=button.dataset.inspector;savePreferences();render();});
   const applyGenerated=(generator)=>{
     try {
