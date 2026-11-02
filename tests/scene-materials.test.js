@@ -1,0 +1,27 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { applySceneMaterial } from "../src/domain/scene-materials.js";
+import { sceneData } from "../src/light-lab/renderer.js";
+import { createStudioMoodProject } from "../src/domain/studio-mood.js";
+import { validateProject } from "../src/domain/project.js";
+test("painting a surface changes vertex colors while preserving geometry and other surfaces",()=>{
+  const before=sceneData([.2,.3,.4],[],{props:false},undefined,false);
+  const after=sceneData([.2,.3,.4],[],{props:false},undefined,false,{floor:"#FF0000"});
+  assert.equal(after.length,before.length);
+  for(let offset=0;offset<before.length;offset+=6) assert.deepEqual(after.slice(offset,offset+3),before.slice(offset,offset+3));
+  assert.ok(after[3]>before[3]);assert.equal(after[4],0);assert.equal(after[5],0);
+  const floorLength=20*16*6*6;
+  assert.deepEqual(after.slice(floorLength),before.slice(floorLength));
+});
+test("surface painting preserves prior materials and validates native import",()=>{
+  const project=createStudioMoodProject(),original=project.scenes[0];
+  const wall=applySceneMaterial(original,"wall","#f00"),floor=applySceneMaterial(wall,"floor","#00f");
+  assert.equal(original.materials,undefined);
+  assert.deepEqual(floor.materials,{wall:"#FF0000",floor:"#0000FF"});
+  assert.equal(floor.materialColor,original.materialColor);
+  project.scenes[0]=floor;
+  assert.equal(validateProject(JSON.parse(JSON.stringify(project))).valid,true);
+  project.scenes[0].materials.wall="url(invalid)";
+  assert.equal(validateProject(project).valid,false);
+  assert.throws(()=>applySceneMaterial(original,"unknown","#fff"));
+});

@@ -24,6 +24,7 @@ import { setChannelKeyframe } from "./timeline/keyframes.js";
 import { roomDimensions } from "./domain/room.js";
 import { duplicateFixture,deleteFixture } from "./domain/fixture-operations.js";
 import { readBrowserStorage,writeBrowserStorage } from "./domain/browser-storage.js";
+import { applySceneMaterial } from "./domain/scene-materials.js";
 import { groupFixtures,saveFixtureGroup } from "./domain/fixture-groups.js";
 import { cueCsv, designTokenJson, paletteCss, paletteJson, paletteSvg, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
 import { readProjectFile } from "./domain/import-project.js";
@@ -68,7 +69,7 @@ function createCueSnapshot() {
     render();
   } catch(error) { document.querySelector("#status").textContent=status=error.message; }
 }
-function updateRendererFromFixtures() { const fixture=project.fixtures[0]; if(fixture) renderer?.setAccent(rgbToHex({r:fixture.properties.red,g:fixture.properties.green,b:fixture.properties.blue})); renderer?.setFixtures(project.fixtures); }
+function updateRendererFromFixtures() { renderer?.setFixtures(project.fixtures); }
 function stopPlayback(message="Cue playback stopped.") { if(playbackTimer){clearInterval(playbackTimer);playbackTimer=null;} playbackClock=null; status=message; }
 function togglePlaybackPause() {
   if (!playbackClock) return;
@@ -323,6 +324,8 @@ function render() {
   document.querySelector(".palette-panel").insertAdjacentHTML("beforeend", `<div class="palette-actions"><label>${t("hueSpacing")}<input id="custom-spacing" type="number" min="-360" max="360" step="any" value="30" /></label><button id="custom-hues">${t("customHues")}</button><button id="perceptual-scale">${t("perceptualScale")}</button></div>`);
   const arrangementEnd=arrangementDuration(project.cues);
   const projectionButton=document.querySelector(".view-menu");
+  const materialButton=document.querySelector("#apply-scene");
+  if (materialButton) materialButton.insertAdjacentHTML("beforebegin", `<label>${t("materialTarget")} <select id="material-target">${["accent","wall","floor","ceiling"].map((target)=>`<option value="${target}" ${preferences.materialTarget===target ? "selected" : ""}>${t(`surface_${target}`)}</option>`).join("")}</select></label>`);
   projectionButton.insertAdjacentHTML("afterend", `<button id="export-viewport" class="view-menu" ${preferences.view==="light" ? "" : "disabled"}>▣ ${t("exportViewport")}</button>`);
   projectionButton.textContent=`${t(preferences.projection==="orthographic" ? "orthographic" : "perspective")} ⌄`;
   projectionButton.setAttribute("aria-label",t("switchProjection"));
@@ -360,7 +363,7 @@ function render() {
   inspector.querySelector(".inspector-tabs").innerHTML=`<button data-inspector="fixture" aria-pressed="${mode==="fixture"}" class="${mode==="fixture" ? "is-active" : ""}" ${fixturePanel ? "" : "disabled"}>${t("fixtureLabel")}</button><button data-inspector="palette" aria-pressed="${mode==="palette"}" class="${mode==="palette" ? "is-active" : ""}">${t("palette")}</button>`;
   bind();
   if (preferences.view === "light") {
-    renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {accent:scene().materialColor,room:scene().room,projection:preferences.projection==="orthographic" ? "orthographic" : "perspective",visibility:scene().visibility,fixtures:project.fixtures.map((fixture)=>({...fixture,selected:fixture.id===selectedFixture()?.id})),onSelect(id){stopPlayback();preferences.fixtureId=id;preferences.inspectorMode="fixture";savePreferences();render();}});
+    renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {accent:scene().materialColor,room:scene().room,materials:scene().materials,projection:preferences.projection==="orthographic" ? "orthographic" : "perspective",visibility:scene().visibility,fixtures:project.fixtures.map((fixture)=>({...fixture,selected:fixture.id===selectedFixture()?.id})),onSelect(id){stopPlayback();preferences.fixtureId=id;preferences.inspectorMode="fixture";savePreferences();render();}});
     if (!renderer.supported) {
       const note=document.createElement("p");
       note.className="webgl-unavailable";
@@ -680,7 +683,8 @@ function bind() {
   document.querySelector("#save").onclick = () => { saveProject(); render(); };
   document.querySelector("#undo").onclick = undo; document.querySelector("#redo").onclick = redo;
   document.querySelector("#toggle-lux").onclick = () => { preferences.luxOpen = !preferences.luxOpen; savePreferences(); render(); };
-  const applyScene = document.querySelector("#apply-scene"); if (applyScene) applyScene.onclick = () => { commitProjectChange("scene-material",(draft)=>{if(!draft.scenes[0])draft.scenes.push({id:"studio-room",name:"Studio room",materialColor:selected().hex});else draft.scenes[0].materialColor=selected().hex;}); renderer.setAccent(selected().hex); status = `${t("apply")} ${selected().hex}`; document.querySelector("#status").textContent = status; };
+  const materialTarget=document.querySelector("#material-target");if(materialTarget) materialTarget.onchange=()=>{preferences.materialTarget=materialTarget.value;savePreferences();};
+  const applyScene = document.querySelector("#apply-scene"); if (applyScene) applyScene.onclick = () => { const target=materialTarget.value;commitProjectChange("scene-material",(draft)=>{draft.scenes[0]=applySceneMaterial(draft.scenes[0],target,selected().hex);});status = `${t("apply")} ${selected().hex}`;render(); };
   const resetCamera = document.querySelector("#reset-camera"); if (resetCamera) resetCamera.onclick = () => renderer.reset();
   document.querySelector("#add-fixture").onclick = () => { addVirtualFixture(); render(); };
   const blackoutButton = document.querySelector("#blackout"); if (blackoutButton) blackoutButton.onclick = () => { activateBlackout(); render(); };

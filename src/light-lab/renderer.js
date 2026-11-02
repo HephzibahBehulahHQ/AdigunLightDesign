@@ -90,13 +90,13 @@ export function studioPlant(x,z,height=2.1) {
   }
   return data;
 }
-export function sceneData(accent, fixtures, visibility={}, room,includeBeams=true) {
-  const data=[],floor=hexVector("#172238"),wall=hexVector("#27324A"),couch=hexVector("#9C4F48"),wood=hexVector("#67442F"),metal=hexVector("#151D2D");
+export function sceneData(accent, fixtures, visibility={}, room,includeBeams=true,materials={}) {
+  const data=[],floor=hexVector(materials.floor ?? "#172238"),wall=hexVector(materials.wall ?? "#27324A"),couch=hexVector("#9C4F48"),wood=hexVector("#67442F"),metal=hexVector("#151D2D");
   const {width,height,depth}=roomDimensions(room);
   data.push(...surfaceGrid([-width/2,0,-depth/2],[width,0,0],[0,0,depth],floor));
   data.push(...surfaceGrid([-width/2,0,depth/2],[width,0,0],[0,height,0],wall));
-  data.push(...surfaceGrid([-width/2,0,-depth/2],[0,0,depth],[0,height,0],hexVector("#132746")));
-  data.push(...surfaceGrid([-width/2,height,-depth/2],[width,0,0],[0,0,depth],hexVector("#101726")));
+  data.push(...surfaceGrid([-width/2,0,-depth/2],[0,0,depth],[0,height,0],materials.wall ? wall : hexVector("#132746")));
+  data.push(...surfaceGrid([-width/2,height,-depth/2],[width,0,0],[0,0,depth],hexVector(materials.ceiling ?? "#101726")));
   if (visibility.props!==false) {
   box(data,-2.1,.01,-.8,4.2,.02,3.5,hexVector("#665477"));
   box(data,-1.7,.25,1.4,3.4,.8,.75,couch);
@@ -131,15 +131,15 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
   return new Float32Array(data);
 }
 
-export function sceneBuffers(accent,fixtures,visibility={},room) {
-  const opaque=sceneData(accent,fixtures,visibility,room,false);
+export function sceneBuffers(accent,fixtures,visibility={},room,materials={}) {
+  const opaque=sceneData(accent,fixtures,visibility,room,false,materials);
   const beams=virtualFixtureVisuals(visibility.lighting===false ? [] : fixtures).filter((light)=>light.colour.some((value)=>value>0)).flatMap((light)=>beamVolume(light));
   const data=new Float32Array(opaque.length+beams.length);
   data.set(opaque);data.set(beams,opaque.length);
   return {data,opaqueVertices:opaque.length/6};
 }
 
-export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = [], visibility = {}, room, projection = "perspective", onSelect=()=>{} } = {}) {
+export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = [], visibility = {}, room, materials={}, projection = "perspective", onSelect=()=>{} } = {}) {
   const gl = canvas.getContext("webgl", { antialias:true, alpha:false });
   if (!gl) return { supported:false, destroy(){}, reset(){}, setAccent(){}, setFixtures(){} };
   const program=gl.createProgram(),vertexShader=compile(gl,gl.VERTEX_SHADER,vertexSource),fragmentShader=compile(gl,gl.FRAGMENT_SHADER,fragmentSource);
@@ -153,7 +153,7 @@ export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = 
     const ratio=Math.min(window.devicePixelRatio||1,2),width=Math.max(1,canvas.clientWidth),height=Math.max(1,canvas.clientHeight);
     gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
     if (!geometry) {
-      geometry=sceneBuffers(hexVector(selectedAccent),virtualFixtures,visibility,room);
+      geometry=sceneBuffers(hexVector(selectedAccent),virtualFixtures,visibility,room,materials);
       gl.bufferData(gl.ARRAY_BUFFER,geometry.data,gl.STATIC_DRAW);
     }
     if(canvas.width!==width*ratio||canvas.height!==height*ratio){canvas.width=width*ratio;canvas.height=height*ratio;}

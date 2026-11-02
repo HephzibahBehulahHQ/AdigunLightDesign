@@ -167,4 +167,8 @@ Object.assign(messages.en,{sessionOnly:"In memory",storageUnavailable:"Project i
 Object.assign(messages.de,{sessionOnly:"Im Speicher",storageUnavailable:"Das Projekt ist nur im Arbeitsspeicher. Lokales Speichern ist nicht verfügbar oder noch nicht abgeschlossen. Vor dem Schließen Projekt-JSON exportieren.",preferencesNotSaved:"Die Einstellungen konnten in diesem Browser nicht gespeichert werden."});
 Object.assign(messages.yo,{sessionOnly:"Nínú ìrántí",storageUnavailable:"Iṣẹ́ wà nínú ìrántí nìkan. Fífipamọ́ sí aṣàwákiri kò sí tàbí kò tíì parí. Gbé Project JSON jáde kí o tó ti ojú ìwé yìí.",preferencesNotSaved:"A kò lè fi àwọn ààyò pamọ́ sínú aṣàwákiri yìí."});
 Object.assign(messages.pcm,{sessionOnly:"For memory",storageUnavailable:"Project dey memory only. Local save no dey available or e never finish. Export Project JSON before you close this page.",preferencesNotSaved:"Preferences no fit save for this browser."});
+Object.assign(messages.en,{materialTarget:"Paint surface",surface_accent:"Accent",surface_wall:"Walls",surface_floor:"Floor",surface_ceiling:"Ceiling"});
+Object.assign(messages.de,{materialTarget:"Oberfläche färben",surface_accent:"Akzent",surface_wall:"Wände",surface_floor:"Boden",surface_ceiling:"Decke"});
+Object.assign(messages.yo,{materialTarget:"Kun ojú ilẹ̀",surface_accent:"Àwọ̀ àfikún",surface_wall:"Àwọn ògiri",surface_floor:"Ilẹ̀",surface_ceiling:"Àjà"});
+Object.assign(messages.pcm,{materialTarget:"Paint surface",surface_accent:"Accent",surface_wall:"Walls",surface_floor:"Floor",surface_ceiling:"Ceiling"});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }

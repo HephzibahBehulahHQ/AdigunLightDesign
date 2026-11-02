@@ -37,6 +37,8 @@ Direct editor mutations use document transactions. Each committed operation snap
 
 ## Visual acceptance
 
+The paint-surface selector applies the selected swatch's RGB color to walls, floor, ceiling or decorative accents. Surface colors persist as optional `scene.materials` HEX values and use document undo/redo. They change actual vertex colors consumed by artistic lighting, rather than only a UI swatch. Surface opacity, texture maps and physically based roughness/metalness are not implemented. Geometry/color and native validation have tests; browser appearance remains unverified.
+
 Beam geometry renders in a separate additive transparency pass after opaque room/fixture geometry, with depth testing retained and depth writes disabled for beams. GPU blend/depth state is restored afterward. Buffer separation and blackout/visibility behavior have tests. This remains an artistic cone approximation without volumetric scattering, calibrated haze or photometric validation; browser appearance and reference matching are unverified.
 
 Fixture duplication preserves profile/mode and properties, offsets X by 0.5 m and allocates a free patch in the source universe. It fails if no contiguous space exists. Fixture deletion removes its patch, group memberships, cue targets and channel keyframes; empty groups are removed. Both are undoable. Removing the final fixture is supported. Copies do not automatically join groups or captured cues. Browser interaction remains unverified.
