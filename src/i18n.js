@@ -102,4 +102,8 @@ Object.assign(messages.en,{pausePlayback:"Pause",resumePlayback:"Resume"});
 Object.assign(messages.de,{pausePlayback:"Pause",resumePlayback:"Fortsetzen"});
 Object.assign(messages.yo,{pausePlayback:"Dá dúró díẹ̀",resumePlayback:"Tẹ̀síwájú"});
 Object.assign(messages.pcm,{pausePlayback:"Pause",resumePlayback:"Continue"});
+Object.assign(messages.en,{loopSequence:"Loop sequence",seekSequence:"Seek sequence"});
+Object.assign(messages.de,{loopSequence:"Sequenz wiederholen",seekSequence:"Sequenzposition"});
+Object.assign(messages.yo,{loopSequence:"Tún ọ̀wọ́ cue ṣe",seekSequence:"Yan ipò nínú ọ̀wọ́ cue"});
+Object.assign(messages.pcm,{loopSequence:"Repeat sequence",seekSequence:"Choose sequence position"});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }

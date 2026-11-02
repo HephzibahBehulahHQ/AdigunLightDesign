@@ -17,7 +17,7 @@ import { createLightLabRenderer } from "./light-lab/renderer.js";
 import { blackout, createFixture, dmxFrame, fixtureProfiles, getFixtureProfile, patchFixture, updateFixture } from "./dmx/engine.js";
 import { createCue, editCue, evaluateCue, evaluateSequence, moveCue } from "./timeline/engine.js";
 import { evaluateEffect } from "./timeline/effects.js";
-import { createPlaybackClock } from "./timeline/playback-clock.js";
+import { createPlaybackClock, playbackPosition } from "./timeline/playback-clock.js";
 import { cueCsv, designTokenJson, paletteCss, paletteJson, paletteSvg, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
 import { readProjectFile } from "./domain/import-project.js";
 import { editorShortcut, isEditableTarget } from "./accessibility/shortcuts.js";
@@ -85,17 +85,24 @@ function playEffect() {
   },100);
   render();
 }
-function playSequence() {
+function playSequence({seek=0,paused=false}={}) {
   if (!project.cues.length) return;
   stopPlayback();
   const source=structuredClone(project.fixtures),cues=structuredClone(project.cues);
   playbackClock=createPlaybackClock(performance.now());
+  playbackClock.seek(seek,performance.now());
+  if (paused) playbackClock.pause(performance.now());
+  const duration=cues.reduce((sum,cue)=>sum+cue.duration,0);
   preferences.view="light";
   playbackTimer=setInterval(()=>{
-    const frame=evaluateSequence(source,cues,playbackClock.elapsed(performance.now()));
+    const position=playbackPosition(playbackClock.elapsed(performance.now()),duration,Boolean(preferences.loopSequence));
+    const frame=evaluateSequence(source,cues,position.time);
     renderer?.setFixtures(frame.fixtures);
-    document.querySelector("#status").textContent=`${t("playSequence")} · ${frame.index + 1}/${cues.length}`;
-    if (frame.complete) { stopPlayback(); render(); }
+    const scrub=document.querySelector("#sequence-seek");
+    if (scrub && document.activeElement!==scrub) scrub.value=String(position.time);
+    document.querySelector("#sequence-position").textContent=`${position.time.toFixed(1)} / ${duration.toFixed(1)} s`;
+    document.querySelector("#status").textContent=`${t("playSequence")} · ${Math.min(frame.index + 1,cues.length)}/${cues.length}`;
+    if (position.complete && !playbackClock.paused) { stopPlayback(); render(); }
   },100);
   render();
 }
@@ -210,6 +217,8 @@ function render() {
   document.querySelector(".dmx-actions").insertAdjacentHTML("beforeend", `<button id="blackout" ${project.fixtures.length ? "" : "disabled"}>${t("blackout")}</button>`);
   document.querySelector(".dmx-actions").insertAdjacentHTML("beforeend", `<button id="play-sequence" ${project.cues.length ? "" : "disabled"}>▶ ${t("playSequence")}</button>`);
   document.querySelector("#stop-cue").insertAdjacentHTML("beforebegin", `<button id="pause-playback" aria-pressed="${Boolean(playbackClock?.paused)}" ${playbackTimer ? "" : "disabled"}>${t(playbackClock?.paused ? "resumePlayback" : "pausePlayback")}</button>`);
+  const sequenceDuration=project.cues.reduce((sum,cue)=>sum+cue.duration,0);
+  document.querySelector(".timeline").insertAdjacentHTML("beforeend", `<div class="dmx-actions"><label><input id="sequence-loop" type="checkbox" ${preferences.loopSequence ? "checked" : ""}> ${t("loopSequence")}</label><label>${t("seekSequence")} <input id="sequence-seek" type="range" min="0" max="${sequenceDuration}" step="0.1" value="0" ${sequenceDuration ? "" : "disabled"}></label><output id="sequence-position">0 / ${sequenceDuration.toFixed(1)} s</output></div>`);
   document.querySelector(".timeline").insertAdjacentHTML("beforeend", `<div class="dmx-actions"><label>${t("virtualEffect")} <select id="effect-type"><option value="pulse">${t("pulse")}</option><option value="chase">${t("chase")}</option></select></label><label>${t("effectPeriod")} <input id="effect-period" type="number" min="0.1" max="120" step="0.1" value="2"></label><button id="play-effect" ${project.fixtures.length ? "" : "disabled"}>▶ ${t("play")}</button></div>`);
   if (activeCue) {
     const index=project.cues.indexOf(activeCue);
@@ -418,6 +427,8 @@ function bind() {
   });
   document.querySelector("#play-sequence").onclick=playSequence;
   document.querySelector("#pause-playback").onclick=togglePlaybackPause;
+  document.querySelector("#sequence-loop").onchange=(event)=>{preferences.loopSequence=event.target.checked;savePreferences();};
+  document.querySelector("#sequence-seek").onchange=(event)=>playSequence({seek:Number(event.target.value),paused:true});
   document.querySelector("#play-effect").onclick=playEffect;
   const editButton=document.querySelector("#edit-cue");
   if (editButton) editButton.onclick=()=>{
