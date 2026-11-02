@@ -271,4 +271,8 @@ Object.assign(messages.en,{cameraAxisViews:"Camera axis views",cameraView_x:"Vie
 Object.assign(messages.de,{cameraAxisViews:"Kamera-Achsenansichten",cameraView_x:"Ansicht entlang der X-Achse",cameraView_y:"Ansicht von oben (Y-Achse)",cameraView_z:"Vorderansicht (Z-Achse)"});
 Object.assign(messages.yo,{cameraAxisViews:"Àwọn ojú ìwòye àáké kámẹ́rà",cameraView_x:"Wo lẹ́gbẹ̀ẹ́ àáké X",cameraView_y:"Wo láti òkè (àáké Y)",cameraView_z:"Ojú ìwòye iwájú (àáké Z)"});
 Object.assign(messages.pcm,{cameraAxisViews:"Camera axis views",cameraView_x:"View along X axis",cameraView_y:"View from above (Y axis)",cameraView_z:"Front view (Z axis)"});
+Object.assign(messages.en,{pdfPaletteLimit:"PDF uses images: artwork text cannot be searched or edited. Long names are shortened; JSON keeps full names."});
+Object.assign(messages.de,{pdfPaletteLimit:"PDF verwendet Bilder: Text im Bild ist nicht durchsuchbar oder bearbeitbar. Lange Namen werden gekürzt; JSON behält vollständige Namen."});
+Object.assign(messages.yo,{pdfPaletteLimit:"PDF ń lo àwòrán: a kò lè wá tàbí ṣàtúnṣe ọ̀rọ̀ inú àwòrán. A gé orúkọ gígùn kúrú; JSON pa gbogbo orúkọ mọ́."});
+Object.assign(messages.pcm,{pdfPaletteLimit:"PDF dey use images: you no fit search or edit text inside artwork. Long names go short; JSON keep full names."});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }
