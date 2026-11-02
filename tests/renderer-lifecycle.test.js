@@ -7,7 +7,7 @@ test("camera movement reuses geometry; changes invalidate it and destroy removes
   const previousObserver=Object.getOwnPropertyDescriptor(globalThis,"ResizeObserver");
   let uploads=0,deletedBuffers=0,deletedPrograms=0,deletedShaders=0,disconnected=false;
   const events=new Map();
-  const drawStates=[],uploadLengths=[];let depthWrites=true,blending=false;
+  const drawStates=[],uploadLengths=[],matrices=[];let depthWrites=true,blending=false;
   const gl=new Proxy({
     BLEND:"blend",DEPTH_TEST:"depth",
     enable:(cap)=>{if(cap==="blend")blending=true;},disable:(cap)=>{if(cap==="blend")blending=false;},
@@ -15,6 +15,7 @@ test("camera movement reuses geometry; changes invalidate it and destroy removes
     getShaderParameter:()=>true,getProgramParameter:()=>true,
     createShader:()=>({}),createProgram:()=>({}),createBuffer:()=>({}),
     getAttribLocation:()=>0,getUniformLocation:()=>({}),
+    uniformMatrix4fv:(location,transpose,matrix)=>matrices.push([...matrix]),
     bufferData:(target,data)=>{uploads+=1;uploadLengths.push(data.length);},deleteBuffer:()=>{deletedBuffers+=1;},deleteProgram:()=>{deletedPrograms+=1;},deleteShader:()=>{deletedShaders+=1;}
   },{get:(target,key)=>key in target ? target[key] : ()=>{}});
   const canvas={clientWidth:800,clientHeight:450,width:800,height:450,
@@ -36,6 +37,9 @@ test("camera movement reuses geometry; changes invalidate it and destroy removes
     events.get("wheel")({deltaY:1,preventDefault(){}});
     renderer.reset();
     assert.equal(uploads,1);
+    const beforeAxis=matrices.at(-1);renderer.setView("x");assert.notDeepEqual(matrices.at(-1),beforeAxis);assert.equal(uploads,1);
+    renderer.setView("y");assert.ok(matrices.at(-1).every(Number.isFinite));renderer.setView("z");assert.equal(uploads,1);assert.throws(()=>renderer.setView("invalid"));
+    const snapshot=renderer.cameraState();assert.equal(snapshot.yaw,0);snapshot.yaw=99;assert.equal(renderer.cameraState().yaw,0);
     renderer.setAccent("#FF0000");
     assert.equal(uploads,2);
     renderer.setFixtures([fixture]);

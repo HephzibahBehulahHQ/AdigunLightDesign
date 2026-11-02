@@ -7,7 +7,8 @@ export function pickScenePoint(points,matrix,width,height,x,y,radius=28) {
     const [nx,ny,nz]=clip.slice(0,3).map((value)=>value/clip[3]);
     if (![nx,ny,nz].every(Number.isFinite) || Math.abs(nx)>1 || Math.abs(ny)>1 || Math.abs(nz)>1) continue;
     const distance=((nx+1)*width/2-x)**2+((1-ny)*height/2-y)**2;
-    if (distance<best || distance===best && nz<bestDepth) {selected=point.id;best=distance;bestDepth=nz;}
+    if(distance>radius*radius)continue;
+    if (selected===null || distance<best-1e-6 || Math.abs(distance-best)<=1e-6 && nz<bestDepth) {selected=point.id;best=distance;bestDepth=nz;}
   }
   return selected;
 }

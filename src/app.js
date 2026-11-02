@@ -67,6 +67,7 @@ if (!Object.hasOwn(previewQualities,preferences.previewQuality)) preferences.pre
 let projectPersisted=false;
 let luxProposal=null;
 let luxConfirmationPending=false;
+let viewportCamera=null;
 let cleanupTopMenu=null;
 const imageAssets=createImageAssetStore();
 const account=createAccount({publishableKey:typeof __ALD_SUPABASE_PUBLISHABLE_KEY__==="undefined" ? "" : __ALD_SUPABASE_PUBLISHABLE_KEY__});
@@ -258,7 +259,7 @@ function render() {
       ? {kind:"fixture",id:selectedFixture().id}
       : {kind:"swatch",id:selected().id,paletteId:palette().id};
   liveCanvasFeed.publish(project,{selection:liveSelection,playing:playbackTimer!==null});
-  renderer?.destroy(); renderer = null;
+  if(renderer){viewportCamera=renderer.cameraState?.() ?? viewportCamera;renderer.destroy();}renderer = null;
   document.documentElement.lang = preferences.locale;
   document.documentElement.dataset.theme = preferences.theme;
   const active = selected();
@@ -465,6 +466,11 @@ function render() {
   document.querySelector(".scene-preview").insertAdjacentHTML("beforeend", `<button id="viewport-exit-fullscreen" class="viewport-exit-fullscreen">${t("exitFullscreen")}</button>`);
   bind();
   bindFixtureSliders(document.querySelector(".inspector"),{channelLabel:t("virtualChannelValue")});
+  if(preferences.view==="light"){
+    const axes=document.createElement("div");axes.className="viewport-axis-controls";axes.setAttribute("role","group");axes.setAttribute("aria-label",t("cameraAxisViews"));
+    axes.innerHTML=["x","y","z"].map(axis=>`<button type="button" class="axis-view-${axis}" data-camera-axis="${axis}" title="${t(`cameraView_${axis}`)}" aria-label="${t(`cameraView_${axis}`)}" disabled>${axis.toUpperCase()}</button>`).join("");
+    document.querySelector(".scene-preview").append(axes);axes.querySelectorAll("[data-camera-axis]").forEach(button=>button.onclick=()=>{renderer?.setView?.(button.dataset.cameraAxis);document.querySelector("#light-canvas")?.focus();});
+  }
   floatingBot.mount(document.querySelector(".lux-panel"));
   cleanupTopMenu=bindTopMenu({project,t,onAccount:()=>openAccountDialog({account,t}),onSelect(result){
     stopPlayback();
@@ -475,7 +481,8 @@ function render() {
     if(result.kind==="palette" && result.id!==palette().id){const versions=document.querySelector("#palette-version");if(versions){versions.value=result.id;versions.dispatchEvent(new Event("change"));}}
   }});
   if (preferences.view === "light") {
-    renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {accent:scene().materialColor,room:scene().room,materials:scene().materials,stage:scene().stage,quality:preferences.previewQuality,projection:preferences.projection==="orthographic" ? "orthographic" : "perspective",visibility:scene().visibility,fixtures:project.fixtures.map((fixture)=>({...fixture,selected:fixture.id===selectedFixture()?.id})),onSelect(id){stopPlayback();preferences.fixtureId=id;preferences.inspectorMode="fixture";savePreferences();render();}});
+    renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {camera:viewportCamera,accent:scene().materialColor,room:scene().room,materials:scene().materials,stage:scene().stage,quality:preferences.previewQuality,projection:preferences.projection==="orthographic" ? "orthographic" : "perspective",visibility:scene().visibility,fixtures:project.fixtures.map((fixture)=>({...fixture,selected:fixture.id===selectedFixture()?.id})),onSelect(id){stopPlayback();preferences.fixtureId=id;preferences.inspectorMode="fixture";savePreferences();render();}});
+    document.querySelectorAll("[data-camera-axis]").forEach(button=>button.disabled=!renderer.supported);
     if (!renderer.supported) {
       document.querySelector(".scene-title small").textContent=phrase("previewFixtureCount",{shown:0,total:project.fixtures.length});
       const note=document.createElement("p");

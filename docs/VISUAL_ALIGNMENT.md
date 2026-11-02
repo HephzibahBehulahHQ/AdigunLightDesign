@@ -9,6 +9,24 @@ the explicitly requested floating Bot and compact top-menu updates. The
 1440 × 900 desktop check remains additional responsive coverage. This reference
 identification is not evidence that the current interface matches it.
 
+Studio camera corrections now honor the document's positive-Z rear-wall
+convention, keeping that wall behind the sofa instead of between the viewer and
+furniture. The camera aims at 55% of room height, rather than near the floor.
+The generic OpenGL matrix helper remains unchanged. Projection/depth tests cover
+both perspective and orthographic picking, including near-equal projected-center
+distances where the closer fixture must win.
+
+The viewport has functional X/Y/Z view buttons, localized labels and keyboard
+access. Camera orientation/zoom survives editor re-renders in session memory.
+Axis changes reuse geometry buffers and remain disabled without WebGL. Y is an
+overhead exterior view; the existing ceiling remains real geometry. These are
+math/lifecycle guarantees, not screenshot evidence or exact visual acceptance.
+
+Latest camera validation: the full local suite passed 221 tests, zero failures
+or skips; project checks and the Vite build passed. Renderer checks also verify
+that axis changes reuse geometry and camera snapshots are defensive copies.
+The build remains Auth-unconfigured, and no editor deployment was performed.
+
 The user's supplied desktop reference remains the acceptance target. Current
 source layout includes the brand/navigation header, layers/tools, scene viewport,
 fixture inspector, palette, timeline and Lux panel. A five-card lower overview

@@ -139,3 +139,9 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
 @media (max-width:670px) { .floating-bot .bot-resize-handle { display:none; }.floating-bot .lux-heading { cursor:default; } }
 
 .floating-bot .bot-window-body { flex:1; min-height:0; display:flex; flex-direction:column; overflow:auto; padding-bottom:24px; }
+
+.viewport-axis-controls { position:absolute; bottom:58px; left:12px; z-index:6; display:grid; grid-template-columns:repeat(3,25px); grid-template-rows:repeat(2,25px); gap:2px; }
+.viewport-axis-controls button { border-radius:50%; background:#0b1220d9; border:1px solid currentColor; font-size:12px; font-weight:800; }
+.axis-view-x { grid-column:3; grid-row:2; color:#ff655e; }
+.axis-view-y { grid-column:1; grid-row:2; color:#47e885; }
+.axis-view-z { grid-column:2; grid-row:1; color:#45baff; }

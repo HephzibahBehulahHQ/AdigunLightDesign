@@ -6,6 +6,12 @@ Settings changes appearance. Search finds fixtures, active-canvas objects/colors
 cues and saved palette names; selecting a saved palette opens its comparison.
 The globe keeps all four languages available. Narrow screens hide the save text.
 
+In the 3D viewport, use X/Y/Z to choose an axis view. Y looks down from above,
+including the ceiling; Z returns to a straight front view. The canvas keeps
+keyboard focus for orbit/zoom after a view change. Camera orientation and zoom
+survive editor updates within the current session; Reset camera/Home restores
+the starting view. These controls require WebGL and do not change project data.
+
 If sign-in is enabled for the build, Account accepts an existing account's email
 and password. The password field clears after each attempt. Sessions remain in
 memory and end on reload; sign-out affects this session. Registration, email-link

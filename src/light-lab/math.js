@@ -16,6 +16,24 @@ export function cameraMatrix({ yaw = 0, pitch = 0, distance = 11 }) {
   return new Float32Array([cy,sy * sx,-sy * cx,0,0,cx,sx,0,sy,-cy * sx,cy * cx,0,0,-.35,-distance,1]);
 }
 
+// Studio documents use +Z toward the rear wall; OpenGL view depth is negative.
+export function studioCameraMatrix({targetHeight=2.2,...options}={}){
+  if(!Number.isFinite(targetHeight))throw new Error("Invalid camera target height.");
+  const matrix=multiply(cameraMatrix(options),new Float32Array([1,0,0,0,0,1,0,0,0,0,-1,0,0,0,0,1]));
+  matrix[13]=-matrix[5]*targetHeight;matrix[14]-=matrix[6]*targetHeight;return matrix;
+}
+export const cameraPitchLimit=Math.PI/2-.01;
+export function normalizeCameraState(value={}){
+  const finite=(key,fallback)=>Number.isFinite(value?.[key]) ? value[key] : fallback;
+  return {yaw:finite("yaw",-.25),pitch:Math.max(-cameraPitchLimit,Math.min(cameraPitchLimit,finite("pitch",.1))),distance:Math.max(4,Math.min(24,finite("distance",11)))};
+}
+export function cameraAxisView(axis){
+  if(axis==="x")return {yaw:-Math.PI/2,pitch:0};
+  if(axis==="y")return {yaw:0,pitch:cameraPitchLimit};
+  if(axis==="z")return {yaw:0,pitch:0};
+  throw new Error("Unsupported camera axis.");
+}
+
 export function viewportProjection(mode,aspect,distance) {
   if (!["perspective","orthographic"].includes(mode) || !Number.isFinite(aspect) || aspect<=0 || !Number.isFinite(distance) || distance<=0) throw new Error("Invalid viewport projection.");
   if (mode==="perspective") return perspective(radians(48),aspect,.1,100);
