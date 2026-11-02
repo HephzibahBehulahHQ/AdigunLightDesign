@@ -37,6 +37,8 @@ Direct editor mutations use document transactions. Each committed operation snap
 
 ## Visual acceptance
 
+Beam geometry renders in a separate additive transparency pass after opaque room/fixture geometry, with depth testing retained and depth writes disabled for beams. GPU blend/depth state is restored afterward. Buffer separation and blackout/visibility behavior have tests. This remains an artistic cone approximation without volumetric scattering, calibrated haze or photometric validation; browser appearance and reference matching are unverified.
+
 Fixture duplication preserves profile/mode and properties, offsets X by 0.5 m and allocates a free patch in the source universe. It fails if no contiguous space exists. Fixture deletion removes its patch, group memberships, cue targets and channel keyframes; empty groups are removed. Both are undoable. Removing the final fixture is supported. Copies do not automatically join groups or captured cues. Browser interaction remains unverified.
 
 Room dimensions are optional `scene.room` values in meters: width/depth 2–50 and height 2–20, with legacy defaults 10 × 4 × 8. Undoable controls resize the cutaway floor, two walls and ceiling. Fixtures, rig and furniture retain their world coordinates; no automatic arrangement, collision checking or room-fit guarantee is claimed. The remaining sides stay open for viewing. Native validation rejects malformed dimensions. Geometry bounds and persistence have tests; rendered appearance is unverified.

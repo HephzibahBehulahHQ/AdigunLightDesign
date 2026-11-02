@@ -5,7 +5,7 @@ import { roomDimensions } from "../domain/room.js";
 import { getFixtureProfile } from "../dmx/engine.js";
 
 const vertexSource = `attribute vec3 p;attribute vec3 c;uniform mat4 m;varying vec3 v;void main(){gl_Position=m*vec4(p,1.0);v=c;}`;
-const fragmentSource = `precision mediump float;varying vec3 v;void main(){gl_FragColor=vec4(v,1.0);}`;
+const fragmentSource = `precision mediump float;varying vec3 v;uniform float opacity;void main(){gl_FragColor=vec4(v,opacity);}`;
 
 function compile(gl, type, source) { const value = gl.createShader(type); gl.shaderSource(value, source); gl.compileShader(value); if (!gl.getShaderParameter(value, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(value)); return value; }
 function quad(target, a, b, c, d, colour) { for (const point of [a,b,c,a,c,d]) target.push(...point, ...colour); }
@@ -38,7 +38,7 @@ export function beamVolume(light, segments=16) {
   }
   return data;
 }
-function lightGeometry(data, light) {
+function lightGeometry(data, light,includeBeams=true) {
   const fixtureColour=light.colour.map((value)=>Math.max(.12,value));
   box(data,light.x-.18,light.y-.11,light.z-.18,.36,.18,.36,fixtureColour);
   if (light.selected) {
@@ -47,7 +47,7 @@ function lightGeometry(data, light) {
     for (const dx of [0,.46]) for (const dz of [0,.46]) box(data,x+dx,y,z+dz,.015,.29,.015,colour);
     for (const dx of [0,.46]) for (const dy of [0,.28]) box(data,x+dx,y+dy,z,.015,.015,.48,colour);
   }
-  if (light.colour.some((value)=>value>0)) data.push(...beamVolume(light));
+  if (includeBeams && light.colour.some((value)=>value>0)) data.push(...beamVolume(light));
 }
 export function surfaceLighting(position, baseColour, lights) {
   const result=baseColour.map((value)=>value*.7);
@@ -90,7 +90,7 @@ export function studioPlant(x,z,height=2.1) {
   }
   return data;
 }
-export function sceneData(accent, fixtures, visibility={}, room) {
+export function sceneData(accent, fixtures, visibility={}, room,includeBeams=true) {
   const data=[],floor=hexVector("#172238"),wall=hexVector("#27324A"),couch=hexVector("#9C4F48"),wood=hexVector("#67442F"),metal=hexVector("#151D2D");
   const {width,height,depth}=roomDimensions(room);
   data.push(...surfaceGrid([-width/2,0,-depth/2],[width,0,0],[0,0,depth],floor));
@@ -127,8 +127,16 @@ export function sceneData(accent, fixtures, visibility={}, room) {
     const colour=surfaceLighting(data.slice(offset,offset+3),data.slice(offset+3,offset+6),lights);
     for (let channel=0;channel<3;channel+=1) data[offset+3+channel]=colour[channel];
   }
-  lights.forEach((light)=>lightGeometry(data,light));
+  lights.forEach((light)=>lightGeometry(data,light,includeBeams));
   return new Float32Array(data);
+}
+
+export function sceneBuffers(accent,fixtures,visibility={},room) {
+  const opaque=sceneData(accent,fixtures,visibility,room,false);
+  const beams=virtualFixtureVisuals(visibility.lighting===false ? [] : fixtures).filter((light)=>light.colour.some((value)=>value>0)).flatMap((light)=>beamVolume(light));
+  const data=new Float32Array(opaque.length+beams.length);
+  data.set(opaque);data.set(beams,opaque.length);
+  return {data,opaqueVertices:opaque.length/6};
 }
 
 export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = [], visibility = {}, room, projection = "perspective", onSelect=()=>{} } = {}) {
@@ -139,21 +147,28 @@ export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = 
   gl.detachShader(program,vertexShader);gl.detachShader(program,fragmentShader);
   gl.deleteShader(vertexShader);gl.deleteShader(fragmentShader);
   if(!gl.getProgramParameter(program,gl.LINK_STATUS)) { const message=gl.getProgramInfoLog(program);gl.deleteProgram(program);throw new Error(message); }
-  const buffer=gl.createBuffer(),position=gl.getAttribLocation(program,"p"),colour=gl.getAttribLocation(program,"c"),matrix=gl.getUniformLocation(program,"m");let selectedAccent=accent,virtualFixtures=fixtures,yaw=-.25,pitch=.1,distance=11,drag;
+  const buffer=gl.createBuffer(),position=gl.getAttribLocation(program,"p"),colour=gl.getAttribLocation(program,"c"),matrix=gl.getUniformLocation(program,"m"),opacity=gl.getUniformLocation(program,"opacity");let selectedAccent=accent,virtualFixtures=fixtures,yaw=-.25,pitch=.1,distance=11,drag;
   let geometry=null,viewProjection=null;
   function draw() {
     const ratio=Math.min(window.devicePixelRatio||1,2),width=Math.max(1,canvas.clientWidth),height=Math.max(1,canvas.clientHeight);
     gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
     if (!geometry) {
-      geometry=sceneData(hexVector(selectedAccent),virtualFixtures,visibility,room);
-      gl.bufferData(gl.ARRAY_BUFFER,geometry,gl.STATIC_DRAW);
+      geometry=sceneBuffers(hexVector(selectedAccent),virtualFixtures,visibility,room);
+      gl.bufferData(gl.ARRAY_BUFFER,geometry.data,gl.STATIC_DRAW);
     }
     if(canvas.width!==width*ratio||canvas.height!==height*ratio){canvas.width=width*ratio;canvas.height=height*ratio;}
     gl.viewport(0,0,canvas.width,canvas.height);gl.enable(gl.DEPTH_TEST);gl.clearColor(.025,.045,.09,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);
     gl.vertexAttribPointer(position,3,gl.FLOAT,false,24,0);gl.enableVertexAttribArray(position);gl.vertexAttribPointer(colour,3,gl.FLOAT,false,24,12);gl.enableVertexAttribArray(colour);
     viewProjection=multiply(viewportProjection(projection,width/height,distance),cameraMatrix({yaw,pitch,distance}));
     gl.uniformMatrix4fv(matrix,false,viewProjection);
-    gl.drawArrays(gl.TRIANGLES,0,geometry.length/6);
+    gl.depthMask(true);gl.disable(gl.BLEND);gl.uniform1f(opacity,1);
+    gl.drawArrays(gl.TRIANGLES,0,geometry.opaqueVertices);
+    const beamVertices=geometry.data.length/6-geometry.opaqueVertices;
+    if (beamVertices) {
+      gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE);gl.depthMask(false);gl.uniform1f(opacity,.35);
+      gl.drawArrays(gl.TRIANGLES,geometry.opaqueVertices,beamVertices);
+      gl.depthMask(true);gl.disable(gl.BLEND);gl.uniform1f(opacity,1);
+    }
   }
   const resize=new ResizeObserver(draw);
   const down=(event)=>{drag={x:event.clientX,y:event.clientY,travel:0};canvas.setPointerCapture(event.pointerId);};

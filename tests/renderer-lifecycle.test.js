@@ -7,7 +7,11 @@ test("camera movement reuses geometry; changes invalidate it and destroy removes
   const previousObserver=Object.getOwnPropertyDescriptor(globalThis,"ResizeObserver");
   let uploads=0,deletedBuffers=0,deletedPrograms=0,deletedShaders=0,disconnected=false;
   const events=new Map();
+  const drawStates=[];let depthWrites=true,blending=false;
   const gl=new Proxy({
+    BLEND:"blend",DEPTH_TEST:"depth",
+    enable:(cap)=>{if(cap==="blend")blending=true;},disable:(cap)=>{if(cap==="blend")blending=false;},
+    depthMask:(value)=>{depthWrites=value;},drawArrays:()=>drawStates.push({depthWrites,blending}),
     getShaderParameter:()=>true,getProgramParameter:()=>true,
     createShader:()=>({}),createProgram:()=>({}),createBuffer:()=>({}),
     getAttribLocation:()=>0,getUniformLocation:()=>({}),
@@ -23,7 +27,9 @@ test("camera movement reuses geometry; changes invalidate it and destroy removes
     observe(){} disconnect(){disconnected=true;}
   }});
   try {
-    const renderer=createLightLabRenderer(canvas);
+    const renderer=createLightLabRenderer(canvas,{fixtures:[{id:"a",properties:{dimmer:255,red:255,green:0,blue:0}}]});
+    assert.deepEqual(drawStates.slice(0,2),[{depthWrites:true,blending:false},{depthWrites:false,blending:true}]);
+    assert.equal(depthWrites,true);assert.equal(blending,false);
     assert.equal(uploads,1);
     events.get("keydown")({key:"ArrowLeft",preventDefault(){}});
     events.get("wheel")({deltaY:1,preventDefault(){}});
