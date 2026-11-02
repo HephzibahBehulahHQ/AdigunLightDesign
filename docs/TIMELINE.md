@@ -6,4 +6,6 @@ The controls capture cues with editable duration, fade and delay, select a cue, 
 
 Play sequence opens the 3D preview and evaluates cues in their stored order. Each cue starts from the previous cue's completed fixture values. Boundary transitions, completion, empty sequences and preservation of source data have automated coverage. Stop cancels the sequence and restores the saved scene.
 
-Pause/resume, track reordering, scrubbing and hardware output remain unimplemented. The implementation does not send DMX to physical devices, synchronize a console or claim real-time hardware timing. Browser interaction and visual acceptance remain unverified; domain timing and snapshot behavior have automated coverage.
+Earlier/Later controls move the selected cue one position in the stored sequence. Boundary controls are disabled. Reordering is undoable, preserves cue snapshots and stops any running preview.
+
+Pause/resume, scrubbing and hardware output remain unimplemented. The implementation does not send DMX to physical devices, synchronize a console or claim real-time hardware timing. Browser interaction and visual acceptance remain unverified; domain timing and snapshot behavior have automated coverage.

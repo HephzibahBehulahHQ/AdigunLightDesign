@@ -1,5 +1,16 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { moveCue } from "../src/timeline/engine.js";
+test("reorders cues without mutating stored snapshots or crossing boundaries", () => {
+  const cues=[{id:"a"},{id:"b"},{id:"c"}];
+  assert.deepEqual(moveCue(cues,"b",-1).map((cue)=>cue.id),["b","a","c"]);
+  assert.deepEqual(moveCue(cues,"b",1).map((cue)=>cue.id),["a","c","b"]);
+  assert.deepEqual(moveCue(cues,"a",-1),cues);
+  assert.deepEqual(moveCue(cues,"c",1),cues);
+  assert.deepEqual(cues.map((cue)=>cue.id),["a","b","c"]);
+  assert.throws(()=>moveCue(cues,"missing",1));
+  assert.throws(()=>moveCue(cues,"a",2));
+});
 import { editCue } from "../src/timeline/engine.js";
 import { evaluateSequence } from "../src/timeline/engine.js";
 test("sequences cues continuously across boundaries without mutating the source", () => {

@@ -1,6 +1,16 @@
 const clamp = (value, minimum = 0, maximum = 1) => Math.min(maximum, Math.max(minimum, value));
 export const interpolate = (from, to, progress) => from + (to - from) * clamp(progress);
 
+export function moveCue(cues, cueId, offset) {
+  if (offset !== -1 && offset !== 1) throw new Error("Cue movement must be one position earlier or later.");
+  const index=cues.findIndex((cue)=>cue.id===cueId);
+  if (index < 0) throw new Error("Cue was not found.");
+  const result=[...cues],destination=index + offset;
+  if (destination < 0 || destination >= cues.length) return result;
+  [result[index],result[destination]]=[result[destination],result[index]];
+  return result;
+}
+
 export function editCue(cue, changes) {
   const options={...cue,...changes};
   if (typeof options.name !== "string" || !options.name.trim()) throw new Error("Cue name must not be empty.");

@@ -30,4 +30,8 @@ Object.assign(messages.en,{playSequence:"Play sequence"});
 Object.assign(messages.de,{playSequence:"Sequenz abspielen"});
 Object.assign(messages.yo,{playSequence:"Ṣeré àwọn cue lẹ́sẹẹsẹ"});
 Object.assign(messages.pcm,{playSequence:"Play cues one by one"});
+Object.assign(messages.en,{earlier:"Earlier",later:"Later"});
+Object.assign(messages.de,{earlier:"Früher",later:"Später"});
+Object.assign(messages.yo,{earlier:"Ṣáájú",later:"Lẹ́yìn"});
+Object.assign(messages.pcm,{earlier:"Move before",later:"Move after"});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }

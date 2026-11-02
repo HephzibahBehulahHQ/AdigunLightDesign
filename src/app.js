@@ -5,7 +5,7 @@ import { paletteCssVariables, rerollUnlocked, starterPalette, updateSwatch } fro
 import { supportedLocales, translate } from "./i18n.js";
 import { createLightLabRenderer } from "./light-lab/renderer.js";
 import { blackout, createFixture, dmxFrame, fixtureProfiles, getFixtureProfile, patchFixture, updateFixture } from "./dmx/engine.js";
-import { createCue, editCue, evaluateCue, evaluateSequence } from "./timeline/engine.js";
+import { createCue, editCue, evaluateCue, evaluateSequence, moveCue } from "./timeline/engine.js";
 import { cueCsv, paletteCss, paletteJson, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
 import { readProjectFile } from "./domain/import-project.js";
 import { editorShortcut, isEditableTarget } from "./accessibility/shortcuts.js";
@@ -163,11 +163,20 @@ function render() {
   if (activeCue) document.querySelector(".cue-track").insertAdjacentHTML("beforebegin", `<div class="cue-timing"><label>${t("timeline")}<input id="edit-cue-name" value="${esc(activeCue.name)}" /></label>${["duration","fade","delay"].map((key)=>`<label>${t(key)} (s)<input id="edit-cue-${key}" type="number" required min="0" step=".1" value="${activeCue[key] ?? 0}" /></label>`).join("")}<button id="edit-cue">${t("apply")}</button></div>`);
   document.querySelector(".dmx-actions").insertAdjacentHTML("beforeend", `<button id="blackout" ${project.fixtures.length ? "" : "disabled"}>${t("blackout")}</button>`);
   document.querySelector(".dmx-actions").insertAdjacentHTML("beforeend", `<button id="play-sequence" ${project.cues.length ? "" : "disabled"}>▶ ${t("playSequence")}</button>`);
+  if (activeCue) {
+    const index=project.cues.indexOf(activeCue);
+    document.querySelector("#edit-cue").insertAdjacentHTML("afterend", `<button data-move-cue="-1" ${index === 0 ? "disabled" : ""}>← ${t("earlier")}</button><button data-move-cue="1" ${index === project.cues.length - 1 ? "disabled" : ""}>${t("later")} →</button>`);
+  }
   bind();
   if (preferences.view === "light") renderer = createLightLabRenderer(document.querySelector("#light-canvas"), { accent:scene().materialColor, fixtures:project.fixtures });
 }
 
 function bind() {
+  document.querySelectorAll("[data-move-cue]").forEach((button)=>button.onclick=()=>{
+    const cue=project.cues.find((item)=>item.id===preferences.cueId) ?? project.cues.at(-1);
+    commitProjectChange("cue-reorder",(draft)=>{draft.cues=moveCue(draft.cues,cue.id,Number(button.dataset.moveCue));});
+    render();
+  });
   document.querySelector("#play-sequence").onclick=playSequence;
   const editButton=document.querySelector("#edit-cue");
   if (editButton) editButton.onclick=()=>{
