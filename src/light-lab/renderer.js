@@ -4,6 +4,7 @@ import { pickScenePoint } from "./picking.js";
 import { roomDimensions } from "../domain/room.js";
 import { getFixtureProfile } from "../dmx/engine.js";
 import { previewQuality } from "./quality.js";
+import { stageSettings } from "../domain/stage.js";
 
 const vertexSource = `attribute vec3 p;attribute vec3 c;uniform mat4 m;varying vec3 v;void main(){gl_Position=m*vec4(p,1.0);v=c;}`;
 const fragmentSource = `precision mediump float;varying vec3 v;uniform float opacity;void main(){gl_FragColor=vec4(v,opacity);}`;
@@ -93,7 +94,7 @@ export function studioPlant(x,z,height=2.1) {
   }
   return data;
 }
-export function sceneData(accent, fixtures, visibility={}, room,includeBeams=true,materials={},quality="balanced") {
+export function sceneData(accent, fixtures, visibility={}, room,includeBeams=true,materials={},quality="balanced",stage) {
   const data=[],floor=hexVector(materials.floor ?? "#172238"),wall=hexVector(materials.wall ?? "#27324A"),couch=hexVector("#9C4F48"),wood=hexVector("#67442F"),metal=hexVector("#151D2D");
   const {width,height,depth}=roomDimensions(room);
   const budget=previewQuality(quality);
@@ -102,6 +103,8 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
   data.push(...surfaceGrid([-width/2,0,-depth/2],[0,0,depth],[0,height,0],materials.wall ? wall : hexVector("#132746"),budget.columns,budget.rows));
   data.push(...surfaceGrid([-width/2,height,-depth/2],[width,0,0],[0,0,depth],hexVector(materials.ceiling ?? "#101726"),budget.columns,budget.rows));
   if (visibility.props!==false) {
+  const platform=stageSettings(stage);
+  if(platform.enabled)box(data,platform.x,platform.y,platform.z,platform.width,platform.height,platform.depth,hexVector(platform.color));
   box(data,-2.1,.01,-.8,4.2,.02,3.5,hexVector("#665477"));
   box(data,-1.7,.25,1.4,3.4,.8,.75,couch);
   box(data,-1.45,1.05,1.55,2.9,.55,.35,couch.map((value)=>Math.min(1,value*1.2)));
@@ -135,15 +138,15 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
   return new Float32Array(data);
 }
 
-export function sceneBuffers(accent,fixtures,visibility={},room,materials={},quality="balanced") {
-  const opaque=sceneData(accent,fixtures,visibility,room,false,materials,quality);
+export function sceneBuffers(accent,fixtures,visibility={},room,materials={},quality="balanced",stage) {
+  const opaque=sceneData(accent,fixtures,visibility,room,false,materials,quality,stage);
   const beams=virtualFixtureVisuals(visibility.lighting===false ? [] : fixtures,previewQuality(quality).fixtures).filter((light)=>light.colour.some((value)=>value>0)).flatMap((light)=>beamVolume(light));
   const data=new Float32Array(opaque.length+beams.length);
   data.set(opaque);data.set(beams,opaque.length);
   return {data,opaqueVertices:opaque.length/6};
 }
 
-export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = [], visibility = {}, room, materials={}, quality="balanced", projection = "perspective", onSelect=()=>{} } = {}) {
+export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = [], visibility = {}, room, materials={}, stage, quality="balanced", projection = "perspective", onSelect=()=>{} } = {}) {
   const gl = canvas.getContext("webgl", { antialias:true, alpha:false });
   if (!gl) return { supported:false, destroy(){}, reset(){}, setAccent(){}, setFixtures(){} };
   const program=gl.createProgram(),vertexShader=compile(gl,gl.VERTEX_SHADER,vertexSource),fragmentShader=compile(gl,gl.FRAGMENT_SHADER,fragmentSource);
@@ -157,7 +160,7 @@ export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = 
     const ratio=Math.min(window.devicePixelRatio||1,previewQuality(quality).pixelRatio),width=Math.max(1,canvas.clientWidth),height=Math.max(1,canvas.clientHeight);
     gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
     if (!geometry) {
-      geometry=sceneBuffers(hexVector(selectedAccent),virtualFixtures,visibility,room,materials,quality);
+      geometry=sceneBuffers(hexVector(selectedAccent),virtualFixtures,visibility,room,materials,quality,stage);
       gl.bufferData(gl.ARRAY_BUFFER,geometry.data,gl.STATIC_DRAW);
     }
     const pixelWidth=Math.max(1,Math.round(width*ratio)),pixelHeight=Math.max(1,Math.round(height*ratio));

@@ -35,6 +35,7 @@ import { previewNativeToolAction,confirmNativeToolAction } from "./ai/action-pre
 import { icon } from "./ui/icons.js";
 import { previewQuality,previewQualities } from "./light-lab/quality.js";
 import { temperaturePalette } from "./domain/temperature.js";
+import { stageSettings,updateStage } from "./domain/stage.js";
 import { groupFixtures,saveFixtureGroup } from "./domain/fixture-groups.js";
 import { cueCsv, designTokenJson, paletteCss, paletteJson, paletteSvg, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
 import { readProjectFile } from "./domain/import-project.js";
@@ -377,6 +378,8 @@ function render() {
   document.querySelector(".timeline").insertAdjacentHTML("beforeend", `<details class="fixture-group-editor"><summary>${t("virtualDmx")} · ${t("outputDisabled")}</summary><pre id="virtual-dmx-monitor"></pre></details>`);
   updateDmxFeedback(project.fixtures);
   const room=roomDimensions(scene().room);
+  const stage=stageSettings(scene().stage);
+  document.querySelector(".left-rail").insertAdjacentHTML("beforeend", `<details class="fixture-group-editor"><summary>${t("stagePlatform")}</summary><label><input id="stage-enabled" type="checkbox" ${stage.enabled ? "checked" : ""}> ${t("showStage")}</label>${["x","y","z","width","height","depth"].map((key)=>`<label>${["x","y","z"].includes(key) ? key.toUpperCase() : t(key)} (m)<input id="stage-${key}" type="number" step="any" required value="${stage[key]}"></label>`).join("")}<label>${t("selectedColour")}<input id="stage-color" type="color" value="${stage.color}"></label><button id="apply-stage">${t("apply")}</button></details>`);
   document.querySelector(".left-rail").insertAdjacentHTML("beforeend", `<details class="fixture-group-editor"><summary>${t("roomDimensions")}</summary>${["width","height","depth"].map((key)=>`<label>${t(key)} (m)<input id="room-${key}" type="number" required min="2" max="${key==="height" ? 20 : 50}" step="any" value="${room[key]}"></label>`).join("")}<button id="apply-room">${t("apply")}</button></details>`);
   for (const [index,key] of ["lighting","palette","props"].entries()) {
     const item=document.querySelectorAll(".layer-list li")[index],visible=scene().visibility?.[key]!==false;
@@ -419,7 +422,7 @@ function render() {
   }
   bind();
   if (preferences.view === "light") {
-    renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {accent:scene().materialColor,room:scene().room,materials:scene().materials,quality:preferences.previewQuality,projection:preferences.projection==="orthographic" ? "orthographic" : "perspective",visibility:scene().visibility,fixtures:project.fixtures.map((fixture)=>({...fixture,selected:fixture.id===selectedFixture()?.id})),onSelect(id){stopPlayback();preferences.fixtureId=id;preferences.inspectorMode="fixture";savePreferences();render();}});
+    renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {accent:scene().materialColor,room:scene().room,materials:scene().materials,stage:scene().stage,quality:preferences.previewQuality,projection:preferences.projection==="orthographic" ? "orthographic" : "perspective",visibility:scene().visibility,fixtures:project.fixtures.map((fixture)=>({...fixture,selected:fixture.id===selectedFixture()?.id})),onSelect(id){stopPlayback();preferences.fixtureId=id;preferences.inspectorMode="fixture";savePreferences();render();}});
     if (!renderer.supported) {
       document.querySelector(".scene-title small").textContent=phrase("previewFixtureCount",{shown:0,total:project.fixtures.length});
       const note=document.createElement("p");
@@ -434,6 +437,13 @@ function render() {
 }
 
 function bind() {
+  document.querySelector("#apply-stage").onclick=()=>{
+    try {
+      const settings={enabled:document.querySelector("#stage-enabled").checked,color:document.querySelector("#stage-color").value};
+      for(const key of ["x","y","z","width","height","depth"]) {const input=document.querySelector(`#stage-${key}`);if(!input.value.trim() || !input.checkValidity())return input.reportValidity();settings[key]=Number(input.value);}
+      commitProjectChange("scene-stage-edit",(draft)=>{draft.scenes[0]=updateStage(draft.scenes[0],settings);});render();
+    }catch(error){setStatus(error.message);}
+  };
   document.querySelectorAll("[data-temperature]").forEach((button)=>button.onclick=()=>{
     const input=document.querySelector("#temperature-strength");
     if(!input.value.trim() || !input.checkValidity())return input.reportValidity();

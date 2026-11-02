@@ -203,4 +203,8 @@ Object.assign(messages.en,{warmPalette:"Warmer palette",coolPalette:"Cooler pale
 Object.assign(messages.de,{warmPalette:"Wärmere Palette",coolPalette:"Kühlere Palette",temperatureStrength:"Stärke der Farbtonverschiebung"});
 Object.assign(messages.yo,{warmPalette:"Paleti gbígbóná",coolPalette:"Paleti tútù",temperatureStrength:"Agbára yíyí irú àwọ̀"});
 Object.assign(messages.pcm,{warmPalette:"Warmer palette",coolPalette:"Cooler palette",temperatureStrength:"Hue shift strength"});
+Object.assign(messages.en,{stagePlatform:"Stage platform",showStage:"Show stage"});
+Object.assign(messages.de,{stagePlatform:"Bühnenpodest",showStage:"Podest anzeigen"});
+Object.assign(messages.yo,{stagePlatform:"Pẹpẹ ìtàgé",showStage:"Fi pẹpẹ hàn"});
+Object.assign(messages.pcm,{stagePlatform:"Stage platform",showStage:"Show stage"});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }

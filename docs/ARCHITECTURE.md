@@ -37,6 +37,8 @@ Direct editor mutations use document transactions. Each committed operation snap
 
 ## Visual acceptance
 
+An optional stage platform is an actual box in the 3D scene. Saved controls set visibility, position, width/height/depth and opaque color through undoable transactions. The stage follows props-layer visibility and receives the artistic lighting pass. Existing scenes default to no stage. Furniture does not automatically move onto the platform; no structural-load, collision or safety calculation is provided. Geometry and native validation have tests; browser appearance remains unverified.
+
 Preview modes use explicit rendering budgets: Performance 4 fixtures/1× pixel ratio, Balanced 12/1.5×, Quality 32/2×. Surface subdivisions also increase with quality. The viewport reports rendered/total fixtures; excess fixtures retain project/DMX data but do not contribute to the preview. Picking uses the same budget. Mode choice persists locally and resets the camera when rebuilding. These are chosen limits, not measured frame-rate guarantees; hardware performance and browser appearance remain unverified.
 
 Fixture yaw is editable in degrees and rotates the virtual pan/tilt beam target around the fixture's world position. It is a scene transform, not a transmitted DMX channel. The simplified fixture housing does not model full mechanical orientation, and no manufacturer aiming calibration is claimed. Rotation/position preservation has automated coverage; browser appearance remains unverified.
