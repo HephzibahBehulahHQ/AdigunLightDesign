@@ -1,5 +1,7 @@
 # Security boundary
 
+Imported fixture/swatch identifiers and names are escaped before insertion into option values, data attributes or text markup. Shared markup helpers have injection-string regression tests. Palette seed preferences normalize before rendering. This closes the identified identifier attribute-injection paths; it does not establish a complete browser security audit or CSP verification.
+
 - Project imports must validate MIME, size and schema before use.
 - AI providers are optional server-side integrations. Browser bundles contain no secret key.
 - Lux actions are structured, capability-scoped, validated and confirmable; they may never execute arbitrary JavaScript.

@@ -25,6 +25,7 @@ import { roomDimensions } from "./domain/room.js";
 import { duplicateFixture,deleteFixture } from "./domain/fixture-operations.js";
 import { readBrowserStorage,writeBrowserStorage } from "./domain/browser-storage.js";
 import { applySceneMaterial } from "./domain/scene-materials.js";
+import { escapeHtml as esc,fixtureOptions,swatchButton } from "./ui/html.js";
 import { groupFixtures,saveFixtureGroup } from "./domain/fixture-groups.js";
 import { cueCsv, designTokenJson, paletteCss, paletteJson, paletteSvg, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
 import { readProjectFile } from "./domain/import-project.js";
@@ -36,6 +37,7 @@ const preferencesKey = "adigunlightdesign/preferences-v1";
 const app = document.querySelector("#app");
 const defaults = { locale:"en", theme:"dark", module:"canvas", view:"light", tool:"select", selected:"deep-blue", luxOpen:true, harmony:"analogous", seed:"#2196F3" };
 const preferences = { ...defaults, ...safeParse(readBrowserStorage(preferencesKey).value) };
+preferences.seed=normalizeHex(preferences.seed) ?? defaults.seed;
 let projectPersisted=false;
 let project = loadProject();
 let undoStack = [], redoStack = [], status = "", renderer = null, playbackTimer = null, playbackClock = null;
@@ -168,13 +170,12 @@ function mutateColours(fn) { commitProjectChange("palette-update",(draft)=>{draf
 function undo() { if (!undoStack.length) return setStatus(t("noUndo")); stopPlayback(); const next=undoTransaction({project,undoStack,redoStack});project=next.project;undoStack=next.undoStack;redoStack=next.redoStack;saveProject();status=t("statusUndo");render(); }
 function redo() { if (!redoStack.length) return setStatus(t("noRedo")); stopPlayback(); const next=redoTransaction({project,undoStack,redoStack});project=next.project;undoStack=next.undoStack;redoStack=next.redoStack;saveProject();status=t("statusRedo");render(); }
 function setStatus(value) { status = value; render(); }
-function esc(value) { return String(value).replace(/[&<>"]/g, (char) => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"})[char]); }
 function disabled(title) { return `disabled title="${esc(title)}"`; }
 function compact(value, digits = 1) { return Number(value).toFixed(digits); }
 function colourSpaceMarkup(hex) { const rgb=hexToRgb(hex),hsl=rgbToHsl(rgb),hsv=rgbToHsv(rgb),lab=rgbToLab(rgb),oklab=rgbToOklab(rgb); return `<section class="colour-space-card" aria-label="${t("colorSpaces")}"><h3>${t("colorSpaces")}</h3><dl><div><dt>sRGB</dt><dd>${Math.round(rgb.r)}, ${Math.round(rgb.g)}, ${Math.round(rgb.b)}</dd></div><div><dt>HSL</dt><dd>${compact(hsl.h)}° · ${compact(hsl.s*100)}% · ${compact(hsl.l*100)}%</dd></div><div><dt>HSV</dt><dd>${compact(hsv.h)}° · ${compact(hsv.s*100)}% · ${compact(hsv.v*100)}%</dd></div><div><dt>CIELAB</dt><dd>${compact(lab.l)}, ${compact(lab.a)}, ${compact(lab.b)}</dd></div><div><dt>OKLab</dt><dd>${compact(oklab.l,3)}, ${compact(oklab.a,3)}, ${compact(oklab.b,3)}</dd></div></dl><small class="${isSrgbGamut(rgb)?"pass":"fail"}">${isSrgbGamut(rgb)?t("inSrgb"):t("outsideSrgb")}</small></section>`; }
 function fixtureLibraryMarkup() { return fixtureProfiles.map((profile)=>`<article><b>${esc(profile.model)}</b><small>${esc(profile.type)} · ${profile.modes[0].channels.length} CH</small><p>${esc(profile.validationStatus)} · ${esc(profile.provenance)}</p><button data-profile="${profile.id}">${t("addToVirtualPatch")}</button></article>`).join(""); }
 function selectedFixture() { return project.fixtures.find((fixture)=>fixture.id===preferences.fixtureId) ?? project.fixtures[0]; }
-function fixtureInspectorMarkup() { const fixture=selectedFixture(),profile=getFixtureProfile(fixture.profileId),patch=fixture.patchAssignment ?? {universe:1,startAddress:1}; return `<section class="fixture-inspector"><h3>${t("virtualFixture")}</h3><label>${t("fixtureLabel")}<select id="fixture-select">${project.fixtures.map((item)=>`<option value="${item.id}" ${item.id===fixture.id?"selected":""}>${esc(item.name)}</option>`).join("")}</select></label><small>${esc(profile.model)} · ${esc(profile.validationStatus)}</small><label>${t("colourName")}<input id="fixture-name" value="${esc(fixture.name)}" /></label><div class="fixture-grid"><label>${t("universe")}<input id="fixture-universe" type="number" min="1" value="${patch.universe}" /></label><label>${t("address")}<input id="fixture-address" type="number" min="1" max="512" value="${patch.startAddress}" /></label><label>${t("dimmer")}<input id="fixture-dimmer" type="number" min="0" max="255" value="${fixture.properties.dimmer ?? 0}" /></label><label>${t("beam")}<input id="fixture-beam" type="number" min="0" max="255" value="${fixture.properties.beam ?? 0}" /></label></div><button id="apply-fixture" class="wide">${t("applyFixturePatch")}</button></section>`; }
+function fixtureInspectorMarkup() { const fixture=selectedFixture(),profile=getFixtureProfile(fixture.profileId),patch=fixture.patchAssignment ?? {universe:1,startAddress:1}; return `<section class="fixture-inspector"><h3>${t("virtualFixture")}</h3><label>${t("fixtureLabel")}<select id="fixture-select">${fixtureOptions(project.fixtures,fixture.id)}</select></label><small>${esc(profile.model)} · ${esc(profile.validationStatus)}</small><label>${t("colourName")}<input id="fixture-name" value="${esc(fixture.name)}" /></label><div class="fixture-grid"><label>${t("universe")}<input id="fixture-universe" type="number" min="1" value="${patch.universe}" /></label><label>${t("address")}<input id="fixture-address" type="number" min="1" max="512" value="${patch.startAddress}" /></label><label>${t("dimmer")}<input id="fixture-dimmer" type="number" min="0" max="255" value="${fixture.properties.dimmer ?? 0}" /></label><label>${t("beam")}<input id="fixture-beam" type="number" min="0" max="255" value="${fixture.properties.beam ?? 0}" /></label></div><button id="apply-fixture" class="wide">${t("applyFixturePatch")}</button></section>`; }
 function applyFixtureInspector() {
   const fixture=selectedFixture();
   if (!fixture) return;
@@ -214,7 +215,7 @@ function render() {
     ["canvas", "⌂", true], ["palette", "◉", true], ["light", "☼", true], ["copilot", "◌", true], ["library", "▱", true], ["export", "↗", true], ["community", "♧", false]
   ].map(([key, icon, enabled]) => `<button class="module ${preferences.module === key ? "is-active" : ""}" data-module="${key}" ${enabled ? "" : disabled(`${t(key)} ${t("availableLater")}`)}><span>${icon}</span>${t(key)}</button>`).join("");
   const tools = [["select","↖",true],["paletteBrush","◉",true],["fixture","☀",true],["material","◆",true],["shapes","□",false],["text","T",false],["measure","⌗",false],["orbit","◎",true],["aiPin","✦",false]].map(([key, icon, enabled]) => `<button class="tool ${preferences.tool === key ? "is-active" : ""}" data-tool="${key}" ${enabled ? "" : disabled(`${t(key)} ${t("availableLater")}`)}><span>${icon}</span>${t(key)}</button>`).join("");
-  const swatches = palette().colors.map((swatch) => `<button class="swatch ${active.id === swatch.id ? "is-selected" : ""}" data-swatch="${swatch.id}" aria-label="${esc(swatch.name)} ${swatch.hex}"><span style="background:${swatch.hex}"></span><b>${esc(swatch.name)}</b><small>${swatch.hex}</small>${swatch.locked ? "<em>⌁</em>" : ""}</button>`).join("");
+  const swatches = palette().colors.map((swatch)=>swatchButton(swatch,active.id)).join("");
   const patchedFixtures = project.fixtures.filter((fixture) => fixture.patchAssignment);
   const virtualFrame = dmxFrame(project.fixtures);
   const activeCue=project.cues.find((cue)=>cue.id===preferences.cueId) ?? project.cues.at(-1);

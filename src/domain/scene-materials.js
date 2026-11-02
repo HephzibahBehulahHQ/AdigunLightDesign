@@ -5,6 +5,7 @@ export function validSceneMaterials(materials) {
 export function applySceneMaterial(scene,target,hex) {
   if (!["accent","wall","floor","ceiling"].includes(target)) throw new Error("Unsupported scene material target.");
   const result=structuredClone(scene),color=normalizeHex(hex);
+  if (!color) throw new Error("Invalid scene material color.");
   if (target==="accent") result.materialColor=color;
   else result.materials={...result.materials,[target]:color};
   return result;
