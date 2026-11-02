@@ -200,9 +200,30 @@ function bind() {
   });
   document.querySelector("#locale").onchange = (event) => { preferences.locale = event.target.value; savePreferences(); status = t("statusLocale"); render(); };
   document.querySelector("#theme").onclick = () => { preferences.theme = preferences.theme === "dark" ? "light" : "dark"; savePreferences(); status = t("statusTheme"); render(); };
-  document.querySelectorAll("[data-module]").forEach((button) => button.onclick = () => { const key = button.dataset.module; if (key === "copilot") preferences.luxOpen = true; else preferences.module = key; status = t("statusModule") + button.textContent.trim(); render(); });
+  document.querySelectorAll("[data-module]").forEach((button) => button.onclick = () => {
+    const key=button.dataset.module;
+    stopPlayback();
+    if (key === "copilot") preferences.luxOpen=true;
+    else preferences.module=key;
+    if (key === "light") preferences.view="light";
+    if (key === "palette") preferences.view="palette";
+    savePreferences();
+    status=t("statusModule") + button.textContent.trim();
+    render();
+  });
   document.querySelectorAll("[data-view]").forEach((button) => button.onclick = () => { preferences.view = button.dataset.view; savePreferences(); render(); });
-  document.querySelectorAll("[data-tool]").forEach((button) => button.onclick = () => { preferences.tool = button.dataset.tool; status = t("statusTool") + button.textContent.trim(); render(); });
+  document.querySelectorAll("[data-tool]").forEach((button) => button.onclick = () => {
+    preferences.tool=button.dataset.tool;
+    if (preferences.tool === "fixture") { preferences.module="library"; preferences.view="light"; }
+    if (preferences.tool === "orbit" || preferences.tool === "material") preferences.view="light";
+    if (preferences.tool === "paletteBrush") preferences.view="palette";
+    savePreferences();
+    status=t("statusTool") + button.textContent.trim();
+    render();
+    if (preferences.tool === "orbit") document.querySelector("#light-canvas")?.focus();
+    if (preferences.tool === "material") document.querySelector("#apply-scene")?.focus();
+    if (preferences.tool === "paletteBrush") document.querySelector("#swatch-hex")?.focus();
+  });
   document.querySelectorAll("[data-swatch]").forEach((button) => button.onclick = () => { preferences.selected = button.dataset.swatch; render(); });
   document.querySelector("#project-name").onchange = (event) => { const name=event.target.value.trim(); if(name&&name!==project.name) commitProjectChange("project-rename",(draft)=>{draft.name=name;}); render(); };
   document.querySelector("#seed").onchange = (event) => { const hex = normalizeHex(event.target.value); if (hex) preferences.seed = hex; event.target.value = preferences.seed; savePreferences(); };
