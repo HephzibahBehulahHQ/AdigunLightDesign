@@ -7,7 +7,7 @@ test("camera movement reuses geometry; changes invalidate it and destroy removes
   const previousObserver=Object.getOwnPropertyDescriptor(globalThis,"ResizeObserver");
   let uploads=0,deletedBuffers=0,deletedPrograms=0,deletedShaders=0,disconnected=false;
   const events=new Map();
-  const drawStates=[];let depthWrites=true,blending=false;
+  const drawStates=[],uploadLengths=[];let depthWrites=true,blending=false;
   const gl=new Proxy({
     BLEND:"blend",DEPTH_TEST:"depth",
     enable:(cap)=>{if(cap==="blend")blending=true;},disable:(cap)=>{if(cap==="blend")blending=false;},
@@ -15,7 +15,7 @@ test("camera movement reuses geometry; changes invalidate it and destroy removes
     getShaderParameter:()=>true,getProgramParameter:()=>true,
     createShader:()=>({}),createProgram:()=>({}),createBuffer:()=>({}),
     getAttribLocation:()=>0,getUniformLocation:()=>({}),
-    bufferData:()=>{uploads+=1;},deleteBuffer:()=>{deletedBuffers+=1;},deleteProgram:()=>{deletedPrograms+=1;},deleteShader:()=>{deletedShaders+=1;}
+    bufferData:(target,data)=>{uploads+=1;uploadLengths.push(data.length);},deleteBuffer:()=>{deletedBuffers+=1;},deleteProgram:()=>{deletedPrograms+=1;},deleteShader:()=>{deletedShaders+=1;}
   },{get:(target,key)=>key in target ? target[key] : ()=>{}});
   const canvas={clientWidth:800,clientHeight:450,width:800,height:450,
     getContext:()=>gl,setPointerCapture:()=>{},
@@ -27,7 +27,8 @@ test("camera movement reuses geometry; changes invalidate it and destroy removes
     observe(){} disconnect(){disconnected=true;}
   }});
   try {
-    const renderer=createLightLabRenderer(canvas,{fixtures:[{id:"a",properties:{dimmer:255,red:255,green:0,blue:0}}]});
+    const fixture={id:"a",properties:{dimmer:255,red:255,green:0,blue:0}};
+    const renderer=createLightLabRenderer(canvas,{fixtures:[{...fixture,selected:true}]});
     assert.deepEqual(drawStates.slice(0,2),[{depthWrites:true,blending:false},{depthWrites:false,blending:true}]);
     assert.equal(depthWrites,true);assert.equal(blending,false);
     assert.equal(uploads,1);
@@ -37,8 +38,13 @@ test("camera movement reuses geometry; changes invalidate it and destroy removes
     assert.equal(uploads,1);
     renderer.setAccent("#FF0000");
     assert.equal(uploads,2);
+    renderer.setFixtures([fixture]);
+    assert.equal(uploadLengths[2],uploadLengths[1],"playback values retain the selected fixture outline");
+    assert.equal(Object.hasOwn(fixture,"selected"),false,"renderer selection must not mutate project fixtures");
+    renderer.setFixtures([{...fixture,selected:false}]);
+    assert.ok(uploadLengths[3]<uploadLengths[2],"explicit deselection removes outline geometry");
     renderer.setFixtures([]);
-    assert.equal(uploads,3);
+    assert.equal(uploads,5);
     renderer.destroy();
     assert.equal(events.size,0);
     assert.equal(disconnected,true);

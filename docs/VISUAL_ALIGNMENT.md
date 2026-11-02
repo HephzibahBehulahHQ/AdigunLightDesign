@@ -17,3 +17,10 @@ This is a source-level alignment change. No screenshot comparison, measured
 pixel difference, browser layout acceptance or exact visual match is established.
 The studio rendering, typography, density and reference artwork still require
 visual verification and further refinement. This document is not acceptance.
+
+The renderer now retains the selected fixture's outline when cue/effect preview
+updates supply fixture values without UI selection markers. Explicit selection
+flags still replace that selection; removal drops the missing fixture naturally.
+A mocked WebGL regression checks retained outline geometry, explicit deselection
+and absence of mutation in source fixtures. This does not verify the outline's
+browser appearance against the reference.
