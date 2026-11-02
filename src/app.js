@@ -2,6 +2,7 @@ import { validateProject } from "./domain/project.js";
 import { prepareEditorProject } from "./domain/editor-project.js";
 import { moveSwatch, removeSwatch, reorderSwatch } from "./domain/palette-store.js";
 import { readImagePalette } from "./domain/image-file.js";
+import { snapshotPalette, restorePalette } from "./domain/palette-versions.js";
 import { paletteRaster } from "./export/raster.js";
 import { hslToRgb } from "./domain/color-engine.js";
 import { suggestContrast } from "./domain/color-engine.js";
@@ -224,6 +225,7 @@ function render() {
   const oklch=oklabToOklch(rgbToOklab(hexToRgb(active.hex)));
   document.querySelector("#lock-swatch").insertAdjacentHTML("beforebegin", `<section class="colour-space-card"><h3>OKLCH</h3>${[["l",oklch.l,1,t("lightness")],["c",oklch.c,1,t("chroma")],["h",oklch.h,360,t("hue")]].map(([key,value,max,label])=>`<label>${label} (0–${max})<input id="oklch-${key}" type="number" required min="0" max="${max}" step="any" value="${compact(value,4)}" /></label>`).join("")}<button id="apply-oklch" class="wide">${t("apply")} OKLCH</button></section>`);
   document.querySelector("#oklch-l").closest("label").firstChild.textContent="L (0–1)";
+  document.querySelector(".palette-panel").insertAdjacentHTML("beforeend", `<div class="palette-actions"><button id="save-version">${t("saveVersion")}</button><select id="palette-version" aria-label="${t("savedVersions")}">${project.palettes.slice(1).map((item)=>`<option value="${esc(item.id)}">${esc(item.name)}</option>`).join("")}</select><button id="restore-version" ${project.palettes.length<2 ? "disabled" : ""}>${t("restoreVersion")}</button></div>`);
   bind();
   if (preferences.view === "light") {
     renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {accent:scene().materialColor,fixtures:project.fixtures.map((fixture)=>({...fixture,selected:fixture.id===selectedFixture()?.id}))});
@@ -239,6 +241,17 @@ function render() {
 }
 
 function bind() {
+  document.querySelector("#save-version").onclick=()=>{
+    commitProjectChange("palette-version-save",(draft)=>{draft.palettes.push(snapshotPalette(draft.palettes[0],`${draft.palettes[0].name} · ${draft.palettes.length}`));});
+    render();
+  };
+  document.querySelector("#restore-version").onclick=()=>{
+    const id=document.querySelector("#palette-version").value;
+    const snapshot=project.palettes.find((item,index)=>index>0 && item.id===id);
+    if (!snapshot) return;
+    commitProjectChange("palette-version-restore",(draft)=>{draft.palettes[0]=restorePalette(draft.palettes[0],snapshot);});
+    render();
+  };
   document.querySelector("#apply-oklch").onclick=()=>{
     try {
       const values=Object.fromEntries(["l","c","h"].map((key)=>{

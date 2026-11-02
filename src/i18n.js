@@ -78,4 +78,8 @@ Object.assign(messages.en,{chroma:"Chroma",chromaMapped:"Chroma reduced to fit s
 Object.assign(messages.de,{chroma:"Chroma",chromaMapped:"Chroma für sRGB reduziert auf:"});
 Object.assign(messages.yo,{chroma:"Kírómà",chromaMapped:"A dín kírómà kù láti wọ sRGB:"});
 Object.assign(messages.pcm,{chroma:"Chroma",chromaMapped:"Chroma don reduce make e fit sRGB:"});
+Object.assign(messages.en,{saveVersion:"Save version",savedVersions:"Saved versions",restoreVersion:"Restore version"});
+Object.assign(messages.de,{saveVersion:"Version speichern",savedVersions:"Gespeicherte Versionen",restoreVersion:"Version wiederherstellen"});
+Object.assign(messages.yo,{saveVersion:"Fi ẹ̀dà pamọ́",savedVersions:"Àwọn ẹ̀dà tí a fi pamọ́",restoreVersion:"Dá ẹ̀dà padà"});
+Object.assign(messages.pcm,{saveVersion:"Save version",savedVersions:"Saved versions",restoreVersion:"Bring version back"});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }
