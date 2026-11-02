@@ -56,26 +56,26 @@ function render() {
   const contrast = contrastResult(active.hex, "#0B1220");
   const nav = [
     ["canvas", "⌂", true], ["palette", "◉", true], ["light", "☼", true], ["copilot", "◌", true], ["library", "▱", false], ["export", "↗", true], ["community", "♧", false]
-  ].map(([key, icon, enabled]) => `<button class="module ${preferences.module === key ? "is-active" : ""}" data-module="${key}" ${enabled ? "" : disabled(`${t(key)} is scheduled after the current milestone.`)}><span>${icon}</span>${t(key)}</button>`).join("");
-  const tools = [["select","↖",true],["paletteBrush","◉",true],["fixture","☀",true],["material","◆",true],["shapes","□",false],["text","T",false],["measure","⌗",false],["orbit","◎",true],["aiPin","✦",false]].map(([key, icon, enabled]) => `<button class="tool ${preferences.tool === key ? "is-active" : ""}" data-tool="${key}" ${enabled ? "" : disabled(`${t(key)} is available with the 3D editor milestone.`)}><span>${icon}</span>${t(key)}</button>`).join("");
+  ].map(([key, icon, enabled]) => `<button class="module ${preferences.module === key ? "is-active" : ""}" data-module="${key}" ${enabled ? "" : disabled(`${t(key)} ${t("availableLater")}`)}><span>${icon}</span>${t(key)}</button>`).join("");
+  const tools = [["select","↖",true],["paletteBrush","◉",true],["fixture","☀",true],["material","◆",true],["shapes","□",false],["text","T",false],["measure","⌗",false],["orbit","◎",true],["aiPin","✦",false]].map(([key, icon, enabled]) => `<button class="tool ${preferences.tool === key ? "is-active" : ""}" data-tool="${key}" ${enabled ? "" : disabled(`${t(key)} ${t("availableLater")}`)}><span>${icon}</span>${t(key)}</button>`).join("");
   const swatches = palette().colors.map((swatch) => `<button class="swatch ${active.id === swatch.id ? "is-selected" : ""}" data-swatch="${swatch.id}" aria-label="${esc(swatch.name)} ${swatch.hex}"><span style="background:${swatch.hex}"></span><b>${esc(swatch.name)}</b><small>${swatch.hex}</small>${swatch.locked ? "<em>⌁</em>" : ""}</button>`).join("");
   const patchedFixtures = project.fixtures.filter((fixture) => fixture.patchAssignment);
   const virtualFrame = dmxFrame(project.fixtures);
-  const cueBlocks = project.cues.map((cue) => `<span class="cue-block" style="--cue-width:${Math.max(55, cue.duration * 25)}px">${esc(cue.name)} · ${cue.duration}s</span>`).join("") || "<small class=\"empty-cues\">No cues yet — add a virtual fixture, set a colour, then capture a look.</small>";
+  const cueBlocks = project.cues.map((cue) => `<span class="cue-block" style="--cue-width:${Math.max(55, cue.duration * 25)}px">${esc(cue.name)} · ${cue.duration}s</span>`).join("") || `<small class="empty-cues">${t("noCues")}</small>`;
   app.innerHTML = `
     <header class="topbar">
-      <div class="brand-lockup" aria-label="Hephzibah Behulah, HB Elektroniker, AdigunLightDesign">
+      <div class="brand-lockup" aria-label="${t("brandAlt")}">
         <img class="corporate-mark" src="https://raw.githubusercontent.com/HephzibahBehulahHQ/hb-design-system/main/assets/corporate/hephzibah-behulah-official.jpg" alt="Hephzibah Behulah" onerror="this.hidden=true;this.nextElementSibling.hidden=false" />
         <span class="brand-fallback" hidden>HB <b>Hephzibah Behulah</b></span><span class="brand-divider"></span><span class="division">⚡ HB Elektroniker</span>
       </div>
       <div class="product-lockup"><strong>Adigun<span>Light</span>Design</strong><small>Unified Color &amp; Light Design Studio</small></div>
-      <div class="utility-controls"><label class="language"><span>◎</span><select id="locale" aria-label="Language">${supportedLocales.map((locale) => `<option value="${locale}" ${locale === preferences.locale ? "selected" : ""}>${locale.toUpperCase()}</option>`).join("")}</select></label><button id="theme" class="icon-button" title="${t("appearance")}" aria-label="${t("appearance")}">${preferences.theme === "dark" ? "☼" : "◐"}</button><span class="offline-pill" title="No account or cloud service is configured">● ${t("offline")}</span></div>
+      <div class="utility-controls"><label class="language"><span>◎</span><select id="locale" aria-label="${t("language")}">${supportedLocales.map((locale) => `<option value="${locale}" ${locale === preferences.locale ? "selected" : ""}>${locale.toUpperCase()}</option>`).join("")}</select></label><button id="theme" class="icon-button" title="${t("appearance")}" aria-label="${t("appearance")}">${preferences.theme === "dark" ? "☼" : "◐"}</button><span class="offline-pill" title="${t("offline")}">● ${t("offline")}</span></div>
     </header>
-    <nav class="module-nav" aria-label="Application modules">${nav}</nav>
+    <nav class="module-nav" aria-label="${t("appModules")}">${nav}</nav>
     <main id="workspace" class="editor-layout">
       <aside class="left-rail panel">
         <section class="project-heading"><div><small>${t("project")}</small><input id="project-name" value="${esc(project.name)}" aria-label="${t("project")} name" /></div><span class="save-state">● ${t("saved")}</span></section>
-        <section><h2>▰ ${t("layers")}</h2><ul class="layer-list"><li>⌄ ▣ Lighting layer <span>◉</span></li><li>⌄ ▣ Palette layer <span>◉</span></li><li>⌄ ▣ Scene &amp; props <span>◉</span></li></ul></section>
+        <section><h2>▰ ${t("layers")}</h2><ul class="layer-list"><li>⌄ ▣ ${t("layersLighting")} <span>◉</span></li><li>⌄ ▣ ${t("layersPalette")} <span>◉</span></li><li>⌄ ▣ ${t("layersScene")} <span>◉</span></li></ul></section>
         <section class="tool-section"><h2>☼ ${t("tools")}</h2><div class="tool-list">${tools}</div></section>
       </aside>
       <section class="work-area">
