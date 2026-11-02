@@ -1,4 +1,7 @@
 .light-canvas { min-height:353px; }
+.fixture-inspector input[type="range"] { padding:0; accent-color:#c084fc; width:100%; }
+.fixture-inspector output { color:var(--text); text-align:right; font-variant-numeric:tabular-nums; }
+.fixture-inspector input[type="color"] { height:32px; padding:2px; }
 .webgl-unavailable { position:absolute; inset:80px 24px 70px; display:grid; place-content:center; margin:0; color:var(--text); line-height:1.6; text-align:center; }
 .cue-timing { display:flex; flex-wrap:wrap; gap:8px; padding:8px 12px; }
 .cue-timing label { flex:1 1 65px; min-width:0; display:grid; gap:4px; font-size:10px; color:var(--muted); }

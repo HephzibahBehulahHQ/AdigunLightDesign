@@ -179,6 +179,22 @@ function render() {
     const mode=profile.modes.find((item)=>item.id===fixture.modeId);
     if (mode?.channels.includes("white")) document.querySelector("#apply-fixture").insertAdjacentHTML("beforebegin", `<label>${t("whiteChannel")}<input id="fixture-white" type="number" required min="0" max="255" step="1" value="${properties.white ?? 0}" /></label>`);
   }
+  for (const id of ["fixture-dimmer","fixture-beam"]) {
+    const input=document.querySelector(`#${id}`);
+    if (!input) continue;
+    input.type="range";
+    input.step="1";
+    const output=document.createElement("output");
+    output.htmlFor=id;
+    output.id=`${id}-value`;
+    const update=()=>{
+      output.textContent=id === "fixture-dimmer" ? `${Math.round(Number(input.value) / 255 * 100)}%` : `${input.value} / 255`;
+      input.setAttribute("aria-valuetext",output.textContent);
+    };
+    input.insertAdjacentElement("afterend",output);
+    input.oninput=update;
+    update();
+  }
   bind();
   if (preferences.view === "light") {
     renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {accent:scene().materialColor,fixtures:project.fixtures});
