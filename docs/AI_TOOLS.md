@@ -15,6 +15,13 @@ the remaining suggestions stale. Browser interaction, a live service and a live
 provider connection remain unverified. Earlier offline descriptions below record
 the baseline before this optional service UI was added.
 
+Panel event-handler tests additionally verify zero network requests without
+consent, escaped provider text, clearing the consent checkbox between requests,
+absence of the service token in rendered markup, explicit preview before a
+mutation, and discarding a pending response after disconnect. They use a small
+event-surface double and mocked transport; they do not establish real browser
+validation, focus behavior, layout, accessibility or target-image fidelity.
+
 Asset-based image extraction is now a native mutation handler. It accepts only an asset ID found in an injected local decoded-image store; it never fetches URLs or file paths. The user-selected image workflow retains up to five downsampled images in memory, with defensive pixel copies and metadata-only listing. Reloading loses this cache; the generated palette remains in native project data. Preview candidates retain exact extracted colors/IDs for later confirmation. This provides 14 mutation and two read-only native handlers across the 16 names, not an AI-provider integration. Image extraction is not yet exposed as a Lux panel action.
 
 Read-only native handlers measure opaque HEX contrast and generate local text artifacts for `project-json`, `palette-json`, `css`, `palette-svg`, `design-tokens`, `patch-csv`, `cue-csv` and `canvas-svg`. They reuse the domain/export implementations and do not mutate the project, start downloads, send network requests or claim external-tool compatibility. Unsupported format names and missing palette/scene IDs reject. Image extraction is a separate confirmed mutation using the approved asset context described above. Provider/chat integration is still absent.

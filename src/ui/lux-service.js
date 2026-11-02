@@ -1,8 +1,8 @@
 import { createLuxChatSession } from "../ai/chat-session.js";
 import { escapeHtml as esc } from "./html.js";
 
-export function createLuxServicePanel({getProject,getLocale,translate,onPreview,onError,imageAssets}) {
-  const session=createLuxChatSession();
+export function createLuxServicePanel({getProject,getLocale,translate,onPreview,onError,imageAssets,fetchImpl=globalThis.fetch,findContainer=()=>document.querySelector("[data-lux-service]")}) {
+  const session=createLuxChatSession({fetchImpl});
   let reply=null,error="",question="",epoch=0;
   function mount(container) {
     const t=(key)=>translate(getLocale(),key),state=session.status;
@@ -26,7 +26,7 @@ export function createLuxServicePanel({getProject,getLocale,translate,onPreview,
         const result=await pending;if(requestEpoch!==epoch)return;reply=result;question="";
       } catch(e){if(requestEpoch!==epoch)return;error=e.message;}
       // The editor may have re-rendered or closed while the request was pending.
-      const current=document.querySelector("[data-lux-service]");if(current)mount(current);
+      const current=findContainer();if(current)mount(current);
     };
     container.querySelectorAll("[data-lux-review]").forEach(button=>button.onclick=()=>{
       try {
