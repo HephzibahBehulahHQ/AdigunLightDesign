@@ -1,5 +1,6 @@
 import { cameraMatrix, hexVector, multiply, viewportProjection } from "./math.js";
 import { viewportPng } from "../export/viewport.js";
+import { pickScenePoint } from "./picking.js";
 
 const vertexSource = `attribute vec3 p;attribute vec3 c;uniform mat4 m;varying vec3 v;void main(){gl_Position=m*vec4(p,1.0);v=c;}`;
 const fragmentSource = `precision mediump float;varying vec3 v;void main(){gl_FragColor=vec4(v,1.0);}`;
@@ -125,7 +126,7 @@ export function sceneData(accent, fixtures, visibility={}) {
   return new Float32Array(data);
 }
 
-export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = [], visibility = {}, projection = "perspective" } = {}) {
+export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = [], visibility = {}, projection = "perspective", onSelect=()=>{} } = {}) {
   const gl = canvas.getContext("webgl", { antialias:true, alpha:false });
   if (!gl) return { supported:false, destroy(){}, reset(){}, setAccent(){}, setFixtures(){} };
   const program=gl.createProgram(),vertexShader=compile(gl,gl.VERTEX_SHADER,vertexSource),fragmentShader=compile(gl,gl.FRAGMENT_SHADER,fragmentSource);
@@ -134,7 +135,7 @@ export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = 
   gl.deleteShader(vertexShader);gl.deleteShader(fragmentShader);
   if(!gl.getProgramParameter(program,gl.LINK_STATUS)) { const message=gl.getProgramInfoLog(program);gl.deleteProgram(program);throw new Error(message); }
   const buffer=gl.createBuffer(),position=gl.getAttribLocation(program,"p"),colour=gl.getAttribLocation(program,"c"),matrix=gl.getUniformLocation(program,"m");let selectedAccent=accent,virtualFixtures=fixtures,yaw=-.25,pitch=.1,distance=11,drag;
-  let geometry=null;
+  let geometry=null,viewProjection=null;
   function draw() {
     const ratio=Math.min(window.devicePixelRatio||1,2),width=Math.max(1,canvas.clientWidth),height=Math.max(1,canvas.clientHeight);
     gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
@@ -145,10 +146,28 @@ export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = 
     if(canvas.width!==width*ratio||canvas.height!==height*ratio){canvas.width=width*ratio;canvas.height=height*ratio;}
     gl.viewport(0,0,canvas.width,canvas.height);gl.enable(gl.DEPTH_TEST);gl.clearColor(.025,.045,.09,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);
     gl.vertexAttribPointer(position,3,gl.FLOAT,false,24,0);gl.enableVertexAttribArray(position);gl.vertexAttribPointer(colour,3,gl.FLOAT,false,24,12);gl.enableVertexAttribArray(colour);
-    gl.uniformMatrix4fv(matrix,false,multiply(viewportProjection(projection,width/height,distance),cameraMatrix({yaw,pitch,distance})));
+    viewProjection=multiply(viewportProjection(projection,width/height,distance),cameraMatrix({yaw,pitch,distance}));
+    gl.uniformMatrix4fv(matrix,false,viewProjection);
     gl.drawArrays(gl.TRIANGLES,0,geometry.length/6);
   }
-  const resize=new ResizeObserver(draw),down=(event)=>{drag={x:event.clientX,y:event.clientY};canvas.setPointerCapture(event.pointerId);},move=(event)=>{if(!drag)return;yaw+=(event.clientX-drag.x)*.009;pitch=Math.max(-.72,Math.min(.72,pitch+(event.clientY-drag.y)*.009));drag={x:event.clientX,y:event.clientY};draw();},up=()=>{drag=undefined;};resize.observe(canvas);canvas.addEventListener("pointerdown",down);canvas.addEventListener("pointermove",move);canvas.addEventListener("pointerup",up);draw();
+  const resize=new ResizeObserver(draw);
+  const down=(event)=>{drag={x:event.clientX,y:event.clientY,travel:0};canvas.setPointerCapture(event.pointerId);};
+  const move=(event)=>{
+    if (!drag) return;
+    const dx=event.clientX-drag.x,dy=event.clientY-drag.y;
+    drag={x:event.clientX,y:event.clientY,travel:drag.travel+Math.hypot(dx,dy)};
+    yaw+=dx*.009;pitch=Math.max(-.72,Math.min(.72,pitch+dy*.009));draw();
+  };
+  const up=(event)=>{
+    const click=drag && event?.type==="pointerup" && drag.travel+Math.hypot(event.clientX-drag.x,event.clientY-drag.y)<=5;
+    drag=undefined;
+    if (!click || visibility.lighting===false) return;
+    const bounds=canvas.getBoundingClientRect();
+    const candidates=virtualFixtureVisuals(virtualFixtures).map((point,index)=>({...point,id:virtualFixtures[index].id}));
+    const id=pickScenePoint(candidates,viewProjection,bounds.width,bounds.height,event.clientX-bounds.left,event.clientY-bounds.top);
+    if (id) onSelect(id);
+  };
+  resize.observe(canvas);canvas.addEventListener("pointerdown",down);canvas.addEventListener("pointermove",move);canvas.addEventListener("pointerup",up);draw();
   const keydown=(event)=>{
     if (!["ArrowLeft","ArrowRight","ArrowUp","ArrowDown","Home","+","=","-"].includes(event.key)) return;
     event.preventDefault();

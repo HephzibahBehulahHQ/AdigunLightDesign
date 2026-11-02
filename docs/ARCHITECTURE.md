@@ -35,6 +35,8 @@ Direct editor mutations use document transactions. Each committed operation snap
 
 ## Visual acceptance
 
+Clicking near a projected fixture center selects it and opens its inspector. Dragging continues to orbit; pointer cancellation does not select. Picking considers the first 12 rendered fixtures, rejects clipped points, and uses a 28 CSS-pixel hit radius with depth tie-breaking. It does not perform mesh raycasting or prop occlusion testing. Layer-list selection remains the keyboard-accessible alternative. Projection tests do not establish browser interaction acceptance.
+
 The viewport projection control toggles perspective and orthographic modes and persists the choice locally. Both retain orbit and zoom; changing mode rebuilds the viewport at its default camera pose. Orthographic zoom changes the view volume, preserving depth-independent object size. Matrix behavior has automated coverage; actual browser appearance remains unverified.
 
 The studio geometry includes two potted plants, a side chair and a floor-lamp model alongside the sofa, table and shelf. These are procedural, vertex-colored approximations that receive the existing artistic fixture spill and follow props-layer visibility. The decorative lamp does not add a calibrated light source. Geometry tests do not establish photorealism or screenshot fidelity.
