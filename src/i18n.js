@@ -159,4 +159,8 @@ Object.assign(messages.en,{roomDimensions:"Room dimensions",width:"Width",height
 Object.assign(messages.de,{roomDimensions:"Raumabmessungen",width:"Breite",height:"Höhe",depth:"Tiefe"});
 Object.assign(messages.yo,{roomDimensions:"Ìwọ̀n yàrá",width:"Ìbú",height:"Gíga",depth:"Ìjìnlẹ̀"});
 Object.assign(messages.pcm,{roomDimensions:"Room size",width:"Width",height:"Height",depth:"Depth"});
+Object.assign(messages.en,{duplicateFixture:"Duplicate fixture",deleteFixture:"Delete fixture"});
+Object.assign(messages.de,{duplicateFixture:"Gerät duplizieren",deleteFixture:"Gerät löschen"});
+Object.assign(messages.yo,{duplicateFixture:"Ṣẹ̀dà fìtílà",deleteFixture:"Pa fìtílà rẹ́"});
+Object.assign(messages.pcm,{duplicateFixture:"Copy fixture",deleteFixture:"Delete fixture"});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }

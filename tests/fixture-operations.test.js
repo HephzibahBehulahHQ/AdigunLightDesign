@@ -1,0 +1,31 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { duplicateFixture,deleteFixture } from "../src/domain/fixture-operations.js";
+import { createStudioMoodProject } from "../src/domain/studio-mood.js";
+import { validateProject } from "../src/domain/project.js";
+import { createCue } from "../src/timeline/engine.js";
+import { commitTransaction,undoTransaction } from "../src/domain/history.js";
+test("fixture copies retain profile and values with a distinct valid patch and position",()=>{
+  const project=createStudioMoodProject(),source=project.fixtures[0],result=duplicateFixture(project,source.id,{id:"copy"}),copy=result.fixtures.at(-1);
+  assert.equal(copy.profileId,source.profileId);assert.deepEqual(copy.properties,source.properties);
+  assert.notEqual(copy.patchAssignment.startAddress,source.patchAssignment.startAddress);
+  assert.equal(copy.transform.x,source.transform.x+.5);
+  assert.equal(validateProject(result).valid,true);
+  const original=source.properties.red;
+  copy.properties.red=(original+1)%256;assert.equal(project.fixtures[0].properties.red,original);
+  assert.throws(()=>duplicateFixture(project,source.id,{id:source.id}));
+});
+test("fixture deletion cleans groups cue targets and keyframes and undo restores all",()=>{
+  const project=createStudioMoodProject(),id=project.fixtures[0].id;
+  project.fixtureGroups=[{id:"g",name:"Key",fixtureIds:[id]}];
+  project.cues=[createCue(project.fixtures)];
+  project.cues[0].channelKeyframes=[{fixtureId:id,property:"dimmer",time:1,value:100}];
+  const state=commitTransaction({project,undoStack:[],redoStack:[]},"fixture-delete",(draft)=>Object.assign(draft,deleteFixture(draft,id)));
+  assert.equal(state.project.fixtureGroups.length,0);
+  assert.equal(state.project.cues[0].channelKeyframes.length,0);
+  assert.ok(state.project.cues[0].targets.every((target)=>target.fixtureId!==id));
+  assert.equal(validateProject(state.project).valid,true);
+  assert.deepEqual(undoTransaction(state).project,project);
+  let empty=project;for (const fixture of project.fixtures) empty=deleteFixture(empty,fixture.id);
+  assert.equal(empty.fixtures.length,0);assert.equal(validateProject(empty).valid,true);
+});

@@ -22,6 +22,7 @@ import { timelineLayout } from "./timeline/layout.js";
 import { arrangeTracks,arrangementDuration,evaluateTracks,scheduleCue } from "./timeline/tracks.js";
 import { setChannelKeyframe } from "./timeline/keyframes.js";
 import { roomDimensions } from "./domain/room.js";
+import { duplicateFixture,deleteFixture } from "./domain/fixture-operations.js";
 import { groupFixtures,saveFixtureGroup } from "./domain/fixture-groups.js";
 import { cueCsv, designTokenJson, paletteCss, paletteJson, paletteSvg, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
 import { readProjectFile } from "./domain/import-project.js";
@@ -340,6 +341,7 @@ function render() {
     timingDetails.insertAdjacentHTML("beforeend", `<fieldset><legend>${t("channelKeyframes")}</legend><label>${t("channel")}<select id="keyframe-channel">${channels.map((channel)=>`<option value="${esc(JSON.stringify(channel))}">${esc(project.fixtures.find((fixture)=>fixture.id===channel.fixtureId)?.name ?? channel.fixtureId)} · ${esc(channel.property)}</option>`).join("")}</select></label><label>${t("startTime")}<input id="keyframe-time" type="number" min="0" max="${activeCue.duration}" step="0.1" value="0" required></label><label>${t("channelValue")}<input id="keyframe-value" type="number" min="0" max="255" step="1" value="127" required></label><button id="save-keyframe" ${channels.length ? "" : "disabled"}>${t("saveKeyframe")}</button>${(activeCue.channelKeyframes ?? []).map((frame,index)=>`<p>${esc(frame.fixtureId)} · ${esc(frame.property)} · ${frame.time}s → ${frame.value} <button data-remove-keyframe="${index}" aria-label="${t("removeKeyframe")}">×</button></p>`).join("")}</fieldset>`);
   }
   const inspector=document.querySelector(".inspector"),fixturePanel=inspector.querySelector(".fixture-inspector");
+  if (fixturePanel) fixturePanel.insertAdjacentHTML("beforeend", `<div class="dmx-actions"><button id="duplicate-fixture">${t("duplicateFixture")}</button><button id="delete-fixture">${t("deleteFixture")}</button></div>`);
   const mode=(preferences.inspectorMode ?? (preferences.view==="light" ? "fixture" : "palette"))==="fixture" && fixturePanel ? "fixture" : "palette";
   const palettePanel=document.createElement("div");palettePanel.id="palette-inspector-panel";
   for (const node of [...inspector.children]) if (!node.classList.contains("section-title") && !node.classList.contains("inspector-tabs") && node!==fixturePanel) palettePanel.append(node);
@@ -363,6 +365,19 @@ function render() {
 }
 
 function bind() {
+  const duplicateFixtureButton=document.querySelector("#duplicate-fixture"),deleteFixtureButton=document.querySelector("#delete-fixture");
+  if (duplicateFixtureButton) duplicateFixtureButton.onclick=()=>{
+    try {
+      const fixture=selectedFixture(),id=crypto.randomUUID();
+      commitProjectChange("fixture-duplicate",(draft)=>Object.assign(draft,duplicateFixture(draft,fixture.id,{id,name:`${fixture.name} · ${t("copyLabel")}`})));
+      preferences.fixtureId=id;savePreferences();render();
+    } catch(error) {setStatus(error.message);}
+  };
+  if (deleteFixtureButton) deleteFixtureButton.onclick=()=>{
+    const id=selectedFixture().id;
+    commitProjectChange("fixture-delete",(draft)=>Object.assign(draft,deleteFixture(draft,id)));
+    preferences.fixtureId=project.fixtures[0]?.id ?? null;savePreferences();render();
+  };
   document.querySelector("#apply-room").onclick=()=>{
     try {
       const values={};
