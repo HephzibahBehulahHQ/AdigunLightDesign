@@ -1,4 +1,7 @@
 .light-canvas { min-height:353px; }
+.cue-timing { display:flex; flex-wrap:wrap; gap:8px; padding:8px 12px; }
+.cue-timing label { flex:1 1 65px; min-width:0; display:grid; gap:4px; font-size:10px; color:var(--muted); }
+.cue-timing input { width:100%; min-width:0; }
 .light-canvas canvas { position:absolute; inset:0; width:100%; height:100%; touch-action:none; cursor:grab; }
 .light-canvas canvas:active { cursor:grabbing; }
 .canvas-actions { position:absolute; z-index:9; right:12px; bottom:12px; display:flex; gap:6px; }
