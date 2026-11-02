@@ -1,5 +1,9 @@
 # AdigunLightDesign help
 
+In the fixture inspector's Light tab, use the intensity and beam sliders, then
+Apply to commit. Intensity percentage is a normalized virtual channel value,
+not measured brightness. Beam is an uncalibrated 0–255 control, not degrees.
+
 ## Contents
 
 - [The live co-pilot](#the-live-co-pilot)

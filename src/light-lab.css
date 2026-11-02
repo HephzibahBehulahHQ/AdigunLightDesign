@@ -99,3 +99,5 @@
 .scheduled-track .cue-block { top:2px; height:21px; padding:2px 5px; }
 .scheduled-track:nth-of-type(3n+2) .cue-block { background:linear-gradient(90deg,#1767ad,#2196f3); border-color:#65b8ff; }
 .scheduled-track:nth-of-type(3n) .cue-block { background:linear-gradient(90deg,#236e47,#39a76a); border-color:#73d797; }
+.fixture-inspector input[type="range"] { display:block; width:100%; padding:0; margin:8px 0; accent-color:#c875f2; }
+.fixture-slider-value { display:block; text-align:right; font-variant-numeric:tabular-nums; color:var(--text); font-size:11px; }

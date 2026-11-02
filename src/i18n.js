@@ -235,4 +235,8 @@ Object.assign(messages.en,{overviewTagline:"Unified Color & Light Design Studio"
 Object.assign(messages.de,{overviewTagline:"Studio für Farb- und Lichtgestaltung"});
 Object.assign(messages.yo,{overviewTagline:"Ilé iṣẹ́ àpapọ̀ àwọ̀ àti ìmọ́lẹ̀"});
 Object.assign(messages.pcm,{overviewTagline:"One Studio for Color & Light Design"});
+Object.assign(messages.en,{virtualChannelValue:"Virtual channel value; use Apply to commit"});
+Object.assign(messages.de,{virtualChannelValue:"Virtueller Kanalwert; mit Anwenden übernehmen"});
+Object.assign(messages.yo,{virtualChannelValue:"Iye ikanni àfojúrí; lo Fi sí i láti mú un ṣiṣẹ́"});
+Object.assign(messages.pcm,{virtualChannelValue:"Virtual channel value; use Apply to commit"});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }

@@ -42,6 +42,7 @@ import { createCanvasStateFeed } from "./ai/live-copilot.js";
 import { createLiveCopilotPanel } from "./ui/live-copilot-panel.js";
 import { projectOverview } from "./ui/project-overview.js";
 import { arrangementTimelineMarkup } from "./ui/arrangement-timeline.js";
+import { bindFixtureSliders } from "./ui/fixture-sliders.js";
 import { canFullscreen,toggleViewportFullscreen } from "./ui/fullscreen.js";
 import { groupFixtures,saveFixtureGroup } from "./domain/fixture-groups.js";
 import { cueCsv, designTokenJson, paletteCss, paletteJson, paletteSvg, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
@@ -446,6 +447,7 @@ function render() {
   }
   document.querySelector(".scene-preview").insertAdjacentHTML("beforeend", `<button id="viewport-exit-fullscreen" class="viewport-exit-fullscreen">${t("exitFullscreen")}</button>`);
   bind();
+  bindFixtureSliders(document.querySelector(".inspector"),{channelLabel:t("virtualChannelValue")});
   if (preferences.view === "light") {
     renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {accent:scene().materialColor,room:scene().room,materials:scene().materials,stage:scene().stage,quality:preferences.previewQuality,projection:preferences.projection==="orthographic" ? "orthographic" : "perspective",visibility:scene().visibility,fixtures:project.fixtures.map((fixture)=>({...fixture,selected:fixture.id===selectedFixture()?.id})),onSelect(id){stopPlayback();preferences.fixtureId=id;preferences.inspectorMode="fixture";savePreferences();render();}});
     if (!renderer.supported) {

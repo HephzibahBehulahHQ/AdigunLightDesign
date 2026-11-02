@@ -31,3 +31,11 @@ The sequential view remains in an expandable section and opens when sequence
 playback starts. Both playheads and playback controls remain present. Markup
 tests cover track separation, scheduled proportions, selected cues, empty state
 and escaping. Browser interaction and reference matching remain unverified.
+
+Fixture dimmer and beam controls now use keyboard-accessible native sliders.
+Intensity displays the normalized percentage alongside the exact 0–255 channel
+value; beam displays its actual 0–255 value without inventing a calibrated angle.
+Changes remain staged until the existing Apply action commits the validated,
+undoable fixture transaction. A handler test covers exact values, endpoint labels,
+missing profile controls and accessible value text. Browser interaction remains
+unverified.
