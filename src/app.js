@@ -36,13 +36,25 @@ function applyPaletteToVirtualFixtures() { const rgb=hexToRgb(selected().hex); c
 function createCueSnapshot() { let cue; commitProjectChange("cue-create",(draft)=>{cue=createCue(draft.fixtures,{name:`Look ${draft.cues.length+1}`});draft.cues=[...draft.cues,cue];}); status=`${cue.name} captured with ${cue.targets.length} fixture target(s).`; }
 function updateRendererFromFixtures() { const fixture=project.fixtures[0]; if(fixture) renderer?.setAccent(rgbToHex({r:fixture.properties.red,g:fixture.properties.green,b:fixture.properties.blue})); renderer?.setFixtures(project.fixtures); }
 function stopPlayback(message="Cue playback stopped.") { if(playbackTimer){clearInterval(playbackTimer);playbackTimer=null;} status=message; }
-function playLatestCue() { const cue=project.cues.at(-1); if(!cue) return; stopPlayback(); const source=structuredClone(project.fixtures),started=performance.now(); playbackTimer=setInterval(()=>{const elapsed=(performance.now()-started)/1000;project.fixtures=evaluateCue(source,cue,elapsed);updateRendererFromFixtures();document.querySelector("#status").textContent=`Playing ${cue.name} · ${(Math.min(elapsed,cue.duration)).toFixed(1)}s / ${cue.duration}s`;if(elapsed>=cue.duration){stopPlayback(`${cue.name} completed in virtual simulation.`);saveProject();render();}},100); }
+function playLatestCue() {
+  const cue=project.cues.at(-1);
+  if (!cue) return;
+  stopPlayback();
+  const source=structuredClone(project.fixtures),started=performance.now();
+  playbackTimer=setInterval(()=>{
+    const elapsed=(performance.now()-started)/1000;
+    renderer?.setFixtures(evaluateCue(source,cue,elapsed));
+    document.querySelector("#status").textContent=`Playing ${cue.name} · ${(Math.min(elapsed,cue.duration)).toFixed(1)}s / ${cue.duration}s`;
+    if (elapsed>=cue.duration) { stopPlayback(`${cue.name} completed in virtual simulation.`); render(); }
+  },100);
+  render();
+}
 function downloadText(content, filename, type) { const file=new Blob([content],{type}); const link=document.createElement("a"); link.href=URL.createObjectURL(file); link.download=filename; link.click(); URL.revokeObjectURL(link.href); }
 function exportFile(kind) { const stem=safeFileStem(project.name); const exports={ project:[projectJson(project),`${stem}.ald.json`,"application/json"], palette:[paletteJson(palette()),`${stem}-palette.json`,"application/json"], css:[paletteCss(palette()),`${stem}-palette.css`,"text/css"], patch:[patchCsv(project.fixtures),`${stem}-patch.csv`,"text/csv"], cues:[cueCsv(project.cues),`${stem}-cues.csv`,"text/csv"] }; const [content,name,type]=exports[kind]; downloadText(content,name,type); status=`${name} downloaded.`; document.querySelector("#status").textContent=status; }
 async function importNativeProject(file) { const result=await readProjectFile(file); if(!result.valid) return setStatus(result.errors.join(" ")); project=result.project; undoStack=[];redoStack=[];saveProject();status=`${project.name} imported locally.`;render(); }
 function savePreferences() { localStorage.setItem(preferencesKey, JSON.stringify(preferences)); }
 function saveProject() { project.updatedAt = new Date().toISOString(); localStorage.setItem(storageKey, JSON.stringify(project)); status = t("statusSaved"); }
-function commitProjectChange(label, mutate) { const next=commitTransaction({project,undoStack,redoStack},label,mutate); project=next.project;undoStack=next.undoStack;redoStack=next.redoStack;saveProject(); }
+function commitProjectChange(label, mutate) { stopPlayback(); const next=commitTransaction({project,undoStack,redoStack},label,mutate); project=next.project;undoStack=next.undoStack;redoStack=next.redoStack;saveProject(); }
 function mutateColours(fn) { commitProjectChange("palette-update",(draft)=>{draft.palettes[0].colors=fn(structuredClone(draft.palettes[0].colors));}); render(); }
 function undo() { if (!undoStack.length) return setStatus(t("noUndo")); const next=undoTransaction({project,undoStack,redoStack});project=next.project;undoStack=next.undoStack;redoStack=next.redoStack;saveProject();status=t("statusUndo");render(); }
 function redo() { if (!redoStack.length) return setStatus(t("noRedo")); const next=redoTransaction({project,undoStack,redoStack});project=next.project;undoStack=next.undoStack;redoStack=next.redoStack;saveProject();status=t("statusRedo");render(); }
