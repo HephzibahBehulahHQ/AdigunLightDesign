@@ -6,9 +6,14 @@ or reconfiguration invalidates pending responses. Project edits during a request
 discard its suggestions; later review also checks the original project snapshot.
 Receiving suggestions never applies them. Mutation review uses the existing
 native preview/confirmation boundary; read-only review uses the native evaluator.
-These behaviors have mocked transport tests. The controller is not yet wired to
-the chat form, and no live service or provider connection is claimed. Earlier
-offline capability descriptions below describe the currently exposed UI.
+These behaviors have mocked transport tests. The Lux panel now exposes optional
+session-only URL/token configuration, disconnect, a question field, per-request
+consent and suggestion review. Configuration does not claim a verified connection.
+Each mutation opens a native before/after data preview for explicit confirmation;
+read-only suggestions display their evaluated result. Editing the project makes
+the remaining suggestions stale. Browser interaction, a live service and a live
+provider connection remain unverified. Earlier offline descriptions below record
+the baseline before this optional service UI was added.
 
 Asset-based image extraction is now a native mutation handler. It accepts only an asset ID found in an injected local decoded-image store; it never fetches URLs or file paths. The user-selected image workflow retains up to five downsampled images in memory, with defensive pixel copies and metadata-only listing. Reloading loses this cache; the generated palette remains in native project data. Preview candidates retain exact extracted colors/IDs for later confirmation. This provides 14 mutation and two read-only native handlers across the 16 names, not an AI-provider integration. Image extraction is not yet exposed as a Lux panel action.
 

@@ -69,3 +69,11 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
   .timeline .dmx-actions { gap:4px; padding-top:5px; padding-bottom:5px; }
   .swatch span { height:44px; }
 }
+.lux-service { margin:12px; font-size:12px; }
+.lux-service form,.lux-service label { display:grid; gap:7px; margin:8px 0; }
+.lux-service input,.lux-service textarea { width:100%; min-width:0; }
+.lux-service textarea { min-height:64px; resize:vertical; }
+.lux-service .lux-consent { display:flex; align-items:flex-start; }
+.lux-consent input { width:auto; flex-shrink:0; }
+.lux-service-reply p { white-space:pre-wrap; overflow-wrap:anywhere; }
+.lux-service pre,.lux-action-preview pre { white-space:pre-wrap; overflow-wrap:anywhere; max-height:220px; overflow:auto; font-size:11px; }
