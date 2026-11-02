@@ -34,4 +34,8 @@ Object.assign(messages.en,{earlier:"Earlier",later:"Later"});
 Object.assign(messages.de,{earlier:"Früher",later:"Später"});
 Object.assign(messages.yo,{earlier:"Ṣáájú",later:"Lẹ́yìn"});
 Object.assign(messages.pcm,{earlier:"Move before",later:"Move after"});
+Object.assign(messages.en,{previewLabel:"Interactive 3D studio preview. Drag or use arrow keys to orbit; Home resets the camera."});
+Object.assign(messages.de,{previewLabel:"Interaktive 3D-Studio-Vorschau. Zum Drehen ziehen oder Pfeiltasten nutzen; Pos1 setzt die Kamera zurück."});
+Object.assign(messages.yo,{previewLabel:"Àfihàn yàrá 3D. Fà á tàbí lo bọ́tìnì ọfà láti yí kámẹ́rà; Home tún un bẹ̀rẹ̀."});
+Object.assign(messages.pcm,{previewLabel:"Interactive 3D studio preview. Drag or use arrow keys to turn camera; Home go reset am."});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }
