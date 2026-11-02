@@ -2,6 +2,7 @@ import { validateProject } from "./domain/project.js";
 import { prepareEditorProject } from "./domain/editor-project.js";
 import { moveSwatch, removeSwatch, reorderSwatch } from "./domain/palette-store.js";
 import { readImagePalette } from "./domain/image-file.js";
+import { customHueHarmony,perceptualScale } from "./domain/color-engine.js";
 import { compositeSwatch,swatchCssColor } from "./domain/swatch-opacity.js";
 import { snapshotPalette, restorePalette, comparePalettes } from "./domain/palette-versions.js";
 import { paletteRaster } from "./export/raster.js";
@@ -234,6 +235,7 @@ function render() {
     button.querySelector("span").style.background=swatchCssColor(swatch);
   }
   document.querySelector(".selected-preview").style.background=swatchCssColor(active);
+  document.querySelector(".palette-panel").insertAdjacentHTML("beforeend", `<div class="palette-actions"><label>${t("hueSpacing")}<input id="custom-spacing" type="number" min="-360" max="360" step="any" value="30" /></label><button id="custom-hues">${t("customHues")}</button><button id="perceptual-scale">${t("perceptualScale")}</button></div>`);
   bind();
   if (preferences.view === "light") {
     renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {accent:scene().materialColor,fixtures:project.fixtures.map((fixture)=>({...fixture,selected:fixture.id===selectedFixture()?.id}))});
@@ -249,6 +251,18 @@ function render() {
 }
 
 function bind() {
+  const applyGenerated=(generator)=>{
+    try {
+      const generated=generator();
+      mutateColours((colors)=>colors.map((color,index)=>color.locked ? color : {...color,hex:generated[index%generated.length]}));
+    } catch(error) { document.querySelector("#status").textContent=status=error.message; }
+  };
+  document.querySelector("#custom-hues").onclick=()=>applyGenerated(()=>{
+    const input=document.querySelector("#custom-spacing");
+    if (!input.value.trim() || !input.checkValidity()) throw new Error("Enter valid hue spacing.");
+    return customHueHarmony(preferences.seed,Number(input.value),Math.min(32,palette().colors.length));
+  });
+  document.querySelector("#perceptual-scale").onclick=()=>applyGenerated(()=>perceptualScale(preferences.seed,Math.max(2,Math.min(32,palette().colors.length))));
   document.querySelector("#apply-opacity").onclick=()=>{
     const input=document.querySelector("#swatch-opacity");
     if (!input.value.trim() || !input.checkValidity()) return input.reportValidity();

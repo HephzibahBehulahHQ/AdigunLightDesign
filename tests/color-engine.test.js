@@ -1,5 +1,17 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { customHueHarmony,perceptualScale } from "../src/domain/color-engine.js";
+test("custom hue spacing wraps predictably and tetradic differs from square",()=>{
+  assert.deepEqual(customHueHarmony("#FF0000",120,3),["#FF0000","#00FF00","#0000FF"]);
+  assert.notDeepEqual(harmony("#FF0000","tetradic"),harmony("#FF0000","square"));
+  assert.throws(()=>customHueHarmony("#FF0000",NaN));
+});
+test("perceptual scales increase OKLab lightness within sRGB",()=>{
+  const colors=perceptualScale("#2196F3",7),levels=colors.map((hex)=>rgbToOklab(hexToRgb(hex)).l);
+  assert.equal(colors.length,7);
+  assert.ok(levels.every((value,index)=>index===0 || value>levels[index-1]));
+  assert.throws(()=>perceptualScale("#2196F3",1));
+});
 import { mapOklchToSrgb } from "../src/domain/color-engine.js";
 test("maps excessive OKLCH chroma explicitly into sRGB",()=>{
   const result=mapOklchToSrgb({l:.65,c:.8,h:30});

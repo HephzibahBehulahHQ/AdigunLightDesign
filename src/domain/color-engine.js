@@ -83,8 +83,17 @@ export function shiftHue(hex, degrees, { saturation, lightness } = {}) {
 }
 
 export function harmony(seed, type = "analogous") {
-  const steps = { complementary:[0, 180], splitComplementary:[0, 150, 210], analogous:[-30, 0, 30, 60, -60], triadic:[0, 120, 240], tetradic:[0, 90, 180, 270], square:[0, 90, 180, 270], monochromatic:[0, 0, 0, 0, 0] }[type] ?? [0];
+  const steps = { complementary:[0, 180], splitComplementary:[0, 150, 210], analogous:[-30, 0, 30, 60, -60], triadic:[0, 120, 240], tetradic:[0, 60, 180, 240], square:[0, 90, 180, 270], monochromatic:[0, 0, 0, 0, 0] }[type] ?? [0];
   return steps.map((step, index) => type === "monochromatic" ? shiftHue(seed, 0, { lightness: [0.2, 0.35, 0.5, 0.65, 0.8][index] }) : shiftHue(seed, step));
+}
+export function customHueHarmony(seed,spacing,count=5) {
+  if (!normalizeHex(seed) || !Number.isFinite(spacing) || !Number.isInteger(count) || count<1 || count>32) throw new Error("Custom harmony needs a valid seed, finite hue spacing and 1–32 colors.");
+  return Array.from({length:count},(_,index)=>shiftHue(seed,index*spacing));
+}
+export function perceptualScale(seed,count=5) {
+  if (!normalizeHex(seed) || !Number.isInteger(count) || count<2 || count>32) throw new Error("Lightness scale needs a valid seed and 2–32 colors.");
+  const lch=oklabToOklch(rgbToOklab(hexToRgb(seed)));
+  return Array.from({length:count},(_,index)=>mapOklchToSrgb({...lch,l:.15+index/(count-1)*.75}).hex);
 }
 
 export function luminance(hex) { const rgb = hexToRgb(hex); if (!rgb) return null; return .2126 * linearRgb(rgb.r) + .7152 * linearRgb(rgb.g) + .0722 * linearRgb(rgb.b); }

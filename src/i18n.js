@@ -90,4 +90,8 @@ Object.assign(messages.en,{opacity:"Opacity"});
 Object.assign(messages.de,{opacity:"Deckkraft"});
 Object.assign(messages.yo,{opacity:"Ìṣípaya àwọ̀"});
 Object.assign(messages.pcm,{opacity:"Opacity"});
+Object.assign(messages.en,{hueSpacing:"Hue spacing (°)",customHues:"Custom hues",perceptualScale:"Perceptual scale"});
+Object.assign(messages.de,{hueSpacing:"Farbtonabstand (°)",customHues:"Eigene Farbtöne",perceptualScale:"Wahrnehmungsskala"});
+Object.assign(messages.yo,{hueSpacing:"Ààyè irú àwọ̀ (°)",customHues:"Àwọn àwọ̀ àṣàyàn",perceptualScale:"Ìpele àwọ̀ ìmọ̀lára"});
+Object.assign(messages.pcm,{hueSpacing:"Hue spacing (°)",customHues:"Custom hues",perceptualScale:"Perceptual scale"});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }
