@@ -5,6 +5,8 @@ It preserves the master specification and desktop visual target. Its acceptance
 gates are additional work, not completed by the existing request-based Lux UI.
 The [floating Bot window](FLOATING_BOT_REQUIREMENTS.md) is also required by the
 latest user extension. Backend progress is tracked in [Supabase setup](SUPABASE_SETUP.md).
+The [top-right menu extension](TOP_MENU_REQUIREMENTS.md) additionally requires
+compact spaced icons, authentic login status and desktop/mobile overlap checks.
 
 The project is intentionally initialized as a static, offline-capable core with no downloaded runtime dependencies. Node 24 or later is required for validation.
 
