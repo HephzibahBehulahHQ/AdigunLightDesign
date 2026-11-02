@@ -106,4 +106,8 @@ Object.assign(messages.en,{loopSequence:"Loop sequence",seekSequence:"Seek seque
 Object.assign(messages.de,{loopSequence:"Sequenz wiederholen",seekSequence:"Sequenzposition"});
 Object.assign(messages.yo,{loopSequence:"Tún ọ̀wọ́ cue ṣe",seekSequence:"Yan ipò nínú ọ̀wọ́ cue"});
 Object.assign(messages.pcm,{loopSequence:"Repeat sequence",seekSequence:"Choose sequence position"});
+Object.assign(messages.en,{duplicateCue:"Duplicate cue",deleteCue:"Delete cue",copyLabel:"Copy"});
+Object.assign(messages.de,{duplicateCue:"Cue duplizieren",deleteCue:"Cue löschen",copyLabel:"Kopie"});
+Object.assign(messages.yo,{duplicateCue:"Ṣẹ̀dà cue",deleteCue:"Pa cue rẹ́",copyLabel:"Ẹ̀dà"});
+Object.assign(messages.pcm,{duplicateCue:"Copy cue",deleteCue:"Delete cue",copyLabel:"Copy"});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }

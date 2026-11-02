@@ -1,5 +1,7 @@
 # Cue timeline
 
+Duplicate cue inserts an independent copy immediately after the selected cue and selects it. Delete cue removes the selection and selects the nearest remaining cue. Both stop previews and use document undo/redo; deleting the final cue is supported. Captured targets and keyframes remain independent between copies.
+
 The sequence transport includes a persistent loop preference and a keyboard-accessible seek slider. Committing a seek starts a paused sequence preview at that position; Resume continues from there. Looping restarts from the captured source scene on each cycle. These controls apply to the full stored cue sequence. Seeking does not edit project data. Browser interaction remains unverified.
 
 Virtual effect previews provide a cosine dimmer pulse and an ordered dimmer chase with an editable cycle of 0.1–120 seconds. Both loop until Stop or a document mutation. They evaluate cloned fixture data and change only rendered preview intensity; they do not save effect settings, alter cue snapshots, or transmit hardware output. Deterministic phase, wraparound, bounds and immutability have domain tests; browser playback remains unverified.

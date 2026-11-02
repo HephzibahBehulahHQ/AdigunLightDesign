@@ -15,7 +15,7 @@ import { paletteCssVariables, rerollUnlocked, starterPalette, updateSwatch } fro
 import { supportedLocales, translate } from "./i18n.js";
 import { createLightLabRenderer } from "./light-lab/renderer.js";
 import { blackout, createFixture, dmxFrame, fixtureProfiles, getFixtureProfile, patchFixture, updateFixture } from "./dmx/engine.js";
-import { createCue, editCue, evaluateCue, evaluateSequence, moveCue } from "./timeline/engine.js";
+import { createCue, duplicateCue, removeCue, editCue, evaluateCue, evaluateSequence, moveCue } from "./timeline/engine.js";
 import { evaluateEffect } from "./timeline/effects.js";
 import { createPlaybackClock, playbackPosition } from "./timeline/playback-clock.js";
 import { cueCsv, designTokenJson, paletteCss, paletteJson, paletteSvg, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
@@ -222,6 +222,7 @@ function render() {
   document.querySelector(".timeline").insertAdjacentHTML("beforeend", `<div class="dmx-actions"><label>${t("virtualEffect")} <select id="effect-type"><option value="pulse">${t("pulse")}</option><option value="chase">${t("chase")}</option></select></label><label>${t("effectPeriod")} <input id="effect-period" type="number" min="0.1" max="120" step="0.1" value="2"></label><button id="play-effect" ${project.fixtures.length ? "" : "disabled"}>▶ ${t("play")}</button></div>`);
   if (activeCue) {
     const index=project.cues.indexOf(activeCue);
+    document.querySelector("#edit-cue").insertAdjacentHTML("afterend", `<button id="duplicate-cue">${t("duplicateCue")}</button><button id="delete-cue">${t("deleteCue")}</button>`);
     document.querySelector("#edit-cue").insertAdjacentHTML("afterend", `<button data-move-cue="-1" ${index === 0 ? "disabled" : ""}>← ${t("earlier")}</button><button data-move-cue="1" ${index === project.cues.length - 1 ? "disabled" : ""}>${t("later")} →</button>`);
   }
   if (document.querySelector(".fixture-inspector")) {
@@ -430,6 +431,20 @@ function bind() {
   document.querySelector("#sequence-loop").onchange=(event)=>{preferences.loopSequence=event.target.checked;savePreferences();};
   document.querySelector("#sequence-seek").onchange=(event)=>playSequence({seek:Number(event.target.value),paused:true});
   document.querySelector("#play-effect").onclick=playEffect;
+  const duplicateButton=document.querySelector("#duplicate-cue"),deleteButton=document.querySelector("#delete-cue");
+  if (duplicateButton) duplicateButton.onclick=()=>{
+    const cue=project.cues.find((item)=>item.id===preferences.cueId) ?? project.cues.at(-1);
+    const id=crypto.randomUUID();
+    commitProjectChange("cue-duplicate",(draft)=>{draft.cues=duplicateCue(draft.cues,cue.id,{id,name:`${cue.name} · ${t("copyLabel")}`});});
+    preferences.cueId=id;savePreferences();render();
+  };
+  if (deleteButton) deleteButton.onclick=()=>{
+    const cue=project.cues.find((item)=>item.id===preferences.cueId) ?? project.cues.at(-1);
+    const index=project.cues.indexOf(cue);
+    commitProjectChange("cue-delete",(draft)=>{draft.cues=removeCue(draft.cues,cue.id);});
+    preferences.cueId=project.cues[Math.min(index,project.cues.length-1)]?.id ?? null;
+    savePreferences();render();
+  };
   const editButton=document.querySelector("#edit-cue");
   if (editButton) editButton.onclick=()=>{
     try {

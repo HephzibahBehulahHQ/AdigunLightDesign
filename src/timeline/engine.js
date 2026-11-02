@@ -1,6 +1,22 @@
 const clamp = (value, minimum = 0, maximum = 1) => Math.min(maximum, Math.max(minimum, value));
 export const interpolate = (from, to, progress) => from + (to - from) * clamp(progress);
 
+export function duplicateCue(cues,cueId,{id=crypto.randomUUID(),name}={}) {
+  const index=cues.findIndex((cue)=>cue.id===cueId);
+  if (index<0) throw new Error("Cue was not found.");
+  if (typeof id!=="string" || !id.trim() || cues.some((cue)=>cue.id===id)) throw new Error("Cue identity must be unique.");
+  const copy=structuredClone(cues[index]);
+  copy.id=id;
+  copy.name=name ?? `${copy.name} (copy)`;
+  if (typeof copy.name!=="string" || !copy.name.trim()) throw new Error("Cue name must not be empty.");
+  return [...cues.slice(0,index+1),copy,...cues.slice(index+1)];
+}
+
+export function removeCue(cues,cueId) {
+  if (!cues.some((cue)=>cue.id===cueId)) throw new Error("Cue was not found.");
+  return cues.filter((cue)=>cue.id!==cueId);
+}
+
 export function moveCue(cues, cueId, offset) {
   if (offset !== -1 && offset !== 1) throw new Error("Cue movement must be one position earlier or later.");
   const index=cues.findIndex((cue)=>cue.id===cueId);
