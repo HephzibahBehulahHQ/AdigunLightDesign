@@ -48,7 +48,30 @@ not validate signed JWT issuance, browser login, PostgREST schema exposure or tw
 independent real API sessions. The advisor discrepancy remains unresolved and
 must not be reported as a clean security audit.
 
-Not complete: exposing the product schema through the Data API, frontend Auth,
+## Optional browser account flow
+
+Pinned `@supabase/supabase-js` now provides existing-account password sign-in,
+server-side `getUser` verification, Auth-event handling and session-local sign-out.
+The header uses only verified, non-anonymous user state. Tokens are held in memory;
+URL session detection and persistent sessions are disabled. Reload returns to
+guest. Signing out uses local scope to preserve other sessions in this shared
+project. The window's local layout keys also use the verified account ID.
+
+The Vite build requires an externally supplied `ALD_SUPABASE_PUBLISHABLE_KEY` to
+enable this flow. The default build remains unconfigured; no actual key,
+password or token is committed. SDK and dialog tests use mocks and synthetic
+credentials. No live login, sign-up, email callback or cloud saving is established.
+Validation: the full local suite passed 212 tests with zero failures/skips.
+Focused checks cover registered/anonymous identity handling, stale verification,
+session-local sign-out, failed sign-out, password clearing and secret-shaped
+build-key rejection. The dependency audit reported zero vulnerabilities. The
+unconfigured production build passed with relative assets, canonical URL and
+CNAME retained, and server sources excluded. These are not live Auth results.
+References: [password sign-in](https://supabase.com/docs/reference/javascript/auth-signinwithpassword),
+[verified user lookup](https://supabase.com/docs/reference/javascript/auth-getuser),
+[session-local sign-out](https://supabase.com/docs/reference/javascript/auth-signout).
+
+Not complete: exposing the product schema through the Data API, live frontend Auth verification,
 product redirect allowlisting, manual cloud save/load, real-session API isolation,
 authenticated Bot acceptance and account layout persistence. Existing global
 Site URL and other products' schemas remain intact. Public client configuration

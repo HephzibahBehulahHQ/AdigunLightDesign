@@ -9,4 +9,10 @@ is preserved for the existing Jekyll landing page. This reconciliation does not
 merge the draft application PR or deploy its editor. The static application build
 uses `dist/CNAME`; Jekyll configuration is not required by its ES-module runtime.
 
-The static build writes `dist/`. GitHub Pages is suitable for the current offline-first core after a Pages publishing workflow, base-path configuration and live verification are added. This repository has no configured cloud database, authentication provider, AI endpoint, physical-DMX bridge or production secret. These services require separate infrastructure and server-side environment variables; never place their credentials in static assets.
+Vite builds relative asset URLs into `dist/` and copies the root CNAME. GitHub
+Pages publication and live editor verification remain pending. Shared Supabase
+product storage exists, but frontend Auth is unavailable in builds without
+`ALD_SUPABASE_PUBLISHABLE_KEY`. This is a public client key, deliberately supplied
+outside version control; secret/service-role keys are rejected. No production
+credentials are committed. AI providers and physical-DMX bridges require separate
+server infrastructure. No deployment is performed by the build or validation CI.

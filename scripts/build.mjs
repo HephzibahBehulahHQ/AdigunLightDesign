@@ -1,8 +1,8 @@
-import { cpSync, mkdirSync, rmSync } from "node:fs";
+import {cpSync} from "node:fs";
+import {build} from "vite";
 
-rmSync("dist", { recursive: true, force: true });
-mkdirSync("dist", { recursive: true });
-for (const path of ["src", "index.html", "CNAME"]) {
-  cpSync(path, `dist/${path}`, { recursive: true });
-}
-console.log("Static build completed.");
+const publishableKey=process.env.ALD_SUPABASE_PUBLISHABLE_KEY ?? "";
+if(publishableKey && !/^sb_publishable_[A-Za-z0-9_-]+$/.test(publishableKey))throw new Error("Only a Supabase publishable key may be embedded in the frontend build.");
+await build({configFile:false,base:"./",publicDir:false,define:{__ALD_SUPABASE_PUBLISHABLE_KEY__:JSON.stringify(publishableKey)},build:{outDir:"dist",emptyOutDir:true,sourcemap:false}});
+cpSync("CNAME","dist/CNAME");
+console.log(`Static build completed; Auth ${publishableKey ? "configured" : "unconfigured"}.`);

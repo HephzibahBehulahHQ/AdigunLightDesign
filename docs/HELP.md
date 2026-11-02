@@ -1,10 +1,16 @@
 # AdigunLightDesign help
 
 The top-right row contains save status, Account, Language, Settings, Search and
-Help. Account currently shows guest because frontend authentication is pending.
+Help. Account shows guest until a configured build verifies a registered login.
 Settings changes appearance. Search finds fixtures, active-canvas objects/colors,
 cues and saved palette names; selecting a saved palette opens its comparison.
 The globe keeps all four languages available. Narrow screens hide the save text.
+
+If sign-in is enabled for the build, Account accepts an existing account's email
+and password. The password field clears after each attempt. Sessions remain in
+memory and end on reload; sign-out affects this session. Registration, email-link
+flows and cloud saving are not available yet. An unconfigured build explains why
+sign-in is unavailable and continues to support local editing.
 
 In the fixture inspector's Light tab, use the intensity and beam sliders, then
 Apply to commit. Intensity percentage is a normalized virtual channel value,

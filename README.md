@@ -10,9 +10,11 @@ Milestone 0 is documented. Partial implementations of the shell, palette engine,
 
 ## Local development
 
-The current application has no runtime dependency installation requirement and can be served by a static web server.
+Install the pinned dependencies, then build. The generated `dist/` is served by
+a static web server; raw source now requires Vite bundling for the optional Auth SDK.
 
 ```text
+npm ci --ignore-scripts
 npm test
 npm run check
 npm run build

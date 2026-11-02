@@ -47,6 +47,8 @@ import { bindCanvasMeasure } from "./ui/canvas-measure.js";
 import { paletteAse } from "./export/ase.js";
 import {topMenuMarkup,bindTopMenu} from "./ui/top-menu.js";
 import {createFloatingBot} from "./ui/floating-bot.js";
+import {createAccount} from "./cloud/account.js";
+import {openAccountDialog} from "./ui/account-dialog.js";
 import { canFullscreen,toggleViewportFullscreen } from "./ui/fullscreen.js";
 import { groupFixtures,saveFixtureGroup } from "./domain/fixture-groups.js";
 import { cueCsv, designTokenJson, paletteCss, paletteJson, paletteSvg, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
@@ -65,8 +67,9 @@ let projectPersisted=false;
 let luxProposal=null;
 let cleanupTopMenu=null;
 const imageAssets=createImageAssetStore();
+const account=createAccount({publishableKey:typeof __ALD_SUPABASE_PUBLISHABLE_KEY__==="undefined" ? "" : __ALD_SUPABASE_PUBLISHABLE_KEY__});
 const liveCanvasFeed=createCanvasStateFeed();
-const floatingBot=createFloatingBot({getProjectId:()=>project.id,getLocale:()=>preferences.locale,translate});
+const floatingBot=createFloatingBot({getProjectId:()=>project.id,getUserId:()=>account.user?.id ?? "guest",getLocale:()=>preferences.locale,translate});
 const liveCopilotPanel=createLiveCopilotPanel({feed:liveCanvasFeed,getLocale:()=>preferences.locale,translate,onNotify:()=>floatingBot.notify()});
 const luxService=createLuxServicePanel({getProject:()=>project,getLocale:()=>preferences.locale,translate,imageAssets,onPreview:(proposal)=>{luxProposal=proposal;render();},onError:(message)=>setStatus(message),onNotify:()=>floatingBot.notify()});
 let project = loadProject();
@@ -275,7 +278,7 @@ function render() {
         <span class="brand-fallback" hidden>HB <b>Hephzibah Behulah</b></span><span class="brand-divider"></span><span class="division">⚡ HB Elektroniker</span>
       </div>
       <div class="product-lockup"><strong>Adigun<span>Light</span>Design</strong><small>Unified Color &amp; Light Design Studio</small></div>
-      ${topMenuMarkup({t,locale:preferences.locale,saved:projectPersisted})}<button id="theme" type="button" hidden aria-label="${t("appearance")}"></button>
+      ${topMenuMarkup({t,locale:preferences.locale,saved:projectPersisted,user:account.user})}<button id="theme" type="button" hidden aria-label="${t("appearance")}"></button>
     </header>
     <nav class="module-nav" aria-label="${t("appModules")}">${nav}</nav>
     <main id="workspace" class="editor-layout">
@@ -459,7 +462,7 @@ function render() {
   bind();
   bindFixtureSliders(document.querySelector(".inspector"),{channelLabel:t("virtualChannelValue")});
   floatingBot.mount(document.querySelector(".lux-panel"));
-  cleanupTopMenu=bindTopMenu({project,t,onSelect(result){
+  cleanupTopMenu=bindTopMenu({project,t,onAccount:()=>openAccountDialog({account,t}),onSelect(result){
     stopPlayback();
     if(result.kind==="fixture"){preferences.fixtureId=result.id;preferences.inspectorMode="fixture";preferences.view="light";}
     else if(result.kind==="cue")preferences.cueId=result.id;
@@ -879,4 +882,5 @@ function bind() {
 }
 function downloadCss() { const file = new Blob([paletteCssVariables(palette().colors)], { type:"text/css" }); const link = document.createElement("a"); link.href = URL.createObjectURL(file); link.download = `${project.name.toLowerCase().replace(/[^a-z0-9]+/gi, "-")}-palette.css`; link.click(); URL.revokeObjectURL(link.href); setStatus(t("statusExport")); }
 window.addEventListener("keydown", (event) => { if (isEditableTarget(event.target) || event.defaultPrevented || event.isComposing) return; const tool=toolShortcut(event);if(tool){const button=document.querySelector(`[data-tool="${tool}"]`);if(button && !button.disabled){event.preventDefault();button.click();}return;} const shortcut=editorShortcut(event); if (!shortcut) return; event.preventDefault(); if (shortcut === "save") { saveProject(); render(); } else if (shortcut === "undo") undo(); else redo(); });
+account.subscribe(()=>render());
 render();

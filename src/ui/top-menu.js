@@ -15,7 +15,7 @@ export function searchProject(project,query){
   project.cues.forEach(item=>add("cue",item));const scene=project.scenes[0];(scene?.canvasObjects ?? []).forEach(item=>add("object",item,{sceneId:scene.id}));
   return results;
 }
-export function bindTopMenu({documentRef=document,project,t,onSelect}){
+export function bindTopMenu({documentRef=document,project,t,onSelect,onAccount}){
   const dialog=documentRef.createElement("dialog");dialog.className="top-menu-dialog";dialog.setAttribute("aria-label",t("help"));
   documentRef.body.append(dialog);
   function show(kind){
@@ -24,6 +24,6 @@ export function bindTopMenu({documentRef=document,project,t,onSelect}){
     const input=dialog.querySelector("[data-project-search]");if(input){input.focus();input.oninput=()=>{const results=searchProject(project,input.value),host=dialog.querySelector("[data-search-results]");host.innerHTML=results.map((item,index)=>`<button data-search-index="${index}">${esc(item.name)} <small>· ${esc(t(item.kind==="object" ? "designCanvas" : item.kind==="cue" ? "timeline" : item.kind==="fixture" ? "fixtureLabel" : "palette"))}</small></button>`).join("") || `<p>${t("noSearchResults")}</p>`;host.querySelectorAll("[data-search-index]").forEach(button=>button.onclick=()=>{dialog.close();onSelect(results[Number(button.dataset.searchIndex)]);});};}
     const theme=dialog.querySelector("[data-theme-toggle]");if(theme)theme.onclick=()=>{dialog.close();documentRef.querySelector("#theme").click();};
   }
-  for(const [id,kind] of [["account-menu","guestAccount"],["settings-menu","settings"],["search-menu","search"],["help-menu","help"]])documentRef.querySelector(`#${id}`).onclick=()=>show(kind);
+  for(const [id,kind] of [["account-menu","guestAccount"],["settings-menu","settings"],["search-menu","search"],["help-menu","help"]])documentRef.querySelector(`#${id}`).onclick=()=>id==="account-menu" && onAccount ? onAccount() : show(kind);
   return ()=>dialog.remove();
 }

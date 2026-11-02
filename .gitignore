@@ -3,3 +3,6 @@ node_modules/
 .DS_Store
 /.review-cache/
 /*.log
+/.npm-cache/
+.env
+.env.*
