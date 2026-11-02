@@ -16,7 +16,7 @@ migrations: `adigunlightdesign_cloud_project_storage` and
 `adigunlightdesign_require_registered_project_owner`.
 
 Database metadata verified RLS, policies, role grants and the invoker trigger.
-No user project rows were inserted. Shared-project advisors returned warnings
+No project rows are retained. Shared-project advisors returned warnings
 including anonymous-access findings; the registered-user gate was added after
 that check. Other products' policies/settings were not changed. Advisor output
 alone is not proof of cross-user isolation; see the
@@ -30,8 +30,26 @@ gate, RLS enabled, no anonymous SELECT grant and an invoker trigger. Review the
 [anonymous-access advisory](https://supabase.com/docs/guides/database/database-advisors?queryGroups=lint&lint=0012_auth_allow_anonymous_sign_ins)
 and verify actual authenticated/anonymous requests before enabling cloud features.
 
+## Transaction-scoped database verification
+
+`docs/sql/verify-cloud-project-rls.sql` was executed successfully against this
+project on 2 November 2026. It internally selected two existing registered owner
+IDs without returning identities, inserted two temporary product-only projects,
+then emulated database roles and JWT claims. Assertions verified anonymous-role
+denial; owner read access; cross-owner read/update/delete denial; forged-owner
+insert denial; owner identity preservation and server revision increment; and
+anonymous Auth-session read/insert denial. All test writes were rolled back.
+The result reported `database_role_verification: passed` and zero retained test
+projects. A separate query confirmed zero stored projects and the same count of
+two registered users; no Auth records were created or changed.
+
+These are real PostgreSQL policy/trigger tests using emulated claims. They do
+not validate signed JWT issuance, browser login, PostgREST schema exposure or two
+independent real API sessions. The advisor discrepancy remains unresolved and
+must not be reported as a clean security audit.
+
 Not complete: exposing the product schema through the Data API, frontend Auth,
-product redirect allowlisting, manual cloud save/load, two-user isolation tests,
+product redirect allowlisting, manual cloud save/load, real-session API isolation,
 authenticated Bot acceptance and account layout persistence. Existing global
 Site URL and other products' schemas remain intact. Public client configuration
 must use a publishable key; private/service-role keys must never enter the app.
