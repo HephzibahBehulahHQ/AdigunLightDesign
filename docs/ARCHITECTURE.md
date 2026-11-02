@@ -37,6 +37,8 @@ Direct editor mutations use document transactions. Each committed operation snap
 
 ## Visual acceptance
 
+Fixture yaw is editable in degrees and rotates the virtual pan/tilt beam target around the fixture's world position. It is a scene transform, not a transmitted DMX channel. The simplified fixture housing does not model full mechanical orientation, and no manufacturer aiming calibration is claimed. Rotation/position preservation has automated coverage; browser appearance remains unverified.
+
 The fixture inspector groups existing controls into Fixture (identity/placement), Light (color/intensity/aiming), DMX (patching) and Effects tabs. Effects are explicitly labeled as applying to all virtual fixtures. Selecting a palette swatch opens palette controls instead; the fixture layer list returns to fixture inspection. Tabs reuse the existing validated actions. Their browser interaction and exact layout remain unverified.
 
 The 2D shape selector creates rectangles or ellipses; both use editable bounding-box position and dimensions. Object duplication creates an independent copy offset by 20 canvas units. Backward/Forward moves change saved stacking order one step at a time and are undoable. SVG export preserves these shapes and order. Geometry/copy/order tests do not verify browser interaction.

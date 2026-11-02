@@ -191,4 +191,8 @@ Object.assign(messages.en,{lightTab:"Light",dmxTab:"DMX",effectsTab:"Effects",al
 Object.assign(messages.de,{lightTab:"Licht",dmxTab:"DMX",effectsTab:"Effekte",allVirtualFixtures:"Effektvorschau gilt für alle virtuellen Geräte.",selectedFixtureTitle:"Ausgewählt"});
 Object.assign(messages.yo,{lightTab:"Ìmọ́lẹ̀",dmxTab:"DMX",effectsTab:"Àwọn ipa",allVirtualFixtures:"Àfihàn ipa kan gbogbo fìtílà àfojúsùn.",selectedFixtureTitle:"A yàn"});
 Object.assign(messages.pcm,{lightTab:"Light",dmxTab:"DMX",effectsTab:"Effects",allVirtualFixtures:"Effect preview go affect all virtual fixtures.",selectedFixtureTitle:"Selected"});
+Object.assign(messages.en,{fixtureRotation:"Fixture yaw"});
+Object.assign(messages.de,{fixtureRotation:"Gerätedrehung"});
+Object.assign(messages.yo,{fixtureRotation:"Ìyí fìtílà"});
+Object.assign(messages.pcm,{fixtureRotation:"Fixture turn"});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }

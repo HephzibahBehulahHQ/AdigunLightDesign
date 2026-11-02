@@ -20,8 +20,10 @@ export function virtualFixtureVisuals(fixtures = []) {
     // Artistic normalized aiming, independent of manufacturer DMX calibration.
     const pan=Number.isFinite(properties.pan) ? properties.pan : 127;
     const tilt=Number.isFinite(properties.tilt) ? properties.tilt : 127;
+    const rotation=(Number.isFinite(transform.rotation) ? transform.rotation%360 : 0)*Math.PI/180;
+    const dx=(pan-127)/128*3,dz=1.35+(tilt-127)/128*3;
     return {x,y:Number.isFinite(transform.y) ? transform.y : 3.65,z,selected:fixture.selected === true,
-      targetX:x+(pan-127)/128*3,targetZ:z+1.35+(tilt-127)/128*3,
+      targetX:x+dx*Math.cos(rotation)+dz*Math.sin(rotation),targetZ:z+dz*Math.cos(rotation)-dx*Math.sin(rotation),
       colour:["red","green","blue"].map((name)=>Math.min(1,(channel(properties[name])+white)*dimmer)),
       spread:.55+channel(properties.beam)*.85};
   });
