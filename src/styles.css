@@ -141,7 +141,7 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
 /* Keep the default assistant beside the inspector, as in the desktop target.
    The window remains freely movable; closing/minimizing releases this space. */
 @media (min-width:1321px) and (min-height:700px) {
-  .has-open-floating-bot .editor-layout { margin-right:350px; }
+  .has-open-floating-bot .editor-layout { margin-right:var(--bot-workspace-reserve,350px); }
 }
 
 .floating-bot .bot-window-body { flex:1; min-height:0; display:flex; flex-direction:column; overflow:auto; padding-bottom:24px; }

@@ -88,3 +88,5 @@ table topology, room-sized slats and lighting response. No photorealistic
 materials, calibrated reflections or exact reference appearance is established.
 
 At desktop widths above 1320px and heights at least 700px, the normal open floating Bot now reserves 350px beside the editor. Closing, minimizing or maximizing releases that space; dragging and resizing remain available. This protects the default inspector from the assistant overlay while retaining the requested floating behavior. Resized or moved windows may intentionally overlay the workspace. State-transition tests cover reservation release/restoration and disposal; rendered desktop/mobile acceptance remains pending.
+
+Reservation now follows the actual right-edge window width and gap. Moving the Bot more than 24px from that edge releases the space; very wide windows float over the editor rather than reducing it below a 900px overall workspace budget. CSS applies reservation only at the existing desktop breakpoint. Four mocked floating-window tests passed, including edge resize, movement and width-limit transitions; browser geometry remains unverified.

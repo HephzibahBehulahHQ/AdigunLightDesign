@@ -7,7 +7,10 @@ export function createFloatingBot({getProjectId,getLocale,translate,getUserId=()
   function paint(){
     if(!host || !store)return;
     const state=store.state,rect=botWindowRect(state,viewport());host.hidden=!state.open;
-    documentRef.body.classList.toggle("has-open-floating-bot",state.open && state.mode==="normal");
+    const rightGap=viewport().width-rect.x-rect.width;
+    const reserve=state.open && state.mode==="normal" && rightGap<=24 && rect.width<=viewport().width-900;
+    documentRef.body.classList.toggle("has-open-floating-bot",reserve);
+    documentRef.body.style.setProperty("--bot-workspace-reserve",`${rect.width+rightGap}px`);
     host.classList.toggle("is-minimized",state.mode==="minimized");
     for(const [key,value] of Object.entries({left:rect.x,top:rect.y,width:rect.width,height:rect.height}))host.style[key]=`${value}px`;
     const maximize=host.querySelector("[data-bot-maximize]");maximize.textContent=state.mode==="maximized" ? "❐" : "□";maximize.title=t(state.mode==="maximized" ? "botRestore" : "botMaximize");maximize.setAttribute("aria-label",maximize.title);
