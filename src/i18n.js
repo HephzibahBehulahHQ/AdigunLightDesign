@@ -50,4 +50,8 @@ Object.assign(messages.en,{pan:"Virtual pan",tilt:"Virtual tilt"});
 Object.assign(messages.de,{pan:"Virtueller Schwenk",tilt:"Virtuelle Neigung"});
 Object.assign(messages.yo,{pan:"Ìyí àfojúsùn",tilt:"Ìtẹ̀ àfojúsùn"});
 Object.assign(messages.pcm,{pan:"Virtual pan",tilt:"Virtual tilt"});
+Object.assign(messages.en,{designTokens:"Design-token JSON"});
+Object.assign(messages.de,{designTokens:"Design-Token-JSON"});
+Object.assign(messages.yo,{designTokens:"JSON tóókìn àpẹrẹ"});
+Object.assign(messages.pcm,{designTokens:"Design-token JSON"});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }

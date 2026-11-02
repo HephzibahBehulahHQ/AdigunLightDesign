@@ -1,5 +1,16 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { designTokenJson } from "../src/export/formats.js";
+test("token export preserves duplicate names and source identities without key collisions",()=>{
+  const palette={name:"Studio",colors:[{id:"a",name:"__proto__",hex:"#f00"},{id:"b",name:"__proto__",hex:"#00f"}]};
+  const result=JSON.parse(designTokenJson(palette));
+  assert.equal(result.schemaVersion,1);
+  assert.deepEqual(Object.keys(result.color),["swatch_1","swatch_2"]);
+  assert.equal(result.color.swatch_1.value,"#FF0000");
+  assert.equal(result.color.swatch_2.sourceId,"b");
+  assert.equal(result.color.swatch_1.name,"__proto__");
+  assert.throws(()=>designTokenJson({colors:[{hex:"invalid"}]}));
+});
 import { paletteSvg } from "../src/export/formats.js";
 test("SVG export escapes names, normalizes colors and rejects unsafe color data",()=>{
   const svg=paletteSvg({name:'Studio <& "',colors:[{name:"<script>alert(1)</script>",hex:"#f00"}]});

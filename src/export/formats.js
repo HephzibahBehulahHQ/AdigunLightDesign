@@ -2,6 +2,15 @@ import { paletteCssVariables } from "../domain/palette-store.js";
 import { normalizeHex } from "../domain/color-engine.js";
 
 const xmlText=(value)=>String(value ?? "").replace(/[&<>"']/g,(char)=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&apos;"})[char]);
+export function designTokenJson(palette) {
+  if (!Array.isArray(palette?.colors) || !palette.colors.length) throw new Error("Token export requires a nonempty palette.");
+  const tokens=palette.colors.map((color,index)=>{
+    const value=normalizeHex(color.hex);
+    if (!value) throw new Error("Token export requires valid HEX colors.");
+    return [`swatch_${index+1}`,{type:"color",value,name:String(color.name ?? ""),sourceId:String(color.id ?? "")}];
+  });
+  return JSON.stringify({format:"adigunlightdesign.design-tokens",schemaVersion:1,name:String(palette.name ?? ""),color:Object.fromEntries(tokens)},null,2);
+}
 export function paletteSvg(palette) {
   if (!Array.isArray(palette?.colors) || !palette.colors.length || palette.colors.length>256) throw new Error("SVG export requires 1–256 colors.");
   const colors=palette.colors.map((color)=>{
