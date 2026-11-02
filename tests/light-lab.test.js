@@ -1,5 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { studioPlant } from "../src/light-lab/renderer.js";
+test("studio plants have deterministic finite leaves and pots at the requested position",()=>{
+  const data=studioPlant(2,1,2.4);
+  assert.equal(data.length%18,0);
+  assert.ok(data.every(Number.isFinite));
+  assert.deepEqual(studioPlant(2,1,2.4),data);
+  const positions=Array.from({length:data.length/6},(_,index)=>data.slice(index*6,index*6+3));
+  assert.ok(positions.every(([x,y,z])=>x>1 && x<3 && y>=0 && y<3 && z>0 && z<2));
+});
 test("selected fixture adds viewport outline geometry without changing scene input",()=>{
   const fixture={transform:{x:0,y:3,z:0},properties:{dimmer:0}};
   const normal=sceneData([.2,.3,.4],[fixture]);

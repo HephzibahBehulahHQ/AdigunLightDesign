@@ -69,6 +69,22 @@ export function surfaceGrid(origin, horizontal, vertical, colour, columns=20, ro
   for (let row=0;row<rows;row+=1) for (let column=0;column<columns;column+=1) quad(data,point(column,row),point(column+1,row),point(column+1,row+1),point(column,row+1),colour);
   return data;
 }
+export function studioPlant(x,z,height=2.1) {
+  const data=[],pot=hexVector("#44313D"),leaf=hexVector("#235E45"),stem=hexVector("#4A6040");
+  for (let segment=0;segment<16;segment++) {
+    const a=segment/16*Math.PI*2,b=(segment+1)/16*Math.PI*2;
+    quad(data,[x+Math.cos(a)*.2,0,z+Math.sin(a)*.2],[x+Math.cos(b)*.2,0,z+Math.sin(b)*.2],[x+Math.cos(b)*.3,.5,z+Math.sin(b)*.3],[x+Math.cos(a)*.3,.5,z+Math.sin(a)*.3],pot);
+  }
+  box(data,x-.025,.45,z-.025,.05,height-.45,.05,stem);
+  for (let index=0;index<24;index++) {
+    const angle=index*2.399963,reach=.45+(index%4)*.13,y=.75+(index/24)*(height-.6);
+    const tip=[x+Math.cos(angle)*reach,y+.12,z+Math.sin(angle)*reach],root=[x,y-.12,z];
+    const middle=[x+Math.cos(angle)*reach*.5,y+.25,z+Math.sin(angle)*reach*.5];
+    const side=[Math.sin(angle)*.13,0,-Math.cos(angle)*.13];
+    quad(data,root,middle.map((value,axis)=>value+side[axis]),tip,middle.map((value,axis)=>value-side[axis]),leaf.map((value)=>value*(.7+(index%3)*.15)));
+  }
+  return data;
+}
 export function sceneData(accent, fixtures, visibility={}) {
   const data=[],floor=hexVector("#172238"),wall=hexVector("#27324A"),couch=hexVector("#9C4F48"),wood=hexVector("#67442F"),metal=hexVector("#151D2D");
   data.push(...surfaceGrid([-5,0,-4],[10,0,0],[0,0,8],floor));
@@ -87,6 +103,15 @@ export function sceneData(accent, fixtures, visibility={}) {
   for (let index=0;index<4;index+=1) box(data,3.85+index*.16,.87,2.6,.1,.4,.22,index%2 ? accent : hexVector("#D4AF37"));
   box(data,-.8,2,3.88,1.6,.95,.08,wood);
   box(data,-.7,2.1,3.78,1.4,.75,.08,accent);
+  data.push(...studioPlant(-3.65,1.8,2.4),...studioPlant(2.8,2.3,1.9));
+  const chair=hexVector("#23405C");
+  box(data,-3.4,.45,.1,1,.16,.85,chair);
+  box(data,-3.4,.6,.8,1,.8,.14,chair);
+  for (const x of [-3.4,-2.48]) for (const z of [.12,.87]) box(data,x,.03,z,.06,.44,.06,metal);
+  for (const x of [-3.48,-2.42]) box(data,x,.7,.12,.08,.08,.85,metal);
+  box(data,-2.65,0,1.55,.35,.06,.35,metal);
+  box(data,-2.51,.06,1.69,.035,1.85,.035,metal);
+  box(data,-2.62,1.83,1.58,.25,.17,.25,hexVector("#E6BA75"));
   }
   for (const y of [3.7,3.95]) box(data,-4,y,.4,8,.06,.06,metal);
   for (let x=-4;x<=4;x+=.5) box(data,x,3.7,.4,.04,.3,.06,metal);

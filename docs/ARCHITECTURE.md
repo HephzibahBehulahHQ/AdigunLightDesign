@@ -35,6 +35,8 @@ Direct editor mutations use document transactions. Each committed operation snap
 
 ## Visual acceptance
 
+The studio geometry includes two potted plants, a side chair and a floor-lamp model alongside the sofa, table and shelf. These are procedural, vertex-colored approximations that receive the existing artistic fixture spill and follow props-layer visibility. The decorative lamp does not add a calibrated light source. Geometry tests do not establish photorealism or screenshot fidelity.
+
 Layer visibility buttons save optional boolean `scene.visibility` settings for lighting, props and the palette panel through undoable transactions. Hiding lighting removes its preview geometry and artistic surface contribution, while virtual DMX and cue data stay unchanged. Hiding props retains the room and rig. Legacy scenes default to visible layers. These controls affect previews and panel visibility, not physical output. Domain geometry and import validation have coverage; browser interaction remains unverified.
 
 The inspector has functional Fixture and Palette selectors. Opening 3D selects fixture controls; opening 2D or selecting a swatch selects palette controls. The choice persists locally. Hidden controls retain their handlers, and fixture editing remains available when WebGL is unavailable. Browser interaction and visual acceptance are still unverified.
