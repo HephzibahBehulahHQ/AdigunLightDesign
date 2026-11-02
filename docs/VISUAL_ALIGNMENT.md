@@ -39,3 +39,10 @@ Changes remain staged until the existing Apply action commits the validated,
 undoable fixture transaction. A handler test covers exact values, endpoint labels,
 missing profile controls and accessible value text. Browser interaction remains
 unverified.
+
+The Measure tool now performs temporary 2D canvas-coordinate measurements using
+SVG screen transforms. It has pointer and keyboard operation, a visible line and
+distance label, localized instructions and live status output. Measurement mode
+does not bind object dragging. Focused tests cover scaled coordinates, pointer
+identity, cancellation, keyboard increments/reset and cleanup. No physical-unit
+calibration or browser interaction acceptance is claimed.

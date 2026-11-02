@@ -101,3 +101,5 @@
 .scheduled-track:nth-of-type(3n) .cue-block { background:linear-gradient(90deg,#236e47,#39a76a); border-color:#73d797; }
 .fixture-inspector input[type="range"] { display:block; width:100%; padding:0; margin:8px 0; accent-color:#c875f2; }
 .fixture-slider-value { display:block; text-align:right; font-variant-numeric:tabular-nums; color:var(--text); font-size:11px; }
+.canvas-measurement line { stroke:#22d3ee; stroke-width:2; stroke-dasharray:6 3; }
+.canvas-measurement text { fill:#f8fafc; stroke:#0b1220; stroke-width:3; paint-order:stroke; font-size:15px; text-anchor:middle; }

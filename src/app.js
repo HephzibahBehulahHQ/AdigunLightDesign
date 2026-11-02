@@ -43,6 +43,7 @@ import { createLiveCopilotPanel } from "./ui/live-copilot-panel.js";
 import { projectOverview } from "./ui/project-overview.js";
 import { arrangementTimelineMarkup } from "./ui/arrangement-timeline.js";
 import { bindFixtureSliders } from "./ui/fixture-sliders.js";
+import { bindCanvasMeasure } from "./ui/canvas-measure.js";
 import { canFullscreen,toggleViewportFullscreen } from "./ui/fullscreen.js";
 import { groupFixtures,saveFixtureGroup } from "./domain/fixture-groups.js";
 import { cueCsv, designTokenJson, paletteCss, paletteJson, paletteSvg, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
@@ -425,7 +426,7 @@ function render() {
   inspector.append(palettePanel);
   const canvasObject=scene().canvasObjects?.find((object)=>object.id===preferences.objectId);
   if (canvasObject && preferences.view==="palette") palettePanel.insertAdjacentHTML("beforeend", `<fieldset class="canvas-object-editor"><legend>${t("canvasObject")}</legend>${["x","y",...(canvasObject.type!=="text" ? ["width","height"] : ["fontSize"])].map((key)=>`<label>${["x","y"].includes(key) ? key.toUpperCase() : t(key)}<input data-object-value="${key}" type="number" step="any" required value="${canvasObject[key]}"></label>`).join("")}${canvasObject.type==="text" ? `<label>${t("text")}<input id="canvas-text" maxlength="2048" value="${esc(canvasObject.text)}"></label>` : ""}<button id="apply-object">${t("apply")}</button><button id="paint-object">${t("applySwatch")}</button><button id="delete-object">${t("deleteObject")}</button><button id="copy-object">${t("duplicateObject")}</button><button data-object-stack="-1">${t("sendBackward")}</button><button data-object-stack="1">${t("bringForward")}</button></fieldset>`);
-  for (const key of ["shapes","text"]) {const button=document.querySelector(`[data-tool="${key}"]`);button.disabled=false;button.removeAttribute("title");}
+  for (const key of ["shapes","text","measure"]) {const button=document.querySelector(`[data-tool="${key}"]`);button.disabled=false;button.removeAttribute("title");}
   palettePanel.hidden=mode!=="palette";
   if (fixturePanel) {fixturePanel.id="fixture-inspector-panel";fixturePanel.hidden=mode!=="fixture";}
   inspector.querySelector(".inspector-tabs").innerHTML=`<button data-inspector="fixture" aria-pressed="${mode==="fixture"}" class="${mode==="fixture" ? "is-active" : ""}" ${fixturePanel ? "" : "disabled"}>${t("fixtureLabel")}</button><button data-inspector="palette" aria-pressed="${mode==="palette"}" class="${mode==="palette" ? "is-active" : ""}">${t("palette")}</button>`;
@@ -502,7 +503,8 @@ function bind() {
   document.querySelectorAll("[data-object-stack]").forEach((button)=>button.onclick=()=>{commitProjectChange("canvas-object-stack",(draft)=>{draft.scenes[0]=moveCanvasObject(draft.scenes[0],preferences.objectId,Number(button.dataset.objectStack));});render();});
   const selectCanvasObject=(id)=>{preferences.objectId=id;preferences.inspectorMode="palette";savePreferences();render();};
   const designCanvas=document.querySelector(".design-canvas");
-  if (designCanvas) bindCanvasDrag(designCanvas,scene().canvasObjects ?? [],{
+  if(designCanvas && preferences.tool==="measure")bindCanvasMeasure(designCanvas,{units:t("canvasUnits"),onMeasure:measurement=>{status=`${measurement.distance.toFixed(2)} ${t("canvasUnits")} · ${t("measureHelp")}`;document.querySelector("#status").textContent=status;}});
+  if (designCanvas && preferences.tool!=="measure") bindCanvasDrag(designCanvas,scene().canvasObjects ?? [],{
     onSelect:selectCanvasObject,
     onMove(id,position){
       try {commitProjectChange("canvas-object-move",(draft)=>{draft.scenes[0]=updateCanvasObject(draft.scenes[0],id,position);});selectCanvasObject(id);}
@@ -818,10 +820,11 @@ function bind() {
     }
     if (preferences.tool === "fixture") { preferences.module="library"; preferences.view="light"; }
     if (preferences.tool === "orbit" || preferences.tool === "material") preferences.view="light";
-    if (preferences.tool === "paletteBrush") preferences.view="palette";
+    if (["paletteBrush","measure"].includes(preferences.tool)) preferences.view="palette";
     savePreferences();
     status=t("statusTool") + button.textContent.trim();
     render();
+    if(preferences.tool==="measure"){document.querySelector(".design-canvas")?.focus();status=t("measureHelp");document.querySelector("#status").textContent=status;}
     if (preferences.tool === "orbit") document.querySelector("#light-canvas")?.focus();
     if (preferences.tool === "material") document.querySelector("#apply-scene")?.focus();
     if (preferences.tool === "paletteBrush") document.querySelector("#swatch-hex")?.focus();

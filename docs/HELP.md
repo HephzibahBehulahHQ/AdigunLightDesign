@@ -4,6 +4,13 @@ In the fixture inspector's Light tab, use the intensity and beam sliders, then
 Apply to commit. Intensity percentage is a normalized virtual channel value,
 not measured brightness. Beam is an uncalibrated 0–255 control, not degrees.
 
+Choose Measure to open the 2D canvas. Drag between two points to measure their
+distance in canvas coordinates. With the canvas focused, arrows move the endpoint,
+Shift moves ten units, Enter sets the starting point and Escape resets. The
+measurement is temporary and excluded from project saves and exports. These
+coordinates are not physical room measurements. Canceling a pointer gesture
+restores the previous measurement and never moves canvas objects.
+
 ## Contents
 
 - [The live co-pilot](#the-live-co-pilot)

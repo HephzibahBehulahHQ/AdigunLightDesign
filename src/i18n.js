@@ -239,4 +239,8 @@ Object.assign(messages.en,{virtualChannelValue:"Virtual channel value; use Apply
 Object.assign(messages.de,{virtualChannelValue:"Virtueller Kanalwert; mit Anwenden übernehmen"});
 Object.assign(messages.yo,{virtualChannelValue:"Iye ikanni àfojúrí; lo Fi sí i láti mú un ṣiṣẹ́"});
 Object.assign(messages.pcm,{virtualChannelValue:"Virtual channel value; use Apply to commit"});
+Object.assign(messages.en,{canvasUnits:"canvas units",measureHelp:"Drag to measure. Arrows move the endpoint; Shift moves 10 units. Enter sets the start; Escape resets. Measurements are temporary."});
+Object.assign(messages.de,{canvasUnits:"Zeichenflächeneinheiten",measureHelp:"Zum Messen ziehen. Pfeile verschieben den Endpunkt; Umschalt bewegt 10 Einheiten. Eingabe setzt den Start; Escape setzt zurück. Messungen sind temporär."});
+Object.assign(messages.yo,{canvasUnits:"ìwọ̀n pátákó",measureHelp:"Fà láti wọn. Àwọn ọfà ń gbé òpin; Shift ń gbé ìwọ̀n 10. Enter ṣètò ìbẹ̀rẹ̀; Escape tún un ṣe. Ìwọ̀n jẹ́ fún ìgbà díẹ̀."});
+Object.assign(messages.pcm,{canvasUnits:"canvas units",measureHelp:"Drag to measure. Arrows move endpoint; Shift move 10 units. Enter set start; Escape reset. Measurements na temporary."});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }
