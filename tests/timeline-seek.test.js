@@ -21,3 +21,8 @@ test('ruler cancellation restores preview and keyboard follows current playback 
  h.cleanup();assert.equal(h.handlers.size,0);
  const empty=setup(0);empty.fire('pointerdown',200);empty.key('End');assert.equal(empty.commits.length,0);assert.equal(empty.ruler.tabIndex,-1);empty.cleanup();
 });
+test('fractional duration never rounds past the endpoint and unrelated keys do not seek',()=>{
+ const h=setup(.06);h.key('End');assert.equal(h.commits.at(-1).t,.06);
+ h.fire('pointerdown',400);h.fire('pointerup',400);assert.equal(h.commits.at(-1).t,.06);
+ const count=h.commits.length;h.key('Tab');h.key('toString');assert.equal(h.commits.length,count);h.cleanup();
+});

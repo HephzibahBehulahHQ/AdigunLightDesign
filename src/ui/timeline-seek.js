@@ -1,6 +1,6 @@
 export function bindTimelineSeek(ruler,{span,duration,value=0,label,onSeek,onPreview=()=>{}}){
   let time=Math.max(0,Math.min(duration,value)),drag=null;
-  const show=next=>{time=Math.round(Math.max(0,Math.min(duration,next))*10)/10;ruler.setAttribute("aria-valuenow",String(time));onPreview(time);};
+  const show=next=>{time=Math.min(duration,Math.round(Math.max(0,Math.min(duration,next))*10)/10);ruler.setAttribute("aria-valuenow",String(time));onPreview(time);};
   ruler.tabIndex=duration>0?0:-1;ruler.setAttribute("role","slider");ruler.setAttribute("aria-label",label);
   ruler.setAttribute("aria-valuemin","0");ruler.setAttribute("aria-valuemax",String(duration));ruler.setAttribute("aria-valuenow",String(time));ruler.setAttribute("aria-disabled",String(duration<=0));
   const position=event=>{const rect=ruler.getBoundingClientRect();return rect.width>0 && Number.isFinite(event.clientX)?(event.clientX-rect.left)/rect.width*span:null;};
@@ -16,8 +16,8 @@ export function bindTimelineSeek(ruler,{span,duration,value=0,label,onSeek,onPre
     if(duration<=0 || event.altKey || event.ctrlKey || event.metaKey)return;
     time=Number(ruler.getAttribute("aria-valuenow")) || 0;
     const step=event.shiftKey?1:.1;
-    const next={ArrowLeft:time-step,ArrowDown:time-step,ArrowRight:time+step,ArrowUp:time+step,Home:0,End:duration}[event.key];
-    if(next===undefined)return;event.preventDefault();show(next);onSeek(time,{keyboard:true});
+    const positions={ArrowLeft:time-step,ArrowDown:time-step,ArrowRight:time+step,ArrowUp:time+step,Home:0,End:duration};
+    if(!Object.hasOwn(positions,event.key))return;event.preventDefault();show(positions[event.key]);onSeek(time,{keyboard:true});
   };
   const handlers={pointerdown:down,pointermove:move,pointerup:end,pointercancel:end,lostpointercapture:end,keydown:key};
   for(const [type,handler] of Object.entries(handlers))ruler.addEventListener(type,handler);

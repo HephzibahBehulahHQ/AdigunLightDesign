@@ -113,3 +113,5 @@ pending. No electrical-ladder analysis or physical DMX feedback is provided.
 In 2D, select a rectangle or ellipse and drag its cyan lower-right handle to resize. Release to commit one undoable size change; pointer cancellation restores the original. Width and height remain editable in the inspector for keyboard operation. Text uses its font-size control.
 
 The scheduled timeline ruler supports pointer scrubbing: drag to preview the playhead and release to pause the virtual arrangement at that time. Cancellation restores the indicator. Focus the ruler and use arrow keys (0.1s), Shift+arrow (1s), Home or End. Seeking is bounded by the actual arrangement duration; this does not alter cues or send hardware output.
+
+Ruler seeking preserves fractional arrangement endpoints (including durations below 0.1 seconds) and restores the wrapped playhead position when looping playback causes an editor refresh.

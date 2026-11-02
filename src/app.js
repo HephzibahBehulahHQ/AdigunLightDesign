@@ -765,7 +765,7 @@ function bind() {
   document.querySelector("#play-tracks").onclick=playArrangement;
   document.querySelector("#arrangement-seek").onchange=(event)=>playArrangement({seek:Number(event.target.value),paused:true});
   bindTimelineSeek(document.querySelector(".arrangement-timeline .timeline-ruler"),{
-    span:Math.max(30,arrangementDuration(project.cues)),duration:arrangementDuration(project.cues),value:playbackClock ? playbackClock.elapsed(performance.now()) : 0,label:t("seekTracks"),
+    span:Math.max(30,arrangementDuration(project.cues)),duration:arrangementDuration(project.cues),value:playbackClock && arrangementDuration(project.cues)>0 ? playbackPosition(playbackClock.elapsed(performance.now()),arrangementDuration(project.cues),Boolean(preferences.loopSequence)).time : 0,label:t("seekTracks"),
     onPreview(time){document.querySelector("#arrangement-playhead").style.left=`${time/Math.max(30,arrangementDuration(project.cues))*100}%`;},
     onSeek(time,{keyboard}){playArrangement({seek:time,paused:true});if(keyboard)document.querySelector(".arrangement-timeline .timeline-ruler")?.focus();}
   });
