@@ -32,6 +32,7 @@ import { canvasMarkup } from "./ui/canvas.js";
 import { canvasSvg } from "./export/canvas.js";
 import { bindCanvasDrag } from "./ui/canvas-drag.js";
 import { previewNativeToolAction,confirmNativeToolAction } from "./ai/action-preview.js";
+import { icon } from "./ui/icons.js";
 import { groupFixtures,saveFixtureGroup } from "./domain/fixture-groups.js";
 import { cueCsv, designTokenJson, paletteCss, paletteJson, paletteSvg, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
 import { readProjectFile } from "./domain/import-project.js";
@@ -338,6 +339,12 @@ function render() {
   document.querySelector(".selected-preview").style.background=swatchCssColor(active);
   document.querySelector(".palette-panel").insertAdjacentHTML("beforeend", `<div class="palette-actions"><label>${t("hueSpacing")}<input id="custom-spacing" type="number" min="-360" max="360" step="any" value="30" /></label><button id="custom-hues">${t("customHues")}</button><button id="perceptual-scale">${t("perceptualScale")}</button></div>`);
   const arrangementEnd=arrangementDuration(project.cues);
+  document.querySelectorAll("[data-module]").forEach((button)=>{button.querySelector("span").innerHTML=icon(button.dataset.module);});
+  document.querySelectorAll("[data-tool]").forEach((button)=>{button.querySelector("span").innerHTML=icon(button.dataset.tool);});
+  document.querySelector(".language > span").innerHTML=icon("globe");
+  document.querySelector(".language").insertAdjacentHTML("beforeend", `<span class="locale-code" aria-hidden="true">${supportedLocales.includes(preferences.locale) ? preferences.locale.toUpperCase() : "EN"} ⌄</span>`);
+  document.querySelector("#theme").innerHTML=icon(preferences.theme==="dark" ? "light" : "moon");
+  document.querySelector(".lux-icon").innerHTML=icon("copilot");
   if (preferences.luxOpen) {
     const colour=(fixture)=>rgbToHex({r:fixture.properties.red ?? 0,g:fixture.properties.green ?? 0,b:fixture.properties.blue ?? 0});
     document.querySelector(".lux-message").insertAdjacentHTML("afterend", `<section class="lux-local-actions"><h3>${t("localPaletteAction")}</h3><button id="preview-lux-palette" ${project.fixtures.length ? "" : "disabled"}>${t("previewPaletteLighting")}</button>${luxProposal ? `<div class="lux-action-preview"><h4>${t("reviewChanges")}</h4><ul>${luxProposal.changes.map((change)=>`<li>${esc(change.after.name)}<br><span style="color:${colour(change.before)}">■</span> ${colour(change.before)} → <span style="color:${colour(change.after)}">■</span> ${colour(change.after)}</li>`).join("") || t("noActionChanges")}</ul><button id="confirm-lux-action" ${luxProposal.changes.length ? "" : "disabled"}>${t("confirmAction")}</button><button id="cancel-lux-action">${t("cancelAction")}</button></div>` : ""}</section>`);
