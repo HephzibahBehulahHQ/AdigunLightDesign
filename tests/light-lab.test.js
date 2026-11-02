@@ -1,7 +1,18 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { cameraMatrix, hexVector, perspective, radians } from "../src/light-lab/math.js";
-import { virtualFixtureVisuals } from "../src/light-lab/renderer.js";
+import { createLightLabRenderer, virtualFixtureVisuals } from "../src/light-lab/renderer.js";
+
+test("fixture editing remains usable when WebGL is unavailable", () => {
+  const renderer = createLightLabRenderer({ getContext: () => null });
+  assert.equal(renderer.supported, false);
+  assert.doesNotThrow(() => {
+    renderer.setFixtures([{ properties: { dimmer:128 } }]);
+    renderer.setAccent("#2196F3");
+    renderer.reset();
+    renderer.destroy();
+  });
+});
 
 test("creates stable projection and camera transforms", () => {
   const projection = perspective(radians(48), 16 / 9, .1, 100);
