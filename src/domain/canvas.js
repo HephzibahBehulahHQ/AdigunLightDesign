@@ -4,14 +4,14 @@ export function validCanvasObjects(objects) {
   if (!Array.isArray(objects) || objects.length>1000) return false;
   const ids=new Set();
   return objects.every((object)=>{
-    if (!object || typeof object.id!=="string" || !object.id.trim() || ids.has(object.id) || !["rect","text"].includes(object.type) || ![object.x,object.y].every((value)=>Number.isFinite(value) && Math.abs(value)<=10000) || typeof object.fill!=="string" || !/^#[0-9a-f]{6}$/i.test(object.fill)) return false;
+    if (!object || typeof object.id!=="string" || !object.id.trim() || ids.has(object.id) || !["rect","ellipse","text"].includes(object.type) || ![object.x,object.y].every((value)=>Number.isFinite(value) && Math.abs(value)<=10000) || typeof object.fill!=="string" || !/^#[0-9a-f]{6}$/i.test(object.fill)) return false;
     ids.add(object.id);
-    return object.type==="rect" ? [object.width,object.height].every((value)=>Number.isFinite(value) && value>=1 && value<=10000) : typeof object.text==="string" && object.text.length<=2048 && Number.isFinite(object.fontSize) && object.fontSize>=1 && object.fontSize<=300;
+    return object.type!=="text" ? [object.width,object.height].every((value)=>Number.isFinite(value) && value>=1 && value<=10000) : typeof object.text==="string" && object.text.length<=2048 && Number.isFinite(object.fontSize) && object.fontSize>=1 && object.fontSize<=300;
   });
 }
 export function addCanvasObject(scene,type,fill,{id=crypto.randomUUID(),text="Text"}={}) {
   const objects=scene.canvasObjects ?? [],offset=objects.length%8*24;
-  const object={id,type,fill:normalizeHex(fill),x:100+offset,y:100+offset,...(type==="rect" ? {width:200,height:120} : {text,fontSize:36})};
+  const object={id,type,fill:normalizeHex(fill),x:100+offset,y:100+offset,...(type!=="text" ? {width:200,height:120} : {text,fontSize:36})};
   const result={...structuredClone(scene),canvasObjects:[...structuredClone(objects),object]};
   if (!validCanvasObjects(result.canvasObjects)) throw new Error("Invalid canvas object.");
   return result;
@@ -21,5 +21,21 @@ export function updateCanvasObject(scene,id,changes) {
   const result=structuredClone(scene);
   result.canvasObjects=result.canvasObjects.map((object)=>object.id===id ? {...object,...changes,id:object.id,type:object.type} : object);
   if (!validCanvasObjects(result.canvasObjects)) throw new Error("Invalid canvas object values.");
+  return result;
+}
+export function duplicateCanvasObject(scene,id,newId=crypto.randomUUID()) {
+  const result=structuredClone(scene),index=result.canvasObjects?.findIndex((object)=>object.id===id) ?? -1;
+  if (index<0) throw new Error("Canvas object was not found.");
+  const copy=structuredClone(result.canvasObjects[index]);copy.id=newId;copy.x+=20;copy.y+=20;
+  result.canvasObjects.splice(index+1,0,copy);
+  if (!validCanvasObjects(result.canvasObjects)) throw new Error("Invalid canvas copy.");
+  return result;
+}
+export function moveCanvasObject(scene,id,offset) {
+  if (![-1,1].includes(offset)) throw new Error("Invalid stacking movement.");
+  const result=structuredClone(scene),index=result.canvasObjects?.findIndex((object)=>object.id===id) ?? -1;
+  if(index<0)throw new Error("Canvas object was not found.");
+  const destination=index+offset;
+  if(destination>=0 && destination<result.canvasObjects.length) [result.canvasObjects[index],result.canvasObjects[destination]]=[result.canvasObjects[destination],result.canvasObjects[index]];
   return result;
 }

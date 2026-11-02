@@ -37,6 +37,8 @@ Direct editor mutations use document transactions. Each committed operation snap
 
 ## Visual acceptance
 
+The 2D shape selector creates rectangles or ellipses; both use editable bounding-box position and dimensions. Object duplication creates an independent copy offset by 20 canvas units. Backward/Forward moves change saved stacking order one step at a time and are undoable. SVG export preserves these shapes and order. Geometry/copy/order tests do not verify browser interaction.
+
 2D objects support pointer dragging. SVG screen-coordinate transforms account for scaling and letterboxing; movement previews locally and commits one undoable position change on release. Pointer cancellation restores the original transform without saving. Numeric fields remain available for keyboard positioning. Mocked interaction tests cover scaled movement, cancellation and click selection; real browser pointer behavior remains unverified.
 
 The 2D view renders saved SVG rectangles/text rather than the static studio concept. Shape/Text tools create objects using the selected swatch. Click or keyboard selection opens numeric position/size and text controls; paint and delete use project undo/redo. Optional `scene.canvasObjects` persists in native files with bounded geometry/text and escaped markup. Standalone SVG export and pointer translation are available. Drag resizing, arbitrary paths and advanced text layout remain unimplemented. Domain/import/markup tests do not establish browser interaction or visual acceptance.

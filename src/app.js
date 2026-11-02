@@ -27,7 +27,7 @@ import { readBrowserStorage,writeBrowserStorage } from "./domain/browser-storage
 import { applySceneMaterial } from "./domain/scene-materials.js";
 import { escapeHtml as esc,fixtureOptions,swatchButton } from "./ui/html.js";
 import { virtualDmxPreview } from "./dmx/preview.js";
-import { addCanvasObject,updateCanvasObject } from "./domain/canvas.js";
+import { addCanvasObject,updateCanvasObject,duplicateCanvasObject,moveCanvasObject } from "./domain/canvas.js";
 import { canvasMarkup } from "./ui/canvas.js";
 import { canvasSvg } from "./export/canvas.js";
 import { bindCanvasDrag } from "./ui/canvas-drag.js";
@@ -353,7 +353,7 @@ function render() {
   timingSummary.textContent=t("cueSettings");timingDetails.append(timingSummary);
   document.querySelectorAll(".cue-timing").forEach((node)=>timingDetails.append(node));
   document.querySelector(".timeline").append(timingDetails);
-  if (preferences.view==="palette") document.querySelector(".scene-preview").innerHTML=canvasMarkup(scene().canvasObjects ?? [],preferences.objectId,t("designCanvas"));
+  if (preferences.view==="palette") document.querySelector(".scene-preview").innerHTML=canvasMarkup(scene().canvasObjects ?? [],preferences.objectId,t("designCanvas"))+`<div class="canvas-actions"><label>${t("shapeKind")} <select id="shape-kind"><option value="rect" ${preferences.shapeKind!=="ellipse" ? "selected" : ""}>${t("rectangle")}</option><option value="ellipse" ${preferences.shapeKind==="ellipse" ? "selected" : ""}>${t("ellipse")}</option></select></label><button id="add-canvas-shape">＋ ${t("shapes")}</button></div>`;
   document.querySelector(".timeline").insertAdjacentHTML("beforeend", `<details class="fixture-group-editor"><summary>${t("virtualDmx")} · ${t("outputDisabled")}</summary><pre id="virtual-dmx-monitor"></pre></details>`);
   updateDmxFeedback(project.fixtures);
   const room=roomDimensions(scene().room);
@@ -376,7 +376,7 @@ function render() {
   for (const node of [...inspector.children]) if (!node.classList.contains("section-title") && !node.classList.contains("inspector-tabs") && node!==fixturePanel) palettePanel.append(node);
   inspector.append(palettePanel);
   const canvasObject=scene().canvasObjects?.find((object)=>object.id===preferences.objectId);
-  if (canvasObject && preferences.view==="palette") palettePanel.insertAdjacentHTML("beforeend", `<fieldset class="canvas-object-editor"><legend>${t("canvasObject")}</legend>${["x","y",...(canvasObject.type==="rect" ? ["width","height"] : ["fontSize"])].map((key)=>`<label>${["x","y"].includes(key) ? key.toUpperCase() : t(key)}<input data-object-value="${key}" type="number" step="any" required value="${canvasObject[key]}"></label>`).join("")}${canvasObject.type==="text" ? `<label>${t("text")}<input id="canvas-text" maxlength="2048" value="${esc(canvasObject.text)}"></label>` : ""}<button id="apply-object">${t("apply")}</button><button id="paint-object">${t("applySwatch")}</button><button id="delete-object">${t("deleteObject")}</button></fieldset>`);
+  if (canvasObject && preferences.view==="palette") palettePanel.insertAdjacentHTML("beforeend", `<fieldset class="canvas-object-editor"><legend>${t("canvasObject")}</legend>${["x","y",...(canvasObject.type!=="text" ? ["width","height"] : ["fontSize"])].map((key)=>`<label>${["x","y"].includes(key) ? key.toUpperCase() : t(key)}<input data-object-value="${key}" type="number" step="any" required value="${canvasObject[key]}"></label>`).join("")}${canvasObject.type==="text" ? `<label>${t("text")}<input id="canvas-text" maxlength="2048" value="${esc(canvasObject.text)}"></label>` : ""}<button id="apply-object">${t("apply")}</button><button id="paint-object">${t("applySwatch")}</button><button id="delete-object">${t("deleteObject")}</button><button id="copy-object">${t("duplicateObject")}</button><button data-object-stack="-1">${t("sendBackward")}</button><button data-object-stack="1">${t("bringForward")}</button></fieldset>`);
   for (const key of ["shapes","text"]) {const button=document.querySelector(`[data-tool="${key}"]`);button.disabled=false;button.removeAttribute("title");}
   palettePanel.hidden=mode!=="palette";
   if (fixturePanel) {fixturePanel.id="fixture-inspector-panel";fixturePanel.hidden=mode!=="fixture";}
@@ -397,6 +397,12 @@ function render() {
 }
 
 function bind() {
+  const shapeKind=document.querySelector("#shape-kind");if(shapeKind)shapeKind.onchange=()=>{preferences.shapeKind=shapeKind.value;savePreferences();};
+  const addShape=document.querySelector("#add-canvas-shape");if(addShape)addShape.onclick=()=>document.querySelector('[data-tool="shapes"]').click();
+  const copyObject=document.querySelector("#copy-object");if(copyObject)copyObject.onclick=()=>{
+    try {const id=crypto.randomUUID();commitProjectChange("canvas-object-duplicate",(draft)=>{draft.scenes[0]=duplicateCanvasObject(draft.scenes[0],preferences.objectId,id);});preferences.objectId=id;savePreferences();render();}catch(error){setStatus(error.message);}
+  };
+  document.querySelectorAll("[data-object-stack]").forEach((button)=>button.onclick=()=>{commitProjectChange("canvas-object-stack",(draft)=>{draft.scenes[0]=moveCanvasObject(draft.scenes[0],preferences.objectId,Number(button.dataset.objectStack));});render();});
   const selectCanvasObject=(id)=>{preferences.objectId=id;preferences.inspectorMode="palette";savePreferences();render();};
   const designCanvas=document.querySelector(".design-canvas");
   if (designCanvas) bindCanvasDrag(designCanvas,scene().canvasObjects ?? [],{
@@ -710,7 +716,7 @@ function bind() {
     preferences.tool=button.dataset.tool;
     if (["shapes","text"].includes(preferences.tool)) {
       const id=crypto.randomUUID();
-      commitProjectChange("canvas-object-add",(draft)=>{draft.scenes[0]=addCanvasObject(draft.scenes[0],preferences.tool==="shapes" ? "rect" : "text",selected().hex,{id,text:t("text")});});
+      commitProjectChange("canvas-object-add",(draft)=>{draft.scenes[0]=addCanvasObject(draft.scenes[0],preferences.tool==="shapes" ? (preferences.shapeKind==="ellipse" ? "ellipse" : "rect") : "text",selected().hex,{id,text:t("text")});});
       preferences.objectId=id;preferences.view="palette";preferences.inspectorMode="palette";
     }
     if (preferences.tool === "fixture") { preferences.module="library"; preferences.view="light"; }

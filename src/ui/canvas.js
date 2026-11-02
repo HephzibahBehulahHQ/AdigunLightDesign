@@ -1,6 +1,7 @@
 import { escapeHtml } from "./html.js";
 import { validCanvasObjects } from "../domain/canvas.js";
 export function canvasObjectMarkup(object,selected=false) {
+  if (object.type==="ellipse") return `<ellipse cx="${object.x+object.width/2}" cy="${object.y+object.height/2}" rx="${object.width/2}" ry="${object.height/2}" fill="${object.fill}" ${selected ? 'stroke="#22D3EE" stroke-width="3"' : ""}/>`;
   return object.type==="rect" ? `<rect x="${object.x}" y="${object.y}" width="${object.width}" height="${object.height}" fill="${object.fill}" ${selected ? 'stroke="#22D3EE" stroke-width="3"' : ""}/>` : `<text x="${object.x}" y="${object.y}" font-size="${object.fontSize}" fill="${object.fill}" ${selected ? 'text-decoration="underline"' : ""}>${escapeHtml(object.text)}</text>`;
 }
 export function canvasMarkup(objects,selectedId,label) {

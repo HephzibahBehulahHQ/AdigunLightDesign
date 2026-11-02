@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { addCanvasObject,updateCanvasObject,validCanvasObjects } from "../src/domain/canvas.js";
+import { addCanvasObject,updateCanvasObject,validCanvasObjects,duplicateCanvasObject,moveCanvasObject } from "../src/domain/canvas.js";
 import { canvasMarkup } from "../src/ui/canvas.js";
 import { createStudioMoodProject } from "../src/domain/studio-mood.js";
 import { validateProject } from "../src/domain/project.js";
@@ -21,4 +21,15 @@ test("canvas text and identifiers cannot become executable SVG markup",()=>{
   assert.ok(html.includes('data-canvas-object="a&quot; onclick=&quot;bad()"'));
   assert.equal(validCanvasObjects([{...scene.canvasObjects[0],fontSize:Infinity}]),false);
   assert.throws(()=>canvasMarkup([{...scene.canvasObjects[0],fill:"url(unsafe)"}],null,"Canvas"));
+});
+test("ellipse copies preserve independent geometry and stacking moves preserve content",()=>{
+  const scene=addCanvasObject({},"ellipse","#f00",{id:"a"}),copy=duplicateCanvasObject(scene,"a","b");
+  assert.equal(copy.canvasObjects[1].x,scene.canvasObjects[0].x+20);
+  assert.equal(copy.canvasObjects[1].type,"ellipse");
+  const moved=moveCanvasObject(copy,"b",-1);
+  assert.deepEqual(moved.canvasObjects.map((object)=>object.id),["b","a"]);
+  assert.deepEqual(copy.canvasObjects.map((object)=>object.id),["a","b"]);
+  assert.deepEqual(moveCanvasObject(moved,"b",-1),moved);
+  assert.throws(()=>duplicateCanvasObject(scene,"a","a"));
+  assert.match(canvasMarkup(scene.canvasObjects,"a","Canvas"),/<ellipse cx="200" cy="160" rx="100" ry="60"/);
 });

@@ -179,4 +179,8 @@ Object.assign(messages.en,{exportCanvas:"Canvas SVG",canvasExported:"Canvas SVG 
 Object.assign(messages.de,{exportCanvas:"Zeichenfläche als SVG",canvasExported:"SVG-Download der Zeichenfläche angefordert."});
 Object.assign(messages.yo,{exportCanvas:"SVG àpẹrẹ",canvasExported:"A ti béèrè ìgbàsílẹ̀ SVG àpẹrẹ."});
 Object.assign(messages.pcm,{exportCanvas:"Canvas SVG",canvasExported:"Canvas SVG download don start."});
+Object.assign(messages.en,{shapeKind:"Shape",rectangle:"Rectangle",ellipse:"Ellipse",duplicateObject:"Duplicate object",sendBackward:"Send backward",bringForward:"Bring forward"});
+Object.assign(messages.de,{shapeKind:"Form",rectangle:"Rechteck",ellipse:"Ellipse",duplicateObject:"Objekt duplizieren",sendBackward:"Nach hinten",bringForward:"Nach vorne"});
+Object.assign(messages.yo,{shapeKind:"Ìrísí",rectangle:"Onígun mẹ́rin",ellipse:"Ẹlẹ́yinjú",duplicateObject:"Ṣẹ̀dà nǹkan",sendBackward:"Rán sí ẹ̀yìn",bringForward:"Mú sí iwájú"});
+Object.assign(messages.pcm,{shapeKind:"Shape",rectangle:"Rectangle",ellipse:"Ellipse",duplicateObject:"Copy object",sendBackward:"Move behind",bringForward:"Move in front"});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }
