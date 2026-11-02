@@ -53,6 +53,9 @@
 .fixture-library button { padding:7px; border-radius:6px; background:#25304a; color:var(--text); font-size:10px; }
 .fixture-inspector { margin:10px 12px; padding:10px; border:1px solid var(--line); border-radius:8px; background:#10182766; }
 .fixture-inspector h3 { margin:0 0 8px; font-size:12px; }.fixture-inspector>small { display:block; color:var(--muted); margin:5px 0 8px; font-size:10px; }
+.inspector [hidden] { display:none !important; }
+.inspector-tabs button { font-size:12px; padding:9px 6px; }
+.inspector-tabs button[aria-pressed="true"] { background:#6d35be33; border-radius:6px 6px 0 0; }
 .fixture-inspector label { display:grid; gap:4px; padding:0 0 7px; font-size:10px; }.fixture-inspector input,.fixture-inspector select { min-width:0; width:100%; font-size:11px; padding:5px; }
 .fixture-grid { display:grid; grid-template-columns:1fr 1fr; gap:0 6px; }
 @media (max-width:670px) { .fixture-library { grid-template-columns:1fr; } }
