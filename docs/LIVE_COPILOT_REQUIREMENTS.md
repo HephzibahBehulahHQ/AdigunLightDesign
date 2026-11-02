@@ -19,6 +19,18 @@ cross-domain ID matches. Domain and panel tests cover actual values, deleted
 selections, escaped names and no mutations. Hover explanations, broader analysis,
 authenticated acceptance and browser verification remain incomplete.
 
+The analyzer additionally identifies shared fixture channels across timeline
+tracks, with localized explanations of later-track precedence and held values.
+It does not label intentional layering a fault. Automated coverage compares a
+finding with actual track playback and rejects unrelated-channel, unrelated-
+fixture and same-track false positives.
+
+Validation on 2 November 2026: full local `npm test` passed 189 tests, zero
+failures/skips, after granting network permission for the loopback HTTP API
+tests. The first sandboxed run failed on loopback EACCES; no tests were removed
+or skipped. Project checks and static build also passed. These results do not
+establish a live provider, authenticated cloud service or browser visual match.
+
 Panel event-surface tests cover drag/cancel, typing cooldown, focused fields,
 hidden pages, dismissal, off state, cleanup and disabled acceptance. Project
 switches now clear session goals in both the scheduler and panel without

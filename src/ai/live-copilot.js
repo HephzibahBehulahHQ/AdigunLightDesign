@@ -1,4 +1,5 @@
 import { validateProject } from "../domain/project.js";
+import { arrangeTracks } from "../timeline/tracks.js";
 
 export function createCanvasStateFeed() {
   const listeners=new Set();let current=null,serialized="",revision=0;
@@ -26,6 +27,19 @@ export function analyzeLightingState(state,{goal=""}={}) {
     id:`unpatched:${fixture.id}`,kind:"offer",messageKey:"liveUnpatched",subject:fixture.name,
     explanationKey:"liveUnpatchedExplanation",fixtureId:fixture.id,action:"review-patch"
   });
+  const tracks=arrangeTracks(project.cues),owners=new Map();
+  for(const track of tracks){
+    const channels=new Map();
+    for(const {cue} of track.entries)for(const target of cue.targets){
+      if(!channels.has(target.fixtureId))channels.set(target.fixtureId,new Set());
+      for(const key of Object.keys(target.properties))channels.get(target.fixtureId).add(key);
+    }
+    for(const [fixtureId,keys] of channels){
+      const previous=owners.get(fixtureId) ?? new Map(),shared=[...keys].filter(key=>previous.has(key));
+      if(shared.length)findings.push({id:`track-priority:${track.id}:${fixtureId}`,kind:"information",messageKey:"liveTrackPriority",subject:`${project.fixtures.find(f=>f.id===fixtureId)?.name ?? fixtureId} · ${track.id} · ${shared.join(", ")}`,explanationKey:"liveTrackPriorityExplanation",fixtureId,trackId:track.id,channels:shared,action:"review-tracks"});
+      for(const key of keys)previous.set(key,track.id);owners.set(fixtureId,previous);
+    }
+  }
   if(!goal.trim())findings.push({id:`goal:${project.id}`,kind:"question",messageKey:"liveGoalQuestion",explanationKey:"liveGoalExplanation",action:"set-goal"});
   return findings;
 }

@@ -16,6 +16,11 @@ and asks about your project goal. These are informational offers, not hardware
 fault diagnoses. Enter your goal under **Project goal** and choose **Remember
 for this session**. The answer is held in memory, not saved to the project.
 
+The analyzer also identifies channels targeted by multiple timeline tracks.
+Later tracks in first-appearance order take priority once they start targeting
+a channel, including values held between cues. This can be intentional layering;
+the message is informational and does not declare the show unsafe or invalid.
+
 Suggestions appear inside the existing panel. **Dismiss** suppresses an offer
 for two minutes; **Tell me more** expands its explanation. Suggestions are
 limited to one per 25 seconds and suppressed while dragging, typing, editing a

@@ -2,6 +2,19 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {createCanvasStateFeed,createLiveCopilot,analyzeLightingState} from "../src/ai/live-copilot.js";
 import {createStudioMoodProject} from "../src/domain/studio-mood.js";
+import {createCue} from "../src/timeline/engine.js";
+import {evaluateTracks} from "../src/timeline/tracks.js";
+test("track-priority information matches actual shared-channel playback semantics",()=>{
+  const project=createStudioMoodProject(),fixture=project.fixtures[0];
+  const cue=(id,trackId,properties)=>({...createCue([fixture],{id,name:id,fade:0}),trackId,startTime:0,targets:[{fixtureId:fixture.id,properties}]});
+  project.cues=[cue("base","Base",{dimmer:40}),cue("overlay","Overlay",{dimmer:200})];
+  const before=JSON.stringify(project),findings=analyzeLightingState({project},{goal:"Layered studio"});
+  assert.equal(findings.length,1);assert.equal(findings[0].kind,"information");assert.deepEqual(findings[0].channels,["dimmer"]);
+  assert.equal(findings[0].trackId,"Overlay");assert.equal(evaluateTracks(project.fixtures,project.cues,6)[0].properties.dimmer,200);assert.equal(JSON.stringify(project),before);
+  project.cues[1].targets[0].properties={red:200};assert.deepEqual(analyzeLightingState({project},{goal:"Layered studio"}),[]);
+  project.cues[1].targets[0]={fixtureId:project.fixtures[1].id,properties:{dimmer:200}};assert.deepEqual(analyzeLightingState({project},{goal:"Layered studio"}),[]);
+  project.cues=[cue("first","Main",{dimmer:40}),{...cue("next","Main",{dimmer:200}),startTime:5}];assert.deepEqual(analyzeLightingState({project},{goal:"Sequence"}),[]);
+});
 test("changing projects clears the analyzer goal without bypassing suggestion rate limits",()=>{
   let time=0;const feed=createCanvasStateFeed(),bot=createLiveCopilot({feed,now:()=>time,onSuggestion:()=>{}});
   feed.publish(createStudioMoodProject());bot.setEnabled(true);bot.setGoal("First project goal");time=1000;assert.equal(bot.tick(),null);
