@@ -1,6 +1,6 @@
 import { validateProject } from "./domain/project.js";
 import { prepareEditorProject } from "./domain/editor-project.js";
-import { moveSwatch, removeSwatch } from "./domain/palette-store.js";
+import { moveSwatch, removeSwatch, reorderSwatch } from "./domain/palette-store.js";
 import { readImagePalette } from "./domain/image-file.js";
 import { createStudioMoodProject } from "./domain/studio-mood.js";
 import { contrastResult, hexToRgb, isSrgbGamut, normalizeHex, rgbToHex, rgbToHsl, rgbToHsv, rgbToLab, rgbToOklab } from "./domain/color-engine.js";
@@ -222,6 +222,17 @@ function render() {
 }
 
 function bind() {
+  document.querySelectorAll("[data-swatch]").forEach((button)=>{
+    button.draggable=true;
+    button.ondragstart=(event)=>{event.dataTransfer.setData("application/x-adigun-swatch",button.dataset.swatch);event.dataTransfer.effectAllowed="move";};
+    button.ondragover=(event)=>{if([...event.dataTransfer.types].includes("application/x-adigun-swatch")){event.preventDefault();event.dataTransfer.dropEffect="move";}};
+    button.ondrop=(event)=>{
+      const sourceId=event.dataTransfer.getData("application/x-adigun-swatch"),targetId=button.dataset.swatch;
+      if (!sourceId || sourceId===targetId || !palette().colors.some((color)=>color.id===sourceId)) return;
+      event.preventDefault();
+      mutateColours((colors)=>reorderSwatch(colors,sourceId,targetId));
+    };
+  });
   document.querySelector("#remove-swatch").onclick=()=>mutateColours((colors)=>removeSwatch(colors,selected().id));
   document.querySelectorAll("[data-move-swatch]").forEach((button)=>button.onclick=()=>mutateColours((colors)=>moveSwatch(colors,selected().id,Number(button.dataset.moveSwatch))));
   document.querySelector("#extract-image").onclick=()=>document.querySelector("#palette-image").click();

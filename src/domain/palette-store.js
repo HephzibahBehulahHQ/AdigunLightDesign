@@ -20,3 +20,11 @@ export function moveSwatch(colors,id,offset) {
   if (next>=0 && next<colors.length) [result[index],result[next]]=[result[next],result[index]];
   return result;
 }
+export function reorderSwatch(colors,sourceId,targetId) {
+  const source=colors.findIndex((color)=>color.id===sourceId),target=colors.findIndex((color)=>color.id===targetId);
+  if (source<0 || target<0) throw new Error("Color was not found.");
+  const result=[...colors];
+  const [color]=result.splice(source,1);
+  result.splice(target,0,color);
+  return result;
+}
