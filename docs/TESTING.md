@@ -3,9 +3,9 @@
 Every milestone must run `npm test`, `npm run check` and `npm run build`.
 
 Run `npm run typecheck` as well. The incremental strict TypeScript gate currently
-checks `src/**/*.ts`, beginning with the playback clock. Existing JavaScript
+checks `src/**/*.ts`, covering the playback clock, timeline layout and preview quality budgets. Existing JavaScript
 modules are not silently covered by this command; full application typing and
-lint remain open release gates. The clock's JavaScript entry point re-exports
+lint remain open release gates. Their JavaScript entry points re-export
 the typed implementation so existing consumers and tests retain their imports.
 Node 24 executes its erasable syntax; Vite bundles it for the browser. CI runs
 this typecheck before the existing test/check/build jobs.
