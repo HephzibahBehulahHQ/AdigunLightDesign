@@ -15,7 +15,7 @@ export function virtualFixtureVisuals(fixtures = []) {
     // Artistic normalized aiming, independent of manufacturer DMX calibration.
     const pan=Number.isFinite(properties.pan) ? properties.pan : 127;
     const tilt=Number.isFinite(properties.tilt) ? properties.tilt : 127;
-    return {x,y:Number.isFinite(transform.y) ? transform.y : 3.65,z,
+    return {x,y:Number.isFinite(transform.y) ? transform.y : 3.65,z,selected:fixture.selected === true,
       targetX:x+(pan-127)/128*3,targetZ:z+1.35+(tilt-127)/128*3,
       colour:["red","green","blue"].map((name)=>Math.min(1,(channel(properties[name])+white)*dimmer)),
       spread:.55+channel(properties.beam)*.85};
@@ -36,6 +36,12 @@ export function beamVolume(light, segments=16) {
 function lightGeometry(data, light) {
   const fixtureColour=light.colour.map((value)=>Math.max(.12,value));
   box(data,light.x-.18,light.y-.11,light.z-.18,.36,.18,.36,fixtureColour);
+  if (light.selected) {
+    const colour=hexVector("#22D3EE"),x=light.x-.23,y=light.y-.16,z=light.z-.23;
+    for (const dy of [0,.28]) for (const dz of [0,.46]) box(data,x,y+dy,z+dz,.48,.015,.015,colour);
+    for (const dx of [0,.46]) for (const dz of [0,.46]) box(data,x+dx,y,z+dz,.015,.29,.015,colour);
+    for (const dx of [0,.46]) for (const dy of [0,.28]) box(data,x+dx,y+dy,z,.015,.015,.48,colour);
+  }
   if (light.colour.some((value)=>value>0)) data.push(...beamVolume(light));
 }
 export function surfaceLighting(position, baseColour, lights) {

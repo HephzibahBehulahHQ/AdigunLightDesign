@@ -203,7 +203,7 @@ function render() {
   if (project.fixtures.length) document.querySelector(".layer-list").insertAdjacentHTML("afterend", `<ul class="fixture-layer-list" aria-label="${t("layersLighting")}">${project.fixtures.map((fixture)=>`<li><button data-layer-fixture="${esc(fixture.id)}" aria-pressed="${fixture.id===selectedFixture()?.id}"><span>☼</span> ${esc(fixture.name)}</button></li>`).join("")}</ul>`);
   bind();
   if (preferences.view === "light") {
-    renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {accent:scene().materialColor,fixtures:project.fixtures});
+    renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {accent:scene().materialColor,fixtures:project.fixtures.map((fixture)=>({...fixture,selected:fixture.id===selectedFixture()?.id}))});
     if (!renderer.supported) {
       const note=document.createElement("p");
       note.className="webgl-unavailable";

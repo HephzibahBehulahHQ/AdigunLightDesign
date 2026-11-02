@@ -1,5 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+test("selected fixture adds viewport outline geometry without changing scene input",()=>{
+  const fixture={transform:{x:0,y:3,z:0},properties:{dimmer:0}};
+  const normal=sceneData([.2,.3,.4],[fixture]);
+  const selected=sceneData([.2,.3,.4],[{...fixture,selected:true}]);
+  assert.ok(selected.length>normal.length);
+  assert.equal(fixture.selected,undefined);
+});
 import { surfaceGrid } from "../src/light-lab/renderer.js";
 test("surface grid includes interior vertices for localized illumination",()=>{
   const data=surfaceGrid([0,0,0],[2,0,0],[0,0,2],[.2,.3,.4],2,2);
