@@ -1,6 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createFixture } from "../src/dmx/engine.js";
+test("rejects unsupported fixture mappings and malformed transform data", () => {
+  const project=createProject(),fixture=createFixture();
+  for (const bad of [{...fixture,profileId:"unknown"},{...fixture,modeId:"unknown"},{...fixture,transform:{x:'\" onfocus=\"alert(1)'}},{...fixture,transform:{y:Infinity}},{...fixture,patchAssignment:{fixtureId:fixture.id,universe:1,startAddress:1,channelFootprint:1}}]) {
+    project.fixtures=[bad];
+    assert.equal(validateProject(project).valid,false);
+  }
+});
 test("rejects imported overlaps while allowing identical addresses in different universes", () => {
   const project=createProject(),a=createFixture(),b=createFixture(2);
   a.patchAssignment={fixtureId:a.id,universe:1,startAddress:1,channelFootprint:6};

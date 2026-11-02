@@ -1,3 +1,5 @@
+import { fixtureProfiles } from "../dmx/engine.js";
+
 export const CURRENT_SCHEMA_VERSION = 1;
 
 export function createProject({ id = crypto.randomUUID(), name = "Untitled lighting project" } = {}) {
@@ -55,8 +57,13 @@ export function validateProject(project) {
       if (!fixture || typeof fixture.id !== "string" || !fixture.id.trim() || ids.has(fixture.id) || typeof fixture.name !== "string" || typeof fixture.profileId !== "string" || typeof fixture.modeId !== "string") errors.push("Fixtures require unique ids, names, profiles, and modes.");
       if (!fixture) continue;
       ids.add(fixture.id);
+      const profile=fixtureProfiles.find((item)=>item.id===fixture.profileId);
+      const mode=profile?.modes.find((item)=>item.id===fixture.modeId);
+      if (!mode) errors.push("Fixture profile or mode is unsupported.");
+      if (fixture.transform && (typeof fixture.transform !== "object" || Array.isArray(fixture.transform) || !Object.entries(fixture.transform).every(([key,value])=>["x","y","z","rotation"].includes(key) && Number.isFinite(value)))) errors.push("Fixture positions and rotations must be finite numbers.");
       if (!fixture.properties || typeof fixture.properties !== "object" || Array.isArray(fixture.properties) || !Object.values(fixture.properties).every((value)=>Number.isInteger(value) && value >= 0 && value <= 255)) errors.push("Fixture channel values must be integers from 0 to 255.");
       const patch=fixture.patchAssignment;
+      if (patch && mode && patch.channelFootprint !== mode.channels.length) errors.push("Fixture patch footprint does not match its mode.");
       if (patch) {
         if (patch.fixtureId !== fixture.id) errors.push("Fixture patch must reference its owning fixture.");
         for (const other of project.fixtures) {
