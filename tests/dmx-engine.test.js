@@ -1,6 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { updateFixture } from "../src/dmx/engine.js";
+test("fixture placement updates preserve the source and reject invalid transforms", () => {
+  const fixture=createFixture();
+  const [updated]=updateFixture([fixture],fixture.id,{transform:{x:1.25,y:2,z:-3}});
+  assert.deepEqual(updated.transform,{x:1.25,y:2,z:-3,rotation:0});
+  assert.notEqual(fixture.transform.x,1.25);
+  for (const transform of [{x:NaN},{y:Infinity},{z:"3"},{unknown:1}]) assert.throws(()=>updateFixture([fixture],fixture.id,{transform}));
+});
 
 test("fixture edits validate values and patch overlaps without changing the source", () => {
   const first=createFixture(),second=createFixture(2);

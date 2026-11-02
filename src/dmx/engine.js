@@ -30,7 +30,7 @@ export function validatePatch(candidate, fixtures) {
 }
 export function firstAvailableAddress(fixtures, universe, footprint) { for(let start=1;start+footprint-1<=512;start+=1) { if (validatePatch({fixtureId:"candidate",universe,startAddress:start,channelFootprint:footprint},fixtures).valid) return start; } return null; }
 export function patchFixture(fixtures, fixtureId, universe = 1, startAddress) { const fixture=fixtures.find((item)=>item.id===fixtureId); if(!fixture) throw new Error("Fixture was not found."); const profile=getFixtureProfile(fixture.profileId),footprint=fixtureFootprint(profile,fixture.modeId),patch={fixtureId,universe,startAddress:startAddress ?? firstAvailableAddress(fixtures,universe,footprint),channelFootprint:footprint}; const result=validatePatch(patch,fixtures); if(!result.valid) throw new Error(result.errors.join(" ")); return fixtures.map((item)=>item.id===fixtureId?{...item,patchAssignment:patch}:item); }
-export function updateFixture(fixtures, fixtureId, { name, properties = {}, universe, startAddress } = {}) {
+export function updateFixture(fixtures, fixtureId, { name, properties = {}, transform = {}, universe, startAddress } = {}) {
   const fixture=fixtures.find((item)=>item.id===fixtureId);
   if (!fixture) throw new Error("Fixture was not found.");
   for (const [channel,value] of Object.entries(properties)) {
@@ -38,7 +38,10 @@ export function updateFixture(fixtures, fixtureId, { name, properties = {}, univ
     if (!Number.isInteger(value) || value < 0 || value > 255) throw new Error(`${channel} must be an integer from 0 to 255.`);
   }
   if (name !== undefined && (typeof name !== "string" || !name.trim())) throw new Error("Fixture name must not be empty.");
-  const revised=fixtures.map((item)=>item.id===fixtureId ? { ...item, name:name?.trim() ?? item.name, properties:{...item.properties,...properties} } : item);
+  for (const [axis,value] of Object.entries(transform)) {
+    if (!["x","y","z","rotation"].includes(axis) || !Number.isFinite(value)) throw new Error("Fixture transforms require finite x, y, z or rotation values.");
+  }
+  const revised=fixtures.map((item)=>item.id===fixtureId ? { ...item, name:name?.trim() ?? item.name, properties:{...item.properties,...properties}, transform:{...item.transform,...transform} } : item);
   return patchFixture(revised,fixtureId,universe ?? fixture.patchAssignment?.universe ?? 1,startAddress ?? fixture.patchAssignment?.startAddress);
 }
 export function dmxFrame(fixtures, universe = 1) { const frame=new Uint8Array(512); for(const fixture of fixtures){const patch=fixture.patchAssignment;if(!patch||patch.universe!==universe)continue;const profile=getFixtureProfile(fixture.profileId),mode=profile.modes.find((item)=>item.id===fixture.modeId) ?? profile.modes[0];mode.channels.forEach((channel,index)=>{frame[patch.startAddress-1+index]=Math.max(0,Math.min(255,Math.round(fixture.properties[channel] ?? 0)));});}return frame; }
