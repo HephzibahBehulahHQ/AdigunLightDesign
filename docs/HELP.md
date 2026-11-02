@@ -11,6 +11,13 @@ measurement is temporary and excluded from project saves and exports. These
 coordinates are not physical room measurements. Canceling a pointer gesture
 restores the previous measurement and never moves canvas objects.
 
+Outside text fields, use V for Select, B for Palette Brush, L for Fixture,
+M for Material, T for Text, S for Shape, R for Measure and O for Orbit. These
+invoke the same tool actions as clicking their buttons. Text and Shape create
+an object once per key press. Disabled tools remain unavailable by keyboard;
+AI Pin has no active shortcut while its tool is disabled. Ctrl/Cmd+S and
+Ctrl/Cmd+Z retain their Save and Undo behavior.
+
 ## Contents
 
 - [The live co-pilot](#the-live-co-pilot)

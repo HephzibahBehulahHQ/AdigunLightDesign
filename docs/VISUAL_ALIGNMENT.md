@@ -46,3 +46,9 @@ distance label, localized instructions and live status output. Measurement mode
 does not bind object dragging. Focused tests cover scaled coordinates, pointer
 identity, cancellation, keyboard increments/reset and cleanup. No physical-unit
 calibration or browser interaction acceptance is claimed.
+
+The reference's implemented tool shortcuts now invoke their existing button
+actions. Enabled tools expose `aria-keyshortcuts` and shortcut tooltips. Text
+editing, composition, modifier combinations, handled events and repeated
+keydowns are excluded. Disabled AI Pin stays unavailable. Focused shortcut
+tests passed; real-browser keyboard/focus acceptance remains pending.
