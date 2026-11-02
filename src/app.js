@@ -2,7 +2,7 @@ import { validateProject } from "./domain/project.js";
 import { prepareEditorProject } from "./domain/editor-project.js";
 import { moveSwatch, removeSwatch, reorderSwatch } from "./domain/palette-store.js";
 import { readImagePalette } from "./domain/image-file.js";
-import { snapshotPalette, restorePalette } from "./domain/palette-versions.js";
+import { snapshotPalette, restorePalette, comparePalettes } from "./domain/palette-versions.js";
 import { paletteRaster } from "./export/raster.js";
 import { hslToRgb } from "./domain/color-engine.js";
 import { suggestContrast } from "./domain/color-engine.js";
@@ -226,6 +226,7 @@ function render() {
   document.querySelector("#lock-swatch").insertAdjacentHTML("beforebegin", `<section class="colour-space-card"><h3>OKLCH</h3>${[["l",oklch.l,1,t("lightness")],["c",oklch.c,1,t("chroma")],["h",oklch.h,360,t("hue")]].map(([key,value,max,label])=>`<label>${label} (0–${max})<input id="oklch-${key}" type="number" required min="0" max="${max}" step="any" value="${compact(value,4)}" /></label>`).join("")}<button id="apply-oklch" class="wide">${t("apply")} OKLCH</button></section>`);
   document.querySelector("#oklch-l").closest("label").firstChild.textContent="L (0–1)";
   document.querySelector(".palette-panel").insertAdjacentHTML("beforeend", `<div class="palette-actions"><button id="save-version">${t("saveVersion")}</button><select id="palette-version" aria-label="${t("savedVersions")}">${project.palettes.slice(1).map((item)=>`<option value="${esc(item.id)}">${esc(item.name)}</option>`).join("")}</select><button id="restore-version" ${project.palettes.length<2 ? "disabled" : ""}>${t("restoreVersion")}</button></div>`);
+  if (project.palettes.length>1) document.querySelector(".palette-panel").insertAdjacentHTML("beforeend", `<details class="palette-comparison"><summary>${t("compareVersions")}</summary><div id="version-comparison"></div></details>`);
   bind();
   if (preferences.view === "light") {
     renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {accent:scene().materialColor,fixtures:project.fixtures.map((fixture)=>({...fixture,selected:fixture.id===selectedFixture()?.id}))});
@@ -241,6 +242,17 @@ function render() {
 }
 
 function bind() {
+  const comparison=document.querySelector("#version-comparison");
+  if (comparison) {
+    const updateComparison=()=>{
+      const saved=project.palettes.find((item)=>item.id===document.querySelector("#palette-version").value);
+      if (!saved) return;
+      const cell=(color)=>color ? `<span style="background:${color.hex};display:inline-block;width:12px;height:12px"></span> ${esc(color.name)} ${color.hex}` : "—";
+      comparison.innerHTML=`<table><thead><tr><th>${t("currentVersion")}</th><th>${t("savedVersions")}</th></tr></thead><tbody>${comparePalettes(palette(),saved).map((row)=>`<tr class="${row.changed ? "is-changed" : ""}"><td>${cell(row.current)}</td><td>${cell(row.saved)}</td></tr>`).join("")}</tbody></table>`;
+    };
+    document.querySelector("#palette-version").onchange=updateComparison;
+    updateComparison();
+  }
   document.querySelector("#save-version").onclick=()=>{
     commitProjectChange("palette-version-save",(draft)=>{draft.palettes.push(snapshotPalette(draft.palettes[0],`${draft.palettes[0].name} · ${draft.palettes.length}`));});
     render();

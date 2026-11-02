@@ -82,4 +82,8 @@ Object.assign(messages.en,{saveVersion:"Save version",savedVersions:"Saved versi
 Object.assign(messages.de,{saveVersion:"Version speichern",savedVersions:"Gespeicherte Versionen",restoreVersion:"Version wiederherstellen"});
 Object.assign(messages.yo,{saveVersion:"Fi ẹ̀dà pamọ́",savedVersions:"Àwọn ẹ̀dà tí a fi pamọ́",restoreVersion:"Dá ẹ̀dà padà"});
 Object.assign(messages.pcm,{saveVersion:"Save version",savedVersions:"Saved versions",restoreVersion:"Bring version back"});
+Object.assign(messages.en,{compareVersions:"Compare versions",currentVersion:"Current"});
+Object.assign(messages.de,{compareVersions:"Versionen vergleichen",currentVersion:"Aktuell"});
+Object.assign(messages.yo,{compareVersions:"Ṣe àfiwé àwọn ẹ̀dà",currentVersion:"Lọ́wọ́lọ́wọ́"});
+Object.assign(messages.pcm,{compareVersions:"Compare versions",currentVersion:"Current"});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }
