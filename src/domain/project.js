@@ -18,7 +18,7 @@ export function validateProject(project) {
   const errors = [];
   if (!project || typeof project !== "object") errors.push("Project must be an object.");
   if (project?.schemaVersion !== CURRENT_SCHEMA_VERSION) errors.push("Unsupported project schema version.");
-  if (!project?.id || !project?.name?.trim()) errors.push("Project needs an id and a name.");
+  if (typeof project?.id !== "string" || !project.id.trim() || typeof project?.name !== "string" || !project.name.trim()) errors.push("Project needs a string id and a nonempty name.");
   for (const key of ["palettes", "scenes", "fixtures", "patches", "cues", "assets", "history"]) {
     if (!Array.isArray(project?.[key])) errors.push(`Project.${key} must be an array.`);
   }
