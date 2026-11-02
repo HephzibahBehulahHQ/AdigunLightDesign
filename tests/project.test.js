@@ -1,5 +1,17 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+test("rejects malformed scene data before rendering", () => {
+  const project=createProject();
+  const scene={id:"s",name:"Studio",materialColor:"#C21888"};
+  project.scenes=[scene];
+  assert.equal(validateProject(project).valid,true);
+  for (const invalid of [null,{...scene,name:42},{...scene,materialColor:"red"},{...scene,materialColor:null}]) {
+    project.scenes=[invalid];
+    assert.equal(validateProject(project).valid,false);
+  }
+  project.scenes=[scene,{...scene}];
+  assert.equal(validateProject(project).valid,false);
+});
 import { createFixture } from "../src/dmx/engine.js";
 test("rejects unsupported fixture mappings and malformed transform data", () => {
   const project=createProject(),fixture=createFixture();
