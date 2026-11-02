@@ -1,5 +1,15 @@
 # Lux action contract
 
+The browser chat-session controller now holds service configuration in memory,
+requires consent for each request, and prevents overlapping requests. Disconnect
+or reconfiguration invalidates pending responses. Project edits during a request
+discard its suggestions; later review also checks the original project snapshot.
+Receiving suggestions never applies them. Mutation review uses the existing
+native preview/confirmation boundary; read-only review uses the native evaluator.
+These behaviors have mocked transport tests. The controller is not yet wired to
+the chat form, and no live service or provider connection is claimed. Earlier
+offline capability descriptions below describe the currently exposed UI.
+
 Asset-based image extraction is now a native mutation handler. It accepts only an asset ID found in an injected local decoded-image store; it never fetches URLs or file paths. The user-selected image workflow retains up to five downsampled images in memory, with defensive pixel copies and metadata-only listing. Reloading loses this cache; the generated palette remains in native project data. Preview candidates retain exact extracted colors/IDs for later confirmation. This provides 14 mutation and two read-only native handlers across the 16 names, not an AI-provider integration. Image extraction is not yet exposed as a Lux panel action.
 
 Read-only native handlers measure opaque HEX contrast and generate local text artifacts for `project-json`, `palette-json`, `css`, `palette-svg`, `design-tokens`, `patch-csv`, `cue-csv` and `canvas-svg`. They reuse the domain/export implementations and do not mutate the project, start downloads, send network requests or claim external-tool compatibility. Unsupported format names and missing palette/scene IDs reject. Image extraction is a separate confirmed mutation using the approved asset context described above. Provider/chat integration is still absent.

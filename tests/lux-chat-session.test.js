@@ -1,0 +1,42 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { createLuxChatSession } from "../src/ai/chat-session.js";
+import { createStudioMoodProject } from "../src/domain/studio-mood.js";
+const configuration={endpoint:"https://example.test/api/lux",accessToken:"test-only-service-token-32-characters-long"};
+const reply={requestId:"r1",answer:"Review this palette.",calls:[{type:"adigunlightdesign.tool-call",version:1,name:"apply_palette_to_lights",payload:{paletteId:"studio-modern"}}]};
+const response=(value)=>({ok:true,text:async()=>JSON.stringify(value)});
+test("chat requires configuration and per-request consent; suggestions leave project untouched",async()=>{
+  let requests=0;
+  const session=createLuxChatSession({fetchImpl:async()=>{requests++;return response(reply);}}),project=createStudioMoodProject();
+  reply.calls[0].payload.paletteId=project.palettes[0].id;
+  const input={project,question:"Light the scene",locale:"en"},before=JSON.stringify(project);
+  await assert.rejects(session.request(input),/Configure/);
+  session.configure(configuration);
+  await assert.rejects(session.request(input),/consent/);assert.equal(requests,0);assert.equal(session.status.pending,false);
+  const suggestions=await session.request({...input,consent:true});
+  assert.equal(JSON.stringify(project),before);assert.equal(requests,1);
+  const review=session.review(project,suggestions,0);
+  assert.equal(review.kind,"mutation");assert.equal(review.proposal.requiresConfirmation,true);
+  assert.equal(JSON.stringify(project),before);
+  project.name="Changed";
+  assert.throws(()=>session.review(project,suggestions,0),/Project changed/);
+  session.disconnect();assert.deepEqual(session.status,{configured:false,pending:false,endpoint:null});
+});
+test("disconnect invalidates an in-flight response and concurrent requests reject",async()=>{
+  let finish;
+  const session=createLuxChatSession({fetchImpl:()=>new Promise(resolve=>{finish=()=>resolve(response({...reply,calls:[]}));})});
+  session.configure(configuration);
+  const input={project:createStudioMoodProject(),question:"Hello",locale:"en",consent:true};
+  const pending=session.request(input);
+  await assert.rejects(session.request(input),/already pending/);
+  session.disconnect();finish();await assert.rejects(pending,/discarded/);
+  assert.equal(session.status.pending,false);
+});
+test("project edits during a request discard stale suggestions",async()=>{
+  let finish;
+  const session=createLuxChatSession({fetchImpl:()=>new Promise(resolve=>{finish=()=>resolve(response({...reply,calls:[]}));})});
+  session.configure(configuration);const project=createStudioMoodProject();
+  const pending=session.request({project,question:"Hello",locale:"de",consent:true});
+  project.name="Edited during request";finish();await assert.rejects(pending,/Project changed/);
+  assert.equal(session.status.pending,false);
+});
