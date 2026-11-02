@@ -2,6 +2,7 @@ import { validateProject } from "./domain/project.js";
 import { prepareEditorProject } from "./domain/editor-project.js";
 import { moveSwatch, removeSwatch, reorderSwatch } from "./domain/palette-store.js";
 import { readImagePalette } from "./domain/image-file.js";
+import { paletteRaster } from "./export/raster.js";
 import { hslToRgb } from "./domain/color-engine.js";
 import { createStudioMoodProject } from "./domain/studio-mood.js";
 import { contrastResult, hexToRgb, isSrgbGamut, normalizeHex, rgbToHex, rgbToHsl, rgbToHsv, rgbToLab, rgbToOklab } from "./domain/color-engine.js";
@@ -211,6 +212,7 @@ function render() {
   document.querySelector("#apply-colour").insertAdjacentHTML("afterend", `<button id="copy-hex">${t("copy")}</button>`);
   const hsl=rgbToHsl(hexToRgb(active.hex));
   document.querySelector("#lock-swatch").insertAdjacentHTML("beforebegin", `<section class="colour-space-card">${[["hue",hsl.h,360],["saturation",hsl.s*100,100],["lightness",hsl.l*100,100]].map(([key,value,max])=>`<label>${t(key)}<input id="color-${key}" type="number" min="0" max="${max}" step="any" value="${compact(value,2)}" /></label>`).join("")}<button id="apply-hsl" class="wide">${t("apply")} HSL</button></section>`);
+  document.querySelector(".export-grid")?.insertAdjacentHTML("beforeend", `<button data-raster="image/png">PNG</button><button data-raster="image/jpeg">JPEG</button>`);
   bind();
   if (preferences.view === "light") {
     renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {accent:scene().materialColor,fixtures:project.fixtures.map((fixture)=>({...fixture,selected:fixture.id===selectedFixture()?.id}))});
@@ -226,6 +228,16 @@ function render() {
 }
 
 function bind() {
+  document.querySelectorAll("[data-raster]").forEach((button)=>button.onclick=async()=>{
+    button.disabled=true;
+    try {
+      const blob=await paletteRaster(structuredClone(palette()),button.dataset.raster);
+      const url=URL.createObjectURL(blob),link=document.createElement("a");
+      link.href=url;link.download=`${safeFileStem(project.name)}-palette.${button.dataset.raster==="image/png" ? "png" : "jpg"}`;
+      link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+    } catch(error) { document.querySelector("#status").textContent=status=error.message; }
+    finally { button.disabled=false; }
+  });
   document.querySelector("#apply-hsl").onclick=()=>{
     try {
       const values=["hue","saturation","lightness"].map((key)=>{
