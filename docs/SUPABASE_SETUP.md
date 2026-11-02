@@ -61,7 +61,7 @@ The Vite build requires an externally supplied `ALD_SUPABASE_PUBLISHABLE_KEY` to
 enable this flow. The default build remains unconfigured; no actual key,
 password or token is committed. SDK and dialog tests use mocks and synthetic
 credentials. No live login, sign-up, email callback or cloud saving is established.
-Validation: the full local suite passed 212 tests with zero failures/skips.
+Validation: the full local suite passed 217 tests with zero failures/skips.
 Focused checks cover registered/anonymous identity handling, stale verification,
 session-local sign-out, failed sign-out, password clearing and secret-shaped
 build-key rejection. The dependency audit reported zero vulnerabilities. The
@@ -73,6 +73,6 @@ References: [password sign-in](https://supabase.com/docs/reference/javascript/au
 
 Not complete: exposing the product schema through the Data API, live frontend Auth verification,
 product redirect allowlisting, manual cloud save/load, real-session API isolation,
-authenticated Bot acceptance and account layout persistence. Existing global
+live Bot-acceptance verification and account layout persistence. Existing global
 Site URL and other products' schemas remain intact. Public client configuration
 must use a publishable key; private/service-role keys must never enter the app.

@@ -31,7 +31,7 @@ import { addCanvasObject,updateCanvasObject,duplicateCanvasObject,moveCanvasObje
 import { canvasMarkup } from "./ui/canvas.js";
 import { canvasSvg } from "./export/canvas.js";
 import { bindCanvasDrag } from "./ui/canvas-drag.js";
-import { previewNativeToolAction,confirmNativeToolAction } from "./ai/action-preview.js";
+import { previewNativeToolAction } from "./ai/action-preview.js";
 import { icon } from "./ui/icons.js";
 import { previewQuality,previewQualities } from "./light-lab/quality.js";
 import { temperaturePalette } from "./domain/temperature.js";
@@ -49,6 +49,7 @@ import {topMenuMarkup,bindTopMenu} from "./ui/top-menu.js";
 import {createFloatingBot} from "./ui/floating-bot.js";
 import {createAccount} from "./cloud/account.js";
 import {openAccountDialog} from "./ui/account-dialog.js";
+import {previewUnpatchedFixture,confirmAuthenticatedAction} from "./ai/authenticated-actions.js";
 import { canFullscreen,toggleViewportFullscreen } from "./ui/fullscreen.js";
 import { groupFixtures,saveFixtureGroup } from "./domain/fixture-groups.js";
 import { cueCsv, designTokenJson, paletteCss, paletteJson, paletteSvg, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
@@ -65,12 +66,15 @@ preferences.seed=normalizeHex(preferences.seed) ?? defaults.seed;
 if (!Object.hasOwn(previewQualities,preferences.previewQuality)) preferences.previewQuality="balanced";
 let projectPersisted=false;
 let luxProposal=null;
+let luxConfirmationPending=false;
 let cleanupTopMenu=null;
 const imageAssets=createImageAssetStore();
 const account=createAccount({publishableKey:typeof __ALD_SUPABASE_PUBLISHABLE_KEY__==="undefined" ? "" : __ALD_SUPABASE_PUBLISHABLE_KEY__});
 const liveCanvasFeed=createCanvasStateFeed();
 const floatingBot=createFloatingBot({getProjectId:()=>project.id,getUserId:()=>account.user?.id ?? "guest",getLocale:()=>preferences.locale,translate});
-const liveCopilotPanel=createLiveCopilotPanel({feed:liveCanvasFeed,getLocale:()=>preferences.locale,translate,onNotify:()=>floatingBot.notify()});
+const liveCopilotPanel=createLiveCopilotPanel({feed:liveCanvasFeed,getLocale:()=>preferences.locale,translate,onNotify:()=>floatingBot.notify(),canAccept:()=>Boolean(account.user),onError:message=>setStatus(t(message)),onAccept:async(suggestion,isCurrent)=>{
+  luxProposal=await previewUnpatchedFixture({getProject:()=>project,suggestion,account,isCurrent});render();floatingBot.open();document.querySelector("#confirm-lux-action")?.focus();
+}});
 const luxService=createLuxServicePanel({getProject:()=>project,getLocale:()=>preferences.locale,translate,imageAssets,onPreview:(proposal)=>{luxProposal=proposal;render();},onError:(message)=>setStatus(message),onNotify:()=>floatingBot.notify()});
 let project = loadProject();
 let undoStack = [], redoStack = [], status = "", renderer = null, playbackTimer = null, playbackClock = null;
@@ -283,7 +287,7 @@ function render() {
     <nav class="module-nav" aria-label="${t("appModules")}">${nav}</nav>
     <main id="workspace" class="editor-layout">
       <aside class="left-rail panel">
-        <section class="project-heading"><div><small>${t("project")}</small><input id="project-name" value="${esc(project.name)}" aria-label="${t("project")} name" /></div><span class="save-state ${projectPersisted ? "" : "is-unsaved"}" title="${projectPersisted ? t("statusSaved") : t("storageUnavailable")}">● ${t(projectPersisted ? "saved" : "sessionOnly")}</span></section>
+        <section class="project-heading"><div><small>${t("project")}</small><input id="project-name" value="${esc(project.name)}" aria-label="${t("project")} name" /></div><span class="save-state ${projectPersisted ? "" : "is-unsaved"}" title="${projectPersisted ? t("statusSaved") : t("unsavedChanges")}">● ${t(projectPersisted ? "saved" : "sessionOnly")}</span></section>
         <section><h2>▰ ${t("layers")}</h2><ul class="layer-list"><li>⌄ ▣ ${t("layersLighting")} <span>◉</span></li><li>⌄ ▣ ${t("layersPalette")} <span>◉</span></li><li>⌄ ▣ ${t("layersScene")} <span>◉</span></li></ul></section>
         <section class="tool-section"><h2>☼ ${t("tools")}</h2><div class="tool-list">${tools}</div></section>
       </aside>
@@ -389,7 +393,7 @@ function render() {
   document.querySelector("#theme").innerHTML=icon(preferences.theme==="dark" ? "light" : "moon");
   document.querySelector(".lux-icon").innerHTML=icon("copilot");
   if (preferences.luxOpen) {
-    document.querySelector(".lux-message").insertAdjacentHTML("afterend", `<section class="lux-local-actions"><h3>${t("localPaletteAction")}</h3><button id="preview-lux-palette" ${project.fixtures.length ? "" : "disabled"}>${t("previewPaletteLighting")}</button>${luxProposal ? `<div class="lux-action-preview"><h4>${t("reviewChanges")}</h4><ul>${luxProposal.changes.map((change)=>`<li>${esc(change.after?.name ?? change.before?.name ?? change.id)}<details><summary>${t("reviewChanges")}: ${esc(change.collection)}</summary><pre>${esc(JSON.stringify({before:change.before,after:change.after},null,2))}</pre></details></li>`).join("") || t("noActionChanges")}</ul><button id="confirm-lux-action" ${luxProposal.changes.length ? "" : "disabled"}>${t("confirmAction")}</button><button id="cancel-lux-action">${t("cancelAction")}</button></div>` : ""}</section>`);
+    document.querySelector(".lux-message").insertAdjacentHTML("afterend", `<section class="lux-local-actions"><h3>${t("localPaletteAction")}</h3><button id="preview-lux-palette" ${project.fixtures.length ? "" : "disabled"}>${t("previewPaletteLighting")}</button>${luxProposal ? `<div class="lux-action-preview"><h4>${t("reviewChanges")}</h4><ul>${luxProposal.changes.map((change)=>`<li>${esc(change.after?.name ?? change.before?.name ?? change.id)}<details><summary>${t("reviewChanges")}: ${esc(change.collection)}</summary><pre>${esc(JSON.stringify({before:change.before,after:change.after},null,2))}</pre></details></li>`).join("") || t("noActionChanges")}</ul><small>${t(account.user ? "liveReviewBeforeApply" : "authRequired")}</small><button id="confirm-lux-action" ${luxProposal.changes.length && account.user && !luxConfirmationPending ? "" : "disabled"} title="${t(account.user ? "confirmAction" : "authRequired")}">${t("confirmAction")}</button><button id="cancel-lux-action">${t("cancelAction")}</button></div>` : ""}</section>`);
   }
   const projectionButton=document.querySelector(".view-menu");
   document.querySelector(".workspace-tabs").insertAdjacentHTML("beforeend", `<button id="viewport-fullscreen" class="view-menu" aria-label="${t("fullscreenViewport")}" title="${t("fullscreenViewport")}" ${canFullscreen(document.querySelector(".scene-preview"),document) ? "" : "disabled"}>${icon("fullscreen")}</button>`);
@@ -508,13 +512,14 @@ function bind() {
     try {luxProposal=previewNativeToolAction(project,{type:"adigunlightdesign.tool-call",version:1,name:"apply_palette_to_lights",payload:{paletteId:palette().id}});render();}catch(error){setStatus(error.message);}
   };
   const cancelLux=document.querySelector("#cancel-lux-action");if(cancelLux)cancelLux.onclick=()=>{luxProposal=null;render();};
-  const confirmLux=document.querySelector("#confirm-lux-action");if(confirmLux)confirmLux.onclick=()=>{
+  const confirmLux=document.querySelector("#confirm-lux-action");if(confirmLux)confirmLux.onclick=async()=>{
+    if(luxConfirmationPending)return;const proposal=luxProposal;luxConfirmationPending=true;confirmLux.disabled=true;
     try {
       stopPlayback();
-      const result=confirmNativeToolAction({project,undoStack,redoStack},luxProposal,{confirmed:true});
-      project=result.project;undoStack=result.undoStack;redoStack=result.redoStack;luxProposal=null;
-      saveProject();status=t("localActionApplied");render();
-    } catch(error) {luxProposal=null;status=error.message;render();}
+      const result=await confirmAuthenticatedAction({getState:()=>({project,undoStack,redoStack}),proposal,account,confirmed:true,isCurrent:()=>luxProposal===proposal});
+      project=result.project;undoStack=result.undoStack;redoStack=result.redoStack;luxProposal=null;projectPersisted=false;status=t("botChangesUnsaved");
+    } catch(error) {if(luxProposal===proposal)luxProposal=null;status=t(error.message);}
+    finally{luxConfirmationPending=false;render();}
   };
   const shapeKind=document.querySelector("#shape-kind");if(shapeKind)shapeKind.onchange=()=>{preferences.shapeKind=shapeKind.value;savePreferences();};
   const addShape=document.querySelector("#add-canvas-shape");if(addShape)addShape.onclick=()=>document.querySelector('[data-tool="shapes"]').click();

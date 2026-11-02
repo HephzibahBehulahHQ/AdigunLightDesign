@@ -1,5 +1,21 @@
 # Lux action contract
 
+Current acceptance boundary: all Bot mutation confirmations use
+`confirmAuthenticatedAction`, which re-verifies a registered account and checks
+that the displayed proposal is still current before invoking the native
+confirmation path. The result is undoable in-memory state with `persisted:false`;
+the UI marks it unsaved and does not call local/cloud storage. Explicit Save is
+separate. Guests may inspect previews but cannot commit Bot changes. This
+supersedes the earlier local-action saving behavior described in baseline notes.
+
+Live unpatched-fixture offers now create an exact native patch preview in
+virtual universe 1 using the first available contiguous address range. Live
+previews bind to the verified account. Stale/canceled offers, changed accounts,
+unsupported fixes and exhausted address space reject without changing source
+state. Registered identity and confirmation are checked again before applying.
+These paths have mocked Auth/domain/panel tests; live login/browser verification
+and cloud persistence remain pending.
+
 The browser chat-session controller now holds service configuration in memory,
 requires consent for each request, and prevents overlapping requests. Disconnect
 or reconfiguration invalidates pending responses. Project edits during a request

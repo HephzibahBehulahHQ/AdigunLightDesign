@@ -4,11 +4,11 @@ import {createLiveCopilotPanel} from "../src/ui/live-copilot-panel.js";
 import {createCanvasStateFeed} from "../src/ai/live-copilot.js";
 import {createStudioMoodProject} from "../src/domain/studio-mood.js";
 import {translate} from "../src/i18n.js";
-function harness(){
+function harness(options={}){
   const listeners=new Map(),feed=createCanvasStateFeed();let time=0,tick,cancelled=false,html="",nodes;
   const documentRef={hidden:false,activeElement:null,addEventListener:(name,handler)=>listeners.set(name,handler),removeEventListener:name=>listeners.delete(name)};
-  const host={isConnected:true,get innerHTML(){return html;},set innerHTML(value){html=value;nodes=new Map([["[data-live-enabled]",{}],["[data-live-goal]",{elements:{goal:{value:""}}}]]);for(const id of ["dismiss","more"])if(value.includes(`data-live-${id}`))nodes.set(`[data-live-${id}]`,{});},insertAdjacentHTML:(position,value)=>{html+=value;},querySelector:key=>nodes.get(key)};
-  const panel=createLiveCopilotPanel({feed,getLocale:()=>"en",translate,documentRef,now:()=>time,schedule:callback=>{tick=callback;return 0;},cancel:handle=>{assert.equal(handle,0);cancelled=true;}});
+  const host={isConnected:true,get innerHTML(){return html;},set innerHTML(value){html=value;nodes=new Map([["[data-live-enabled]",{}],["[data-live-goal]",{elements:{goal:{value:""}}}]]);for(const id of ["dismiss","more","accept"])if(value.includes(`data-live-${id}`))nodes.set(`[data-live-${id}]`,{disabled:id==="accept" && /data-live-accept\s+disabled/.test(value)});},insertAdjacentHTML:(position,value)=>{html+=value;},querySelector:key=>nodes.get(key)};
+  const panel=createLiveCopilotPanel({feed,getLocale:()=>"en",translate,documentRef,now:()=>time,schedule:callback=>{tick=callback;return 0;},cancel:handle=>{assert.equal(handle,0);cancelled=true;},...options});
   panel.mount(host);
   return {panel,feed,host,documentRef,listeners,advance:value=>{time=value;tick();},get cancelled(){return cancelled;}};
 }
@@ -35,7 +35,15 @@ test("project switching clears the session goal and offers never change or save 
   h.advance(1000);assert.ok(!h.host.innerHTML.includes("live-suggestion"));
   const other=createStudioMoodProject();other.fixtures[0].patchAssignment=null;const before=JSON.stringify(other);
   h.feed.publish(other);assert.ok(!h.host.innerHTML.includes("Warm portrait"));h.advance(2000);
-  assert.ok(h.host.innerHTML.includes("live-suggestion"));assert.ok(h.host.innerHTML.includes("button disabled"));
+  assert.ok(h.host.innerHTML.includes("live-suggestion"));assert.equal(h.host.querySelector("[data-live-accept]").disabled,true);
   h.host.querySelector("[data-live-more]").onclick();assert.ok(h.host.innerHTML.includes(translate("en","liveUnpatchedExplanation")));
   assert.equal(JSON.stringify(other),before);h.panel.dispose();
+});
+
+test("signed-in acceptance requests a preview and dismissal invalidates an outstanding offer",async()=>{
+  let offer,current,finish;
+  const h=harness({canAccept:()=>true,onAccept:async(value,isCurrent)=>{offer=value;current=isCurrent;await new Promise(resolve=>{finish=resolve;});}}),project=createStudioMoodProject();
+  project.fixtures[0].patchAssignment=null;const before=JSON.stringify(project);h.feed.publish(project);h.advance(1000);
+  const accept=h.host.querySelector("[data-live-accept]");assert.equal(accept.disabled,false);const pending=accept.onclick();assert.equal(accept.disabled,true);assert.equal(offer.fixtureId,project.fixtures[0].id);assert.equal(current(),true);
+  h.host.querySelector("[data-live-dismiss]").onclick();assert.equal(current(),false);finish();await pending;assert.equal(JSON.stringify(project),before);h.panel.dispose();
 });

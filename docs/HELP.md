@@ -83,11 +83,17 @@ focused field or when the page is hidden. Closing Lux keeps suggestions
 non-blocking: new offers set its navigation badge without reopening it. Changing
 project state removes the displayed suggestion.
 
-**Accept** is currently disabled: accepting changes requires real login, which
-is not configured. The live co-pilot does not modify or save the project.
-Authenticated preview, acceptance, undo and rollback are still required work.
-Existing manual editor actions and the separate request-based Lux action path
-retain their current behavior; they do not demonstrate live acceptance.
+**Accept** requires a verified registered account. In a configured build, an
+unpatched-fixture offer opens a proposed virtual-universe-1 patch using the first
+free address range. Review the exact before/after data, then Confirm to apply.
+Cancel, changed project/account state or unavailable addresses prevent the action.
+The unconfigured default build keeps authenticated acceptance unavailable.
+
+All Bot mutation confirmations, including request-based Lux suggestions and
+local palette actions, now recheck login and apply changes only in memory.
+They never automatically save the project. Use Save to persist locally or Undo
+to restore the previous state. Ordinary manual editing keeps its existing local
+saving behavior. Live Auth and browser acceptance remain unverified.
 
 Expand **What does this do?** to inspect the selected fixture, palette swatch or
 2D object. Facts refresh from the local project: fixture profile, saved virtual

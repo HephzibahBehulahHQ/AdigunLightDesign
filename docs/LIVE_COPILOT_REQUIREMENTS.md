@@ -11,13 +11,24 @@ asks a session goal when missing. The scheduler supports a 600 ms debounce,
 suppression and an off switch. Three automated tests cover those foundations.
 The scheduler is now mounted in the Lux panel with four-language controls,
 session goal entry, dismissal and explanation. Pointer/input activity, focused
-editing fields and hidden pages suppress offers. Accept is disabled until real
-authentication exists; no live suggestion changes or saves the document.
+editing fields and hidden pages suppress offers. Registered users in configured
+builds can accept a patch offer into an exact preview and explicitly confirm an
+undoable in-memory change. Every Bot mutation rechecks login and never autosaves.
+Guests/unconfigured builds cannot commit. Stale, canceled and account-switched
+previews reject. The default build remains Auth-unconfigured; live verification
+has not been performed.
 See `HELP.md`. Selected fixture/swatch/2D-object facts now refresh from the live
 feed in an expandable localized explanation. Typed selection identities prevent
 cross-domain ID matches. Domain and panel tests cover actual values, deleted
 selections, escaped names and no mutations. Hover explanations, broader analysis,
-authenticated acceptance and browser verification remain incomplete.
+live authenticated acceptance and browser verification remain incomplete.
+
+Latest local validation: 217 tests passed with zero failures or skips, and the
+project check and build passed. New coverage verifies exact patch allocation,
+explicit confirmation, no mutation during preview, undo, failed login, canceled
+offers, account changes, edits during verification, exhausted address space and
+the panel's preview callback. The confirmation handler has no save call. Auth
+uses mocks in these tests; this does not establish real-session acceptance.
 
 The analyzer additionally identifies shared fixture channels across timeline
 tracks, with localized explanations of later-track precedence and held values.
