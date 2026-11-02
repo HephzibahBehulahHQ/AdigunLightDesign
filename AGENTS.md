@@ -7,7 +7,7 @@ Read `docs/M0_AUDIT.md` and the architecture documentation before changing produ
 - Preserve the hierarchy: Hephzibah Behulah → HB Elektroniker → AdigunLightDesign.
 - Use the shared design-system tokens and exactly one verified corporate logo in the header.
 - Do not fabricate a logo, fixture data, backend, hardware connection, translation, integration or completed test result.
-- The supplied 1440 × 900 editor reference is the desktop visual acceptance target. A feature is not accepted merely because its control appears in the UI; it needs an implemented action and automated coverage appropriate to its risk.
+- The latest supplied 1672 × 941 editor image is the desktop visual acceptance target; also verify the 1440 × 900 desktop layout. Its identity is recorded in `docs/VISUAL_ALIGNMENT.md`. Preserve the user's later floating-Bot and compact-menu requirements. A feature is not accepted merely because its control appears in the UI; it needs an implemented action and automated coverage appropriate to its risk.
 
 ## Engineering
 

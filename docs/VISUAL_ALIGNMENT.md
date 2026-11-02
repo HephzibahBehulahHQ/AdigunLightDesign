@@ -1,5 +1,14 @@
 # Visual alignment evidence
 
+The user reaffirmed the delivery reference on 3 November 2026:
+`codex-clipboard-5b6caab9-9259-4364-a4d9-642494b849c2.png`.
+The original attachment is a 1672 × 941 PNG, SHA-256
+`13b35cd250ac8c587b9696fd802b57703e406c2894968003cf1a8f45dee126c4`.
+Use this composition and styling as the visual acceptance target, incorporating
+the explicitly requested floating Bot and compact top-menu updates. The
+1440 × 900 desktop check remains additional responsive coverage. This reference
+identification is not evidence that the current interface matches it.
+
 The user's supplied desktop reference remains the acceptance target. Current
 source layout includes the brand/navigation header, layers/tools, scene viewport,
 fixture inspector, palette, timeline and Lux panel. A five-card lower overview
