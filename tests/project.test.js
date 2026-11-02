@@ -47,7 +47,9 @@ import { createCue } from "../src/timeline/engine.js";
 
 test("validates imported cue timing and captured channel values", () => {
   const project=createProject();
-  const cue=createCue([{id:"f",properties:{dimmer:72}}]);
+  const fixture=createFixture();fixture.id="f";
+  project.fixtures=[fixture];
+  const cue=createCue(project.fixtures);
   project.cues=[cue];
   assert.equal(validateProject(project).valid,true);
   for (const bad of [null,{...cue,targets:null},{...cue,duration:0},{...cue,targets:[{fixtureId:"f",properties:{dimmer:999}}]}]) {

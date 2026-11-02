@@ -33,11 +33,13 @@ export function validateProject(project) {
     if (!Array.isArray(project?.[key])) errors.push(`Project.${key} must be an array.`);
   }
   if (Array.isArray(project?.palettes)) {
+    const paletteIds=new Set();
     for (const palette of project.palettes) {
-      if (!palette || typeof palette.id !== "string" || typeof palette.name !== "string" || !Array.isArray(palette.colors) || !palette.colors.length) {
+      if (!palette || typeof palette.id !== "string" || !palette.id.trim() || paletteIds.has(palette.id) || typeof palette.name !== "string" || !palette.name.trim() || !Array.isArray(palette.colors) || !palette.colors.length) {
         errors.push("Each palette needs an id, name, and nonempty colors array.");
         continue;
       }
+      paletteIds.add(palette.id);
       const ids=new Set();
       for (const color of palette.colors) {
         if (color?.opacity !== undefined && (!Number.isFinite(color.opacity) || color.opacity<0 || color.opacity>1)) errors.push("Color opacity must be from 0 to 1.");
@@ -48,7 +50,7 @@ export function validateProject(project) {
   }
   if (Array.isArray(project?.cues)) {
     try { arrangeTracks(project.cues); } catch { errors.push("Cue track scheduling is invalid."); }
-    const ids=new Set();
+    const ids=new Set(),fixtureIds=new Set(Array.isArray(project.fixtures) ? project.fixtures.filter(Boolean).map((fixture)=>fixture.id) : []);
     for (const cue of project.cues) {
       if (!cue || typeof cue.id !== "string" || !cue.id.trim() || ids.has(cue.id) || typeof cue.name !== "string" || !cue.name.trim()) errors.push("Cues require unique ids and nonempty names.");
       if (!cue) continue;
@@ -58,7 +60,10 @@ export function validateProject(project) {
       const fadeOut=cue.fadeOut ?? 0;
       if (![cue.duration,cue.fade,delay,fadeOut].every(Number.isFinite) || cue.duration <= 0 || cue.fade < 0 || delay < 0 || fadeOut<0 || delay + cue.fade + fadeOut > cue.duration) errors.push("Cue timing is invalid.");
       if (!Array.isArray(cue.targets)) { errors.push("Cue targets must be an array."); continue; }
+      const targetIds=new Set();
       for (const target of cue.targets) {
+        if (target && (!fixtureIds.has(target.fixtureId) || targetIds.has(target.fixtureId))) errors.push("Cue targets require unique existing fixture references.");
+        if (target) targetIds.add(target.fixtureId);
         if (!target || typeof target.fixtureId !== "string" || !target.properties || typeof target.properties !== "object" || Array.isArray(target.properties) || !Object.values(target.properties).every((value)=>Number.isInteger(value) && value >= 0 && value <= 255)) errors.push("Cue targets require fixture ids and DMX channel values from 0 to 255.");
       }
     }
