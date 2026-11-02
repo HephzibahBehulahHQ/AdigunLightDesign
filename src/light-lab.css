@@ -1,4 +1,9 @@
 .light-canvas { min-height:353px; }
+.layer-list button { padding:0 3px; background:transparent; color:var(--muted); border-radius:4px; }
+.layer-list button[aria-pressed="true"] { color:var(--text); }
+.scene-preview.hide-lighting .beam { display:none; }
+.scene-preview.hide-props :is(.couch,.plant,.lamp,.art-frame) { display:none; }
+.lower-workspace > [hidden] { display:none !important; }
 .palette-comparison { padding:10px; font-size:11px; }.palette-comparison>div { overflow:auto; max-height:220px; }.palette-comparison table { width:100%; border-collapse:collapse; }.palette-comparison td,.palette-comparison th { padding:6px; text-align:left; border-bottom:1px solid var(--line); }.palette-comparison .is-changed { background:#a855f71c; }
 .contrast-card dl { font-size:10px; }.contrast-card dl div { display:flex; justify-content:space-between; gap:6px; margin:5px 0; }.contrast-card dd { margin:0; padding:2px 4px; border-radius:3px; }.contrast-card label { padding:8px 0; }
 .fixture-layer-list { list-style:none; padding:0 10px 10px 22px; margin:0; max-height:180px; overflow:auto; }

@@ -88,6 +88,7 @@ export function validateProject(project) {
     for (const scene of project.scenes) {
       if (!scene || typeof scene.id !== "string" || !scene.id.trim() || ids.has(scene.id) || typeof scene.name !== "string" || !scene.name.trim()) errors.push("Scenes require unique ids and nonempty names.");
       if (!scene) continue;
+      if (scene.visibility!==undefined && (!scene.visibility || typeof scene.visibility!=="object" || Array.isArray(scene.visibility) || !Object.entries(scene.visibility).every(([key,value])=>["lighting","props","palette"].includes(key) && typeof value==="boolean"))) errors.push("Scene visibility requires boolean layer settings.");
       ids.add(scene.id);
       if (typeof scene.materialColor !== "string" || !/^#[0-9a-f]{6}$/i.test(scene.materialColor)) errors.push("Scene material color must be a six-digit HEX value.");
     }

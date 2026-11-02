@@ -321,6 +321,13 @@ function render() {
   timingSummary.textContent=t("cueSettings");timingDetails.append(timingSummary);
   document.querySelectorAll(".cue-timing").forEach((node)=>timingDetails.append(node));
   document.querySelector(".timeline").append(timingDetails);
+  for (const [index,key] of ["lighting","palette","props"].entries()) {
+    const item=document.querySelectorAll(".layer-list li")[index],visible=scene().visibility?.[key]!==false;
+    item.querySelector("span").outerHTML=`<button data-layer-visibility="${key}" aria-pressed="${visible}" aria-label="${t("layerVisibility")}: ${t(["layersLighting","layersPalette","layersScene"][index])}">${visible ? "◉" : "○"}</button>`;
+  }
+  document.querySelector(".palette-panel").hidden=scene().visibility?.palette===false;
+  document.querySelector(".scene-preview").classList.toggle("hide-lighting",scene().visibility?.lighting===false);
+  document.querySelector(".scene-preview").classList.toggle("hide-props",scene().visibility?.props===false);
   if (activeCue) {
     const channels=activeCue.targets.flatMap((target)=>Object.keys(target.properties).map((property)=>({fixtureId:target.fixtureId,property})));
     timingDetails.insertAdjacentHTML("beforeend", `<fieldset><legend>${t("channelKeyframes")}</legend><label>${t("channel")}<select id="keyframe-channel">${channels.map((channel)=>`<option value="${esc(JSON.stringify(channel))}">${esc(project.fixtures.find((fixture)=>fixture.id===channel.fixtureId)?.name ?? channel.fixtureId)} · ${esc(channel.property)}</option>`).join("")}</select></label><label>${t("startTime")}<input id="keyframe-time" type="number" min="0" max="${activeCue.duration}" step="0.1" value="0" required></label><label>${t("channelValue")}<input id="keyframe-value" type="number" min="0" max="255" step="1" value="127" required></label><button id="save-keyframe" ${channels.length ? "" : "disabled"}>${t("saveKeyframe")}</button>${(activeCue.channelKeyframes ?? []).map((frame,index)=>`<p>${esc(frame.fixtureId)} · ${esc(frame.property)} · ${frame.time}s → ${frame.value} <button data-remove-keyframe="${index}" aria-label="${t("removeKeyframe")}">×</button></p>`).join("")}</fieldset>`);
@@ -335,7 +342,7 @@ function render() {
   inspector.querySelector(".inspector-tabs").innerHTML=`<button data-inspector="fixture" aria-pressed="${mode==="fixture"}" class="${mode==="fixture" ? "is-active" : ""}" ${fixturePanel ? "" : "disabled"}>${t("fixtureLabel")}</button><button data-inspector="palette" aria-pressed="${mode==="palette"}" class="${mode==="palette" ? "is-active" : ""}">${t("palette")}</button>`;
   bind();
   if (preferences.view === "light") {
-    renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {accent:scene().materialColor,fixtures:project.fixtures.map((fixture)=>({...fixture,selected:fixture.id===selectedFixture()?.id}))});
+    renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {accent:scene().materialColor,visibility:scene().visibility,fixtures:project.fixtures.map((fixture)=>({...fixture,selected:fixture.id===selectedFixture()?.id}))});
     if (!renderer.supported) {
       const note=document.createElement("p");
       note.className="webgl-unavailable";
@@ -348,6 +355,10 @@ function render() {
 }
 
 function bind() {
+  document.querySelectorAll("[data-layer-visibility]").forEach((button)=>button.onclick=()=>{
+    const key=button.dataset.layerVisibility;
+    commitProjectChange("scene-layer-visibility",(draft)=>{const target=draft.scenes[0];target.visibility={...target.visibility,[key]:target.visibility?.[key]===false};});render();
+  });
   const keyframeButton=document.querySelector("#save-keyframe");
   if (keyframeButton) keyframeButton.onclick=()=>{
     try {

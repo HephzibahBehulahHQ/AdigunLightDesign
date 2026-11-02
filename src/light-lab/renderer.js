@@ -69,11 +69,12 @@ export function surfaceGrid(origin, horizontal, vertical, colour, columns=20, ro
   for (let row=0;row<rows;row+=1) for (let column=0;column<columns;column+=1) quad(data,point(column,row),point(column+1,row),point(column+1,row+1),point(column,row+1),colour);
   return data;
 }
-export function sceneData(accent, fixtures) {
+export function sceneData(accent, fixtures, visibility={}) {
   const data=[],floor=hexVector("#172238"),wall=hexVector("#27324A"),couch=hexVector("#9C4F48"),wood=hexVector("#67442F"),metal=hexVector("#151D2D");
   data.push(...surfaceGrid([-5,0,-4],[10,0,0],[0,0,8],floor));
   data.push(...surfaceGrid([-5,0,4],[10,0,0],[0,4,0],wall));
   data.push(...surfaceGrid([-5,0,-4],[0,0,8],[0,4,0],hexVector("#132746")));
+  if (visibility.props!==false) {
   box(data,-2.1,.01,-.8,4.2,.02,3.5,hexVector("#665477"));
   box(data,-1.7,.25,1.4,3.4,.8,.75,couch);
   box(data,-1.45,1.05,1.55,2.9,.55,.35,couch.map((value)=>Math.min(1,value*1.2)));
@@ -86,9 +87,10 @@ export function sceneData(accent, fixtures) {
   for (let index=0;index<4;index+=1) box(data,3.85+index*.16,.87,2.6,.1,.4,.22,index%2 ? accent : hexVector("#D4AF37"));
   box(data,-.8,2,3.88,1.6,.95,.08,wood);
   box(data,-.7,2.1,3.78,1.4,.75,.08,accent);
+  }
   for (const y of [3.7,3.95]) box(data,-4,y,.4,8,.06,.06,metal);
   for (let x=-4;x<=4;x+=.5) box(data,x,3.7,.4,.04,.3,.06,metal);
-  const lights=virtualFixtureVisuals(fixtures,accent);
+  const lights=virtualFixtureVisuals(visibility.lighting===false ? [] : fixtures,accent);
   for (let offset=0;offset<data.length;offset+=6) {
     const colour=surfaceLighting(data.slice(offset,offset+3),data.slice(offset+3,offset+6),lights);
     for (let channel=0;channel<3;channel+=1) data[offset+3+channel]=colour[channel];
@@ -97,7 +99,7 @@ export function sceneData(accent, fixtures) {
   return new Float32Array(data);
 }
 
-export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = [] } = {}) {
+export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = [], visibility = {} } = {}) {
   const gl = canvas.getContext("webgl", { antialias:true, alpha:false });
   if (!gl) return { supported:false, destroy(){}, reset(){}, setAccent(){}, setFixtures(){} };
   const program=gl.createProgram(),vertexShader=compile(gl,gl.VERTEX_SHADER,vertexSource),fragmentShader=compile(gl,gl.FRAGMENT_SHADER,fragmentSource);
@@ -111,7 +113,7 @@ export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = 
     const ratio=Math.min(window.devicePixelRatio||1,2),width=Math.max(1,canvas.clientWidth),height=Math.max(1,canvas.clientHeight);
     gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
     if (!geometry) {
-      geometry=sceneData(hexVector(selectedAccent),virtualFixtures);
+      geometry=sceneData(hexVector(selectedAccent),virtualFixtures,visibility);
       gl.bufferData(gl.ARRAY_BUFFER,geometry,gl.STATIC_DRAW);
     }
     if(canvas.width!==width*ratio||canvas.height!==height*ratio){canvas.width=width*ratio;canvas.height=height*ratio;}

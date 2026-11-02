@@ -143,4 +143,8 @@ Object.assign(messages.en,{channelKeyframes:"Channel keyframes",channel:"Fixture
 Object.assign(messages.de,{channelKeyframes:"Kanal-Keyframes",channel:"Gerätekanal",channelValue:"Wert (0–255)",saveKeyframe:"Keyframe hinzufügen / ersetzen",removeKeyframe:"Keyframe entfernen"});
 Object.assign(messages.yo,{channelKeyframes:"Àwọn férémù pàtàkì chánẹ́lì",channel:"Chánẹ́lì fìtílà",channelValue:"Iye (0–255)",saveKeyframe:"Fi férémù kún / rọ́pò rẹ̀",removeKeyframe:"Yọ férémù kúrò"});
 Object.assign(messages.pcm,{channelKeyframes:"Channel keyframes",channel:"Fixture channel",channelValue:"Value (0–255)",saveKeyframe:"Add / replace keyframe",removeKeyframe:"Remove keyframe"});
+Object.assign(messages.en,{layerVisibility:"Layer visibility"});
+Object.assign(messages.de,{layerVisibility:"Ebenensichtbarkeit"});
+Object.assign(messages.yo,{layerVisibility:"Ìfihàn ipele"});
+Object.assign(messages.pcm,{layerVisibility:"Show or hide layer"});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }

@@ -35,6 +35,8 @@ Direct editor mutations use document transactions. Each committed operation snap
 
 ## Visual acceptance
 
+Layer visibility buttons save optional boolean `scene.visibility` settings for lighting, props and the palette panel through undoable transactions. Hiding lighting removes its preview geometry and artistic surface contribution, while virtual DMX and cue data stay unchanged. Hiding props retains the room and rig. Legacy scenes default to visible layers. These controls affect previews and panel visibility, not physical output. Domain geometry and import validation have coverage; browser interaction remains unverified.
+
 The inspector has functional Fixture and Palette selectors. Opening 3D selects fixture controls; opening 2D or selecting a swatch selects palette controls. The choice persists locally. Hidden controls retain their handlers, and fixture editing remains available when WebGL is unavailable. Browser interaction and visual acceptance are still unverified.
 
 At desktop sizes above 1320 × 700, the editor grid places the toolbar across the viewport and inspector, with the palette/timeline row spanning the same combined width below. The project rail and Lux panel span the editor height. Secondary controls scroll inside their panels. Smaller windows retain the existing stacked layout. This structural change has not been visually accepted against the reference; browser screenshot verification remains required.
