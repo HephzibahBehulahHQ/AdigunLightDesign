@@ -1,6 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { evaluateEffect } from "../src/timeline/effects.js";
+import { createFixture,getFixtureProfile } from "../src/dmx/engine.js";
+import { virtualFixtureVisuals } from "../src/light-lab/renderer.js";
 const fixtures=[{id:"a",properties:{dimmer:72,red:200}},{id:"b",properties:{dimmer:90,red:100}}];
 test("pulse is deterministic, periodic and bounded without changing source fixtures",()=>{
   const sample=(time)=>evaluateEffect(fixtures,{type:"pulse",period:2,minimum:20,maximum:200},time)[0].properties.dimmer;
@@ -32,4 +34,15 @@ test("pan/tilt circle is periodic, channel-limited and leaves fixed fixtures unc
     const channel=evaluateEffect(moving,settings,time)[0].properties[key];
     assert.ok(channel>=64 && channel<=192);
   }
+});
+test("real application profiles restrict effects despite legacy extra properties",()=>{
+  const wash=createFixture(1),strip=createFixture(2,"generic-led-strip-rgb"),moving=createFixture(3,"generic-moving-head-rgbw");
+  for (const fixture of [wash,strip,moving]) assert.deepEqual(Object.keys(fixture.properties).sort(),[...getFixtureProfile(fixture.profileId).modes[0].channels].sort());
+  wash.properties.pan=127;wash.properties.tilt=127;
+  const result=evaluateEffect([wash,strip,moving],{type:"panTilt",period:4},1);
+  assert.deepEqual(result[0],wash);assert.deepEqual(result[1],strip);
+  assert.notDeepEqual(result[2].properties,moving.properties);
+  const before=virtualFixtureVisuals([strip])[0];
+  strip.properties.pan=0;strip.properties.tilt=0;strip.properties.white=255;strip.properties.beam=255;
+  assert.deepEqual(virtualFixtureVisuals([strip])[0],before);
 });

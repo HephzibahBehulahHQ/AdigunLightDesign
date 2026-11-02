@@ -2,6 +2,7 @@ import { cameraMatrix, hexVector, multiply, viewportProjection } from "./math.js
 import { viewportPng } from "../export/viewport.js";
 import { pickScenePoint } from "./picking.js";
 import { roomDimensions } from "../domain/room.js";
+import { getFixtureProfile } from "../dmx/engine.js";
 
 const vertexSource = `attribute vec3 p;attribute vec3 c;uniform mat4 m;varying vec3 v;void main(){gl_Position=m*vec4(p,1.0);v=c;}`;
 const fragmentSource = `precision mediump float;varying vec3 v;void main(){gl_FragColor=vec4(v,1.0);}`;
@@ -12,7 +13,8 @@ function box(target, x, y, z, w, h, d, colour) { const X=x+w,Y=y+h,Z=z+d, shade=
 const channel = (value) => Math.max(0, Math.min(255, Number(value) || 0)) / 255;
 export function virtualFixtureVisuals(fixtures = []) {
   return fixtures.slice(0,12).map((fixture,index)=>{
-    const properties=fixture.properties ?? {},white=channel(properties.white),dimmer=channel(properties.dimmer),transform=fixture.transform ?? {};
+    const stored=fixture.properties ?? {},channels=fixture.profileId ? getFixtureProfile(fixture.profileId).modes.find((mode)=>mode.id===fixture.modeId)?.channels ?? [] : Object.keys(stored);
+    const properties=Object.fromEntries(channels.map((key)=>[key,stored[key]])),white=channel(properties.white),dimmer=channel(properties.dimmer),transform=fixture.transform ?? {};
     const x=Number.isFinite(transform.x) ? transform.x : (index-1)*2.5;
     const z=Number.isFinite(transform.z) ? transform.z : .45;
     // Artistic normalized aiming, independent of manufacturer DMX calibration.
