@@ -1,5 +1,19 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { updateFixture } from "../src/dmx/engine.js";
+
+test("fixture edits validate values and patch overlaps without changing the source", () => {
+  const first=createFixture(),second=createFixture(2);
+  const fixtures=patchFixture(patchFixture([first,second],first.id),second.id);
+  for (const dimmer of [-1,256,NaN,Infinity,1.5]) assert.throws(()=>updateFixture(fixtures,first.id,{properties:{dimmer}}));
+  assert.throws(()=>updateFixture(fixtures,first.id,{startAddress:7}),/overlaps/);
+  const updated=updateFixture(fixtures,first.id,{name:" Key ",properties:{dimmer:72},startAddress:20});
+  assert.equal(updated[0].name,"Key");
+  assert.equal(updated[0].properties.dimmer,72);
+  assert.equal(updated[0].patchAssignment.startAddress,20);
+  assert.equal(fixtures[0].properties.dimmer,255);
+  assert.equal(fixtures[0].patchAssignment.startAddress,1);
+});
 import { blackout, createFixture, dmxFrame, fixtureFootprint, fixtureProfiles, firstAvailableAddress, getFixtureProfile, patchFixture, validatePatch } from "../src/dmx/engine.js";
 
 test("uses the declared footprint and validates universe bounds", () => { assert.equal(fixtureFootprint(), 6); assert.equal(validatePatch({fixtureId:"a",universe:1,startAddress:508,channelFootprint:6},[]).valid, false); });

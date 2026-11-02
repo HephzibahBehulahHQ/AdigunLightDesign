@@ -4,7 +4,7 @@ import { contrastResult, hexToRgb, isSrgbGamut, normalizeHex, rgbToHex, rgbToHsl
 import { paletteCssVariables, rerollUnlocked, starterPalette, updateSwatch } from "./domain/palette-store.js";
 import { supportedLocales, translate } from "./i18n.js";
 import { createLightLabRenderer } from "./light-lab/renderer.js";
-import { blackout, createFixture, dmxFrame, fixtureProfiles, getFixtureProfile, patchFixture } from "./dmx/engine.js";
+import { blackout, createFixture, dmxFrame, fixtureProfiles, getFixtureProfile, patchFixture, updateFixture } from "./dmx/engine.js";
 import { createCue, evaluateCue } from "./timeline/engine.js";
 import { cueCsv, paletteCss, paletteJson, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
 import { readProjectFile } from "./domain/import-project.js";
@@ -54,7 +54,26 @@ function colourSpaceMarkup(hex) { const rgb=hexToRgb(hex),hsl=rgbToHsl(rgb),hsv=
 function fixtureLibraryMarkup() { return fixtureProfiles.map((profile)=>`<article><b>${esc(profile.model)}</b><small>${esc(profile.type)} · ${profile.modes[0].channels.length} CH</small><p>${esc(profile.validationStatus)} · ${esc(profile.provenance)}</p><button data-profile="${profile.id}">${t("addToVirtualPatch")}</button></article>`).join(""); }
 function selectedFixture() { return project.fixtures.find((fixture)=>fixture.id===preferences.fixtureId) ?? project.fixtures[0]; }
 function fixtureInspectorMarkup() { const fixture=selectedFixture(),profile=getFixtureProfile(fixture.profileId),patch=fixture.patchAssignment ?? {universe:1,startAddress:1}; return `<section class="fixture-inspector"><h3>${t("virtualFixture")}</h3><label>${t("fixtureLabel")}<select id="fixture-select">${project.fixtures.map((item)=>`<option value="${item.id}" ${item.id===fixture.id?"selected":""}>${esc(item.name)}</option>`).join("")}</select></label><small>${esc(profile.model)} · ${esc(profile.validationStatus)}</small><label>${t("colourName")}<input id="fixture-name" value="${esc(fixture.name)}" /></label><div class="fixture-grid"><label>${t("universe")}<input id="fixture-universe" type="number" min="1" value="${patch.universe}" /></label><label>${t("address")}<input id="fixture-address" type="number" min="1" max="512" value="${patch.startAddress}" /></label><label>${t("dimmer")}<input id="fixture-dimmer" type="number" min="0" max="255" value="${fixture.properties.dimmer ?? 0}" /></label><label>${t("beam")}<input id="fixture-beam" type="number" min="0" max="255" value="${fixture.properties.beam ?? 0}" /></label></div><button id="apply-fixture" class="wide">${t("applyFixturePatch")}</button></section>`; }
-function applyFixtureInspector() { const fixture=selectedFixture(); if(!fixture)return; const value=(id)=>Number(document.querySelector(id).value); try { commitProjectChange("fixture-update",(draft)=>{const index=draft.fixtures.findIndex((item)=>item.id===fixture.id),current=draft.fixtures[index],changed={...current,name:document.querySelector("#fixture-name").value.trim()||current.name,properties:{...current.properties,dimmer:value("#fixture-dimmer"),beam:value("#fixture-beam")}}; const revised=draft.fixtures.map((item,itemIndex)=>itemIndex===index?changed:item);draft.fixtures=patchFixture(revised,fixture.id,value("#fixture-universe"),value("#fixture-address"));});updateRendererFromFixtures();status=phrase("fixtureUpdated",{name:selectedFixture().name});render(); } catch(error) { setStatus(error.message); } }
+function applyFixtureInspector() {
+  const fixture=selectedFixture();
+  if (!fixture) return;
+  const value=(id)=>{
+    const input=document.querySelector(id);
+    if (!input.value.trim() || !input.checkValidity()) throw new Error(`${input.closest("label").textContent.trim()}: enter a valid value.`);
+    return Number(input.value);
+  };
+  try {
+    const changes={
+      name:document.querySelector("#fixture-name").value,
+      properties:{dimmer:value("#fixture-dimmer"),beam:value("#fixture-beam")},
+      universe:value("#fixture-universe"),startAddress:value("#fixture-address")
+    };
+    commitProjectChange("fixture-update",(draft)=>{draft.fixtures=updateFixture(draft.fixtures,fixture.id,changes);});
+    updateRendererFromFixtures();
+    status=phrase("fixtureUpdated",{name:selectedFixture().name});
+    render();
+  } catch(error) { document.querySelector("#status").textContent=status=error.message; }
+}
 
 function render() {
   renderer?.destroy(); renderer = null;
