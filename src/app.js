@@ -29,6 +29,7 @@ import { escapeHtml as esc,fixtureOptions,swatchButton } from "./ui/html.js";
 import { virtualDmxPreview } from "./dmx/preview.js";
 import { addCanvasObject,updateCanvasObject } from "./domain/canvas.js";
 import { canvasMarkup } from "./ui/canvas.js";
+import { canvasSvg } from "./export/canvas.js";
 import { groupFixtures,saveFixtureGroup } from "./domain/fixture-groups.js";
 import { cueCsv, designTokenJson, paletteCss, paletteJson, paletteSvg, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
 import { readProjectFile } from "./domain/import-project.js";
@@ -335,6 +336,7 @@ function render() {
   document.querySelector(".palette-panel").insertAdjacentHTML("beforeend", `<div class="palette-actions"><label>${t("hueSpacing")}<input id="custom-spacing" type="number" min="-360" max="360" step="any" value="30" /></label><button id="custom-hues">${t("customHues")}</button><button id="perceptual-scale">${t("perceptualScale")}</button></div>`);
   const arrangementEnd=arrangementDuration(project.cues);
   const projectionButton=document.querySelector(".view-menu");
+  projectionButton.insertAdjacentHTML("afterend", `<button id="export-canvas" class="view-menu" ${preferences.view==="palette" ? "" : "disabled"}>↗ ${t("exportCanvas")}</button>`);
   const materialButton=document.querySelector("#apply-scene");
   if (materialButton) materialButton.insertAdjacentHTML("beforebegin", `<label>${t("materialTarget")} <select id="material-target">${["accent","wall","floor","ceiling"].map((target)=>`<option value="${target}" ${preferences.materialTarget===target ? "selected" : ""}>${t(`surface_${target}`)}</option>`).join("")}</select></label>`);
   projectionButton.insertAdjacentHTML("afterend", `<button id="export-viewport" class="view-menu" ${preferences.view==="light" ? "" : "disabled"}>▣ ${t("exportViewport")}</button>`);
@@ -394,6 +396,9 @@ function render() {
 }
 
 function bind() {
+  document.querySelector("#export-canvas").onclick=()=>{
+    downloadText(canvasSvg(scene().canvasObjects ?? [],project.name),`${safeFileStem(project.name)}-canvas.svg`,"image/svg+xml");setStatus(t("canvasExported"));
+  };
   document.querySelectorAll("[data-canvas-object]").forEach((element)=>{
     const select=()=>{preferences.objectId=element.dataset.canvasObject;preferences.inspectorMode="palette";savePreferences();render();};
     element.onclick=select;element.onkeydown=(event)=>{if (["Enter"," "].includes(event.key)){event.preventDefault();select();}};

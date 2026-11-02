@@ -175,4 +175,8 @@ Object.assign(messages.en,{designCanvas:"2D design canvas",canvasObject:"Canvas 
 Object.assign(messages.de,{designCanvas:"2D-Designfläche",canvasObject:"Zeichenobjekt",deleteObject:"Objekt löschen",fontSize:"Schriftgröße"});
 Object.assign(messages.yo,{designCanvas:"Pápá àpẹrẹ 2D",canvasObject:"Nǹkan àpẹrẹ",deleteObject:"Pa nǹkan rẹ́",fontSize:"Ìwọ̀n lẹ́tà"});
 Object.assign(messages.pcm,{designCanvas:"2D design canvas",canvasObject:"Canvas object",deleteObject:"Delete object",fontSize:"Text size"});
+Object.assign(messages.en,{exportCanvas:"Canvas SVG",canvasExported:"Canvas SVG download requested."});
+Object.assign(messages.de,{exportCanvas:"Zeichenfläche als SVG",canvasExported:"SVG-Download der Zeichenfläche angefordert."});
+Object.assign(messages.yo,{exportCanvas:"SVG àpẹrẹ",canvasExported:"A ti béèrè ìgbàsílẹ̀ SVG àpẹrẹ."});
+Object.assign(messages.pcm,{exportCanvas:"Canvas SVG",canvasExported:"Canvas SVG download don start."});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }
