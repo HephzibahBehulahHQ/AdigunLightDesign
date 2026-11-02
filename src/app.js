@@ -495,9 +495,29 @@ function bind() {
   document.querySelector("#save-group").onclick=()=>{
     try {
       const name=document.querySelector("#group-name").value,fixtureIds=[...document.querySelectorAll("[data-group-member]:checked")].map((input)=>input.value);
-      commitProjectChange("fixture-group-save",(draft)=>{draft.fixtureGroups=saveFixtureGroup(draft.fixtureGroups ?? [],draft.fixtures,{name,fixtureIds});});render();
+      const id=document.querySelector("#save-group").dataset.groupId || crypto.randomUUID();
+      commitProjectChange("fixture-group-save",(draft)=>{draft.fixtureGroups=saveFixtureGroup(draft.fixtureGroups ?? [],draft.fixtures,{id,name,fixtureIds});});render();
     } catch(error) { setStatus(error.message); }
   };
+  const clearGroupEditor=()=>{
+    document.querySelector("#save-group").dataset.groupId="";
+    document.querySelector("#group-name").value="";
+    document.querySelectorAll("[data-group-member]").forEach((input)=>{input.checked=false;});
+    document.querySelector("#group-name").focus();
+  };
+  document.querySelector("#save-group").insertAdjacentHTML("afterend", `<button id="new-group">${t("newGroup")}</button>`);
+  document.querySelector("#new-group").onclick=clearGroupEditor;
+  document.querySelectorAll("[data-delete-group]").forEach((button)=>{
+    const edit=document.createElement("button");edit.textContent=t("editGroup");
+    edit.onclick=()=>{
+      const group=project.fixtureGroups.find((item)=>item.id===button.dataset.deleteGroup);
+      document.querySelector("#save-group").dataset.groupId=group.id;
+      document.querySelector("#group-name").value=group.name;
+      document.querySelectorAll("[data-group-member]").forEach((input)=>{input.checked=group.fixtureIds.includes(input.value);});
+      document.querySelector("#group-name").focus();
+    };
+    button.insertAdjacentElement("beforebegin",edit);
+  });
   document.querySelectorAll("[data-delete-group]").forEach((button)=>button.onclick=()=>{
     commitProjectChange("fixture-group-delete",(draft)=>{draft.fixtureGroups=(draft.fixtureGroups ?? []).filter((group)=>group.id!==button.dataset.deleteGroup);});render();
   });

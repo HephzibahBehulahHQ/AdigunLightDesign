@@ -127,4 +127,8 @@ Object.assign(messages.en,{luxTitle:"AI Co-Pilot",luxSubtitle:"Your color and li
 Object.assign(messages.de,{luxTitle:"KI-Copilot",luxSubtitle:"Ihr Assistent für Farb- und Lichtgestaltung",luxLocal:"Paletten- und Projektdaten bleiben in diesem Browser.",luxNoUpload:"Es werden keine Projektdaten an einen KI-Dienst gesendet.",askLux:"Fragen Sie Lux…",sendLux:"An Lux senden"});
 Object.assign(messages.yo,{luxTitle:"Olùrànlọ́wọ́ AI",luxSubtitle:"Olùrànlọ́wọ́ àpẹrẹ àwọ̀ àti ìmọ́lẹ̀ rẹ",luxLocal:"Paleti àti àlàyé iṣẹ́ wà nínú aṣàwákiri yìí.",luxNoUpload:"A kò fi dátà iṣẹ́ ránṣẹ́ sí iṣẹ́ AI kankan.",askLux:"Béèrè lọ́wọ́ Lux…",sendLux:"Firanṣẹ́ sí Lux"});
 Object.assign(messages.pcm,{luxTitle:"AI Co-Pilot",luxSubtitle:"Your colour and light design assistant",luxLocal:"Palette and project information stay for this browser.",luxNoUpload:"We no send project data to any AI service.",askLux:"Ask Lux anything…",sendLux:"Send to Lux"});
+Object.assign(messages.en,{editGroup:"Edit group",newGroup:"New group"});
+Object.assign(messages.de,{editGroup:"Gruppe bearbeiten",newGroup:"Neue Gruppe"});
+Object.assign(messages.yo,{editGroup:"Ṣàtúnṣe ẹgbẹ́",newGroup:"Ẹgbẹ́ tuntun"});
+Object.assign(messages.pcm,{editGroup:"Edit group",newGroup:"New group"});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }
