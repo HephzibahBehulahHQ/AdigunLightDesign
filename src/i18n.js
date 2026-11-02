@@ -62,4 +62,8 @@ Object.assign(messages.en,{removeColor:"Remove color"});
 Object.assign(messages.de,{removeColor:"Farbe entfernen"});
 Object.assign(messages.yo,{removeColor:"Yọ àwọ̀ kúrò"});
 Object.assign(messages.pcm,{removeColor:"Remove colour"});
+Object.assign(messages.en,{hue:"Hue (°)",saturation:"Saturation (%)",lightness:"Lightness (%)"});
+Object.assign(messages.de,{hue:"Farbton (°)",saturation:"Sättigung (%)",lightness:"Helligkeit (%)"});
+Object.assign(messages.yo,{hue:"Irú àwọ̀ (°)",saturation:"Ìkún àwọ̀ (%)",lightness:"Ìmọ́lẹ̀ àwọ̀ (%)"});
+Object.assign(messages.pcm,{hue:"Hue (°)",saturation:"Colour strength (%)",lightness:"Lightness (%)"});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }

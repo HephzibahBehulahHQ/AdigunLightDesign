@@ -2,6 +2,7 @@ import { validateProject } from "./domain/project.js";
 import { prepareEditorProject } from "./domain/editor-project.js";
 import { moveSwatch, removeSwatch, reorderSwatch } from "./domain/palette-store.js";
 import { readImagePalette } from "./domain/image-file.js";
+import { hslToRgb } from "./domain/color-engine.js";
 import { createStudioMoodProject } from "./domain/studio-mood.js";
 import { contrastResult, hexToRgb, isSrgbGamut, normalizeHex, rgbToHex, rgbToHsl, rgbToHsv, rgbToLab, rgbToOklab } from "./domain/color-engine.js";
 import { paletteCssVariables, rerollUnlocked, starterPalette, updateSwatch } from "./domain/palette-store.js";
@@ -208,6 +209,8 @@ function render() {
   const swatchIndex=palette().colors.indexOf(active);
   document.querySelector("#lock-swatch").insertAdjacentHTML("afterend", `<div class="palette-actions"><button data-move-swatch="-1" ${swatchIndex===0 ? "disabled" : ""}>← ${t("earlier")}</button><button data-move-swatch="1" ${swatchIndex===palette().colors.length-1 ? "disabled" : ""}>${t("later")} →</button><button id="remove-swatch" ${palette().colors.length<2 ? "disabled" : ""}>${t("removeColor")}</button></div>`);
   document.querySelector("#apply-colour").insertAdjacentHTML("afterend", `<button id="copy-hex">${t("copy")}</button>`);
+  const hsl=rgbToHsl(hexToRgb(active.hex));
+  document.querySelector("#lock-swatch").insertAdjacentHTML("beforebegin", `<section class="colour-space-card">${[["hue",hsl.h,360],["saturation",hsl.s*100,100],["lightness",hsl.l*100,100]].map(([key,value,max])=>`<label>${t(key)}<input id="color-${key}" type="number" min="0" max="${max}" step="any" value="${compact(value,2)}" /></label>`).join("")}<button id="apply-hsl" class="wide">${t("apply")} HSL</button></section>`);
   bind();
   if (preferences.view === "light") {
     renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {accent:scene().materialColor,fixtures:project.fixtures.map((fixture)=>({...fixture,selected:fixture.id===selectedFixture()?.id}))});
@@ -223,6 +226,17 @@ function render() {
 }
 
 function bind() {
+  document.querySelector("#apply-hsl").onclick=()=>{
+    try {
+      const values=["hue","saturation","lightness"].map((key)=>{
+        const input=document.querySelector(`#color-${key}`);
+        if (!input.value.trim() || !input.checkValidity()) throw new Error(`${t(key)}: enter a valid value.`);
+        return Number(input.value);
+      });
+      const hex=rgbToHex(hslToRgb({h:values[0],s:values[1]/100,l:values[2]/100}));
+      mutateColours((colors)=>updateSwatch(colors,selected().id,{hex}));
+    } catch(error) { document.querySelector("#status").textContent=status=error.message; }
+  };
   document.querySelector("#copy-hex").onclick=async()=>{
     try {
       if (!navigator.clipboard?.writeText) throw new Error("Clipboard is unavailable in this browser.");
