@@ -14,3 +14,16 @@ test("rejects an incomplete imported project", () => {
   assert.equal(result.valid, false);
   assert.ok(result.errors.length > 1);
 });
+
+test("rejects malformed nested palette data and duplicate swatch ids", () => {
+  const project=createProject();
+  for (const palette of [null,{id:"p",name:"P",colors:[]},{id:"p",name:"P",colors:[{id:"x",name:"X",hex:"red",locked:false}]}]) {
+    project.palettes=[palette];
+    assert.equal(validateProject(project).valid,false);
+  }
+  const swatch={id:"x",name:"X",hex:"#2196F3",locked:false};
+  project.palettes=[{id:"p",name:"P",colors:[swatch]}];
+  assert.equal(validateProject(project).valid,true);
+  project.palettes[0].colors.push({...swatch});
+  assert.equal(validateProject(project).valid,false);
+});

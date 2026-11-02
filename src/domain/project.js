@@ -22,5 +22,18 @@ export function validateProject(project) {
   for (const key of ["palettes", "scenes", "fixtures", "patches", "cues", "assets", "history"]) {
     if (!Array.isArray(project?.[key])) errors.push(`Project.${key} must be an array.`);
   }
+  if (Array.isArray(project?.palettes)) {
+    for (const palette of project.palettes) {
+      if (!palette || typeof palette.id !== "string" || typeof palette.name !== "string" || !Array.isArray(palette.colors) || !palette.colors.length) {
+        errors.push("Each palette needs an id, name, and nonempty colors array.");
+        continue;
+      }
+      const ids=new Set();
+      for (const color of palette.colors) {
+        if (!color || typeof color.id !== "string" || !color.id.trim() || ids.has(color.id) || typeof color.name !== "string" || typeof color.hex !== "string" || !/^#[0-9a-f]{6}$/i.test(color.hex) || typeof color.locked !== "boolean") errors.push("Palette colors require unique ids, names, six-digit HEX values, and boolean locks.");
+        if (color) ids.add(color.id);
+      }
+    }
+  }
   return { valid: errors.length === 0, errors };
 }
