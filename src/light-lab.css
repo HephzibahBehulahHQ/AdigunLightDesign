@@ -21,6 +21,10 @@
 .fixture-library article { padding:10px; border:1px solid var(--line); border-radius:8px; background:#10182766; display:grid; gap:6px; }
 .fixture-library b { font-size:11px; }.fixture-library small,.fixture-library p { color:var(--muted); font-size:10px; line-height:1.35; margin:0; }
 .fixture-library button { padding:7px; border-radius:6px; background:#25304a; color:var(--text); font-size:10px; }
+.fixture-inspector { margin:10px 12px; padding:10px; border:1px solid var(--line); border-radius:8px; background:#10182766; }
+.fixture-inspector h3 { margin:0 0 8px; font-size:12px; }.fixture-inspector>small { display:block; color:var(--muted); margin:5px 0 8px; font-size:10px; }
+.fixture-inspector label { display:grid; gap:4px; padding:0 0 7px; font-size:10px; }.fixture-inspector input,.fixture-inspector select { min-width:0; width:100%; font-size:11px; padding:5px; }
+.fixture-grid { display:grid; grid-template-columns:1fr 1fr; gap:0 6px; }
 @media (max-width:670px) { .fixture-library { grid-template-columns:1fr; } }
 .colour-space-card { margin:10px 12px; padding:10px; border:1px solid var(--line); border-radius:8px; background:#10182766; }
 .colour-space-card h3 { margin:0 0 7px; font-size:12px; }
