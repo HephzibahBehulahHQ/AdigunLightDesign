@@ -1,5 +1,29 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { createFixture } from "../src/dmx/engine.js";
+test("rejects imported overlaps while allowing identical addresses in different universes", () => {
+  const project=createProject(),a=createFixture(),b=createFixture(2);
+  a.patchAssignment={fixtureId:a.id,universe:1,startAddress:1,channelFootprint:6};
+  b.patchAssignment={fixtureId:b.id,universe:1,startAddress:6,channelFootprint:6};
+  project.fixtures=[a,b];
+  assert.equal(validateProject(project).valid,false);
+  b.patchAssignment.startAddress=7;
+  assert.equal(validateProject(project).valid,true);
+  b.patchAssignment.startAddress=1;
+  b.patchAssignment.universe=2;
+  assert.equal(validateProject(project).valid,true);
+  b.patchAssignment.fixtureId=a.id;
+  assert.equal(validateProject(project).valid,false);
+});
+test("rejects malformed imported fixtures and out-of-range patches", () => {
+  const project=createProject(),fixture=createFixture();
+  project.fixtures=[fixture];
+  assert.equal(validateProject(project).valid,true);
+  for (const bad of [null,{...fixture,properties:null},{...fixture,properties:{dimmer:256}},{...fixture,patchAssignment:{universe:1,startAddress:510,channelFootprint:6}}]) {
+    project.fixtures=[bad];
+    assert.equal(validateProject(project).valid,false);
+  }
+});
 import { createCue } from "../src/timeline/engine.js";
 
 test("validates imported cue timing and captured channel values", () => {

@@ -49,5 +49,24 @@ export function validateProject(project) {
       }
     }
   }
+  if (Array.isArray(project?.fixtures)) {
+    const ids=new Set();
+    for (const fixture of project.fixtures) {
+      if (!fixture || typeof fixture.id !== "string" || !fixture.id.trim() || ids.has(fixture.id) || typeof fixture.name !== "string" || typeof fixture.profileId !== "string" || typeof fixture.modeId !== "string") errors.push("Fixtures require unique ids, names, profiles, and modes.");
+      if (!fixture) continue;
+      ids.add(fixture.id);
+      if (!fixture.properties || typeof fixture.properties !== "object" || Array.isArray(fixture.properties) || !Object.values(fixture.properties).every((value)=>Number.isInteger(value) && value >= 0 && value <= 255)) errors.push("Fixture channel values must be integers from 0 to 255.");
+      const patch=fixture.patchAssignment;
+      if (patch) {
+        if (patch.fixtureId !== fixture.id) errors.push("Fixture patch must reference its owning fixture.");
+        for (const other of project.fixtures) {
+          const existing=other?.patchAssignment;
+          if (!existing || other === fixture || existing.universe !== patch.universe) continue;
+          if (patch.startAddress <= existing.startAddress + existing.channelFootprint - 1 && existing.startAddress <= patch.startAddress + patch.channelFootprint - 1) errors.push("Imported fixture patches overlap.");
+        }
+      }
+      if (patch && (!Number.isInteger(patch.universe) || patch.universe < 1 || !Number.isInteger(patch.startAddress) || patch.startAddress < 1 || !Number.isInteger(patch.channelFootprint) || patch.channelFootprint < 1 || patch.startAddress + patch.channelFootprint - 1 > 512)) errors.push("Fixture patch exceeds valid universe or address bounds.");
+    }
+  }
   return { valid: errors.length === 0, errors };
 }
