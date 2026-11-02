@@ -101,21 +101,25 @@ export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = 
   const gl = canvas.getContext("webgl", { antialias:true, alpha:false });
   if (!gl) return { supported:false, destroy(){}, reset(){}, setAccent(){}, setFixtures(){} };
   const program=gl.createProgram();gl.attachShader(program,compile(gl,gl.VERTEX_SHADER,vertexSource));gl.attachShader(program,compile(gl,gl.FRAGMENT_SHADER,fragmentSource));gl.linkProgram(program);if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(program));
-  const buffer=gl.createBuffer(),position=gl.getAttribLocation(program,"p"),colour=gl.getAttribLocation(program,"c"),matrix=gl.getUniformLocation(program,"m");let selectedAccent=accent,virtualFixtures=fixtures,yaw=-.25,pitch=.1,drag;
-  function draw() { const ratio=Math.min(window.devicePixelRatio||1,2),width=Math.max(1,canvas.clientWidth),height=Math.max(1,canvas.clientHeight),data=sceneData(hexVector(selectedAccent),virtualFixtures);if(canvas.width!==width*ratio||canvas.height!==height*ratio){canvas.width=width*ratio;canvas.height=height*ratio;}gl.viewport(0,0,canvas.width,canvas.height);gl.enable(gl.DEPTH_TEST);gl.clearColor(.025,.045,.09,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,data,gl.STATIC_DRAW);gl.vertexAttribPointer(position,3,gl.FLOAT,false,24,0);gl.enableVertexAttribArray(position);gl.vertexAttribPointer(colour,3,gl.FLOAT,false,24,12);gl.enableVertexAttribArray(colour);gl.uniformMatrix4fv(matrix,false,multiply(perspective(radians(48),width/height,.1,100),cameraMatrix({yaw,pitch})));gl.drawArrays(gl.TRIANGLES,0,data.length/6); }
+  const buffer=gl.createBuffer(),position=gl.getAttribLocation(program,"p"),colour=gl.getAttribLocation(program,"c"),matrix=gl.getUniformLocation(program,"m");let selectedAccent=accent,virtualFixtures=fixtures,yaw=-.25,pitch=.1,distance=11,drag;
+  function draw() { const ratio=Math.min(window.devicePixelRatio||1,2),width=Math.max(1,canvas.clientWidth),height=Math.max(1,canvas.clientHeight),data=sceneData(hexVector(selectedAccent),virtualFixtures);if(canvas.width!==width*ratio||canvas.height!==height*ratio){canvas.width=width*ratio;canvas.height=height*ratio;}gl.viewport(0,0,canvas.width,canvas.height);gl.enable(gl.DEPTH_TEST);gl.clearColor(.025,.045,.09,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,data,gl.STATIC_DRAW);gl.vertexAttribPointer(position,3,gl.FLOAT,false,24,0);gl.enableVertexAttribArray(position);gl.vertexAttribPointer(colour,3,gl.FLOAT,false,24,12);gl.enableVertexAttribArray(colour);gl.uniformMatrix4fv(matrix,false,multiply(perspective(radians(48),width/height,.1,100),cameraMatrix({yaw,pitch,distance})));gl.drawArrays(gl.TRIANGLES,0,data.length/6); }
   const resize=new ResizeObserver(draw),down=(event)=>{drag={x:event.clientX,y:event.clientY};canvas.setPointerCapture(event.pointerId);},move=(event)=>{if(!drag)return;yaw+=(event.clientX-drag.x)*.009;pitch=Math.max(-.72,Math.min(.72,pitch+(event.clientY-drag.y)*.009));drag={x:event.clientX,y:event.clientY};draw();},up=()=>{drag=undefined;};resize.observe(canvas);canvas.addEventListener("pointerdown",down);canvas.addEventListener("pointermove",move);canvas.addEventListener("pointerup",up);draw();
   const keydown=(event)=>{
-    if (!["ArrowLeft","ArrowRight","ArrowUp","ArrowDown","Home"].includes(event.key)) return;
+    if (!["ArrowLeft","ArrowRight","ArrowUp","ArrowDown","Home","+","=","-"].includes(event.key)) return;
     event.preventDefault();
     if (event.key === "ArrowLeft") yaw-=.08;
     if (event.key === "ArrowRight") yaw+=.08;
     if (event.key === "ArrowUp") pitch=Math.max(-.72,pitch-.08);
     if (event.key === "ArrowDown") pitch=Math.min(.72,pitch+.08);
-    if (event.key === "Home") { yaw=-.25; pitch=.1; }
+    if (event.key === "+" || event.key === "=") distance=Math.max(4,distance-.5);
+    if (event.key === "-") distance=Math.min(24,distance+.5);
+    if (event.key === "Home") { yaw=-.25; pitch=.1; distance=11; }
     draw();
   };
   canvas.addEventListener("keydown",keydown);
+  const wheel=(event)=>{event.preventDefault();distance=Math.max(4,Math.min(24,distance+Math.sign(event.deltaY)*.5));draw();};
+  canvas.addEventListener("wheel",wheel,{passive:false});
   canvas.addEventListener("pointercancel",up);
   canvas.addEventListener("lostpointercapture",up);
-  return { supported:true, setAccent(value){selectedAccent=value;draw();}, setFixtures(value){virtualFixtures=value;draw();}, reset(){yaw=-.25;pitch=.1;draw();}, destroy(){resize.disconnect();canvas.removeEventListener("keydown",keydown);canvas.removeEventListener("pointercancel",up);canvas.removeEventListener("lostpointercapture",up);canvas.removeEventListener("pointerdown",down);canvas.removeEventListener("pointermove",move);canvas.removeEventListener("pointerup",up);gl.deleteBuffer(buffer);gl.deleteProgram(program);} };
+  return { supported:true, setAccent(value){selectedAccent=value;draw();}, setFixtures(value){virtualFixtures=value;draw();}, reset(){yaw=-.25;pitch=.1;distance=11;draw();}, destroy(){resize.disconnect();canvas.removeEventListener("wheel",wheel);canvas.removeEventListener("keydown",keydown);canvas.removeEventListener("pointercancel",up);canvas.removeEventListener("lostpointercapture",up);canvas.removeEventListener("pointerdown",down);canvas.removeEventListener("pointermove",move);canvas.removeEventListener("pointerup",up);gl.deleteBuffer(buffer);gl.deleteProgram(program);} };
 }
