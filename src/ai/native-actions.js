@@ -7,6 +7,7 @@ import { addCanvasObject } from "../domain/canvas.js";
 import { starterPalette,rerollUnlocked,updateSwatch } from "../domain/palette-store.js";
 import { normalizeHex,hexToRgb } from "../domain/color-engine.js";
 import { applySceneMaterial } from "../domain/scene-materials.js";
+import { extractImagePalette } from "../domain/image-palette.js";
 
 function paletteById(project,id) {
   const palette=project.palettes.find((item)=>item.id===id);
@@ -15,6 +16,13 @@ function paletteById(project,id) {
 }
 
 const handlers={
+  extract_image_palette(project,payload,context) {
+    const asset=context.imageAssets?.get(payload.assetId);
+    if(!asset)throw new Error("Approved decoded image asset is unavailable. Select the local image again.");
+    const extracted=extractImagePalette(asset.pixels,{count:payload.count ?? 5});
+    if(!extracted.length)throw new Error("Image asset has no visible colors.");
+    project.palettes.push({id:crypto.randomUUID(),name:payload.name ?? asset.name ?? "Image palette",harmonyType:"image",sourceAssetId:payload.assetId,colors:extracted.map((color,index)=>({id:crypto.randomUUID(),name:`Image ${index+1}`,hex:color.hex,locked:false}))});
+  },
   create_palette(project,payload) {
     let colors=structuredClone(starterPalette);
     if (payload.colors!==undefined) {
@@ -79,14 +87,14 @@ const handlers={
 };
 export const supportedNativeActions=Object.freeze(Object.keys(handlers));
 
-export function commitNativeToolAction(state,call,{confirmed=false}={}) {
+export function commitNativeToolAction(state,call,{confirmed=false,imageAssets}={}) {
   const validation=validateToolCall(call);
   if (!validation.valid) throw new Error(validation.errors.join(" "));
   if (!Object.hasOwn(handlers,call.name)) throw new Error("This registered tool has no native executor yet.");
   if (confirmed!==true) throw new Error("Project action requires explicit confirmation.");
   const before=validateProject(state.project);if(!before.valid)throw new Error("Source project is invalid.");
   const result=commitTransaction(state,`lux:${call.name}`,(draft)=>{
-    handlers[call.name](draft,structuredClone(call.payload));
+    handlers[call.name](draft,structuredClone(call.payload),{imageAssets});
     const after=validateProject(draft);if(!after.valid)throw new Error(after.errors.join(" "));
   });
   return {...result,receipt:{tool:call.name,mode:"local-native-action",physicalOutput:false,historyId:result.project.history.at(-1).id}};

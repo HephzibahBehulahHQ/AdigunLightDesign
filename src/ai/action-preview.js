@@ -3,8 +3,8 @@ import { commitTransaction } from "../domain/history.js";
 import { validateProject } from "../domain/project.js";
 const proposals=new WeakMap();
 
-export function previewNativeToolAction(project,call) {
-  const planned=commitNativeToolAction({project,undoStack:[],redoStack:[]},call,{confirmed:true}).project;
+export function previewNativeToolAction(project,call,{imageAssets}={}) {
+  const planned=commitNativeToolAction({project,undoStack:[],redoStack:[]},call,{confirmed:true,imageAssets}).project;
   planned.history=structuredClone(project.history);
   const changes=[];
   for (const collection of ["palettes","scenes","fixtures","cues"]) {

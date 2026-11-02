@@ -36,6 +36,7 @@ import { icon } from "./ui/icons.js";
 import { previewQuality,previewQualities } from "./light-lab/quality.js";
 import { temperaturePalette } from "./domain/temperature.js";
 import { stageSettings,updateStage } from "./domain/stage.js";
+import { createImageAssetStore } from "./domain/image-assets.js";
 import { groupFixtures,saveFixtureGroup } from "./domain/fixture-groups.js";
 import { cueCsv, designTokenJson, paletteCss, paletteJson, paletteSvg, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
 import { readProjectFile } from "./domain/import-project.js";
@@ -51,6 +52,7 @@ preferences.seed=normalizeHex(preferences.seed) ?? defaults.seed;
 if (!Object.hasOwn(previewQualities,preferences.previewQuality)) preferences.previewQuality="balanced";
 let projectPersisted=false;
 let luxProposal=null;
+const imageAssets=createImageAssetStore();
 let project = loadProject();
 let undoStack = [], redoStack = [], status = "", renderer = null, playbackTimer = null, playbackClock = null;
 
@@ -654,7 +656,7 @@ function bind() {
     if (!file) return;
     const projectId=project.id;
     try {
-      const colors=await readImagePalette(file);
+      const colors=await readImagePalette(file,{onDecoded:(asset)=>imageAssets.add(asset)});
       if (project.id!==projectId) return;
       mutateColours((existing)=>[...existing,...colors.map((color)=>({id:crypto.randomUUID(),name:color.hex,hex:color.hex,locked:false}))]);
     } catch(error) { document.querySelector("#status").textContent=status=error.message; }

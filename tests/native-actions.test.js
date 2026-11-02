@@ -19,7 +19,7 @@ test("invalid patch and cue actions are atomic and unsupported tools do not pret
   assert.throws(()=>commitNativeToolAction(initial,call("patch_fixture",{fixtureId:fixture.id,universe:1,startAddress:1}),{confirmed:true}));
   assert.equal(initial.project.history.length,0);
   assert.throws(()=>commitNativeToolAction(initial,call("create_cue",{name:"Bad",duration:1,fade:2}),{confirmed:true}));
-  assert.throws(()=>commitNativeToolAction(initial,call("extract_image_palette",{assetId:"missing"}),{confirmed:true}),/no native executor/);
+  assert.throws(()=>commitNativeToolAction(initial,call("check_contrast",{foreground:"#fff",background:"#000"}),{confirmed:true}),/no native executor/);
   for (const name of ["constructor","__proto__","toString"]) assert.equal(validateToolCall(call(name,{})).valid,false);
 });
 test("native scene and canvas actions validate and preserve the source document",()=>{
