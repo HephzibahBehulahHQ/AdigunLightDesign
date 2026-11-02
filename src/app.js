@@ -1,5 +1,5 @@
 import { createProject, validateProject } from "./domain/project.js";
-import { contrastResult, hexToRgb, normalizeHex, rgbToHex } from "./domain/color-engine.js";
+import { contrastResult, hexToRgb, isSrgbGamut, normalizeHex, rgbToHex, rgbToHsl, rgbToHsv, rgbToLab, rgbToOklab } from "./domain/color-engine.js";
 import { paletteCssVariables, rerollUnlocked, starterPalette, updateSwatch } from "./domain/palette-store.js";
 import { supportedLocales, translate } from "./i18n.js";
 import { createLightLabRenderer } from "./light-lab/renderer.js";
@@ -49,6 +49,8 @@ function redo() { if (!redoStack.length) return setStatus(t("noRedo")); const ne
 function setStatus(value) { status = value; render(); }
 function esc(value) { return String(value).replace(/[&<>"]/g, (char) => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"})[char]); }
 function disabled(title) { return `disabled title="${esc(title)}"`; }
+function compact(value, digits = 1) { return Number(value).toFixed(digits); }
+function colourSpaceMarkup(hex) { const rgb=hexToRgb(hex),hsl=rgbToHsl(rgb),hsv=rgbToHsv(rgb),lab=rgbToLab(rgb),oklab=rgbToOklab(rgb); return `<section class="colour-space-card" aria-label="Color-space values"><h3>Color spaces</h3><dl><div><dt>sRGB</dt><dd>${Math.round(rgb.r)}, ${Math.round(rgb.g)}, ${Math.round(rgb.b)}</dd></div><div><dt>HSL</dt><dd>${compact(hsl.h)}° · ${compact(hsl.s*100)}% · ${compact(hsl.l*100)}%</dd></div><div><dt>HSV</dt><dd>${compact(hsv.h)}° · ${compact(hsv.s*100)}% · ${compact(hsv.v*100)}%</dd></div><div><dt>CIELAB</dt><dd>${compact(lab.l)}, ${compact(lab.a)}, ${compact(lab.b)}</dd></div><div><dt>OKLab</dt><dd>${compact(oklab.l,3)}, ${compact(oklab.a,3)}, ${compact(oklab.b,3)}</dd></div></dl><small class="${isSrgbGamut(rgb)?"pass":"fail"}">${isSrgbGamut(rgb)?"In sRGB gamut":"Outside sRGB gamut"}</small></section>`; }
 
 function render() {
   renderer?.destroy(); renderer = null;
@@ -56,6 +58,7 @@ function render() {
   document.documentElement.dataset.theme = preferences.theme;
   const active = selected();
   const contrast = contrastResult(active.hex, "#0B1220");
+  const colourSpaces = colourSpaceMarkup(active.hex);
   const nav = [
     ["canvas", "⌂", true], ["palette", "◉", true], ["light", "☼", true], ["copilot", "◌", true], ["library", "▱", false], ["export", "↗", true], ["community", "♧", false]
   ].map(([key, icon, enabled]) => `<button class="module ${preferences.module === key ? "is-active" : ""}" data-module="${key}" ${enabled ? "" : disabled(`${t(key)} ${t("availableLater")}`)}><span>${icon}</span>${t(key)}</button>`).join("");
@@ -92,6 +95,7 @@ function render() {
     ${preferences.module === "export" ? `<section class="export-drawer panel" aria-label="${t("export")}"><div class="section-title"><h2>↗ ${t("export")}</h2><button id="close-exports" class="subtle">×</button></div><p>Verified local formats only. Advanced interchange formats remain unavailable until independently validated.</p><div class="export-grid"><button data-export="project">Project JSON</button><button data-export="palette">Palette JSON</button><button data-export="css">CSS variables</button><button data-export="patch">Patch CSV</button><button data-export="cues">Cue CSV</button><button id="import-project">Import project JSON</button><input id="project-file" type="file" accept="application/json,.json" hidden /></div></section>` : ""}
     <footer><span>${t("footer")}</span><span id="status" role="status" aria-live="polite">${status}</span><div><button id="save">${t("save")}</button><button id="undo" ${undoStack.length ? "" : "disabled"}>↶ ${t("undo")}</button><button id="redo" ${redoStack.length ? "" : "disabled"}>↷ ${t("redo")}</button></div></footer>`;
   bind();
+  document.querySelector(".contrast-card").insertAdjacentHTML("beforebegin", colourSpaces);
   if (preferences.view === "light") renderer = createLightLabRenderer(document.querySelector("#light-canvas"), { accent:scene().materialColor });
 }
 
