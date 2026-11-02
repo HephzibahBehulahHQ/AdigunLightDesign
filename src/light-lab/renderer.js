@@ -25,7 +25,28 @@ function lightGeometry(data, light) {
   box(data,light.x-.18,light.y-.11,light.z-.18,.36,.18,.36,fixtureColour);
   if (light.colour.some((value)=>value>0)) data.push(...beamVolume(light));
 }
-function sceneData(accent, fixtures) { const data=[],floor=hexVector("#172238"),wall=hexVector("#27324A"),couch=hexVector("#9C4F48"),cyan=hexVector("#22D3EE"); quad(data,[-5,0,-4],[5,0,-4],[5,0,4],[-5,0,4],floor);quad(data,[-5,0,4],[5,0,4],[5,4,4],[-5,4,4],wall);quad(data,[-5,0,-4],[-5,0,4],[-5,4,4],[-5,4,-4],hexVector("#132746"));box(data,-1.7,.25,1.4,3.4,.8,.75,couch);box(data,-1.45,1.05,1.55,2.9,.55,.35,couch.map((value)=>Math.min(1,value*1.2)));box(data,-3.9,0,2.4,.35,2.3,.35,cyan);box(data,3.3,0,2.2,.35,2.1,.35,accent);box(data,-.15,.05,-.1,.3,.7,.3,hexVector("#D4AF37"));virtualFixtureVisuals(fixtures,accent).forEach((light)=>lightGeometry(data,light));return new Float32Array(data); }
+export function sceneData(accent, fixtures) {
+  const data=[],floor=hexVector("#172238"),wall=hexVector("#27324A"),couch=hexVector("#9C4F48"),wood=hexVector("#67442F"),metal=hexVector("#151D2D");
+  quad(data,[-5,0,-4],[5,0,-4],[5,0,4],[-5,0,4],floor);
+  quad(data,[-5,0,4],[5,0,4],[5,4,4],[-5,4,4],wall);
+  quad(data,[-5,0,-4],[-5,0,4],[-5,4,4],[-5,4,-4],hexVector("#132746"));
+  box(data,-2.1,.01,-.8,4.2,.02,3.5,hexVector("#665477"));
+  box(data,-1.7,.25,1.4,3.4,.8,.75,couch);
+  box(data,-1.45,1.05,1.55,2.9,.55,.35,couch.map((value)=>Math.min(1,value*1.2)));
+  box(data,-1.9,.25,1.3,.3,1,.95,couch);
+  box(data,1.6,.25,1.3,.3,1,.95,couch);
+  box(data,-1,.65,-.25,2,.09,1,wood);
+  for (const x of [-.85,.75]) for (const z of [-.1,.55]) box(data,x,.04,z,.07,.61,.07,metal);
+  for (const x of [3.6,4.7]) box(data,x,0,2.5,.08,2.8,.45,wood);
+  for (const y of [.1,.8,1.5,2.2,2.75]) box(data,3.6,y,2.5,1.18,.07,.45,wood);
+  for (let index=0;index<4;index+=1) box(data,3.85+index*.16,.87,2.6,.1,.4,.22,index%2 ? accent : hexVector("#D4AF37"));
+  box(data,-.8,2,3.88,1.6,.95,.08,wood);
+  box(data,-.7,2.1,3.78,1.4,.75,.08,accent);
+  for (const y of [3.7,3.95]) box(data,-4,y,.4,8,.06,.06,metal);
+  for (let x=-4;x<=4;x+=.5) box(data,x,3.7,.4,.04,.3,.06,metal);
+  virtualFixtureVisuals(fixtures,accent).forEach((light)=>lightGeometry(data,light));
+  return new Float32Array(data);
+}
 
 export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = [] } = {}) {
   const gl = canvas.getContext("webgl", { antialias:true, alpha:false });

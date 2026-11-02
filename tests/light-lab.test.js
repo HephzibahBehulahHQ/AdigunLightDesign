@@ -1,5 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { sceneData } from "../src/light-lab/renderer.js";
+test("studio furniture produces finite interleaved triangle geometry",()=>{
+  const data=sceneData([.5,.1,.7],[]);
+  assert.ok(data instanceof Float32Array);
+  assert.ok(data.length>1000);
+  assert.equal(data.length%18,0);
+  assert.ok(data.every(Number.isFinite));
+});
 import { beamVolume } from "../src/light-lab/renderer.js";
 test("builds a closed three-dimensional beam with a floor footprint",()=>{
   const data=beamVolume({x:1,y:3,z:0,spread:1,colour:[1,.5,0]});
