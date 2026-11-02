@@ -37,7 +37,7 @@ not silently substituted with local simulation.
   passed. Project check and production build passed. Do not add these counts
   together or report the full suite as rerun after that change.
 - CI executes dependency installation, tests, project check and production build.
-  It does not execute browser acceptance, strict TypeScript, lint or deployment.
+  It now executes an incremental strict TypeScript gate for migrated `.ts` source, beginning with the playback clock. It does not establish full application typing and does not execute browser acceptance, lint or deployment.
 - Draft PR #1 contains the application on `codex/adigunlightdesign-m0-foundation`.
   The inspected main branch remains `943e9df1d1cae22a1d267ef1c01f752409c6680c`;
   branch publication is not a production editor deployment.
