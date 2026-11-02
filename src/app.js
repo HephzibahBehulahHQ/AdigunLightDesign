@@ -77,6 +77,7 @@ function playEffect() {
   const input=document.querySelector("#effect-period");
   if (!input.value.trim() || !input.checkValidity()) return input.reportValidity();
   const settings={type:document.querySelector("#effect-type").value,period:Number(input.value)};
+  if (settings.type==="panTilt") { settings.minimum=64;settings.maximum=192; }
   const source=structuredClone(project.fixtures);
   if (!source.length) return;
   evaluateEffect(source,settings,0);
@@ -309,6 +310,7 @@ function render() {
   document.querySelector(".selected-preview").style.background=swatchCssColor(active);
   document.querySelector(".palette-panel").insertAdjacentHTML("beforeend", `<div class="palette-actions"><label>${t("hueSpacing")}<input id="custom-spacing" type="number" min="-360" max="360" step="any" value="30" /></label><button id="custom-hues">${t("customHues")}</button><button id="perceptual-scale">${t("perceptualScale")}</button></div>`);
   const arrangementEnd=arrangementDuration(project.cues);
+  document.querySelector("#effect-type").insertAdjacentHTML("beforeend", `<option value="panTilt">${t("panTilt")}</option>`);
   document.querySelector("#play-tracks").insertAdjacentHTML("afterend", `<label>${t("seekTracks")} <input id="arrangement-seek" type="range" min="0" max="${arrangementEnd}" step="0.1" value="0" ${arrangementEnd ? "" : "disabled"}></label><output id="arrangement-position">0 / ${arrangementEnd.toFixed(1)} s</output>`);
   const timingDetails=document.createElement("details");
   timingDetails.className="fixture-group-editor";

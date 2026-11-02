@@ -131,4 +131,8 @@ Object.assign(messages.en,{editGroup:"Edit group",newGroup:"New group"});
 Object.assign(messages.de,{editGroup:"Gruppe bearbeiten",newGroup:"Neue Gruppe"});
 Object.assign(messages.yo,{editGroup:"Ṣàtúnṣe ẹgbẹ́",newGroup:"Ẹgbẹ́ tuntun"});
 Object.assign(messages.pcm,{editGroup:"Edit group",newGroup:"New group"});
+Object.assign(messages.en,{panTilt:"Virtual pan/tilt circle"});
+Object.assign(messages.de,{panTilt:"Virtueller Pan/Tilt-Kreis"});
+Object.assign(messages.yo,{panTilt:"Ìyí àti ìtẹ̀ àfojúsùn ní àyíká"});
+Object.assign(messages.pcm,{panTilt:"Virtual pan/tilt circle"});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }

@@ -17,3 +17,19 @@ test("effects reject invalid timing and channel limits",()=>{
   for (const options of [{type:"unknown"},{period:0},{minimum:-1},{maximum:256},{minimum:200,maximum:100}]) assert.throws(()=>evaluateEffect(fixtures,options,0));
   assert.throws(()=>evaluateEffect(fixtures,{},NaN));
 });
+test("pan/tilt circle is periodic, channel-limited and leaves fixed fixtures unchanged",()=>{
+  const moving=[{id:"moving",properties:{pan:127,tilt:127,dimmer:72,red:200}},fixtures[0]];
+  const settings={type:"panTilt",period:4,minimum:64,maximum:192};
+  const start=evaluateEffect(moving,settings,0);
+  assert.equal(start[0].properties.pan,128);
+  assert.equal(start[0].properties.tilt,192);
+  assert.equal(evaluateEffect(moving,settings,1)[0].properties.pan,192);
+  assert.deepEqual(evaluateEffect(moving,settings,4),start);
+  assert.deepEqual(start[1],fixtures[0]);
+  assert.equal(start[0].properties.dimmer,72);
+  assert.equal(moving[0].properties.pan,127);
+  for (let time=0;time<4;time+=.1) for (const key of ["pan","tilt"]) {
+    const channel=evaluateEffect(moving,settings,time)[0].properties[key];
+    assert.ok(channel>=64 && channel<=192);
+  }
+});
