@@ -23,6 +23,7 @@ import { arrangeTracks,arrangementDuration,evaluateTracks,scheduleCue } from "./
 import { setChannelKeyframe } from "./timeline/keyframes.js";
 import { roomDimensions } from "./domain/room.js";
 import { duplicateFixture,deleteFixture } from "./domain/fixture-operations.js";
+import { readBrowserStorage,writeBrowserStorage } from "./domain/browser-storage.js";
 import { groupFixtures,saveFixtureGroup } from "./domain/fixture-groups.js";
 import { cueCsv, designTokenJson, paletteCss, paletteJson, paletteSvg, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
 import { readProjectFile } from "./domain/import-project.js";
@@ -33,14 +34,15 @@ const storageKey = "adigunlightdesign/project-v1";
 const preferencesKey = "adigunlightdesign/preferences-v1";
 const app = document.querySelector("#app");
 const defaults = { locale:"en", theme:"dark", module:"canvas", view:"light", tool:"select", selected:"deep-blue", luxOpen:true, harmony:"analogous", seed:"#2196F3" };
-const preferences = { ...defaults, ...safeParse(localStorage.getItem(preferencesKey)) };
+const preferences = { ...defaults, ...safeParse(readBrowserStorage(preferencesKey).value) };
+let projectPersisted=false;
 let project = loadProject();
 let undoStack = [], redoStack = [], status = "", renderer = null, playbackTimer = null, playbackClock = null;
 
 function safeParse(value) { try { return JSON.parse(value) ?? {}; } catch { return {}; } }
 function loadProject() {
-  const loaded = safeParse(localStorage.getItem(storageKey));
-  if (validateProject(loaded).valid) return prepareEditorProject(loaded);
+  const loaded = safeParse(readBrowserStorage(storageKey).value);
+  if (validateProject(loaded).valid) {projectPersisted=true;return prepareEditorProject(loaded);}
   return createStudioMoodProject();
 }
 function t(key) { return translate(preferences.locale, key); }
@@ -152,8 +154,14 @@ function playArrangement({seek=0,paused=false}={}) {
 function downloadText(content, filename, type) { const file=new Blob([content],{type}); const link=document.createElement("a"); link.href=URL.createObjectURL(file); link.download=filename; link.click(); URL.revokeObjectURL(link.href); }
 function exportFile(kind) { const stem=safeFileStem(project.name); const exports={ project:[projectJson(project),`${stem}.ald.json`,"application/json"], palette:[paletteJson(palette()),`${stem}-palette.json`,"application/json"], css:[paletteCss(palette()),`${stem}-palette.css`,"text/css"], patch:[patchCsv(project.fixtures),`${stem}-patch.csv`,"text/csv"], cues:[cueCsv(project.cues),`${stem}-cues.csv`,"text/csv"] }; const [content,name,type]=exports[kind]; downloadText(content,name,type); status=`${name} downloaded.`; document.querySelector("#status").textContent=status; }
 async function importNativeProject(file) { const result=await readProjectFile(file); if(!result.valid) return setStatus(result.errors.join(" ")); stopPlayback(); project=prepareEditorProject(result.project); undoStack=[];redoStack=[];saveProject();status=`${project.name} imported locally.`;render(); }
-function savePreferences() { localStorage.setItem(preferencesKey, JSON.stringify(preferences)); }
-function saveProject() { project.updatedAt = new Date().toISOString(); localStorage.setItem(storageKey, JSON.stringify(project)); status = t("statusSaved"); }
+function savePreferences() { if (!writeBrowserStorage(preferencesKey,JSON.stringify(preferences)).ok) status=t("preferencesNotSaved"); }
+function saveProject() {
+  project.updatedAt = new Date().toISOString();
+  projectPersisted=writeBrowserStorage(storageKey,JSON.stringify(project)).ok;
+  status=t(projectPersisted ? "statusSaved" : "storageUnavailable");
+  const indicator=document.querySelector(".save-state");
+  if (indicator) {indicator.classList.toggle("is-unsaved",!projectPersisted);indicator.textContent=`● ${t(projectPersisted ? "saved" : "sessionOnly")}`;indicator.title=status;}
+}
 function commitProjectChange(label, mutate) { stopPlayback(); const next=commitTransaction({project,undoStack,redoStack},label,mutate); const validation=validateProject(next.project); if (!validation.valid) throw new Error(validation.errors.join(" ")); project=next.project;undoStack=next.undoStack;redoStack=next.redoStack;saveProject(); }
 function mutateColours(fn) { commitProjectChange("palette-update",(draft)=>{draft.palettes[0].colors=fn(structuredClone(draft.palettes[0].colors));}); render(); }
 function undo() { if (!undoStack.length) return setStatus(t("noUndo")); stopPlayback(); const next=undoTransaction({project,undoStack,redoStack});project=next.project;undoStack=next.undoStack;redoStack=next.redoStack;saveProject();status=t("statusUndo");render(); }
@@ -223,7 +231,7 @@ function render() {
     <nav class="module-nav" aria-label="${t("appModules")}">${nav}</nav>
     <main id="workspace" class="editor-layout">
       <aside class="left-rail panel">
-        <section class="project-heading"><div><small>${t("project")}</small><input id="project-name" value="${esc(project.name)}" aria-label="${t("project")} name" /></div><span class="save-state">● ${t("saved")}</span></section>
+        <section class="project-heading"><div><small>${t("project")}</small><input id="project-name" value="${esc(project.name)}" aria-label="${t("project")} name" /></div><span class="save-state ${projectPersisted ? "" : "is-unsaved"}" title="${projectPersisted ? t("statusSaved") : t("storageUnavailable")}">● ${t(projectPersisted ? "saved" : "sessionOnly")}</span></section>
         <section><h2>▰ ${t("layers")}</h2><ul class="layer-list"><li>⌄ ▣ ${t("layersLighting")} <span>◉</span></li><li>⌄ ▣ ${t("layersPalette")} <span>◉</span></li><li>⌄ ▣ ${t("layersScene")} <span>◉</span></li></ul></section>
         <section class="tool-section"><h2>☼ ${t("tools")}</h2><div class="tool-list">${tools}</div></section>
       </aside>

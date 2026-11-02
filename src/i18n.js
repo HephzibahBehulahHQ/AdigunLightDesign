@@ -163,4 +163,8 @@ Object.assign(messages.en,{duplicateFixture:"Duplicate fixture",deleteFixture:"D
 Object.assign(messages.de,{duplicateFixture:"Gerät duplizieren",deleteFixture:"Gerät löschen"});
 Object.assign(messages.yo,{duplicateFixture:"Ṣẹ̀dà fìtílà",deleteFixture:"Pa fìtílà rẹ́"});
 Object.assign(messages.pcm,{duplicateFixture:"Copy fixture",deleteFixture:"Delete fixture"});
+Object.assign(messages.en,{sessionOnly:"In memory",storageUnavailable:"Project is in memory only. Local saving is unavailable or has not completed. Export Project JSON before closing this page.",preferencesNotSaved:"Preferences could not be saved in this browser."});
+Object.assign(messages.de,{sessionOnly:"Im Speicher",storageUnavailable:"Das Projekt ist nur im Arbeitsspeicher. Lokales Speichern ist nicht verfügbar oder noch nicht abgeschlossen. Vor dem Schließen Projekt-JSON exportieren.",preferencesNotSaved:"Die Einstellungen konnten in diesem Browser nicht gespeichert werden."});
+Object.assign(messages.yo,{sessionOnly:"Nínú ìrántí",storageUnavailable:"Iṣẹ́ wà nínú ìrántí nìkan. Fífipamọ́ sí aṣàwákiri kò sí tàbí kò tíì parí. Gbé Project JSON jáde kí o tó ti ojú ìwé yìí.",preferencesNotSaved:"A kò lè fi àwọn ààyò pamọ́ sínú aṣàwákiri yìí."});
+Object.assign(messages.pcm,{sessionOnly:"For memory",storageUnavailable:"Project dey memory only. Local save no dey available or e never finish. Export Project JSON before you close this page.",preferencesNotSaved:"Preferences no fit save for this browser."});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }
