@@ -9,8 +9,12 @@ unpatched fixtures as optional patch-review offers, never hardware faults, and
 asks a session goal when missing. The scheduler supports a 600 ms debounce,
 25-second minimum suggestion interval, two-minute suppression, typing/drag
 suppression and an off switch. Three automated tests cover those foundations.
-The scheduler is not yet mounted in the UI or driven by editor activity events;
-live suggestions, selected-object explanations and acceptance are not complete.
+The scheduler is now mounted in the Lux panel with four-language controls,
+session goal entry, dismissal and explanation. Pointer/input activity, focused
+editing fields and hidden pages suppress offers. Accept is disabled until real
+authentication exists; no live suggestion changes or saves the document.
+See `HELP.md`. Selected-object explanations, broader analysis, authenticated
+acceptance and browser verification remain incomplete.
 
 This extends the original master specification and exact desktop visual target;
 it does not replace either. Authority: the user's attached continuation request,
