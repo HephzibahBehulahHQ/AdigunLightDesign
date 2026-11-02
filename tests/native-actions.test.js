@@ -19,7 +19,7 @@ test("invalid patch and cue actions are atomic and unsupported tools do not pret
   assert.throws(()=>commitNativeToolAction(initial,call("patch_fixture",{fixtureId:fixture.id,universe:1,startAddress:1}),{confirmed:true}));
   assert.equal(initial.project.history.length,0);
   assert.throws(()=>commitNativeToolAction(initial,call("create_cue",{name:"Bad",duration:1,fade:2}),{confirmed:true}));
-  assert.throws(()=>commitNativeToolAction(initial,call("create_palette",{name:"New"}),{confirmed:true}),/no native executor/);
+  assert.throws(()=>commitNativeToolAction(initial,call("extract_image_palette",{assetId:"missing"}),{confirmed:true}),/no native executor/);
   for (const name of ["constructor","__proto__","toString"]) assert.equal(validateToolCall(call(name,{})).valid,false);
 });
 test("native scene and canvas actions validate and preserve the source document",()=>{
@@ -45,4 +45,25 @@ test("cue and scene handlers preserve snapshots and create valid named scenes",(
   const scene=commitNativeToolAction(edited,call("create_scene",{name:"Second room"}),{confirmed:true});
   assert.equal(scene.project.scenes.at(-1).name,"Second room");
   assert.equal(scene.project.scenes.length,initial.project.scenes.length+1);
+});
+test("native palette creation updates locks and harmony preserve locked colors",()=>{
+  let current=state();
+  current=commitNativeToolAction(current,call("create_palette",{name:"Custom",colors:["#f00","#00f"]}),{confirmed:true});
+  const palette=current.project.palettes.at(-1),id=palette.colors[0].id;
+  current=commitNativeToolAction(current,call("update_swatch",{paletteId:palette.id,swatchId:id,changes:{hex:"#0f0",opacity:.5}}),{confirmed:true});
+  current=commitNativeToolAction(current,call("lock_swatch",{paletteId:palette.id,swatchId:id}),{confirmed:true});
+  assert.throws(()=>commitNativeToolAction(current,call("update_swatch",{paletteId:palette.id,swatchId:id,changes:{hex:"#fff"}}),{confirmed:true}),/Unlock/);
+  current=commitNativeToolAction(current,call("generate_harmony",{paletteId:palette.id,seed:"#ff0000",type:"complementary"}),{confirmed:true});
+  assert.equal(current.project.palettes.at(-1).colors[0].hex,"#00FF00");
+  assert.equal(current.project.palettes.at(-1).colors[0].opacity,.5);
+  assert.throws(()=>commitNativeToolAction(current,call("generate_harmony",{seed:"invalid",type:"unknown"}),{confirmed:true}));
+});
+test("native palette application changes chosen surfaces and only selected fixtures",()=>{
+  const initial=state(),palette=initial.project.palettes[0],id=initial.project.fixtures[1].id;
+  const material=commitNativeToolAction(initial,call("apply_palette_to_material",{paletteId:palette.id,materialId:"wall"}),{confirmed:true});
+  assert.equal(material.project.scenes[0].materials.wall,palette.colors[0].hex);
+  const lights=commitNativeToolAction(initial,call("apply_palette_to_lights",{paletteId:palette.id,fixtureIds:[id]}),{confirmed:true});
+  assert.deepEqual(lights.project.fixtures[0],initial.project.fixtures[0]);
+  assert.notDeepEqual(lights.project.fixtures[1].properties,initial.project.fixtures[1].properties);
+  assert.equal(initial.project.scenes[0].materials,undefined);
 });
