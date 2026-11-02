@@ -1,5 +1,17 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { createCue } from "../src/timeline/engine.js";
+
+test("validates imported cue timing and captured channel values", () => {
+  const project=createProject();
+  const cue=createCue([{id:"f",properties:{dimmer:72}}]);
+  project.cues=[cue];
+  assert.equal(validateProject(project).valid,true);
+  for (const bad of [null,{...cue,targets:null},{...cue,duration:0},{...cue,targets:[{fixtureId:"f",properties:{dimmer:999}}]}]) {
+    project.cues=[bad];
+    assert.equal(validateProject(project).valid,false);
+  }
+});
 import { createProject, validateProject, CURRENT_SCHEMA_VERSION } from "../src/domain/project.js";
 
 test("creates a versioned project document", () => {
