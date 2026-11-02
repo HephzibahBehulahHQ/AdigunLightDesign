@@ -35,6 +35,8 @@ Direct editor mutations use document transactions. Each committed operation snap
 
 ## Visual acceptance
 
+The viewport projection control toggles perspective and orthographic modes and persists the choice locally. Both retain orbit and zoom; changing mode rebuilds the viewport at its default camera pose. Orthographic zoom changes the view volume, preserving depth-independent object size. Matrix behavior has automated coverage; actual browser appearance remains unverified.
+
 The studio geometry includes two potted plants, a side chair and a floor-lamp model alongside the sofa, table and shelf. These are procedural, vertex-colored approximations that receive the existing artistic fixture spill and follow props-layer visibility. The decorative lamp does not add a calibrated light source. Geometry tests do not establish photorealism or screenshot fidelity.
 
 Layer visibility buttons save optional boolean `scene.visibility` settings for lighting, props and the palette panel through undoable transactions. Hiding lighting removes its preview geometry and artistic surface contribution, while virtual DMX and cue data stay unchanged. Hiding props retains the room and rig. Legacy scenes default to visible layers. These controls affect previews and panel visibility, not physical output. Domain geometry and import validation have coverage; browser interaction remains unverified.

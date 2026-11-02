@@ -16,6 +16,13 @@ export function cameraMatrix({ yaw = 0, pitch = 0, distance = 11 }) {
   return new Float32Array([cy,sy * sx,-sy * cx,0,0,cx,sx,0,sy,-cy * sx,cy * cx,0,0,-.35,-distance,1]);
 }
 
+export function viewportProjection(mode,aspect,distance) {
+  if (!["perspective","orthographic"].includes(mode) || !Number.isFinite(aspect) || aspect<=0 || !Number.isFinite(distance) || distance<=0) throw new Error("Invalid viewport projection.");
+  if (mode==="perspective") return perspective(radians(48),aspect,.1,100);
+  const halfHeight=distance*Math.tan(radians(24)),halfWidth=halfHeight*aspect;
+  return new Float32Array([1/halfWidth,0,0,0,0,1/halfHeight,0,0,0,0,-2/99.9,0,0,0,-100.1/99.9,1]);
+}
+
 export function hexVector(hex) {
   const cleaned = String(hex).replace("#", "");
   return [0, 2, 4].map((index) => Number.parseInt(cleaned.slice(index, index + 2), 16) / 255);

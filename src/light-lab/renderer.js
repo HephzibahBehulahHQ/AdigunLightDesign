@@ -1,4 +1,4 @@
-import { cameraMatrix, hexVector, multiply, perspective, radians } from "./math.js";
+import { cameraMatrix, hexVector, multiply, viewportProjection } from "./math.js";
 
 const vertexSource = `attribute vec3 p;attribute vec3 c;uniform mat4 m;varying vec3 v;void main(){gl_Position=m*vec4(p,1.0);v=c;}`;
 const fragmentSource = `precision mediump float;varying vec3 v;void main(){gl_FragColor=vec4(v,1.0);}`;
@@ -124,7 +124,7 @@ export function sceneData(accent, fixtures, visibility={}) {
   return new Float32Array(data);
 }
 
-export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = [], visibility = {} } = {}) {
+export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = [], visibility = {}, projection = "perspective" } = {}) {
   const gl = canvas.getContext("webgl", { antialias:true, alpha:false });
   if (!gl) return { supported:false, destroy(){}, reset(){}, setAccent(){}, setFixtures(){} };
   const program=gl.createProgram(),vertexShader=compile(gl,gl.VERTEX_SHADER,vertexSource),fragmentShader=compile(gl,gl.FRAGMENT_SHADER,fragmentSource);
@@ -144,7 +144,7 @@ export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = 
     if(canvas.width!==width*ratio||canvas.height!==height*ratio){canvas.width=width*ratio;canvas.height=height*ratio;}
     gl.viewport(0,0,canvas.width,canvas.height);gl.enable(gl.DEPTH_TEST);gl.clearColor(.025,.045,.09,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);
     gl.vertexAttribPointer(position,3,gl.FLOAT,false,24,0);gl.enableVertexAttribArray(position);gl.vertexAttribPointer(colour,3,gl.FLOAT,false,24,12);gl.enableVertexAttribArray(colour);
-    gl.uniformMatrix4fv(matrix,false,multiply(perspective(radians(48),width/height,.1,100),cameraMatrix({yaw,pitch,distance})));
+    gl.uniformMatrix4fv(matrix,false,multiply(viewportProjection(projection,width/height,distance),cameraMatrix({yaw,pitch,distance})));
     gl.drawArrays(gl.TRIANGLES,0,geometry.length/6);
   }
   const resize=new ResizeObserver(draw),down=(event)=>{drag={x:event.clientX,y:event.clientY};canvas.setPointerCapture(event.pointerId);},move=(event)=>{if(!drag)return;yaw+=(event.clientX-drag.x)*.009;pitch=Math.max(-.72,Math.min(.72,pitch+(event.clientY-drag.y)*.009));drag={x:event.clientX,y:event.clientY};draw();},up=()=>{drag=undefined;};resize.observe(canvas);canvas.addEventListener("pointerdown",down);canvas.addEventListener("pointermove",move);canvas.addEventListener("pointerup",up);draw();

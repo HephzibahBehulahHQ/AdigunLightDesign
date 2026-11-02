@@ -311,6 +311,9 @@ function render() {
   document.querySelector(".selected-preview").style.background=swatchCssColor(active);
   document.querySelector(".palette-panel").insertAdjacentHTML("beforeend", `<div class="palette-actions"><label>${t("hueSpacing")}<input id="custom-spacing" type="number" min="-360" max="360" step="any" value="30" /></label><button id="custom-hues">${t("customHues")}</button><button id="perceptual-scale">${t("perceptualScale")}</button></div>`);
   const arrangementEnd=arrangementDuration(project.cues);
+  const projectionButton=document.querySelector(".view-menu");
+  projectionButton.textContent=`${t(preferences.projection==="orthographic" ? "orthographic" : "perspective")} ⌄`;
+  projectionButton.setAttribute("aria-label",t("switchProjection"));
   document.querySelector("#effect-type").insertAdjacentHTML("beforeend", `<option value="panTilt">${t("panTilt")}</option>`);
   document.querySelector("#play-tracks").insertAdjacentHTML("afterend", `<label>${t("seekTracks")} <input id="arrangement-seek" type="range" min="0" max="${arrangementEnd}" step="0.1" value="0" ${arrangementEnd ? "" : "disabled"}></label><output id="arrangement-position">0 / ${arrangementEnd.toFixed(1)} s</output>`);
   const timingDetails=document.createElement("details");
@@ -342,7 +345,7 @@ function render() {
   inspector.querySelector(".inspector-tabs").innerHTML=`<button data-inspector="fixture" aria-pressed="${mode==="fixture"}" class="${mode==="fixture" ? "is-active" : ""}" ${fixturePanel ? "" : "disabled"}>${t("fixtureLabel")}</button><button data-inspector="palette" aria-pressed="${mode==="palette"}" class="${mode==="palette" ? "is-active" : ""}">${t("palette")}</button>`;
   bind();
   if (preferences.view === "light") {
-    renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {accent:scene().materialColor,visibility:scene().visibility,fixtures:project.fixtures.map((fixture)=>({...fixture,selected:fixture.id===selectedFixture()?.id}))});
+    renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {accent:scene().materialColor,projection:preferences.projection==="orthographic" ? "orthographic" : "perspective",visibility:scene().visibility,fixtures:project.fixtures.map((fixture)=>({...fixture,selected:fixture.id===selectedFixture()?.id}))});
     if (!renderer.supported) {
       const note=document.createElement("p");
       note.className="webgl-unavailable";
@@ -355,6 +358,7 @@ function render() {
 }
 
 function bind() {
+  document.querySelector(".view-menu").onclick=()=>{preferences.projection=preferences.projection==="orthographic" ? "perspective" : "orthographic";savePreferences();render();};
   document.querySelectorAll("[data-layer-visibility]").forEach((button)=>button.onclick=()=>{
     const key=button.dataset.layerVisibility;
     commitProjectChange("scene-layer-visibility",(draft)=>{const target=draft.scenes[0];target.visibility={...target.visibility,[key]:target.visibility?.[key]===false};});render();

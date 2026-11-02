@@ -147,4 +147,8 @@ Object.assign(messages.en,{layerVisibility:"Layer visibility"});
 Object.assign(messages.de,{layerVisibility:"Ebenensichtbarkeit"});
 Object.assign(messages.yo,{layerVisibility:"Ìfihàn ipele"});
 Object.assign(messages.pcm,{layerVisibility:"Show or hide layer"});
+Object.assign(messages.en,{orthographic:"Orthographic",switchProjection:"Switch perspective / orthographic projection"});
+Object.assign(messages.de,{orthographic:"Orthografisch",switchProjection:"Perspektivische / orthografische Projektion wechseln"});
+Object.assign(messages.yo,{orthographic:"Àfihàn aláfarawé",switchProjection:"Yí irú àfihàn kámẹ́rà padà"});
+Object.assign(messages.pcm,{orthographic:"Orthographic",switchProjection:"Switch perspective / orthographic view"});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }
