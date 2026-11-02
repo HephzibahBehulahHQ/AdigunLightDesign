@@ -14,7 +14,7 @@ import { commitTransaction, redoTransaction, undoTransaction } from "./domain/hi
 const storageKey = "adigunlightdesign/project-v1";
 const preferencesKey = "adigunlightdesign/preferences-v1";
 const app = document.querySelector("#app");
-const defaults = { locale:"en", theme:"dark", module:"canvas", view:"palette", tool:"select", selected:"deep-blue", luxOpen:true, harmony:"analogous", seed:"#2196F3" };
+const defaults = { locale:"en", theme:"dark", module:"canvas", view:"light", tool:"select", selected:"deep-blue", luxOpen:true, harmony:"analogous", seed:"#2196F3" };
 const preferences = { ...defaults, ...safeParse(localStorage.getItem(preferencesKey)) };
 let project = loadProject();
 let undoStack = [], redoStack = [], status = "", renderer = null, playbackTimer = null;
@@ -168,7 +168,17 @@ function render() {
     document.querySelector("#edit-cue").insertAdjacentHTML("afterend", `<button data-move-cue="-1" ${index === 0 ? "disabled" : ""}>← ${t("earlier")}</button><button data-move-cue="1" ${index === project.cues.length - 1 ? "disabled" : ""}>${t("later")} →</button>`);
   }
   bind();
-  if (preferences.view === "light") renderer = createLightLabRenderer(document.querySelector("#light-canvas"), { accent:scene().materialColor, fixtures:project.fixtures });
+  if (preferences.view === "light") {
+    renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {accent:scene().materialColor,fixtures:project.fixtures});
+    if (!renderer.supported) {
+      const note=document.createElement("p");
+      note.className="webgl-unavailable";
+      note.setAttribute("role","status");
+      note.textContent=t("webglUnavailable");
+      document.querySelector("#light-canvas").replaceWith(note);
+      document.querySelector("#reset-camera").disabled=true;
+    }
+  }
 }
 
 function bind() {

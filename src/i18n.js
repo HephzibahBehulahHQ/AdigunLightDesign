@@ -38,4 +38,8 @@ Object.assign(messages.en,{previewLabel:"Interactive 3D studio preview. Drag or 
 Object.assign(messages.de,{previewLabel:"Interaktive 3D-Studio-Vorschau. Zum Drehen ziehen oder Pfeiltasten nutzen; Pos1 setzt die Kamera zurück."});
 Object.assign(messages.yo,{previewLabel:"Àfihàn yàrá 3D. Fà á tàbí lo bọ́tìnì ọfà láti yí kámẹ́rà; Home tún un bẹ̀rẹ̀."});
 Object.assign(messages.pcm,{previewLabel:"Interactive 3D studio preview. Drag or use arrow keys to turn camera; Home go reset am."});
+Object.assign(messages.en,{webglUnavailable:"3D preview is unavailable because this browser could not start WebGL. Palette editing, virtual DMX, cues and exports remain available."});
+Object.assign(messages.de,{webglUnavailable:"Die 3D-Vorschau ist nicht verfügbar, da WebGL nicht gestartet werden konnte. Paletten, virtuelles DMX, Cues und Exporte bleiben verfügbar."});
+Object.assign(messages.yo,{webglUnavailable:"Àfihàn 3D kò sí nítorí aṣàwákiri kò lè bẹ̀rẹ̀ WebGL. Paleti, DMX àfojúsùn, cue àti ìgbéjáde ṣì wà."});
+Object.assign(messages.pcm,{webglUnavailable:"3D preview no dey available because this browser no fit start WebGL. Palette editing, virtual DMX, cues and exports still dey work."});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }
