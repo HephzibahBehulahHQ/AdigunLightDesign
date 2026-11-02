@@ -243,4 +243,12 @@ Object.assign(messages.en,{canvasUnits:"canvas units",measureHelp:"Drag to measu
 Object.assign(messages.de,{canvasUnits:"Zeichenflächeneinheiten",measureHelp:"Zum Messen ziehen. Pfeile verschieben den Endpunkt; Umschalt bewegt 10 Einheiten. Eingabe setzt den Start; Escape setzt zurück. Messungen sind temporär."});
 Object.assign(messages.yo,{canvasUnits:"ìwọ̀n pátákó",measureHelp:"Fà láti wọn. Àwọn ọfà ń gbé òpin; Shift ń gbé ìwọ̀n 10. Enter ṣètò ìbẹ̀rẹ̀; Escape tún un ṣe. Ìwọ̀n jẹ́ fún ìgbà díẹ̀."});
 Object.assign(messages.pcm,{canvasUnits:"canvas units",measureHelp:"Drag to measure. Arrows move endpoint; Shift move 10 units. Enter set start; Escape reset. Measurements na temporary."});
+Object.assign(messages.en,{aseExport:"ASE RGB (experimental)",aseExportLimit:"Opaque RGB only. External application compatibility is not verified."});
+Object.assign(messages.de,{aseExport:"ASE RGB (experimentell)",aseExportLimit:"Nur deckendes RGB. Kompatibilität mit externen Anwendungen ist nicht geprüft."});
+Object.assign(messages.yo,{aseExport:"ASE RGB (ìdánwò)",aseExportLimit:"RGB tí kò ríkọjá nìkan. A kò tíì ṣàyẹ̀wò ìbámu pẹ̀lú àwọn ètò òde."});
+Object.assign(messages.pcm,{aseExport:"ASE RGB (experimental)",aseExportLimit:"Opaque RGB only. Compatibility with external apps never verify."});
+Object.assign(messages.en,{exportFormatsNotice:"Local exports are available below. Experimental formats are labeled; external application compatibility requires separate verification."});
+Object.assign(messages.de,{exportFormatsNotice:"Lokale Exporte stehen unten bereit. Experimentelle Formate sind gekennzeichnet; Kompatibilität mit externen Anwendungen erfordert separate Prüfung."});
+Object.assign(messages.yo,{exportFormatsNotice:"Àwọn ìgbéjáde abẹ́lé wà ní ìsàlẹ̀. A samisi àwọn ọ̀nà ìdánwò; ìbámu pẹ̀lú àwọn ètò òde nílò àyẹ̀wò lọ́tọ̀."});
+Object.assign(messages.pcm,{exportFormatsNotice:"Local exports dey below. Experimental formats get label; compatibility with external apps need separate verification."});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }

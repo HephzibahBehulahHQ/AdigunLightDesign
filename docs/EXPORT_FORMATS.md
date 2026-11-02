@@ -12,4 +12,24 @@ Implemented local exports are native project JSON, portable palette JSON, CSS cu
 
 PNG/JPEG palette export adapters render the generated SVG through the browser's image and canvas APIs, then verify the requested encoding MIME type. Adapter success/failure and URL cleanup have mocked automated coverage. Actual browser encoding, downloads, font appearance and output pixels remain unverified.
 
-PDF/ASE/Procreate/glTF/GDTF/MVR and Figma/Adobe/console integration are not implemented and are not displayed as working exports. Re-import validation and external interchange adapters require their own schema and compatibility testing before release.
+PDF/Procreate/glTF/GDTF/MVR and Figma/Adobe/console integration are not implemented and are not displayed as working integrations. Re-import validation and external interchange adapters require their own schema and compatibility testing before release.
+
+## Experimental ASE RGB export
+
+The export drawer offers an experimental ASE v1 binary writer for 1–256 opaque
+RGB swatches. It writes a named group, UTF-16BE names, normalized big-endian RGB
+floats and process-color records. Names must contain 1–255 well-formed UTF-16
+code units without NUL. Invalid values or non-opaque swatches reject the entire
+export; opacity is never silently discarded. JSON and SVG retain opacity.
+
+The implementation was written independently using ASE reader behavior in
+[GIMP's palette loader](https://github.com/GNOME/gimp/blob/master/app/core/gimppalette-load.c)
+as a format reference. No GIMP code was copied. GIMP's
+[standards notes](https://developer.gimp.org/core/standards/#palette-file-formats)
+also document the absence of a publicly available authoritative ASE specification.
+Tests decode the generated binary records independently and check names, group
+boundaries, record lengths, RGB values, process type and failure cases.
+
+No ASE re-import, CMYK/Lab/spot-color output, ICC profile, Adobe integration or
+external application/version compatibility is established. Browser download and
+actual GIMP/Adobe import still require verification; keep the experimental label.
