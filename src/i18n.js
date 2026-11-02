@@ -58,4 +58,8 @@ Object.assign(messages.en,{extractImage:"Colors from image"});
 Object.assign(messages.de,{extractImage:"Farben aus Bild"});
 Object.assign(messages.yo,{extractImage:"Àwọ̀ láti àwòrán"});
 Object.assign(messages.pcm,{extractImage:"Get colours from image"});
+Object.assign(messages.en,{removeColor:"Remove color"});
+Object.assign(messages.de,{removeColor:"Farbe entfernen"});
+Object.assign(messages.yo,{removeColor:"Yọ àwọ̀ kúrò"});
+Object.assign(messages.pcm,{removeColor:"Remove colour"});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }

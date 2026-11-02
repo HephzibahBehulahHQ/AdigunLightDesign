@@ -1,5 +1,6 @@
 import { validateProject } from "./domain/project.js";
 import { prepareEditorProject } from "./domain/editor-project.js";
+import { moveSwatch, removeSwatch } from "./domain/palette-store.js";
 import { readImagePalette } from "./domain/image-file.js";
 import { createStudioMoodProject } from "./domain/studio-mood.js";
 import { contrastResult, hexToRgb, isSrgbGamut, normalizeHex, rgbToHex, rgbToHsl, rgbToHsv, rgbToLab, rgbToOklab } from "./domain/color-engine.js";
@@ -204,6 +205,8 @@ function render() {
   if (project.fixtures.length) document.querySelector(".layer-list").insertAdjacentHTML("afterend", `<ul class="fixture-layer-list" aria-label="${t("layersLighting")}">${project.fixtures.map((fixture)=>`<li><button data-layer-fixture="${esc(fixture.id)}" aria-pressed="${fixture.id===selectedFixture()?.id}"><span>☼</span> ${esc(fixture.name)}</button></li>`).join("")}</ul>`);
   document.querySelector(".export-grid")?.insertAdjacentHTML("beforeend", `<button id="export-svg">SVG</button><button id="export-tokens">${t("designTokens")}</button>`);
   document.querySelector(".palette-actions").insertAdjacentHTML("beforeend", `<button id="extract-image">${t("extractImage")}</button><input id="palette-image" type="file" accept="image/png,image/jpeg,image/webp" hidden />`);
+  const swatchIndex=palette().colors.indexOf(active);
+  document.querySelector("#lock-swatch").insertAdjacentHTML("afterend", `<div class="palette-actions"><button data-move-swatch="-1" ${swatchIndex===0 ? "disabled" : ""}>← ${t("earlier")}</button><button data-move-swatch="1" ${swatchIndex===palette().colors.length-1 ? "disabled" : ""}>${t("later")} →</button><button id="remove-swatch" ${palette().colors.length<2 ? "disabled" : ""}>${t("removeColor")}</button></div>`);
   bind();
   if (preferences.view === "light") {
     renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {accent:scene().materialColor,fixtures:project.fixtures.map((fixture)=>({...fixture,selected:fixture.id===selectedFixture()?.id}))});
@@ -219,6 +222,8 @@ function render() {
 }
 
 function bind() {
+  document.querySelector("#remove-swatch").onclick=()=>mutateColours((colors)=>removeSwatch(colors,selected().id));
+  document.querySelectorAll("[data-move-swatch]").forEach((button)=>button.onclick=()=>mutateColours((colors)=>moveSwatch(colors,selected().id,Number(button.dataset.moveSwatch))));
   document.querySelector("#extract-image").onclick=()=>document.querySelector("#palette-image").click();
   document.querySelector("#palette-image").onchange=async(event)=>{
     const [file]=event.target.files;
