@@ -539,6 +539,10 @@ function bind() {
   if(designCanvas && preferences.tool==="measure")bindCanvasMeasure(designCanvas,{units:t("canvasUnits"),onMeasure:measurement=>{status=`${measurement.distance.toFixed(2)} ${t("canvasUnits")} · ${t("measureHelp")}`;document.querySelector("#status").textContent=status;}});
   if (designCanvas && preferences.tool!=="measure") bindCanvasDrag(designCanvas,scene().canvasObjects ?? [],{
     onSelect:selectCanvasObject,
+    onResize(id,size){
+      try {commitProjectChange("canvas-object-resize",(draft)=>{draft.scenes[0]=updateCanvasObject(draft.scenes[0],id,size);});selectCanvasObject(id);}
+      catch(error){setStatus(error.message);}
+    },
     onMove(id,position){
       try {commitProjectChange("canvas-object-move",(draft)=>{draft.scenes[0]=updateCanvasObject(draft.scenes[0],id,position);});selectCanvasObject(id);}
       catch(error){setStatus(error.message);}

@@ -109,3 +109,5 @@ hardware output. Explanations use the current selection, not hover detection.
 
 Broader incomplete-workflow analysis and live browser verification remain
 pending. No electrical-ladder analysis or physical DMX feedback is provided.
+
+In 2D, select a rectangle or ellipse and drag its cyan lower-right handle to resize. Release to commit one undoable size change; pointer cancellation restores the original. Width and height remain editable in the inspector for keyboard operation. Text uses its font-size control.

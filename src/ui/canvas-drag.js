@@ -1,4 +1,4 @@
-export function bindCanvasDrag(svg,objects,{onSelect,onMove}) {
+export function bindCanvasDrag(svg,objects,{onSelect,onMove,onResize}) {
   let drag=null;
   const position=(event)=>{
     try {
@@ -14,14 +14,18 @@ export function bindCanvasDrag(svg,objects,{onSelect,onMove}) {
     const object=objects.find((item)=>item.id===element?.dataset.canvasObject);
     if (!element || !object || !point || !svg.contains(element)) return;
     event.preventDefault();
-    drag={element,object,point,pointerId:event.pointerId,dx:0,dy:0};
+    const resize=Boolean(event.target.closest("[data-canvas-resize]")) && ["rect","ellipse"].includes(object.type) && typeof onResize==="function";
+    drag={element,object,point,pointerId:event.pointerId,dx:0,dy:0,resize};
     svg.setPointerCapture(event.pointerId);
   };
   const move=(event)=>{
     if (!drag || drag.pointerId!==event.pointerId) return;
     const point=position(event);if(!point)return;
     drag.dx=point.x-drag.point.x;drag.dy=point.y-drag.point.y;
-    drag.element.setAttribute("transform",`translate(${drag.dx} ${drag.dy})`);
+    if(drag.resize){
+      const o=drag.object;drag.width=Math.max(1,Math.min(10000,o.width+drag.dx));drag.height=Math.max(1,Math.min(10000,o.height+drag.dy));
+      drag.element.setAttribute("transform",`translate(${o.x} ${o.y}) scale(${drag.width/o.width} ${drag.height/o.height}) translate(${-o.x} ${-o.y})`);
+    }else drag.element.setAttribute("transform",`translate(${drag.dx} ${drag.dy})`);
   };
   const end=(event)=>{
     if (!drag || drag.pointerId!==event.pointerId) return;
@@ -30,7 +34,8 @@ export function bindCanvasDrag(svg,objects,{onSelect,onMove}) {
     completed.element.removeAttribute("transform");
     if (svg.hasPointerCapture(event.pointerId)) svg.releasePointerCapture(event.pointerId);
     if (event.type!=="pointerup") return;
-    if (Math.hypot(completed.dx,completed.dy)>.5) onMove(completed.object.id,{x:completed.object.x+completed.dx,y:completed.object.y+completed.dy});
+    if(completed.resize){if(completed.width!==undefined && (completed.width!==completed.object.width || completed.height!==completed.object.height))onResize(completed.object.id,{width:completed.width,height:completed.height});}
+    else if (Math.hypot(completed.dx,completed.dy)>.5) onMove(completed.object.id,{x:completed.object.x+completed.dx,y:completed.object.y+completed.dy});
     else onSelect(completed.object.id);
   };
   svg.addEventListener("pointerdown",down);svg.addEventListener("pointermove",move);

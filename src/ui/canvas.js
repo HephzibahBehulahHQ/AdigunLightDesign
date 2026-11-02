@@ -6,5 +6,5 @@ export function canvasObjectMarkup(object,selected=false) {
 }
 export function canvasMarkup(objects,selectedId,label) {
   if (!validCanvasObjects(objects)) throw new Error("Invalid canvas data.");
-  return `<svg class="design-canvas" viewBox="0 0 800 450" role="group" aria-label="${escapeHtml(label)}">${objects.map((object)=>`<g data-canvas-object="${escapeHtml(object.id)}" tabindex="0" role="button" aria-pressed="${object.id===selectedId}" aria-label="${escapeHtml(object.type==="text" ? object.text : object.type)}">${canvasObjectMarkup(object,object.id===selectedId)}</g>`).join("")}</svg>`;
+  return `<svg class="design-canvas" viewBox="0 0 800 450" role="group" aria-label="${escapeHtml(label)}">${objects.map((object)=>`<g data-canvas-object="${escapeHtml(object.id)}" tabindex="0" role="button" aria-pressed="${object.id===selectedId}" aria-label="${escapeHtml(object.type==="text" ? object.text : object.type)}">${canvasObjectMarkup(object,object.id===selectedId)}${object.id===selectedId && object.type!=="text" ? `<rect data-canvas-resize="" aria-hidden="true" x="${object.x+object.width-6}" y="${object.y+object.height-6}" width="12" height="12" fill="#22D3EE" stroke="#0B1220" style="cursor:nwse-resize"/>` : ""}</g>`).join("")}</svg>`;
 }
