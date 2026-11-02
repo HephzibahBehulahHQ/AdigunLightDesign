@@ -5,7 +5,7 @@ import { paletteCssVariables, rerollUnlocked, starterPalette, updateSwatch } fro
 import { supportedLocales, translate } from "./i18n.js";
 import { createLightLabRenderer } from "./light-lab/renderer.js";
 import { blackout, createFixture, dmxFrame, fixtureProfiles, getFixtureProfile, patchFixture, updateFixture } from "./dmx/engine.js";
-import { createCue, editCue, evaluateCue } from "./timeline/engine.js";
+import { createCue, editCue, evaluateCue, evaluateSequence } from "./timeline/engine.js";
 import { cueCsv, paletteCss, paletteJson, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
 import { readProjectFile } from "./domain/import-project.js";
 import { editorShortcut, isEditableTarget } from "./accessibility/shortcuts.js";
@@ -49,6 +49,19 @@ function createCueSnapshot() {
 }
 function updateRendererFromFixtures() { const fixture=project.fixtures[0]; if(fixture) renderer?.setAccent(rgbToHex({r:fixture.properties.red,g:fixture.properties.green,b:fixture.properties.blue})); renderer?.setFixtures(project.fixtures); }
 function stopPlayback(message="Cue playback stopped.") { if(playbackTimer){clearInterval(playbackTimer);playbackTimer=null;} status=message; }
+function playSequence() {
+  if (!project.cues.length) return;
+  stopPlayback();
+  const source=structuredClone(project.fixtures),cues=structuredClone(project.cues),started=performance.now();
+  preferences.view="light";
+  playbackTimer=setInterval(()=>{
+    const frame=evaluateSequence(source,cues,(performance.now()-started)/1000);
+    renderer?.setFixtures(frame.fixtures);
+    document.querySelector("#status").textContent=`${t("playSequence")} · ${frame.index + 1}/${cues.length}`;
+    if (frame.complete) { stopPlayback(); render(); }
+  },100);
+  render();
+}
 function playLatestCue() {
   const cue=project.cues.find((item)=>item.id===preferences.cueId) ?? project.cues.at(-1);
   if (!cue) return;
@@ -149,11 +162,13 @@ function render() {
   document.querySelector(".cue-track").insertAdjacentHTML("beforebegin", `<div class="cue-timing">${["duration","fade","delay"].map((key)=>`<label>${t(key)} (s)<input id="cue-${key}" type="number" required min="${key === "duration" ? ".1" : "0"}" step=".1" value="${key === "duration" ? "5" : key === "fade" ? "1" : "0"}" /></label>`).join("")}</div>`);
   if (activeCue) document.querySelector(".cue-track").insertAdjacentHTML("beforebegin", `<div class="cue-timing"><label>${t("timeline")}<input id="edit-cue-name" value="${esc(activeCue.name)}" /></label>${["duration","fade","delay"].map((key)=>`<label>${t(key)} (s)<input id="edit-cue-${key}" type="number" required min="0" step=".1" value="${activeCue[key] ?? 0}" /></label>`).join("")}<button id="edit-cue">${t("apply")}</button></div>`);
   document.querySelector(".dmx-actions").insertAdjacentHTML("beforeend", `<button id="blackout" ${project.fixtures.length ? "" : "disabled"}>${t("blackout")}</button>`);
+  document.querySelector(".dmx-actions").insertAdjacentHTML("beforeend", `<button id="play-sequence" ${project.cues.length ? "" : "disabled"}>▶ ${t("playSequence")}</button>`);
   bind();
   if (preferences.view === "light") renderer = createLightLabRenderer(document.querySelector("#light-canvas"), { accent:scene().materialColor, fixtures:project.fixtures });
 }
 
 function bind() {
+  document.querySelector("#play-sequence").onclick=playSequence;
   const editButton=document.querySelector("#edit-cue");
   if (editButton) editButton.onclick=()=>{
     try {

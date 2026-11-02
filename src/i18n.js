@@ -26,4 +26,8 @@ Object.assign(messages.en,{duration:"Duration",fade:"Fade",delay:"Delay",blackou
 Object.assign(messages.de,{duration:"Dauer",fade:"Überblendung",delay:"Verzögerung",blackout:"Virtuelle Verdunkelung"});
 Object.assign(messages.yo,{duration:"Àkókò",fade:"Ìyípadà díẹ̀díẹ̀",delay:"Ìdádúró",blackout:"Pa ìmọ́lẹ̀ àfojúsùn"});
 Object.assign(messages.pcm,{duration:"How long",fade:"Fade",delay:"Wait time",blackout:"Off virtual lights"});
+Object.assign(messages.en,{playSequence:"Play sequence"});
+Object.assign(messages.de,{playSequence:"Sequenz abspielen"});
+Object.assign(messages.yo,{playSequence:"Ṣeré àwọn cue lẹ́sẹẹsẹ"});
+Object.assign(messages.pcm,{playSequence:"Play cues one by one"});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }

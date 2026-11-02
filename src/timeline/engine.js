@@ -26,3 +26,16 @@ export function evaluateCue(sourceFixtures, cue, elapsedSeconds) {
 }
 
 export function cueProgress(cue, elapsedSeconds) { return clamp(elapsedSeconds / Math.max(cue.duration, .001)); }
+
+export function evaluateSequence(sourceFixtures, cues, elapsedSeconds) {
+  if (!Number.isFinite(elapsedSeconds)) throw new Error("Sequence time must be finite.");
+  let fixtures=structuredClone(sourceFixtures), remaining=Math.max(0,elapsedSeconds);
+  for (let index=0;index<cues.length;index+=1) {
+    const cue=cues[index];
+    if (!Number.isFinite(cue.duration) || cue.duration <= 0) throw new Error("Sequence cues require positive durations.");
+    if (remaining < cue.duration) return {fixtures:evaluateCue(fixtures,cue,remaining),cueId:cue.id,index,elapsed:remaining,complete:false};
+    fixtures=evaluateCue(fixtures,cue,cue.duration);
+    remaining-=cue.duration;
+  }
+  return {fixtures,cueId:null,index:cues.length,elapsed:0,complete:true};
+}

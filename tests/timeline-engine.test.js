@@ -1,6 +1,23 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { editCue } from "../src/timeline/engine.js";
+import { evaluateSequence } from "../src/timeline/engine.js";
+test("sequences cues continuously across boundaries without mutating the source", () => {
+  const source=[{id:"f",properties:{dimmer:0}}];
+  const first=createCue([{id:"f",properties:{dimmer:100}}],{id:"a",duration:2,fade:1});
+  const second=createCue([{id:"f",properties:{dimmer:200}}],{id:"b",duration:3,fade:2});
+  assert.equal(evaluateSequence(source,[first,second],1).fixtures[0].properties.dimmer,100);
+  const boundary=evaluateSequence(source,[first,second],2);
+  assert.equal(boundary.cueId,"b");
+  assert.equal(boundary.fixtures[0].properties.dimmer,100);
+  assert.equal(evaluateSequence(source,[first,second],3).fixtures[0].properties.dimmer,150);
+  const end=evaluateSequence(source,[first,second],5);
+  assert.equal(end.complete,true);
+  assert.equal(end.fixtures[0].properties.dimmer,200);
+  assert.equal(source[0].properties.dimmer,0);
+  assert.equal(evaluateSequence(source,[],0).complete,true);
+  assert.throws(()=>evaluateSequence(source,[first],NaN));
+});
 test("editing cue metadata preserves its captured targets and rejects invalid timing", () => {
   const cue=createCue([{id:"f",properties:{dimmer:72}}]);
   const edited=editCue(cue,{name:" Intro ",duration:8,delay:2,fade:3});
