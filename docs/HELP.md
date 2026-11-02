@@ -28,6 +28,11 @@ Authenticated preview, acceptance, undo and rollback are still required work.
 Existing manual editor actions and the separate request-based Lux action path
 retain their current behavior; they do not demonstrate live acceptance.
 
-Selected-object explanations, broader incomplete-workflow analysis and live
-browser verification remain pending. No electrical-ladder analysis or physical
-DMX feedback is provided.
+Expand **What does this do?** to inspect the selected fixture, palette swatch or
+2D object. Facts refresh from the local project: fixture profile, saved virtual
+dimmer, patch and cue membership; swatch color, opacity and lock; or object type,
+position, fill and size. Virtual values do not establish physical brightness or
+hardware output. Explanations use the current selection, not hover detection.
+
+Broader incomplete-workflow analysis and live browser verification remain
+pending. No electrical-ladder analysis or physical DMX feedback is provided.

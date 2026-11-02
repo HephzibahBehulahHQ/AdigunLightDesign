@@ -1,15 +1,17 @@
 import {createLiveCopilot} from "../ai/live-copilot.js";
 import {escapeHtml as esc} from "./html.js";
+import {explainSelection} from "../ai/selection-explanation.js";
 
 export function createLiveCopilotPanel({feed,getLocale,translate,documentRef=document,now=Date.now,schedule=setInterval,cancel=clearInterval}) {
-  let host=null,suggestion=null,enabled=true,goal="",expanded=false,timer=null,projectId=null;
+  let host=null,suggestion=null,enabled=true,goal="",expanded=false,timer=null,projectId=null,explanation=null;
   const t=key=>translate(getLocale(),key);
   const bot=createLiveCopilot({feed,now,onSuggestion(value){suggestion=value;expanded=false;paint();}});
   bot.setEnabled(true);
-  const unsubscribe=feed.subscribe(state=>{if(projectId!==null && projectId!==state.project.id)goal="";projectId=state.project.id;suggestion=null;paint();});
+  const unsubscribe=feed.subscribe(state=>{if(projectId!==null && projectId!==state.project.id)goal="";projectId=state.project.id;explanation=explainSelection(state);suggestion=null;paint();});
   function paint(){
     if(!host?.isConnected)return;
     host.innerHTML=`<label><input data-live-enabled type="checkbox" ${enabled ? "checked" : ""} /> ${t("liveCopilot")}</label><details><summary>${t("liveProjectGoal")}</summary><form data-live-goal><label>${t("liveGoalQuestion")}<input name="goal" maxlength="1000" value="${esc(goal)}" /></label><button>${t("liveRememberGoal")}</button></form></details>${suggestion ? `<section class="live-suggestion" aria-live="polite"><p>${t(suggestion.messageKey)} ${esc(suggestion.subject ?? "")}</p><button data-live-dismiss>${t("liveDismiss")}</button><button data-live-more>${t("liveTellMore")}</button>${suggestion.kind==="offer" ? `<button disabled title="${t("liveLoginRequired")}">${t("liveAccept")}</button><small>${t("liveLoginRequired")}</small>` : ""}${expanded ? `<p>${t(suggestion.explanationKey)}</p>` : ""}</section>` : ""}`;
+    if(explanation)host.insertAdjacentHTML("beforeend",`<details class="live-selection"><summary>${t("explainSelection")}: ${esc(explanation.name)}</summary><p>${t(explanation.descriptionKey)}</p><dl>${explanation.facts.map(fact=>`<dt>${t(fact.key)}</dt><dd>${esc(fact.valueKey ? t(fact.valueKey) : fact.value ?? t("explainUnpatched"))}</dd>`).join("")}</dl></details>`);
     host.querySelector("[data-live-enabled]").onchange=event=>{enabled=event.target.checked;bot.setEnabled(enabled);if(!enabled)suggestion=null;paint();};
     host.querySelector("[data-live-goal]").onsubmit=event=>{event.preventDefault();goal=event.currentTarget.elements.goal.value.trim();bot.setGoal(goal);if(suggestion?.kind==="question"){bot.dismiss(suggestion.id);suggestion=null;}paint();};
     const dismiss=host.querySelector("[data-live-dismiss]");if(dismiss)dismiss.onclick=()=>{bot.dismiss(suggestion.id);suggestion=null;paint();};

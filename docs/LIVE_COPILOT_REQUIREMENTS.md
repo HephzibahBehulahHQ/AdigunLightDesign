@@ -13,8 +13,11 @@ The scheduler is now mounted in the Lux panel with four-language controls,
 session goal entry, dismissal and explanation. Pointer/input activity, focused
 editing fields and hidden pages suppress offers. Accept is disabled until real
 authentication exists; no live suggestion changes or saves the document.
-See `HELP.md`. Selected-object explanations, broader analysis, authenticated
-acceptance and browser verification remain incomplete.
+See `HELP.md`. Selected fixture/swatch/2D-object facts now refresh from the live
+feed in an expandable localized explanation. Typed selection identities prevent
+cross-domain ID matches. Domain and panel tests cover actual values, deleted
+selections, escaped names and no mutations. Hover explanations, broader analysis,
+authenticated acceptance and browser verification remain incomplete.
 
 Panel event-surface tests cover drag/cancel, typing cooldown, focused fields,
 hidden pages, dismissal, off state, cleanup and disabled acceptance. Project

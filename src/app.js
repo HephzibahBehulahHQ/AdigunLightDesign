@@ -232,7 +232,12 @@ function applyFixtureInspector() {
 }
 
 function render() {
-  liveCanvasFeed.publish(project,{selection:preferences.fixtureId ?? preferences.selected,playing:playbackTimer!==null});
+  const liveSelection=preferences.view==="palette" && scene().canvasObjects?.some(object=>object.id===preferences.objectId)
+    ? {kind:"object",id:preferences.objectId,sceneId:scene().id}
+    : (preferences.inspectorMode ?? (preferences.view==="light" ? "fixture" : "palette"))==="fixture" && selectedFixture()
+      ? {kind:"fixture",id:selectedFixture().id}
+      : {kind:"swatch",id:selected().id,paletteId:palette().id};
+  liveCanvasFeed.publish(project,{selection:liveSelection,playing:playbackTimer!==null});
   renderer?.destroy(); renderer = null;
   document.documentElement.lang = preferences.locale;
   document.documentElement.dataset.theme = preferences.theme;
