@@ -129,7 +129,8 @@ function render() {
   document.documentElement.lang = preferences.locale;
   document.documentElement.dataset.theme = preferences.theme;
   const active = selected();
-  const contrast = contrastResult(active.hex, "#0B1220");
+  const contrastBackground=normalizeHex(preferences.contrastBackground) ?? "#0B1220";
+  const contrast = contrastResult(active.hex, contrastBackground);
   const colourSpaces = colourSpaceMarkup(active.hex);
   const nav = [
     ["canvas", "⌂", true], ["palette", "◉", true], ["light", "☼", true], ["copilot", "◌", true], ["library", "▱", true], ["export", "↗", true], ["community", "♧", false]
@@ -213,6 +214,9 @@ function render() {
   const hsl=rgbToHsl(hexToRgb(active.hex));
   document.querySelector("#lock-swatch").insertAdjacentHTML("beforebegin", `<section class="colour-space-card">${[["hue",hsl.h,360],["saturation",hsl.s*100,100],["lightness",hsl.l*100,100]].map(([key,value,max])=>`<label>${t(key)}<input id="color-${key}" type="number" min="0" max="${max}" step="any" value="${compact(value,2)}" /></label>`).join("")}<button id="apply-hsl" class="wide">${t("apply")} HSL</button></section>`);
   document.querySelector(".export-grid")?.insertAdjacentHTML("beforeend", `<button data-raster="image/png">PNG</button><button data-raster="image/jpeg">JPEG</button>`);
+  const contrastCard=document.querySelector(".contrast-card");
+  contrastCard.querySelector("small").textContent=contrastBackground;
+  contrastCard.insertAdjacentHTML("beforeend", `<label>${t("contrastBackground")}<input id="contrast-background" type="color" value="${contrastBackground}" /></label><dl>${[["normalText","AA",contrast.aa],["normalText","AAA",contrast.aaa],["largeText","AA",contrast.largeAa],["largeText","AAA",contrast.largeAaa]].map(([key,level,pass])=>`<div><dt>${t(key)} ${level}</dt><dd class="${pass ? "pass" : "fail"}">${t(pass ? "passes" : "fails")}</dd></div>`).join("")}</dl>`);
   bind();
   if (preferences.view === "light") {
     renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {accent:scene().materialColor,fixtures:project.fixtures.map((fixture)=>({...fixture,selected:fixture.id===selectedFixture()?.id}))});
@@ -228,6 +232,7 @@ function render() {
 }
 
 function bind() {
+  document.querySelector("#contrast-background").onchange=(event)=>{preferences.contrastBackground=event.target.value;savePreferences();render();};
   document.querySelectorAll("[data-raster]").forEach((button)=>button.onclick=async()=>{
     button.disabled=true;
     try {

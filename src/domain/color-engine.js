@@ -79,4 +79,4 @@ export function harmony(seed, type = "analogous") {
 
 export function luminance(hex) { const rgb = hexToRgb(hex); if (!rgb) return null; return .2126 * linearRgb(rgb.r) + .7152 * linearRgb(rgb.g) + .0722 * linearRgb(rgb.b); }
 export function contrastRatio(a, b) { const l1 = luminance(a), l2 = luminance(b); if (l1 === null || l2 === null) return null; return (Math.max(l1, l2) + .05) / (Math.min(l1, l2) + .05); }
-export function contrastResult(a, b) { const ratio = contrastRatio(a, b); return { ratio, aa: ratio >= 4.5, aaa: ratio >= 7, largeAa: ratio >= 3 }; }
+export function contrastResult(a, b) { const ratio = contrastRatio(a, b); return { ratio, aa: ratio >= 4.5, aaa: ratio >= 7, largeAa: ratio >= 3, largeAaa: ratio >= 4.5 }; }
