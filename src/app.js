@@ -31,6 +31,7 @@ import { addCanvasObject,updateCanvasObject,duplicateCanvasObject,moveCanvasObje
 import { canvasMarkup } from "./ui/canvas.js";
 import { canvasSvg } from "./export/canvas.js";
 import { bindCanvasDrag } from "./ui/canvas-drag.js";
+import { bindTimelineSeek } from "./ui/timeline-seek.js";
 import { previewNativeToolAction } from "./ai/action-preview.js";
 import { icon } from "./ui/icons.js";
 import { previewQuality,previewQualities } from "./light-lab/quality.js";
@@ -189,9 +190,11 @@ function playArrangement({seek=0,paused=false}={}) {
   playbackClock.seek(seek,performance.now());
   if (paused) playbackClock.pause(performance.now());
   playbackTimer=setInterval(()=>{
+    if(document.querySelector(".arrangement-timeline .timeline-ruler")?.dataset.seeking)return;
     const position=playbackPosition(playbackClock.elapsed(performance.now()),duration,Boolean(preferences.loopSequence));
     previewFixtures(evaluateTracks(source,cues,position.time));
     document.querySelector("#arrangement-playhead").style.left=`${position.time/Math.max(30,duration)*100}%`;
+    document.querySelector(".arrangement-timeline .timeline-ruler").setAttribute("aria-valuenow",String(position.time));
     const slider=document.querySelector("#arrangement-seek");
     if (document.activeElement!==slider) slider.value=String(position.time);
     document.querySelector("#arrangement-position").textContent=`${position.time.toFixed(1)} / ${duration.toFixed(1)} s`;
@@ -761,6 +764,11 @@ function bind() {
   document.querySelector("#play-effect").onclick=playEffect;
   document.querySelector("#play-tracks").onclick=playArrangement;
   document.querySelector("#arrangement-seek").onchange=(event)=>playArrangement({seek:Number(event.target.value),paused:true});
+  bindTimelineSeek(document.querySelector(".arrangement-timeline .timeline-ruler"),{
+    span:Math.max(30,arrangementDuration(project.cues)),duration:arrangementDuration(project.cues),value:playbackClock ? playbackClock.elapsed(performance.now()) : 0,label:t("seekTracks"),
+    onPreview(time){document.querySelector("#arrangement-playhead").style.left=`${time/Math.max(30,arrangementDuration(project.cues))*100}%`;},
+    onSeek(time,{keyboard}){playArrangement({seek:time,paused:true});if(keyboard)document.querySelector(".arrangement-timeline .timeline-ruler")?.focus();}
+  });
   const scheduleButton=document.querySelector("#schedule-cue");
   if (scheduleButton) scheduleButton.onclick=()=>{
     try {

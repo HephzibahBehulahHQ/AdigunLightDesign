@@ -151,3 +151,6 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
 .axis-view-x { grid-column:3; grid-row:2; color:#ff655e; }
 .axis-view-y { grid-column:1; grid-row:2; color:#47e885; }
 .axis-view-z { grid-column:2; grid-row:1; color:#45baff; }
+
+.arrangement-timeline .timeline-ruler[role=slider] { touch-action:none; cursor:crosshair; }
+.arrangement-timeline .timeline-ruler[role=slider]:focus-visible { outline:2px solid var(--cyan); outline-offset:2px; }
