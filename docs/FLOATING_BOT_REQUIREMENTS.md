@@ -1,6 +1,27 @@
 # Floating Adigun Bot — additional required scope
 
-Status: required; not implemented or accepted.
+Status: in progress; core implemented, acceptance incomplete.
+
+Implementation progress: the Bot is now mounted as a non-modal complementary
+window with pointer drag/resize, keyboard movement/resize, minimize/maximize/
+restore/close, AI-navigation reopening and local per-project persistence.
+Local suggestions and service replies set unread state without opening or
+focusing the window. Focus returns to the AI control on close and to the chat
+input on explicit open. Mobile uses viewport-sized geometry. Normal project
+editing and simulation continue when the Bot is opened.
+
+Five state/controller tests cover geometry reload, bounds, storage denial,
+maximize/restore, minimized state, canceled dragging, final pointer positions,
+unread behavior, focus callbacks and mobile geometry. Related locale and panel
+tests also passed. These use event-surface doubles, not a real browser. Account
+storage, actual touch/browser interaction, desktop/mobile overlap checks and
+exact visual acceptance remain pending. The requirements below stay binding.
+
+Validation: full local `npm test` passed 204 tests with zero failures or skips;
+project checks and static build passed. This does not establish browser or
+account-backed behavior. The production domain was checked separately: DNS and
+HTTPS work, but it still serves the main-branch landing page rather than this
+implementation branch. No deployment was performed.
 
 Authority: the user's attached continuation request
 `80971f78-f3a7-4a52-b800-61f7f3c00de2/Pasted text.txt`.

@@ -46,6 +46,7 @@ import { bindFixtureSliders } from "./ui/fixture-sliders.js";
 import { bindCanvasMeasure } from "./ui/canvas-measure.js";
 import { paletteAse } from "./export/ase.js";
 import {topMenuMarkup,bindTopMenu} from "./ui/top-menu.js";
+import {createFloatingBot} from "./ui/floating-bot.js";
 import { canFullscreen,toggleViewportFullscreen } from "./ui/fullscreen.js";
 import { groupFixtures,saveFixtureGroup } from "./domain/fixture-groups.js";
 import { cueCsv, designTokenJson, paletteCss, paletteJson, paletteSvg, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
@@ -65,8 +66,9 @@ let luxProposal=null;
 let cleanupTopMenu=null;
 const imageAssets=createImageAssetStore();
 const liveCanvasFeed=createCanvasStateFeed();
-const liveCopilotPanel=createLiveCopilotPanel({feed:liveCanvasFeed,getLocale:()=>preferences.locale,translate});
-const luxService=createLuxServicePanel({getProject:()=>project,getLocale:()=>preferences.locale,translate,imageAssets,onPreview:(proposal)=>{luxProposal=proposal;render();},onError:(message)=>setStatus(message)});
+const floatingBot=createFloatingBot({getProjectId:()=>project.id,getLocale:()=>preferences.locale,translate});
+const liveCopilotPanel=createLiveCopilotPanel({feed:liveCanvasFeed,getLocale:()=>preferences.locale,translate,onNotify:()=>floatingBot.notify()});
+const luxService=createLuxServicePanel({getProject:()=>project,getLocale:()=>preferences.locale,translate,imageAssets,onPreview:(proposal)=>{luxProposal=proposal;render();},onError:(message)=>setStatus(message),onNotify:()=>floatingBot.notify()});
 let project = loadProject();
 let undoStack = [], redoStack = [], status = "", renderer = null, playbackTimer = null, playbackClock = null;
 
@@ -241,6 +243,7 @@ function applyFixtureInspector() {
 }
 
 function render() {
+  preferences.luxOpen=true; // Floating-window state controls visibility; keep its content mounted.
   cleanupTopMenu?.();
   const liveSelection=preferences.view==="palette" && scene().canvasObjects?.some(object=>object.id===preferences.objectId)
     ? {kind:"object",id:preferences.objectId,sceneId:scene().id}
@@ -455,6 +458,7 @@ function render() {
   document.querySelector(".scene-preview").insertAdjacentHTML("beforeend", `<button id="viewport-exit-fullscreen" class="viewport-exit-fullscreen">${t("exitFullscreen")}</button>`);
   bind();
   bindFixtureSliders(document.querySelector(".inspector"),{channelLabel:t("virtualChannelValue")});
+  floatingBot.mount(document.querySelector(".lux-panel"));
   cleanupTopMenu=bindTopMenu({project,t,onSelect(result){
     stopPlayback();
     if(result.kind==="fixture"){preferences.fixtureId=result.id;preferences.inspectorMode="fixture";preferences.view="light";}
@@ -815,9 +819,9 @@ function bind() {
   document.querySelector("#theme").onclick = () => { preferences.theme = preferences.theme === "dark" ? "light" : "dark"; savePreferences(); status = t("statusTheme"); render(); };
   document.querySelectorAll("[data-module]").forEach((button) => button.onclick = () => {
     const key=button.dataset.module;
+    if(key==="copilot"){floatingBot.open();return;}
     stopPlayback();
-    if (key === "copilot") preferences.luxOpen=true;
-    else preferences.module=key;
+    preferences.module=key;
     if (key === "light") preferences.view="light";
     if (key === "palette") preferences.view="palette";
     savePreferences();

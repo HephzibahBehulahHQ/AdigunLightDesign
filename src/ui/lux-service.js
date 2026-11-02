@@ -1,7 +1,7 @@
 import { createLuxChatSession } from "../ai/chat-session.js";
 import { escapeHtml as esc } from "./html.js";
 
-export function createLuxServicePanel({getProject,getLocale,translate,onPreview,onError,imageAssets,fetchImpl=globalThis.fetch,findContainer=()=>document.querySelector("[data-lux-service]")}) {
+export function createLuxServicePanel({getProject,getLocale,translate,onPreview,onError,imageAssets,fetchImpl=globalThis.fetch,findContainer=()=>document.querySelector("[data-lux-service]"),onNotify=()=>{}}) {
   const session=createLuxChatSession({fetchImpl});
   let reply=null,error="",question="",epoch=0;
   function mount(container) {
@@ -23,7 +23,7 @@ export function createLuxServicePanel({getProject,getLocale,translate,onPreview,
       try {
         const pending=session.request({project:getProject(),question,locale:getLocale(),consent});
         reply=null;error="";mount(container);
-        const result=await pending;if(requestEpoch!==epoch)return;reply=result;question="";
+        const result=await pending;if(requestEpoch!==epoch)return;reply=result;question="";onNotify();
       } catch(e){if(requestEpoch!==epoch)return;error=e.message;}
       // The editor may have re-rendered or closed while the request was pending.
       const current=findContainer();if(current)mount(current);

@@ -124,3 +124,18 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
 @media (max-width:940px) { .topbar { grid-template-columns:minmax(0,1fr) auto; } }
 @media (max-width:670px) { .topbar { grid-template-columns:1fr; gap:10px; }.topbar .brand-lockup { grid-row:1; }.topbar .utility-controls { grid-row:2; justify-self:start; gap:12px; }.topbar .product-lockup { grid-row:3; grid-column:1; } }
 
+
+.lux-panel.floating-bot { position:fixed; z-index:100; min-height:0; max-height:none; margin:0; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 18px 65px #0009; }
+.lux-panel.floating-bot[hidden] { display:none !important; }
+.floating-bot .lux-heading { position:sticky; top:0; z-index:3; flex:0 0 44px; min-height:44px; padding:5px 8px; gap:5px; background:var(--panel); cursor:move; touch-action:none; }
+.floating-bot .lux-heading > div { min-width:0; flex:1; }
+.floating-bot .lux-heading h2 { font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.floating-bot .lux-heading button { width:28px; height:28px; flex:0 0 28px; background:transparent; border-radius:5px; }
+.floating-bot.is-minimized { overflow:hidden; }
+.floating-bot.is-minimized > :not(.lux-heading) { display:none; }
+.bot-resize-handle { position:absolute; right:2px; bottom:2px; z-index:4; width:26px; height:26px; cursor:nwse-resize; touch-action:none; background:var(--panel); color:var(--cyan); }
+.module.has-bot-unread::after { content:""; display:inline-block; width:8px; height:8px; border-radius:50%; background:#d875ff; margin-left:4px; }
+@media (min-width:1321px) and (min-height:700px) { .has-floating-bot .editor-layout { grid-template-columns:clamp(216px,15.3vw,255px) minmax(0,1fr) clamp(220px,14.5vw,250px); } }
+@media (max-width:670px) { .floating-bot .bot-resize-handle { display:none; }.floating-bot .lux-heading { cursor:default; } }
+
+.floating-bot .bot-window-body { flex:1; min-height:0; display:flex; flex-direction:column; overflow:auto; padding-bottom:24px; }

@@ -2,10 +2,10 @@ import {createLiveCopilot} from "../ai/live-copilot.js";
 import {escapeHtml as esc} from "./html.js";
 import {explainSelection} from "../ai/selection-explanation.js";
 
-export function createLiveCopilotPanel({feed,getLocale,translate,documentRef=document,now=Date.now,schedule=setInterval,cancel=clearInterval}) {
+export function createLiveCopilotPanel({feed,getLocale,translate,documentRef=document,now=Date.now,schedule=setInterval,cancel=clearInterval,onNotify=()=>{}}) {
   let host=null,suggestion=null,enabled=true,goal="",expanded=false,timer=null,projectId=null,explanation=null;
   const t=key=>translate(getLocale(),key);
-  const bot=createLiveCopilot({feed,now,onSuggestion(value){suggestion=value;expanded=false;paint();}});
+  const bot=createLiveCopilot({feed,now,onSuggestion(value){suggestion=value;expanded=false;paint();onNotify(value);}});
   bot.setEnabled(true);
   const unsubscribe=feed.subscribe(state=>{if(projectId!==null && projectId!==state.project.id)goal="";projectId=state.project.id;explanation=explainSelection(state);suggestion=null;paint();});
   function paint(){

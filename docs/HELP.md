@@ -26,7 +26,32 @@ Ctrl/Cmd+Z retain their Save and Undo behavior.
 
 ## Contents
 
+- [Using the Bot window](#using-the-bot-window)
 - [The live co-pilot](#the-live-co-pilot)
+
+## Using the Bot window
+
+Use AI Co-Pilot in the navigation to open or restore Lux. It floats above the
+workspace without a modal backdrop. Drag its title bar to move it, or focus
+the title bar and use arrows (Shift moves ten pixels). Drag the bottom-right
+handle to resize; its arrow keys also resize it. The window stays within the
+viewport. On small screens it fills the screen and retains a close control.
+
+The title-bar controls minimize to a compact bar, maximize with an outer margin,
+restore previous geometry and close. Escape inside the window closes it and
+returns focus to the AI control. Reopening focuses the chat input. Normal Tab
+navigation remains available; the window does not trap focus from the canvas.
+
+Position, size, minimized/maximized and open/closed state are saved locally per
+project. Storage failure leaves an in-memory layout and reports that it could
+not be saved. Account-backed layout synchronization is not implemented yet.
+
+New local suggestions and service replies mark the AI navigation control and
+announce a status notification without opening the window or moving focus.
+Opening or focusing the window acknowledges unread state. Moving or resizing
+the window never saves project design data. Browser/touch interaction and actual
+canvas interaction around the window remain unverified; automated coverage uses
+state and event-surface tests.
 
 ## The live co-pilot
 
@@ -48,8 +73,9 @@ the message is informational and does not declare the show unsafe or invalid.
 Suggestions appear inside the existing panel. **Dismiss** suppresses an offer
 for two minutes; **Tell me more** expands its explanation. Suggestions are
 limited to one per 25 seconds and suppressed while dragging, typing, editing a
-focused field or when the page is hidden. Closing the Lux panel also stops new
-offers from appearing. Changing project state removes the displayed suggestion.
+focused field or when the page is hidden. Closing Lux keeps suggestions
+non-blocking: new offers set its navigation badge without reopening it. Changing
+project state removes the displayed suggestion.
 
 **Accept** is currently disabled: accepting changes requires real login, which
 is not configured. The live co-pilot does not modify or save the project.
