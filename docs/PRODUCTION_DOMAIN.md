@@ -12,10 +12,10 @@ the canonical URL. GitHub Pages custom-domain and HTTPS enforcement settings
 still require account-level verification; no DNS change is necessary based on
 the observed public record.
 
-Supabase is not connected to this application yet. Accessible projects were
-VoltPRo and HephzibahBehulahHQ; neither has been established as this product's
-backend. Do not change their authentication configuration without confirming
-the intended project. When provisioned, configure the frontend hostname as the
-Auth Site URL and allow only the actual implemented callback paths. This does
-not require a custom Supabase API domain. Never include private keys in this
-static build.
+The user selected shared Supabase project HephzibahBehulahHQ
+(`fqcbfnktdvqojyezxeis`). Product storage is isolated in `adigunlightdesign`;
+frontend Auth and cloud operations remain unconnected. See `SUPABASE_SETUP.md`.
+Preserve the shared project's existing global Auth Site URL; add this product's
+actual implemented callback paths to its redirect allowlist when that flow is
+ready. A custom Supabase API domain is not required. Never include private keys
+in this static build.
