@@ -30,6 +30,7 @@ import { virtualDmxPreview } from "./dmx/preview.js";
 import { addCanvasObject,updateCanvasObject } from "./domain/canvas.js";
 import { canvasMarkup } from "./ui/canvas.js";
 import { canvasSvg } from "./export/canvas.js";
+import { bindCanvasDrag } from "./ui/canvas-drag.js";
 import { groupFixtures,saveFixtureGroup } from "./domain/fixture-groups.js";
 import { cueCsv, designTokenJson, paletteCss, paletteJson, paletteSvg, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
 import { readProjectFile } from "./domain/import-project.js";
@@ -396,12 +397,21 @@ function render() {
 }
 
 function bind() {
+  const selectCanvasObject=(id)=>{preferences.objectId=id;preferences.inspectorMode="palette";savePreferences();render();};
+  const designCanvas=document.querySelector(".design-canvas");
+  if (designCanvas) bindCanvasDrag(designCanvas,scene().canvasObjects ?? [],{
+    onSelect:selectCanvasObject,
+    onMove(id,position){
+      try {commitProjectChange("canvas-object-move",(draft)=>{draft.scenes[0]=updateCanvasObject(draft.scenes[0],id,position);});selectCanvasObject(id);}
+      catch(error){setStatus(error.message);}
+    }
+  });
   document.querySelector("#export-canvas").onclick=()=>{
     downloadText(canvasSvg(scene().canvasObjects ?? [],project.name),`${safeFileStem(project.name)}-canvas.svg`,"image/svg+xml");setStatus(t("canvasExported"));
   };
   document.querySelectorAll("[data-canvas-object]").forEach((element)=>{
     const select=()=>{preferences.objectId=element.dataset.canvasObject;preferences.inspectorMode="palette";savePreferences();render();};
-    element.onclick=select;element.onkeydown=(event)=>{if (["Enter"," "].includes(event.key)){event.preventDefault();select();}};
+    element.onkeydown=(event)=>{if (["Enter"," "].includes(event.key)){event.preventDefault();select();}};
   });
   const applyObject=document.querySelector("#apply-object");
   if (applyObject) applyObject.onclick=()=>{

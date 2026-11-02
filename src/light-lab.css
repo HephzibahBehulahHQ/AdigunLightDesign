@@ -1,5 +1,6 @@
 .light-canvas { min-height:353px; }
-.design-canvas { position:absolute; inset:0; width:100%; height:100%; background:#101827; }
+.design-canvas { position:absolute; inset:0; width:100%; height:100%; background:#101827; touch-action:none; }
+.scene-preview.hide-props .design-canvas g { display:none; }
 .design-canvas [role="button"] { cursor:pointer; }
 .design-canvas [role="button"]:focus-visible { outline:2px solid var(--cyan); }
 .canvas-object-editor { margin:10px 12px; border:1px solid var(--line); border-radius:8px; }
