@@ -1,5 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { paletteCssVariables } from "../src/domain/palette-store.js";
+test("CSS export retains every swatch despite duplicate or non-Latin names",()=>{
+  const css=paletteCssVariables([{name:"Blue",hex:"#00f"},{name:"Blue",hex:"#f00"},{name:"Blue-2",hex:"#0f0"},{name:"Àwọ̀",hex:"#fff"}]);
+  const names=[...css.matchAll(/(--ald-[\w-]+):/g)].map((match)=>match[1]);
+  assert.equal(new Set(names).size,4);
+  assert.match(css,/#0000FF/);
+  assert.throws(()=>paletteCssVariables([{name:"X",hex:"red; color:black"}]));
+});
 import { reorderSwatch } from "../src/domain/palette-store.js";
 test("drag reordering supports both directions and keeps source data intact",()=>{
   const colors=[{id:"a",locked:true},{id:"b"},{id:"c"}];

@@ -207,6 +207,7 @@ function render() {
   document.querySelector(".palette-actions").insertAdjacentHTML("beforeend", `<button id="extract-image">${t("extractImage")}</button><input id="palette-image" type="file" accept="image/png,image/jpeg,image/webp" hidden />`);
   const swatchIndex=palette().colors.indexOf(active);
   document.querySelector("#lock-swatch").insertAdjacentHTML("afterend", `<div class="palette-actions"><button data-move-swatch="-1" ${swatchIndex===0 ? "disabled" : ""}>← ${t("earlier")}</button><button data-move-swatch="1" ${swatchIndex===palette().colors.length-1 ? "disabled" : ""}>${t("later")} →</button><button id="remove-swatch" ${palette().colors.length<2 ? "disabled" : ""}>${t("removeColor")}</button></div>`);
+  document.querySelector("#apply-colour").insertAdjacentHTML("afterend", `<button id="copy-hex">${t("copy")}</button>`);
   bind();
   if (preferences.view === "light") {
     renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {accent:scene().materialColor,fixtures:project.fixtures.map((fixture)=>({...fixture,selected:fixture.id===selectedFixture()?.id}))});
@@ -222,6 +223,13 @@ function render() {
 }
 
 function bind() {
+  document.querySelector("#copy-hex").onclick=async()=>{
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error("Clipboard is unavailable in this browser.");
+      await navigator.clipboard.writeText(selected().hex);
+      document.querySelector("#status").textContent=status=t("copied");
+    } catch(error) { document.querySelector("#status").textContent=status=error.message; }
+  };
   document.querySelectorAll("[data-swatch]").forEach((button)=>{
     button.draggable=true;
     button.ondragstart=(event)=>{event.dataTransfer.setData("application/x-adigun-swatch",button.dataset.swatch);event.dataTransfer.effectAllowed="move";};

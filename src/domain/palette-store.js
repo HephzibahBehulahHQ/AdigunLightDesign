@@ -5,7 +5,19 @@ export const starterPalette = [
   { id:"amber", name:"Amber", hex:"#FFB347", locked:false }, { id:"magenta", name:"Magenta", hex:"#C21888", locked:false }, { id:"warm-neutral", name:"Warm Neutral", hex:"#F5E6D3", locked:false }
 ];
 
-export function paletteCssVariables(palette) { return `:root {\n${palette.map((swatch) => `  --ald-${swatch.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}: ${swatch.hex};`).join("\n")}\n}\n`; }
+export function paletteCssVariables(palette) {
+  const used=new Set();
+  const declarations=palette.map((swatch,index)=>{
+    const base=String(swatch.name).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"") || `color-${index+1}`;
+    let name=base,suffix=2;
+    while(used.has(name)) name=`${base}-${suffix++}`;
+    used.add(name);
+    const hex=normalizeHex(swatch.hex);
+    if (!hex) throw new Error("CSS export requires valid HEX colors.");
+    return `  --ald-${name}: ${hex};`;
+  });
+  return `:root {\n${declarations.join("\n")}\n}\n`;
+}
 export function rerollUnlocked(palette, seed, type) { const colours = harmony(seed, type); return palette.map((swatch, index) => swatch.locked ? swatch : { ...swatch, hex: colours[index % colours.length] }); }
 export function updateSwatch(palette, id, change) { return palette.map((swatch) => swatch.id === id ? { ...swatch, ...change, hex: normalizeHex(change.hex ?? swatch.hex) ?? swatch.hex } : swatch); }
 export function removeSwatch(colors,id) {
