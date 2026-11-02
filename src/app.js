@@ -64,13 +64,13 @@ function playLatestCue() {
 }
 function downloadText(content, filename, type) { const file=new Blob([content],{type}); const link=document.createElement("a"); link.href=URL.createObjectURL(file); link.download=filename; link.click(); URL.revokeObjectURL(link.href); }
 function exportFile(kind) { const stem=safeFileStem(project.name); const exports={ project:[projectJson(project),`${stem}.ald.json`,"application/json"], palette:[paletteJson(palette()),`${stem}-palette.json`,"application/json"], css:[paletteCss(palette()),`${stem}-palette.css`,"text/css"], patch:[patchCsv(project.fixtures),`${stem}-patch.csv`,"text/csv"], cues:[cueCsv(project.cues),`${stem}-cues.csv`,"text/csv"] }; const [content,name,type]=exports[kind]; downloadText(content,name,type); status=`${name} downloaded.`; document.querySelector("#status").textContent=status; }
-async function importNativeProject(file) { const result=await readProjectFile(file); if(!result.valid) return setStatus(result.errors.join(" ")); project=result.project; undoStack=[];redoStack=[];saveProject();status=`${project.name} imported locally.`;render(); }
+async function importNativeProject(file) { const result=await readProjectFile(file); if(!result.valid) return setStatus(result.errors.join(" ")); stopPlayback(); project=result.project; undoStack=[];redoStack=[];saveProject();status=`${project.name} imported locally.`;render(); }
 function savePreferences() { localStorage.setItem(preferencesKey, JSON.stringify(preferences)); }
 function saveProject() { project.updatedAt = new Date().toISOString(); localStorage.setItem(storageKey, JSON.stringify(project)); status = t("statusSaved"); }
 function commitProjectChange(label, mutate) { stopPlayback(); const next=commitTransaction({project,undoStack,redoStack},label,mutate); project=next.project;undoStack=next.undoStack;redoStack=next.redoStack;saveProject(); }
 function mutateColours(fn) { commitProjectChange("palette-update",(draft)=>{draft.palettes[0].colors=fn(structuredClone(draft.palettes[0].colors));}); render(); }
-function undo() { if (!undoStack.length) return setStatus(t("noUndo")); const next=undoTransaction({project,undoStack,redoStack});project=next.project;undoStack=next.undoStack;redoStack=next.redoStack;saveProject();status=t("statusUndo");render(); }
-function redo() { if (!redoStack.length) return setStatus(t("noRedo")); const next=redoTransaction({project,undoStack,redoStack});project=next.project;undoStack=next.undoStack;redoStack=next.redoStack;saveProject();status=t("statusRedo");render(); }
+function undo() { if (!undoStack.length) return setStatus(t("noUndo")); stopPlayback(); const next=undoTransaction({project,undoStack,redoStack});project=next.project;undoStack=next.undoStack;redoStack=next.redoStack;saveProject();status=t("statusUndo");render(); }
+function redo() { if (!redoStack.length) return setStatus(t("noRedo")); stopPlayback(); const next=redoTransaction({project,undoStack,redoStack});project=next.project;undoStack=next.undoStack;redoStack=next.redoStack;saveProject();status=t("statusRedo");render(); }
 function setStatus(value) { status = value; render(); }
 function esc(value) { return String(value).replace(/[&<>"]/g, (char) => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"})[char]); }
 function disabled(title) { return `disabled title="${esc(title)}"`; }
