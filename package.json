@@ -6,7 +6,8 @@
   "scripts": {
     "test": "node --test",
     "check": "node scripts/check-project.mjs",
-    "build": "node scripts/build.mjs"
+    "build": "node scripts/build.mjs",
+    "serve:lux": "node server/start-lux.js"
   },
   "engines": { "node": ">=24" }
 }
