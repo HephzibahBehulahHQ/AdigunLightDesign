@@ -12,7 +12,7 @@ Implemented local exports are native project JSON, portable palette JSON, CSS cu
 
 PNG/JPEG palette export adapters render the generated SVG through the browser's image and canvas APIs, then verify the requested encoding MIME type. Adapter success/failure and URL cleanup have mocked automated coverage. Actual browser encoding, downloads, font appearance and output pixels remain unverified.
 
-PDF/Procreate/glTF/GDTF/MVR and Figma/Adobe/console integration are not implemented and are not displayed as working integrations. Re-import validation and external interchange adapters require their own schema and compatibility testing before release.
+Procreate/glTF/GDTF/MVR and Figma/Adobe/console integration are not implemented and are not displayed as working integrations. Re-import validation and external interchange adapters require their own schema and compatibility testing before release.
 
 ## Experimental ASE RGB export
 
@@ -33,3 +33,9 @@ boundaries, record lengths, RGB values, process type and failure cases.
 No ASE re-import, CMYK/Lab/spot-color output, ICC profile, Adobe integration or
 external application/version compatibility is established. Browser download and
 actual GIMP/Adobe import still require verification; keep the experimental label.
+
+## PDF palette sheets
+
+PDF palette export uses pinned pdf-lib 1.17.1 and the existing browser PNG palette renderer, with ten swatches per A4 page and page/range numbering. It preserves RGB appearance and browser-rendered Unicode/opacity as raster artwork. Names longer than 12 Unicode code points and palette headings longer than 28 are shortened in the sheet; native JSON retains full names. PDF text inside artwork is not searchable or editable, fonts are not embedded, and this is not an ICC/CMYK print proof. Cue-sheet PDF remains unimplemented. Adapter tests cover page count, metadata, source preservation and encoding failure; actual browser encoding/download and visual acceptance remain unverified. Implementation reference: [pdf-lib PDFDocument API](https://pdf-lib.js.org/docs/api/classes/pdfdocument).
+
+A synthetic raster sample was embedded, opened by independent pypdf and rendered with PDFium; the inspected A4 output had a readable brand heading, palette artwork and page footer. This validates PDF assembly/layout with supplied pixels, not the browser's SVG-to-PNG encoding or real download flow.
