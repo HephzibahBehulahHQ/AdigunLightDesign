@@ -42,9 +42,27 @@ export function beamVolume(light, segments=16) {
   }
   return data;
 }
+export function fixtureHousing(light){
+  const data=[],origin=[light.x,light.y-.11,light.z];
+  const direction=[(light.targetX ?? light.x)-light.x,.03-light.y,(light.targetZ ?? light.z+1.35)-light.z];
+  const length=Math.hypot(...direction),axis=direction.map(v=>v/Math.max(length,.0001));
+  const reference=Math.abs(axis[1])>.95 ? [1,0,0] : [0,1,0];
+  const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+  const raw=cross(axis,reference),n=Math.hypot(...raw),u=raw.map(v=>v/Math.max(n,.0001)),v=cross(axis,u);
+  const point=(angle,depth,radius)=>origin.map((value,i)=>value+axis[i]*depth+radius*(Math.cos(angle)*u[i]+Math.sin(angle)*v[i]));
+  const center=point(0,.30,0),lens=light.colour.map(value=>Math.max(.025,value));
+  for(let index=0;index<20;index++){
+    const a=index*Math.PI/10,b=(index+1)*Math.PI/10,shade=.06+.025*(1+Math.cos(a));
+    quad(data,point(a,0,.19),point(b,0,.19),point(b,.28,.19),point(a,.28,.19),[shade,shade,shade*1.2]);
+    quad(data,point(a,.28,.19),point(b,.28,.19),point(b,.30,.145),point(a,.30,.145),[.16,.17,.20]);
+    for(const p of [center,point(a,.30,.145),point(b,.30,.145)])data.push(...p,...lens);
+  }
+  box(data,light.x-.27,light.y-.02,light.z-.12,.54,.10,.24,[.07,.08,.10]);
+  for(const x of [light.x-.27,light.x+.21])box(data,x,light.y-.24,light.z-.05,.06,.24,.10,[.10,.11,.13]);
+  return data;
+}
 function lightGeometry(data, light,includeBeams=true) {
-  const fixtureColour=light.colour.map((value)=>Math.max(.12,value));
-  box(data,light.x-.18,light.y-.11,light.z-.18,.36,.18,.36,fixtureColour);
+  data.push(...fixtureHousing(light));
   if (light.selected) {
     const colour=hexVector("#22D3EE"),x=light.x-.23,y=light.y-.16,z=light.z-.23;
     for (const dy of [0,.28]) for (const dz of [0,.46]) box(data,x,y+dy,z+dz,.48,.015,.015,colour);
