@@ -24,6 +24,9 @@
 .cue-track { min-height:42px; margin:0 12px 12px; padding:7px; display:flex; gap:6px; align-items:center; overflow:auto; border-top:1px solid var(--line); background:#0f172a66; }
 .cue-block { position:absolute; top:4px; height:26px; padding:4px 6px; border-radius:4px; border:1px solid #aa80ee; background:linear-gradient(90deg,#7133af,#8066ee); color:white; font-size:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .timeline-scale { position:relative; flex:1 0 360px; margin:0 12px; }
+.fixture-group-editor { margin:8px 12px; font-size:11px; }
+.fixture-group-editor label { display:block; margin:5px 0; }
+.fixture-group-editor button { padding:5px 8px; border-radius:5px; background:#493275; }
 .timeline-ruler { position:relative; height:24px; border-bottom:1px solid var(--line); }
 .timeline-ruler span { position:absolute; top:0; transform:translateX(-50%); color:var(--muted); font-size:10px; }
 .timeline-ruler span::after { content:""; position:absolute; left:50%; top:15px; height:8px; border-left:1px solid var(--line); }

@@ -1,5 +1,7 @@
 # Cue timeline
 
+Fixture groups store named sets of existing fixture IDs in the optional `fixtureGroups` project field. Older version-1 files without groups remain valid. The group editor creates and deletes groups through undoable transactions. Capture group limits a new cue's snapshot to that group; other fixtures retain their values during evaluation. Deleting a group preserves already captured cues. Native import validates group identities and membership. Group editing and multi-track scheduling are still pending.
+
 The sequence lane uses cumulative start times and duration-proportional blocks, with a seconds ruler and a moving sequence playhead. It displays a minimum 30-second span and expands for longer sequences. This is one sequential lane; independent multi-track scheduling remains unimplemented. Layout arithmetic is tested; rendered visual fidelity is unverified.
 
 Duplicate cue inserts an independent copy immediately after the selected cue and selects it. Delete cue removes the selection and selects the nearest remaining cue. Both stop previews and use document undo/redo; deleting the final cue is supported. Captured targets and keyframes remain independent between copies.

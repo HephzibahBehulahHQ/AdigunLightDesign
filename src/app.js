@@ -19,6 +19,7 @@ import { createCue, duplicateCue, removeCue, editCue, evaluateCue, evaluateSeque
 import { evaluateEffect } from "./timeline/effects.js";
 import { createPlaybackClock, playbackPosition } from "./timeline/playback-clock.js";
 import { timelineLayout } from "./timeline/layout.js";
+import { groupFixtures,saveFixtureGroup } from "./domain/fixture-groups.js";
 import { cueCsv, designTokenJson, paletteCss, paletteJson, paletteSvg, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
 import { readProjectFile } from "./domain/import-project.js";
 import { editorShortcut, isEditableTarget } from "./accessibility/shortcuts.js";
@@ -55,7 +56,8 @@ function createCueSnapshot() {
       timing[key]=Number(input.value);
     }
     let cue;
-    commitProjectChange("cue-create",(draft)=>{cue=createCue(draft.fixtures,{name:`Look ${draft.cues.length+1}`,...timing});draft.cues=[...draft.cues,cue];});
+    const groupId=document.querySelector("#cue-group").value;
+    commitProjectChange("cue-create",(draft)=>{cue=createCue(groupFixtures(draft.fixtures,draft.fixtureGroups ?? [],groupId),{name:`Look ${draft.cues.length+1}`,...timing});draft.cues=[...draft.cues,cue];});
     status=`${cue.name} captured with ${cue.targets.length} fixture target(s).`;
     render();
   } catch(error) { document.querySelector("#status").textContent=status=error.message; }
@@ -221,6 +223,8 @@ function render() {
   document.querySelector(".dmx-actions").insertAdjacentHTML("beforeend", `<button id="play-sequence" ${project.cues.length ? "" : "disabled"}>▶ ${t("playSequence")}</button>`);
   document.querySelector("#stop-cue").insertAdjacentHTML("beforebegin", `<button id="pause-playback" aria-pressed="${Boolean(playbackClock?.paused)}" ${playbackTimer ? "" : "disabled"}>${t(playbackClock?.paused ? "resumePlayback" : "pausePlayback")}</button>`);
   const sequenceDuration=project.cues.reduce((sum,cue)=>sum+cue.duration,0);
+  document.querySelector("#create-cue").insertAdjacentHTML("beforebegin", `<label>${t("captureGroup")} <select id="cue-group"><option value="">${t("allFixtures")}</option>${(project.fixtureGroups ?? []).map((group)=>`<option value="${esc(group.id)}">${esc(group.name)}</option>`).join("")}</select></label>`);
+  document.querySelector(".timeline").insertAdjacentHTML("beforeend", `<details class="fixture-group-editor"><summary>${t("fixtureGroups")}</summary><label>${t("groupName")} <input id="group-name" maxlength="120"></label><div>${project.fixtures.map((fixture)=>`<label><input type="checkbox" data-group-member value="${esc(fixture.id)}"> ${esc(fixture.name)}</label>`).join("")}</div><button id="save-group">${t("saveGroup")}</button>${(project.fixtureGroups ?? []).map((group)=>`<p>${esc(group.name)} · ${group.fixtureIds.length} <button data-delete-group="${esc(group.id)}">${t("deleteGroup")}</button></p>`).join("")}</details>`);
   document.querySelector(".timeline").insertAdjacentHTML("beforeend", `<div class="dmx-actions"><label><input id="sequence-loop" type="checkbox" ${preferences.loopSequence ? "checked" : ""}> ${t("loopSequence")}</label><label>${t("seekSequence")} <input id="sequence-seek" type="range" min="0" max="${sequenceDuration}" step="0.1" value="0" ${sequenceDuration ? "" : "disabled"}></label><output id="sequence-position">0 / ${sequenceDuration.toFixed(1)} s</output></div>`);
   document.querySelector(".timeline").insertAdjacentHTML("beforeend", `<div class="dmx-actions"><label>${t("virtualEffect")} <select id="effect-type"><option value="pulse">${t("pulse")}</option><option value="chase">${t("chase")}</option></select></label><label>${t("effectPeriod")} <input id="effect-period" type="number" min="0.1" max="120" step="0.1" value="2"></label><button id="play-effect" ${project.fixtures.length ? "" : "disabled"}>▶ ${t("play")}</button></div>`);
   if (activeCue) {
@@ -434,6 +438,15 @@ function bind() {
   document.querySelector("#sequence-loop").onchange=(event)=>{preferences.loopSequence=event.target.checked;savePreferences();};
   document.querySelector("#sequence-seek").onchange=(event)=>playSequence({seek:Number(event.target.value),paused:true});
   document.querySelector("#play-effect").onclick=playEffect;
+  document.querySelector("#save-group").onclick=()=>{
+    try {
+      const name=document.querySelector("#group-name").value,fixtureIds=[...document.querySelectorAll("[data-group-member]:checked")].map((input)=>input.value);
+      commitProjectChange("fixture-group-save",(draft)=>{draft.fixtureGroups=saveFixtureGroup(draft.fixtureGroups ?? [],draft.fixtures,{name,fixtureIds});});render();
+    } catch(error) { setStatus(error.message); }
+  };
+  document.querySelectorAll("[data-delete-group]").forEach((button)=>button.onclick=()=>{
+    commitProjectChange("fixture-group-delete",(draft)=>{draft.fixtureGroups=(draft.fixtureGroups ?? []).filter((group)=>group.id!==button.dataset.deleteGroup);});render();
+  });
   const duplicateButton=document.querySelector("#duplicate-cue"),deleteButton=document.querySelector("#delete-cue");
   if (duplicateButton) duplicateButton.onclick=()=>{
     const cue=project.cues.find((item)=>item.id===preferences.cueId) ?? project.cues.at(-1);

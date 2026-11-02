@@ -1,4 +1,5 @@
 import { fixtureProfiles } from "../dmx/engine.js";
+import { validateFixtureGroups } from "./fixture-groups.js";
 
 export const CURRENT_SCHEMA_VERSION = 1;
 
@@ -12,12 +13,13 @@ export function createProject({ id = crypto.randomUUID(), name = "Untitled light
     createdAt: now,
     updatedAt: now,
     preferences: { locale: "en", theme: "dark", renderingQuality: "high" },
-    palettes: [], scenes: [], fixtures: [], patches: [], cues: [], assets: [], history: []
+    palettes: [], scenes: [], fixtures: [], fixtureGroups: [], patches: [], cues: [], assets: [], history: []
   };
 }
 
 export function validateProject(project) {
   const errors = [];
+  if (project?.fixtureGroups!==undefined && !validateFixtureGroups(project.fixtureGroups,Array.isArray(project.fixtures) ? project.fixtures : [])) errors.push("Fixture groups require unique identities, names and existing fixture members.");
   if (!project || typeof project !== "object") errors.push("Project must be an object.");
   if (project?.schemaVersion !== CURRENT_SCHEMA_VERSION) errors.push("Unsupported project schema version.");
   if (typeof project?.id !== "string" || !project.id.trim() || typeof project?.name !== "string" || !project.name.trim()) errors.push("Project needs a string id and a nonempty name.");

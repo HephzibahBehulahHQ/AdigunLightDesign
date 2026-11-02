@@ -110,4 +110,8 @@ Object.assign(messages.en,{duplicateCue:"Duplicate cue",deleteCue:"Delete cue",c
 Object.assign(messages.de,{duplicateCue:"Cue duplizieren",deleteCue:"Cue löschen",copyLabel:"Kopie"});
 Object.assign(messages.yo,{duplicateCue:"Ṣẹ̀dà cue",deleteCue:"Pa cue rẹ́",copyLabel:"Ẹ̀dà"});
 Object.assign(messages.pcm,{duplicateCue:"Copy cue",deleteCue:"Delete cue",copyLabel:"Copy"});
+Object.assign(messages.en,{fixtureGroups:"Fixture groups",captureGroup:"Capture group",allFixtures:"All fixtures",groupName:"Group name",saveGroup:"Save group",deleteGroup:"Delete group"});
+Object.assign(messages.de,{fixtureGroups:"Gerätegruppen",captureGroup:"Gruppe erfassen",allFixtures:"Alle Geräte",groupName:"Gruppenname",saveGroup:"Gruppe speichern",deleteGroup:"Gruppe löschen"});
+Object.assign(messages.yo,{fixtureGroups:"Àwọn ẹgbẹ́ fìtílà",captureGroup:"Gba ẹgbẹ́ sí cue",allFixtures:"Gbogbo fìtílà",groupName:"Orúkọ ẹgbẹ́",saveGroup:"Fi ẹgbẹ́ pamọ́",deleteGroup:"Pa ẹgbẹ́ rẹ́"});
+Object.assign(messages.pcm,{fixtureGroups:"Fixture groups",captureGroup:"Capture group",allFixtures:"All fixtures",groupName:"Group name",saveGroup:"Save group",deleteGroup:"Delete group"});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }

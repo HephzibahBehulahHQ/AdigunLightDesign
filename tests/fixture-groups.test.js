@@ -1,0 +1,30 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { saveFixtureGroup,groupFixtures } from "../src/domain/fixture-groups.js";
+import { createStudioMoodProject } from "../src/domain/studio-mood.js";
+import { validateProject } from "../src/domain/project.js";
+import { createCue,evaluateCue } from "../src/timeline/engine.js";
+test("groups validate members and preserve the original group list",()=>{
+  const fixtures=[{id:"a"},{id:"b"}],groups=[];
+  const result=saveFixtureGroup(groups,fixtures,{id:"g",name:" Key ",fixtureIds:["a"]});
+  assert.equal(groups.length,0);assert.equal(result[0].name,"Key");
+  assert.deepEqual(groupFixtures(fixtures,result,"g"),[fixtures[0]]);
+  assert.throws(()=>saveFixtureGroup([],fixtures,{name:"X",fixtureIds:["missing"]}));
+  assert.throws(()=>saveFixtureGroup([],fixtures,{name:"X",fixtureIds:["a","a"]}));
+  assert.throws(()=>saveFixtureGroup([],fixtures,{name:"",fixtureIds:[]}));
+});
+test("group-scoped cue capture leaves other fixtures untouched and round-trips natively",()=>{
+  const project=createStudioMoodProject(),id=project.fixtures[0].id;
+  project.fixtureGroups=saveFixtureGroup([],project.fixtures,{id:"g",name:"Key",fixtureIds:[id]});
+  const cue=createCue(groupFixtures(project.fixtures,project.fixtureGroups,"g"));
+  assert.equal(cue.targets.length,1);
+  cue.targets[0].properties.dimmer=0;
+  const frame=evaluateCue(project.fixtures,cue,5);
+  assert.equal(frame[0].properties.dimmer,0);
+  assert.deepEqual(frame[1],project.fixtures[1]);
+  assert.equal(validateProject(JSON.parse(JSON.stringify(project))).valid,true);
+  project.fixtureGroups[0].fixtureIds.push("missing");
+  assert.equal(validateProject(project).valid,false);
+  delete project.fixtureGroups;
+  assert.equal(validateProject(project).valid,true);
+});
