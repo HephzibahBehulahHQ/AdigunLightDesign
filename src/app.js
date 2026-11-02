@@ -7,7 +7,7 @@ import { supportedLocales, translate } from "./i18n.js";
 import { createLightLabRenderer } from "./light-lab/renderer.js";
 import { blackout, createFixture, dmxFrame, fixtureProfiles, getFixtureProfile, patchFixture, updateFixture } from "./dmx/engine.js";
 import { createCue, editCue, evaluateCue, evaluateSequence, moveCue } from "./timeline/engine.js";
-import { cueCsv, paletteCss, paletteJson, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
+import { cueCsv, paletteCss, paletteJson, paletteSvg, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
 import { readProjectFile } from "./domain/import-project.js";
 import { editorShortcut, isEditableTarget } from "./accessibility/shortcuts.js";
 import { commitTransaction, redoTransaction, undoTransaction } from "./domain/history.js";
@@ -201,6 +201,7 @@ function render() {
     update();
   }
   if (project.fixtures.length) document.querySelector(".layer-list").insertAdjacentHTML("afterend", `<ul class="fixture-layer-list" aria-label="${t("layersLighting")}">${project.fixtures.map((fixture)=>`<li><button data-layer-fixture="${esc(fixture.id)}" aria-pressed="${fixture.id===selectedFixture()?.id}"><span>☼</span> ${esc(fixture.name)}</button></li>`).join("")}</ul>`);
+  document.querySelector(".export-grid")?.insertAdjacentHTML("beforeend", `<button id="export-svg">SVG</button>`);
   bind();
   if (preferences.view === "light") {
     renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {accent:scene().materialColor,fixtures:project.fixtures.map((fixture)=>({...fixture,selected:fixture.id===selectedFixture()?.id}))});
@@ -216,6 +217,11 @@ function render() {
 }
 
 function bind() {
+  const svgButton=document.querySelector("#export-svg");
+  if (svgButton) svgButton.onclick=()=>{
+    try { downloadText(paletteSvg(palette()),`${safeFileStem(project.name)}-palette.svg`,"image/svg+xml"); }
+    catch(error) { document.querySelector("#status").textContent=status=error.message; }
+  };
   document.querySelectorAll("[data-layer-fixture]").forEach((button)=>button.onclick=()=>{
     stopPlayback();
     preferences.fixtureId=button.dataset.layerFixture;

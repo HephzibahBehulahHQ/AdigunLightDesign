@@ -6,11 +6,11 @@ It is being built as an offline-first browser application. It will connect palet
 
 ## Status
 
-Milestones 0–5 are implemented on the current feature branch. The product repository was empty before this work; no existing application has been replaced.
+Milestone 0 is documented. Partial implementations of the shell, palette engine, artistic 3D preview, virtual fixture/DMX engine, cue timeline and basic exports are available on the feature branch. This is not a completed M1–M5 acceptance claim: browser interaction, screenshot fidelity and remaining specification requirements still need implementation or verification. The product repository was empty before this work; no existing application has been replaced.
 
 ## Local development
 
-This first foundation deliberately has no runtime dependency installation requirement. It can be served by any static web server once the application shell is added.
+The current application has no runtime dependency installation requirement and can be served by a static web server.
 
 ```text
 npm test

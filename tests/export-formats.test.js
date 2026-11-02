@@ -1,5 +1,15 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { paletteSvg } from "../src/export/formats.js";
+test("SVG export escapes names, normalizes colors and rejects unsafe color data",()=>{
+  const svg=paletteSvg({name:'Studio <& "',colors:[{name:"<script>alert(1)</script>",hex:"#f00"}]});
+  assert.match(svg,/xmlns="http:\/\/www.w3.org\/2000\/svg"/);
+  assert.match(svg,/fill="#FF0000"/);
+  assert.ok(!svg.includes("<script>"));
+  assert.match(svg,/&lt;script&gt;/);
+  assert.throws(()=>paletteSvg({colors:[]}));
+  assert.throws(()=>paletteSvg({colors:[{hex:'url(javascript:alert(1))'}]}));
+});
 import { cueCsv, paletteJson, patchCsv, safeFileStem } from "../src/export/formats.js";
 
 test("exports a portable palette without project-only fields", () => { const exported=JSON.parse(paletteJson({id:"p",name:"Studio",harmonyType:"triadic",colors:[{hex:"#FF0000"}]})); assert.deepEqual(exported,{schemaVersion:1,id:"p",name:"Studio",harmonyType:"triadic",colors:[{hex:"#FF0000"}]}); });
