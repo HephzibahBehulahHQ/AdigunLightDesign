@@ -46,4 +46,8 @@ Object.assign(messages.en,{whiteChannel:"White channel"});
 Object.assign(messages.de,{whiteChannel:"Weißkanal"});
 Object.assign(messages.yo,{whiteChannel:"Chánẹ́lì funfun"});
 Object.assign(messages.pcm,{whiteChannel:"White channel"});
+Object.assign(messages.en,{pan:"Virtual pan",tilt:"Virtual tilt"});
+Object.assign(messages.de,{pan:"Virtueller Schwenk",tilt:"Virtuelle Neigung"});
+Object.assign(messages.yo,{pan:"Ìyí àfojúsùn",tilt:"Ìtẹ̀ àfojúsùn"});
+Object.assign(messages.pcm,{pan:"Virtual pan",tilt:"Virtual tilt"});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }

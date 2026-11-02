@@ -108,7 +108,8 @@ function applyFixtureInspector() {
       properties:{dimmer:value("#fixture-dimmer"),beam:value("#fixture-beam"),...(()=>{
         const rgb=hexToRgb(document.querySelector("#fixture-colour").value);
         const white=document.querySelector("#fixture-white");
-        return {red:rgb.r,green:rgb.g,blue:rgb.b,...(white ? {white:value("#fixture-white")} : {})};
+        const aiming=Object.fromEntries(["pan","tilt"].filter((key)=>document.querySelector(`#fixture-${key}`)).map((key)=>[key,value(`#fixture-${key}`)]));
+        return {red:rgb.r,green:rgb.g,blue:rgb.b,...aiming,...(white ? {white:value("#fixture-white")} : {})};
       })()},
       universe:value("#fixture-universe"),startAddress:value("#fixture-address")
     };
@@ -180,6 +181,7 @@ function render() {
     const fixture=selectedFixture(),profile=getFixtureProfile(fixture.profileId);
     document.querySelector("#apply-fixture").insertAdjacentHTML("beforebegin", `<div class="fixture-grid">${["x","y","z"].map((axis)=>`<label>${axis.toUpperCase()} (m)<input id="fixture-${axis}" type="number" required step="any" value="${fixture.transform?.[axis] ?? 0}" /></label>`).join("")}</div>`);
     const mode=profile.modes.find((item)=>item.id===fixture.modeId);
+    for (const key of ["pan","tilt"]) if (mode?.channels.includes(key)) document.querySelector("#apply-fixture").insertAdjacentHTML("beforebegin", `<label>${t(key)} (0–255)<input id="fixture-${key}" type="number" required min="0" max="255" step="1" value="${properties[key] ?? 127}" /></label>`);
     if (mode?.channels.includes("white")) document.querySelector("#apply-fixture").insertAdjacentHTML("beforebegin", `<label>${t("whiteChannel")}<input id="fixture-white" type="number" required min="0" max="255" step="1" value="${properties.white ?? 0}" /></label>`);
   }
   for (const id of ["fixture-dimmer","fixture-beam"]) {

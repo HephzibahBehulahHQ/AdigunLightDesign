@@ -1,5 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+test("virtual pan and tilt move beam targets without changing fixture positions",()=>{
+  const neutral=virtualFixtureVisuals([{transform:{x:1,y:3,z:2},properties:{pan:127,tilt:127}}])[0];
+  const aimed=virtualFixtureVisuals([{transform:{x:1,y:3,z:2},properties:{pan:255,tilt:255}}])[0];
+  assert.equal(neutral.targetX,1);
+  assert.equal(aimed.targetX,4);
+  assert.ok(aimed.targetZ>neutral.targetZ);
+  assert.equal(aimed.x,neutral.x);
+  assert.deepEqual(virtualFixtureVisuals([]),[]);
+});
 import { surfaceLighting } from "../src/light-lab/renderer.js";
 test("artistic surface spill follows fixture colour, distance and blackout",()=>{
   const base=[.2,.2,.2],light={x:0,y:3,z:0,colour:[1,0,0]};

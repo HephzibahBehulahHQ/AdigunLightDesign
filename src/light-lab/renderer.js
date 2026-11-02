@@ -7,9 +7,22 @@ function compile(gl, type, source) { const value = gl.createShader(type); gl.sha
 function quad(target, a, b, c, d, colour) { for (const point of [a,b,c,a,c,d]) target.push(...point, ...colour); }
 function box(target, x, y, z, w, h, d, colour) { const X=x+w,Y=y+h,Z=z+d, shade=colour.map((value)=>value*.55),mid=colour.map((value)=>value*.78); quad(target,[x,y,z],[X,y,z],[X,Y,z],[x,Y,z],colour);quad(target,[X,y,Z],[x,y,Z],[x,Y,Z],[X,Y,Z],shade);quad(target,[x,y,Z],[X,y,Z],[X,y,z],[x,y,z],mid);quad(target,[x,Y,z],[X,Y,z],[X,Y,Z],[x,Y,Z],colour);quad(target,[x,y,Z],[x,y,z],[x,Y,z],[x,Y,Z],shade);quad(target,[X,y,z],[X,y,Z],[X,Y,Z],[X,Y,z],mid); }
 const channel = (value) => Math.max(0, Math.min(255, Number(value) || 0)) / 255;
-export function virtualFixtureVisuals(fixtures = [], fallback = "#C21888") { return fixtures.slice(0, 12).map((fixture, index) => { const properties=fixture.properties ?? {},white=channel(properties.white),dimmer=channel(properties.dimmer),transform=fixture.transform ?? {}; return { x:Number.isFinite(transform.x) ? transform.x : (index - 1) * 2.5, y:Number.isFinite(transform.y) ? transform.y : 3.65, z:Number.isFinite(transform.z) ? transform.z : .45, colour:["red","green","blue"].map((name)=>Math.min(1,(channel(properties[name]) + white) * dimmer)), spread:.55 + channel(properties.beam) * .85 }; }) || [{x:0,y:3.65,z:.45,colour:hexVector(fallback),spread:.9}]; }
+export function virtualFixtureVisuals(fixtures = []) {
+  return fixtures.slice(0,12).map((fixture,index)=>{
+    const properties=fixture.properties ?? {},white=channel(properties.white),dimmer=channel(properties.dimmer),transform=fixture.transform ?? {};
+    const x=Number.isFinite(transform.x) ? transform.x : (index-1)*2.5;
+    const z=Number.isFinite(transform.z) ? transform.z : .45;
+    // Artistic normalized aiming, independent of manufacturer DMX calibration.
+    const pan=Number.isFinite(properties.pan) ? properties.pan : 127;
+    const tilt=Number.isFinite(properties.tilt) ? properties.tilt : 127;
+    return {x,y:Number.isFinite(transform.y) ? transform.y : 3.65,z,
+      targetX:x+(pan-127)/128*3,targetZ:z+1.35+(tilt-127)/128*3,
+      colour:["red","green","blue"].map((name)=>Math.min(1,(channel(properties[name])+white)*dimmer)),
+      spread:.55+channel(properties.beam)*.85};
+  });
+}
 export function beamVolume(light, segments=16) {
-  const data=[],tip=[light.x,light.y-.11,light.z],center=[light.x,.03,light.z+1.35];
+  const data=[],tip=[light.x,light.y-.11,light.z],center=[light.targetX ?? light.x,.03,light.targetZ ?? light.z+1.35];
   for (let index=0;index<segments;index+=1) {
     const angle=index / segments * Math.PI * 2,next=(index + 1) / segments * Math.PI * 2;
     const a=[center[0]+Math.cos(angle)*light.spread,center[1],center[2]+Math.sin(angle)*light.spread];
