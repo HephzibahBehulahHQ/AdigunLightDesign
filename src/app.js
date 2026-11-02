@@ -105,7 +105,8 @@ function applyFixtureInspector() {
       name:document.querySelector("#fixture-name").value,
       properties:{dimmer:value("#fixture-dimmer"),beam:value("#fixture-beam"),...(()=>{
         const rgb=hexToRgb(document.querySelector("#fixture-colour").value);
-        return {red:rgb.r,green:rgb.g,blue:rgb.b};
+        const white=document.querySelector("#fixture-white");
+        return {red:rgb.r,green:rgb.g,blue:rgb.b,...(white ? {white:value("#fixture-white")} : {})};
       })()},
       universe:value("#fixture-universe"),startAddress:value("#fixture-address")
     };
@@ -174,6 +175,9 @@ function render() {
     const properties=selectedFixture().properties;
     const color=rgbToHex({r:properties.red ?? 0,g:properties.green ?? 0,b:properties.blue ?? 0});
     document.querySelector("#apply-fixture").insertAdjacentHTML("beforebegin", `<label>${t("selectedColour")}<input id="fixture-colour" type="color" value="${color}" /></label>`);
+    const fixture=selectedFixture(),profile=getFixtureProfile(fixture.profileId);
+    const mode=profile.modes.find((item)=>item.id===fixture.modeId);
+    if (mode?.channels.includes("white")) document.querySelector("#apply-fixture").insertAdjacentHTML("beforebegin", `<label>${t("whiteChannel")}<input id="fixture-white" type="number" required min="0" max="255" step="1" value="${properties.white ?? 0}" /></label>`);
   }
   bind();
   if (preferences.view === "light") {

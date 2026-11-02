@@ -31,3 +31,9 @@ test("maps virtual DMX colour, dimmer, and beam channels to preview lights", () 
   assert.deepEqual(light.colour.map((value)=>Number(value.toFixed(3))), [.502,.252,0]);
   assert.equal(Number(light.spread.toFixed(2)), 1.4);
 });
+test("RGBW preview mixes white with RGB and respects blackout", () => {
+  const fixture={properties:{red:255,green:0,blue:0,white:255,dimmer:255}};
+  assert.deepEqual(virtualFixtureVisuals([fixture])[0].colour,[1,1,1]);
+  fixture.properties.dimmer=0;
+  assert.deepEqual(virtualFixtureVisuals([fixture])[0].colour,[0,0,0]);
+});

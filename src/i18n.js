@@ -42,4 +42,8 @@ Object.assign(messages.en,{webglUnavailable:"3D preview is unavailable because t
 Object.assign(messages.de,{webglUnavailable:"Die 3D-Vorschau ist nicht verfügbar, da WebGL nicht gestartet werden konnte. Paletten, virtuelles DMX, Cues und Exporte bleiben verfügbar."});
 Object.assign(messages.yo,{webglUnavailable:"Àfihàn 3D kò sí nítorí aṣàwákiri kò lè bẹ̀rẹ̀ WebGL. Paleti, DMX àfojúsùn, cue àti ìgbéjáde ṣì wà."});
 Object.assign(messages.pcm,{webglUnavailable:"3D preview no dey available because this browser no fit start WebGL. Palette editing, virtual DMX, cues and exports still dey work."});
+Object.assign(messages.en,{whiteChannel:"White channel"});
+Object.assign(messages.de,{whiteChannel:"Weißkanal"});
+Object.assign(messages.yo,{whiteChannel:"Chánẹ́lì funfun"});
+Object.assign(messages.pcm,{whiteChannel:"White channel"});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }
