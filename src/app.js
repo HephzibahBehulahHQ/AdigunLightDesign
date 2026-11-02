@@ -50,7 +50,7 @@ function createCueSnapshot() {
 function updateRendererFromFixtures() { const fixture=project.fixtures[0]; if(fixture) renderer?.setAccent(rgbToHex({r:fixture.properties.red,g:fixture.properties.green,b:fixture.properties.blue})); renderer?.setFixtures(project.fixtures); }
 function stopPlayback(message="Cue playback stopped.") { if(playbackTimer){clearInterval(playbackTimer);playbackTimer=null;} status=message; }
 function playLatestCue() {
-  const cue=project.cues.at(-1);
+  const cue=project.cues.find((item)=>item.id===preferences.cueId) ?? project.cues.at(-1);
   if (!cue) return;
   stopPlayback();
   const source=structuredClone(project.fixtures),started=performance.now();
@@ -114,7 +114,8 @@ function render() {
   const swatches = palette().colors.map((swatch) => `<button class="swatch ${active.id === swatch.id ? "is-selected" : ""}" data-swatch="${swatch.id}" aria-label="${esc(swatch.name)} ${swatch.hex}"><span style="background:${swatch.hex}"></span><b>${esc(swatch.name)}</b><small>${swatch.hex}</small>${swatch.locked ? "<em>⌁</em>" : ""}</button>`).join("");
   const patchedFixtures = project.fixtures.filter((fixture) => fixture.patchAssignment);
   const virtualFrame = dmxFrame(project.fixtures);
-  const cueBlocks = project.cues.map((cue) => `<span class="cue-block" style="--cue-width:${Math.max(55, cue.duration * 25)}px">${esc(cue.name)} · ${cue.duration}s</span>`).join("") || `<small class="empty-cues">${t("noCues")}</small>`;
+  const activeCue=project.cues.find((cue)=>cue.id===preferences.cueId) ?? project.cues.at(-1);
+  const cueBlocks = project.cues.map((cue) => `<button type="button" class="cue-block" data-cue="${esc(cue.id)}" aria-pressed="${cue.id===activeCue?.id}" style="--cue-width:${Math.max(55, cue.duration * 25)}px">${esc(cue.name)} · ${cue.duration}s</button>`).join("") || `<small class="empty-cues">${t("noCues")}</small>`;
   app.innerHTML = `
     <header class="topbar">
       <div class="brand-lockup" aria-label="${t("brandAlt")}">
@@ -151,6 +152,12 @@ function render() {
 }
 
 function bind() {
+  document.querySelectorAll("[data-cue]").forEach((button)=>button.onclick=()=>{
+    stopPlayback();
+    preferences.cueId=button.dataset.cue;
+    savePreferences();
+    render();
+  });
   document.querySelector("#locale").onchange = (event) => { preferences.locale = event.target.value; savePreferences(); status = t("statusLocale"); render(); };
   document.querySelector("#theme").onclick = () => { preferences.theme = preferences.theme === "dark" ? "light" : "dark"; savePreferences(); status = t("statusTheme"); render(); };
   document.querySelectorAll("[data-module]").forEach((button) => button.onclick = () => { const key = button.dataset.module; if (key === "copilot") preferences.luxOpen = true; else preferences.module = key; status = t("statusModule") + button.textContent.trim(); render(); });
