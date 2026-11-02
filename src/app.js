@@ -31,6 +31,7 @@ import { addCanvasObject,updateCanvasObject,duplicateCanvasObject,moveCanvasObje
 import { canvasMarkup } from "./ui/canvas.js";
 import { canvasSvg } from "./export/canvas.js";
 import { bindCanvasDrag } from "./ui/canvas-drag.js";
+import { previewNativeToolAction,confirmNativeToolAction } from "./ai/action-preview.js";
 import { groupFixtures,saveFixtureGroup } from "./domain/fixture-groups.js";
 import { cueCsv, designTokenJson, paletteCss, paletteJson, paletteSvg, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
 import { readProjectFile } from "./domain/import-project.js";
@@ -44,6 +45,7 @@ const defaults = { locale:"en", theme:"dark", module:"canvas", view:"light", too
 const preferences = { ...defaults, ...safeParse(readBrowserStorage(preferencesKey).value) };
 preferences.seed=normalizeHex(preferences.seed) ?? defaults.seed;
 let projectPersisted=false;
+let luxProposal=null;
 let project = loadProject();
 let undoStack = [], redoStack = [], status = "", renderer = null, playbackTimer = null, playbackClock = null;
 
@@ -336,6 +338,10 @@ function render() {
   document.querySelector(".selected-preview").style.background=swatchCssColor(active);
   document.querySelector(".palette-panel").insertAdjacentHTML("beforeend", `<div class="palette-actions"><label>${t("hueSpacing")}<input id="custom-spacing" type="number" min="-360" max="360" step="any" value="30" /></label><button id="custom-hues">${t("customHues")}</button><button id="perceptual-scale">${t("perceptualScale")}</button></div>`);
   const arrangementEnd=arrangementDuration(project.cues);
+  if (preferences.luxOpen) {
+    const colour=(fixture)=>rgbToHex({r:fixture.properties.red ?? 0,g:fixture.properties.green ?? 0,b:fixture.properties.blue ?? 0});
+    document.querySelector(".lux-message").insertAdjacentHTML("afterend", `<section class="lux-local-actions"><h3>${t("localPaletteAction")}</h3><button id="preview-lux-palette" ${project.fixtures.length ? "" : "disabled"}>${t("previewPaletteLighting")}</button>${luxProposal ? `<div class="lux-action-preview"><h4>${t("reviewChanges")}</h4><ul>${luxProposal.changes.map((change)=>`<li>${esc(change.after.name)}<br><span style="color:${colour(change.before)}">■</span> ${colour(change.before)} → <span style="color:${colour(change.after)}">■</span> ${colour(change.after)}</li>`).join("") || t("noActionChanges")}</ul><button id="confirm-lux-action" ${luxProposal.changes.length ? "" : "disabled"}>${t("confirmAction")}</button><button id="cancel-lux-action">${t("cancelAction")}</button></div>` : ""}</section>`);
+  }
   const projectionButton=document.querySelector(".view-menu");
   projectionButton.insertAdjacentHTML("afterend", `<button id="export-canvas" class="view-menu" ${preferences.view==="palette" ? "" : "disabled"}>↗ ${t("exportCanvas")}</button>`);
   const materialButton=document.querySelector("#apply-scene");
@@ -397,6 +403,18 @@ function render() {
 }
 
 function bind() {
+  const previewLux=document.querySelector("#preview-lux-palette");if(previewLux)previewLux.onclick=()=>{
+    try {luxProposal=previewNativeToolAction(project,{type:"adigunlightdesign.tool-call",version:1,name:"apply_palette_to_lights",payload:{paletteId:palette().id}});render();}catch(error){setStatus(error.message);}
+  };
+  const cancelLux=document.querySelector("#cancel-lux-action");if(cancelLux)cancelLux.onclick=()=>{luxProposal=null;render();};
+  const confirmLux=document.querySelector("#confirm-lux-action");if(confirmLux)confirmLux.onclick=()=>{
+    try {
+      stopPlayback();
+      const result=confirmNativeToolAction({project,undoStack,redoStack},luxProposal,{confirmed:true});
+      project=result.project;undoStack=result.undoStack;redoStack=result.redoStack;luxProposal=null;
+      saveProject();status=t("localActionApplied");render();
+    } catch(error) {luxProposal=null;status=error.message;render();}
+  };
   const shapeKind=document.querySelector("#shape-kind");if(shapeKind)shapeKind.onchange=()=>{preferences.shapeKind=shapeKind.value;savePreferences();};
   const addShape=document.querySelector("#add-canvas-shape");if(addShape)addShape.onclick=()=>document.querySelector('[data-tool="shapes"]').click();
   const copyObject=document.querySelector("#copy-object");if(copyObject)copyObject.onclick=()=>{
