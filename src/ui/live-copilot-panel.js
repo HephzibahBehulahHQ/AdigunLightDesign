@@ -1,12 +1,12 @@
 import {createLiveCopilot} from "../ai/live-copilot.js";
 import {escapeHtml as esc} from "./html.js";
 
-export function createLiveCopilotPanel({feed,getLocale,translate,documentRef=document}) {
-  let host=null,suggestion=null,enabled=true,goal="",expanded=false,timer=null;
+export function createLiveCopilotPanel({feed,getLocale,translate,documentRef=document,now=Date.now,schedule=setInterval,cancel=clearInterval}) {
+  let host=null,suggestion=null,enabled=true,goal="",expanded=false,timer=null,projectId=null;
   const t=key=>translate(getLocale(),key);
-  const bot=createLiveCopilot({feed,onSuggestion(value){suggestion=value;expanded=false;paint();}});
+  const bot=createLiveCopilot({feed,now,onSuggestion(value){suggestion=value;expanded=false;paint();}});
   bot.setEnabled(true);
-  const unsubscribe=feed.subscribe(()=>{suggestion=null;paint();});
+  const unsubscribe=feed.subscribe(state=>{if(projectId!==null && projectId!==state.project.id)goal="";projectId=state.project.id;suggestion=null;paint();});
   function paint(){
     if(!host?.isConnected)return;
     host.innerHTML=`<label><input data-live-enabled type="checkbox" ${enabled ? "checked" : ""} /> ${t("liveCopilot")}</label><details><summary>${t("liveProjectGoal")}</summary><form data-live-goal><label>${t("liveGoalQuestion")}<input name="goal" maxlength="1000" value="${esc(goal)}" /></label><button>${t("liveRememberGoal")}</button></form></details>${suggestion ? `<section class="live-suggestion" aria-live="polite"><p>${t(suggestion.messageKey)} ${esc(suggestion.subject ?? "")}</p><button data-live-dismiss>${t("liveDismiss")}</button><button data-live-more>${t("liveTellMore")}</button>${suggestion.kind==="offer" ? `<button disabled title="${t("liveLoginRequired")}">${t("liveAccept")}</button><small>${t("liveLoginRequired")}</small>` : ""}${expanded ? `<p>${t(suggestion.explanationKey)}</p>` : ""}</section>` : ""}`;
@@ -20,13 +20,13 @@ export function createLiveCopilotPanel({feed,getLocale,translate,documentRef=doc
   documentRef.addEventListener("pointerdown",down,true);documentRef.addEventListener("pointerup",up,true);documentRef.addEventListener("pointercancel",up,true);
   const blur=()=>bot.activity({dragging:false});documentRef.defaultView?.addEventListener("blur",blur);
   return {
-    mount(container){host=container;paint();if(!timer)timer=setInterval(()=>{
+    mount(container){host=container;paint();if(timer===null)timer=schedule(()=>{
       if(!host?.isConnected || documentRef.hidden)return;
       const active=documentRef.activeElement;
       if(active?.matches('input,textarea,select,[contenteditable="true"]'))return;
       bot.tick();
     },1000);},
-    dispose(){clearInterval(timer);timer=null;bot.dispose();unsubscribe();host=null;
+    dispose(){if(timer!==null)cancel(timer);timer=null;bot.dispose();unsubscribe();host=null;
       documentRef.removeEventListener("input",input,true);documentRef.removeEventListener("keydown",input,true);
       documentRef.removeEventListener("pointerdown",down,true);documentRef.removeEventListener("pointerup",up,true);documentRef.removeEventListener("pointercancel",up,true);
       documentRef.defaultView?.removeEventListener("blur",blur);

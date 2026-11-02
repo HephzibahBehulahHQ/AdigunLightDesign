@@ -34,7 +34,10 @@ export function createLiveCopilot({feed,now=Date.now,onSuggestion,debounceMs=600
   if(!feed || typeof onSuggestion!=="function" || typeof now!=="function" || !Number.isFinite(debounceMs) || debounceMs<0 || !Number.isFinite(intervalMs) || intervalMs<20000 || !Number.isFinite(dismissMs) || dismissMs<intervalMs)throw new Error("Invalid live co-pilot configuration.");
   let state=null,changedAt=0,lastShown=-Infinity,typingUntil=0,dragging=false,enabled=false,goal="",disposed=false;
   const suppressed=new Map();
-  const unsubscribe=feed.subscribe(value=>{state=value;changedAt=now();});
+  const unsubscribe=feed.subscribe(value=>{
+    if(state && state.project.id!==value.project.id){goal="";suppressed.clear();}
+    state=value;changedAt=now();
+  });
   return {
     setEnabled(value){enabled=value===true;},
     setGoal(value){if(typeof value!=="string" || value.length>1000)throw new Error("Invalid project goal.");goal=value.trim();},

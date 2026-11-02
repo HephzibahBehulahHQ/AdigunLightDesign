@@ -2,6 +2,12 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {createCanvasStateFeed,createLiveCopilot,analyzeLightingState} from "../src/ai/live-copilot.js";
 import {createStudioMoodProject} from "../src/domain/studio-mood.js";
+test("changing projects clears the analyzer goal without bypassing suggestion rate limits",()=>{
+  let time=0;const feed=createCanvasStateFeed(),bot=createLiveCopilot({feed,now:()=>time,onSuggestion:()=>{}});
+  feed.publish(createStudioMoodProject());bot.setEnabled(true);bot.setGoal("First project goal");time=1000;assert.equal(bot.tick(),null);
+  const next=createStudioMoodProject();feed.publish(next);time=2000;
+  assert.equal(bot.tick().id,`goal:${next.id}`);feed.publish(createStudioMoodProject());time=3000;assert.equal(bot.tick(),null);bot.dispose();
+});
 test("state subscription tracks changes and selection with isolated snapshots",()=>{
   const feed=createCanvasStateFeed(),project=createStudioMoodProject(),events=[];
   const stop=feed.subscribe(state=>{events.push(state);state.project.name="observer copy";});

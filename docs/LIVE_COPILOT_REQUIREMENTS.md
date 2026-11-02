@@ -16,6 +16,12 @@ authentication exists; no live suggestion changes or saves the document.
 See `HELP.md`. Selected-object explanations, broader analysis, authenticated
 acceptance and browser verification remain incomplete.
 
+Panel event-surface tests cover drag/cancel, typing cooldown, focused fields,
+hidden pages, dismissal, off state, cleanup and disabled acceptance. Project
+switches now clear session goals in both the scheduler and panel without
+resetting the global suggestion rate limit. These are mocked interaction tests,
+not browser layout or accessibility acceptance.
+
 This extends the original master specification and exact desktop visual target;
 it does not replace either. Authority: the user's attached continuation request,
 `1d470cdc-5ca2-4abd-b333-573b5fa7a2ad/Pasted text.txt`.
