@@ -27,6 +27,8 @@ import { readBrowserStorage,writeBrowserStorage } from "./domain/browser-storage
 import { applySceneMaterial } from "./domain/scene-materials.js";
 import { escapeHtml as esc,fixtureOptions,swatchButton } from "./ui/html.js";
 import { virtualDmxPreview } from "./dmx/preview.js";
+import { addCanvasObject,updateCanvasObject } from "./domain/canvas.js";
+import { canvasMarkup } from "./ui/canvas.js";
 import { groupFixtures,saveFixtureGroup } from "./domain/fixture-groups.js";
 import { cueCsv, designTokenJson, paletteCss, paletteJson, paletteSvg, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
 import { readProjectFile } from "./domain/import-project.js";
@@ -348,6 +350,7 @@ function render() {
   timingSummary.textContent=t("cueSettings");timingDetails.append(timingSummary);
   document.querySelectorAll(".cue-timing").forEach((node)=>timingDetails.append(node));
   document.querySelector(".timeline").append(timingDetails);
+  if (preferences.view==="palette") document.querySelector(".scene-preview").innerHTML=canvasMarkup(scene().canvasObjects ?? [],preferences.objectId,t("designCanvas"));
   document.querySelector(".timeline").insertAdjacentHTML("beforeend", `<details class="fixture-group-editor"><summary>${t("virtualDmx")} · ${t("outputDisabled")}</summary><pre id="virtual-dmx-monitor"></pre></details>`);
   updateDmxFeedback(project.fixtures);
   const room=roomDimensions(scene().room);
@@ -369,6 +372,9 @@ function render() {
   const palettePanel=document.createElement("div");palettePanel.id="palette-inspector-panel";
   for (const node of [...inspector.children]) if (!node.classList.contains("section-title") && !node.classList.contains("inspector-tabs") && node!==fixturePanel) palettePanel.append(node);
   inspector.append(palettePanel);
+  const canvasObject=scene().canvasObjects?.find((object)=>object.id===preferences.objectId);
+  if (canvasObject && preferences.view==="palette") palettePanel.insertAdjacentHTML("beforeend", `<fieldset class="canvas-object-editor"><legend>${t("canvasObject")}</legend>${["x","y",...(canvasObject.type==="rect" ? ["width","height"] : ["fontSize"])].map((key)=>`<label>${["x","y"].includes(key) ? key.toUpperCase() : t(key)}<input data-object-value="${key}" type="number" step="any" required value="${canvasObject[key]}"></label>`).join("")}${canvasObject.type==="text" ? `<label>${t("text")}<input id="canvas-text" maxlength="2048" value="${esc(canvasObject.text)}"></label>` : ""}<button id="apply-object">${t("apply")}</button><button id="paint-object">${t("applySwatch")}</button><button id="delete-object">${t("deleteObject")}</button></fieldset>`);
+  for (const key of ["shapes","text"]) {const button=document.querySelector(`[data-tool="${key}"]`);button.disabled=false;button.removeAttribute("title");}
   palettePanel.hidden=mode!=="palette";
   if (fixturePanel) {fixturePanel.id="fixture-inspector-panel";fixturePanel.hidden=mode!=="fixture";}
   inspector.querySelector(".inspector-tabs").innerHTML=`<button data-inspector="fixture" aria-pressed="${mode==="fixture"}" class="${mode==="fixture" ? "is-active" : ""}" ${fixturePanel ? "" : "disabled"}>${t("fixtureLabel")}</button><button data-inspector="palette" aria-pressed="${mode==="palette"}" class="${mode==="palette" ? "is-active" : ""}">${t("palette")}</button>`;
@@ -388,6 +394,21 @@ function render() {
 }
 
 function bind() {
+  document.querySelectorAll("[data-canvas-object]").forEach((element)=>{
+    const select=()=>{preferences.objectId=element.dataset.canvasObject;preferences.inspectorMode="palette";savePreferences();render();};
+    element.onclick=select;element.onkeydown=(event)=>{if (["Enter"," "].includes(event.key)){event.preventDefault();select();}};
+  });
+  const applyObject=document.querySelector("#apply-object");
+  if (applyObject) applyObject.onclick=()=>{
+    try {
+      const changes={};
+      for (const input of document.querySelectorAll("[data-object-value]")) {if (!input.value.trim() || !input.checkValidity()) return input.reportValidity();changes[input.dataset.objectValue]=Number(input.value);}
+      const text=document.querySelector("#canvas-text");if(text)changes.text=text.value;
+      commitProjectChange("canvas-object-edit",(draft)=>{draft.scenes[0]=updateCanvasObject(draft.scenes[0],preferences.objectId,changes);});render();
+    } catch(error) {setStatus(error.message);}
+  };
+  const paintObject=document.querySelector("#paint-object");if(paintObject)paintObject.onclick=()=>{commitProjectChange("canvas-object-paint",(draft)=>{draft.scenes[0]=updateCanvasObject(draft.scenes[0],preferences.objectId,{fill:selected().hex});});render();};
+  const deleteObject=document.querySelector("#delete-object");if(deleteObject)deleteObject.onclick=()=>{commitProjectChange("canvas-object-delete",(draft)=>{draft.scenes[0].canvasObjects=draft.scenes[0].canvasObjects.filter((object)=>object.id!==preferences.objectId);});preferences.objectId=null;render();};
   const duplicateFixtureButton=document.querySelector("#duplicate-fixture"),deleteFixtureButton=document.querySelector("#delete-fixture");
   if (duplicateFixtureButton) duplicateFixtureButton.onclick=()=>{
     try {
@@ -672,6 +693,11 @@ function bind() {
   document.querySelectorAll("[data-view]").forEach((button) => button.onclick = () => { preferences.view = button.dataset.view; preferences.inspectorMode=preferences.view==="light" ? "fixture" : "palette"; savePreferences(); render(); });
   document.querySelectorAll("[data-tool]").forEach((button) => button.onclick = () => {
     preferences.tool=button.dataset.tool;
+    if (["shapes","text"].includes(preferences.tool)) {
+      const id=crypto.randomUUID();
+      commitProjectChange("canvas-object-add",(draft)=>{draft.scenes[0]=addCanvasObject(draft.scenes[0],preferences.tool==="shapes" ? "rect" : "text",selected().hex,{id,text:t("text")});});
+      preferences.objectId=id;preferences.view="palette";preferences.inspectorMode="palette";
+    }
     if (preferences.tool === "fixture") { preferences.module="library"; preferences.view="light"; }
     if (preferences.tool === "orbit" || preferences.tool === "material") preferences.view="light";
     if (preferences.tool === "paletteBrush") preferences.view="palette";

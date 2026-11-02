@@ -171,4 +171,8 @@ Object.assign(messages.en,{materialTarget:"Paint surface",surface_accent:"Accent
 Object.assign(messages.de,{materialTarget:"Oberfläche färben",surface_accent:"Akzent",surface_wall:"Wände",surface_floor:"Boden",surface_ceiling:"Decke"});
 Object.assign(messages.yo,{materialTarget:"Kun ojú ilẹ̀",surface_accent:"Àwọ̀ àfikún",surface_wall:"Àwọn ògiri",surface_floor:"Ilẹ̀",surface_ceiling:"Àjà"});
 Object.assign(messages.pcm,{materialTarget:"Paint surface",surface_accent:"Accent",surface_wall:"Walls",surface_floor:"Floor",surface_ceiling:"Ceiling"});
+Object.assign(messages.en,{designCanvas:"2D design canvas",canvasObject:"Canvas object",deleteObject:"Delete object",fontSize:"Font size"});
+Object.assign(messages.de,{designCanvas:"2D-Designfläche",canvasObject:"Zeichenobjekt",deleteObject:"Objekt löschen",fontSize:"Schriftgröße"});
+Object.assign(messages.yo,{designCanvas:"Pápá àpẹrẹ 2D",canvasObject:"Nǹkan àpẹrẹ",deleteObject:"Pa nǹkan rẹ́",fontSize:"Ìwọ̀n lẹ́tà"});
+Object.assign(messages.pcm,{designCanvas:"2D design canvas",canvasObject:"Canvas object",deleteObject:"Delete object",fontSize:"Text size"});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }

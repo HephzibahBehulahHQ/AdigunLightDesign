@@ -37,6 +37,8 @@ Direct editor mutations use document transactions. Each committed operation snap
 
 ## Visual acceptance
 
+The 2D view now renders saved SVG rectangles/text rather than the static studio concept. Shape/Text tools create objects using the selected swatch. Click or keyboard selection opens numeric position/size and text controls; paint and delete use project undo/redo. Optional `scene.canvasObjects` persists in native files with bounded geometry/text and escaped markup. Drag transforms, arbitrary paths, text layout and dedicated canvas export are not implemented. Domain/import/markup tests do not establish browser interaction or visual acceptance.
+
 The paint-surface selector applies the selected swatch's RGB color to walls, floor, ceiling or decorative accents. Surface colors persist as optional `scene.materials` HEX values and use document undo/redo. They change actual vertex colors consumed by artistic lighting, rather than only a UI swatch. Surface opacity, texture maps and physically based roughness/metalness are not implemented. Geometry/color and native validation have tests; browser appearance remains unverified.
 
 Beam geometry renders in a separate additive transparency pass after opaque room/fixture geometry, with depth testing retained and depth writes disabled for beams. GPU blend/depth state is restored afterward. Buffer separation and blackout/visibility behavior have tests. This remains an artistic cone approximation without volumetric scattering, calibrated haze or photometric validation; browser appearance and reference matching are unverified.
