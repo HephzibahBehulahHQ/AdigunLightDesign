@@ -1,5 +1,15 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { mapOklchToSrgb } from "../src/domain/color-engine.js";
+test("maps excessive OKLCH chroma explicitly into sRGB",()=>{
+  const result=mapOklchToSrgb({l:.65,c:.8,h:30});
+  assert.equal(result.mapped,true);
+  assert.ok(result.chroma<.8);
+  assert.match(result.hex,/^#[0-9A-F]{6}$/);
+  assert.deepEqual(mapOklchToSrgb({l:.65,c:.8,h:30}),result);
+  assert.equal(mapOklchToSrgb({l:.5,c:0,h:0}).mapped,false);
+  assert.throws(()=>mapOklchToSrgb({l:2,c:.2,h:0}));
+});
 import { suggestContrast } from "../src/domain/color-engine.js";
 test("contrast suggestions meet their measured target or report no solution",()=>{
   for (const [foreground,background] of [["#777777","#FFFFFF"],["#333333","#0B1220"],["#FF0000","#FFFFFF"]]) {

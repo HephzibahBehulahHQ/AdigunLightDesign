@@ -64,6 +64,16 @@ export function rgbToOklab({ r, g, b }) { const R=linearRgb(r),G=linearRgb(g),B=
 export function oklabToRgb({ l, a, b }) { const L=(l+.3963377774*a+.2158037573*b)**3,M=(l-.1055613458*a-.0638541728*b)**3,S=(l-.0894841775*a-1.291485548*b)**3;return {r:displayRgb(4.0767416621*L-3.3077115913*M+.2309699292*S),g:displayRgb(-1.2684380046*L+2.6097574011*M-.3413193965*S),b:displayRgb(-.0041960863*L-.7034186147*M+1.707614701*S)}; }
 export function oklabToOklch({ l, a, b }) { return { l, c:Math.hypot(a,b), h:mod(Math.atan2(b,a)*180/Math.PI,360) }; }
 export function oklchToOklab({ l, c, h }) { const angle=h*Math.PI/180; return {l,a:c*Math.cos(angle),b:c*Math.sin(angle)}; }
+export function mapOklchToSrgb({l,c,h}) {
+  if (![l,c,h].every(Number.isFinite) || l<0 || l>1 || c<0 || c>1) throw new Error("OKLCH requires lightness 0–1, chroma 0–1 and finite hue.");
+  const rgbAt=(chroma)=>oklabToRgb(oklchToOklab({l,c:chroma,h}));
+  const fits=(rgb)=>Object.values(rgb).every((value)=>value>=-.001 && value<=255.001);
+  const requested=rgbAt(c);
+  if (fits(requested)) return {hex:rgbToHex(requested),mapped:false,chroma:c};
+  let low=0,high=c;
+  for (let index=0;index<24;index+=1) {const middle=(low+high)/2;if(fits(rgbAt(middle)))low=middle;else high=middle;}
+  return {hex:rgbToHex(rgbAt(low)),mapped:true,chroma:low};
+}
 export function isSrgbGamut(rgb) { return [rgb.r,rgb.g,rgb.b].every((channel)=>Number.isFinite(channel)&&channel>=0&&channel<=255); }
 
 export function shiftHue(hex, degrees, { saturation, lightness } = {}) {

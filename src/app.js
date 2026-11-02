@@ -5,6 +5,7 @@ import { readImagePalette } from "./domain/image-file.js";
 import { paletteRaster } from "./export/raster.js";
 import { hslToRgb } from "./domain/color-engine.js";
 import { suggestContrast } from "./domain/color-engine.js";
+import { mapOklchToSrgb, oklabToOklch } from "./domain/color-engine.js";
 import { createStudioMoodProject } from "./domain/studio-mood.js";
 import { contrastResult, hexToRgb, isSrgbGamut, normalizeHex, rgbToHex, rgbToHsl, rgbToHsv, rgbToLab, rgbToOklab } from "./domain/color-engine.js";
 import { paletteCssVariables, rerollUnlocked, starterPalette, updateSwatch } from "./domain/palette-store.js";
@@ -220,6 +221,9 @@ function render() {
   contrastCard.insertAdjacentHTML("beforeend", `<label>${t("contrastBackground")}<input id="contrast-background" type="color" value="${contrastBackground}" /></label><dl>${[["normalText","AA",contrast.aa],["normalText","AAA",contrast.aaa],["largeText","AA",contrast.largeAa],["largeText","AAA",contrast.largeAaa]].map(([key,level,pass])=>`<div><dt>${t(key)} ${level}</dt><dd class="${pass ? "pass" : "fail"}">${t(pass ? "passes" : "fails")}</dd></div>`).join("")}</dl>`);
   const contrastSuggestion=contrast.aa ? null : suggestContrast(active.hex,contrastBackground);
   if (contrastSuggestion) contrastCard.insertAdjacentHTML("beforeend", `<button id="apply-contrast" class="wide">${t("improveContrast")} ${contrastSuggestion}</button>`);
+  const oklch=oklabToOklch(rgbToOklab(hexToRgb(active.hex)));
+  document.querySelector("#lock-swatch").insertAdjacentHTML("beforebegin", `<section class="colour-space-card"><h3>OKLCH</h3>${[["l",oklch.l,1,t("lightness")],["c",oklch.c,1,t("chroma")],["h",oklch.h,360,t("hue")]].map(([key,value,max,label])=>`<label>${label} (0–${max})<input id="oklch-${key}" type="number" required min="0" max="${max}" step="any" value="${compact(value,4)}" /></label>`).join("")}<button id="apply-oklch" class="wide">${t("apply")} OKLCH</button></section>`);
+  document.querySelector("#oklch-l").closest("label").firstChild.textContent="L (0–1)";
   bind();
   if (preferences.view === "light") {
     renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {accent:scene().materialColor,fixtures:project.fixtures.map((fixture)=>({...fixture,selected:fixture.id===selectedFixture()?.id}))});
@@ -235,6 +239,18 @@ function render() {
 }
 
 function bind() {
+  document.querySelector("#apply-oklch").onclick=()=>{
+    try {
+      const values=Object.fromEntries(["l","c","h"].map((key)=>{
+        const input=document.querySelector(`#oklch-${key}`);
+        if (!input.value.trim() || !input.checkValidity()) throw new Error("Enter valid OKLCH values.");
+        return [key,Number(input.value)];
+      }));
+      const result=mapOklchToSrgb(values);
+      mutateColours((colors)=>updateSwatch(colors,selected().id,{hex:result.hex}));
+      if (result.mapped) document.querySelector("#status").textContent=status=`${t("chromaMapped")} ${result.chroma.toFixed(4)}`;
+    } catch(error) { document.querySelector("#status").textContent=status=error.message; }
+  };
   const contrastButton=document.querySelector("#apply-contrast");
   if (contrastButton) contrastButton.onclick=()=>{
     const background=normalizeHex(preferences.contrastBackground) ?? "#0B1220";

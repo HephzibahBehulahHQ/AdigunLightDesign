@@ -74,4 +74,8 @@ Object.assign(messages.en,{improveContrast:"Apply AA suggestion"});
 Object.assign(messages.de,{improveContrast:"AA-Vorschlag anwenden"});
 Object.assign(messages.yo,{improveContrast:"Lo àbá AA"});
 Object.assign(messages.pcm,{improveContrast:"Apply AA suggestion"});
+Object.assign(messages.en,{chroma:"Chroma",chromaMapped:"Chroma reduced to fit sRGB:"});
+Object.assign(messages.de,{chroma:"Chroma",chromaMapped:"Chroma für sRGB reduziert auf:"});
+Object.assign(messages.yo,{chroma:"Kírómà",chromaMapped:"A dín kírómà kù láti wọ sRGB:"});
+Object.assign(messages.pcm,{chroma:"Chroma",chromaMapped:"Chroma don reduce make e fit sRGB:"});
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }
