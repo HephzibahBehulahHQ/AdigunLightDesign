@@ -45,6 +45,7 @@ import { arrangementTimelineMarkup } from "./ui/arrangement-timeline.js";
 import { bindFixtureSliders } from "./ui/fixture-sliders.js";
 import { bindCanvasMeasure } from "./ui/canvas-measure.js";
 import { paletteAse } from "./export/ase.js";
+import {topMenuMarkup,bindTopMenu} from "./ui/top-menu.js";
 import { canFullscreen,toggleViewportFullscreen } from "./ui/fullscreen.js";
 import { groupFixtures,saveFixtureGroup } from "./domain/fixture-groups.js";
 import { cueCsv, designTokenJson, paletteCss, paletteJson, paletteSvg, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
@@ -61,6 +62,7 @@ preferences.seed=normalizeHex(preferences.seed) ?? defaults.seed;
 if (!Object.hasOwn(previewQualities,preferences.previewQuality)) preferences.previewQuality="balanced";
 let projectPersisted=false;
 let luxProposal=null;
+let cleanupTopMenu=null;
 const imageAssets=createImageAssetStore();
 const liveCanvasFeed=createCanvasStateFeed();
 const liveCopilotPanel=createLiveCopilotPanel({feed:liveCanvasFeed,getLocale:()=>preferences.locale,translate});
@@ -197,6 +199,7 @@ function saveProject() {
   projectPersisted=writeBrowserStorage(storageKey,JSON.stringify(project)).ok;
   status=t(projectPersisted ? "statusSaved" : "storageUnavailable");
   const indicator=document.querySelector(".save-state");
+  const headerSave=document.querySelector(".header-save-status");if(headerSave)headerSave.textContent=t(projectPersisted ? "savedLocally" : "sessionOnly");
   if (indicator) {indicator.classList.toggle("is-unsaved",!projectPersisted);indicator.textContent=`● ${t(projectPersisted ? "saved" : "sessionOnly")}`;indicator.title=status;}
 }
 function commitProjectChange(label, mutate) { stopPlayback(); const next=commitTransaction({project,undoStack,redoStack},label,mutate); const validation=validateProject(next.project); if (!validation.valid) throw new Error(validation.errors.join(" ")); project=next.project;undoStack=next.undoStack;redoStack=next.redoStack;saveProject(); }
@@ -238,6 +241,7 @@ function applyFixtureInspector() {
 }
 
 function render() {
+  cleanupTopMenu?.();
   const liveSelection=preferences.view==="palette" && scene().canvasObjects?.some(object=>object.id===preferences.objectId)
     ? {kind:"object",id:preferences.objectId,sceneId:scene().id}
     : (preferences.inspectorMode ?? (preferences.view==="light" ? "fixture" : "palette"))==="fixture" && selectedFixture()
@@ -268,7 +272,7 @@ function render() {
         <span class="brand-fallback" hidden>HB <b>Hephzibah Behulah</b></span><span class="brand-divider"></span><span class="division">⚡ HB Elektroniker</span>
       </div>
       <div class="product-lockup"><strong>Adigun<span>Light</span>Design</strong><small>Unified Color &amp; Light Design Studio</small></div>
-      <div class="utility-controls"><label class="language"><span>◎</span><select id="locale" aria-label="${t("language")}">${supportedLocales.map((locale) => `<option value="${locale}" ${locale === preferences.locale ? "selected" : ""}>${localeNames[locale]}</option>`).join("")}</select></label><button id="theme" class="icon-button" title="${t("appearance")}" aria-label="${t("appearance")}">${preferences.theme === "dark" ? "☼" : "◐"}</button><span class="offline-pill" title="${t("offline")}">● ${t("offline")}</span></div>
+      ${topMenuMarkup({t,locale:preferences.locale,saved:projectPersisted})}<button id="theme" type="button" hidden aria-label="${t("appearance")}"></button>
     </header>
     <nav class="module-nav" aria-label="${t("appModules")}">${nav}</nav>
     <main id="workspace" class="editor-layout">
@@ -451,6 +455,14 @@ function render() {
   document.querySelector(".scene-preview").insertAdjacentHTML("beforeend", `<button id="viewport-exit-fullscreen" class="viewport-exit-fullscreen">${t("exitFullscreen")}</button>`);
   bind();
   bindFixtureSliders(document.querySelector(".inspector"),{channelLabel:t("virtualChannelValue")});
+  cleanupTopMenu=bindTopMenu({project,t,onSelect(result){
+    stopPlayback();
+    if(result.kind==="fixture"){preferences.fixtureId=result.id;preferences.inspectorMode="fixture";preferences.view="light";}
+    else if(result.kind==="cue")preferences.cueId=result.id;
+    else {preferences.view="palette";preferences.inspectorMode="palette";if(result.kind==="object")preferences.objectId=result.id;if(result.kind==="swatch")preferences.selected=result.id;}
+    savePreferences();render();
+    if(result.kind==="palette" && result.id!==palette().id){const versions=document.querySelector("#palette-version");if(versions){versions.value=result.id;versions.dispatchEvent(new Event("change"));}}
+  }});
   if (preferences.view === "light") {
     renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {accent:scene().materialColor,room:scene().room,materials:scene().materials,stage:scene().stage,quality:preferences.previewQuality,projection:preferences.projection==="orthographic" ? "orthographic" : "perspective",visibility:scene().visibility,fixtures:project.fixtures.map((fixture)=>({...fixture,selected:fixture.id===selectedFixture()?.id})),onSelect(id){stopPlayback();preferences.fixtureId=id;preferences.inspectorMode="fixture";savePreferences();render();}});
     if (!renderer.supported) {

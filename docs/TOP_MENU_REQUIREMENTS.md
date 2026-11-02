@@ -2,6 +2,20 @@
 
 Status: required; not implemented or visually verified.
 
+Implementation progress: `src/ui/top-menu.js` now supplies the requested ordered
+row, profile icon/guest dot, compact native four-language selector and square
+Settings/Search/Help controls. Settings changes the real theme; search selects
+fixtures, active canvas objects/swatches, cues or saved palette comparisons;
+Help opens instructions and the project help guide. Account currently reports
+the true guest/unconfigured-Auth state. Five focused tests cover order, state
+presentation, search bounds/nonmutation and locale coverage. Signed-in state is
+only exercised with synthetic test inputs, not a real session.
+
+CSS uses normal flex/grid flow with 44-pixel controls and a 12-pixel gap. Small
+screens hide save text and place the icon row on its own header row. Desktop and
+mobile rendered overlap, real tooltips/focus and authenticated status changes
+remain unverified. The findings below describe the pre-change baseline.
+
 The latest user request extends this AdigunLightDesign goal. Its repeated
 AdigunSPs wording is example context; do not modify the AdigunSPs repository as
 part of this product task. Preserve the original scope, latest floating Bot

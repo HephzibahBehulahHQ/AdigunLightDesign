@@ -1,5 +1,11 @@
 # AdigunLightDesign help
 
+The top-right row contains save status, Account, Language, Settings, Search and
+Help. Account currently shows guest because frontend authentication is pending.
+Settings changes appearance. Search finds fixtures, active-canvas objects/colors,
+cues and saved palette names; selecting a saved palette opens its comparison.
+The globe keeps all four languages available. Narrow screens hide the save text.
+
 In the fixture inspector's Light tab, use the intensity and beam sliders, then
 Apply to commit. Intensity percentage is a normalized virtual channel value,
 not measured brightness. Beam is an uncalibrated 0–255 control, not degrees.
