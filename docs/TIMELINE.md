@@ -1,5 +1,7 @@
 # Cue timeline
 
+The sequence lane uses cumulative start times and duration-proportional blocks, with a seconds ruler and a moving sequence playhead. It displays a minimum 30-second span and expands for longer sequences. This is one sequential lane; independent multi-track scheduling remains unimplemented. Layout arithmetic is tested; rendered visual fidelity is unverified.
+
 Duplicate cue inserts an independent copy immediately after the selected cue and selects it. Delete cue removes the selection and selects the nearest remaining cue. Both stop previews and use document undo/redo; deleting the final cue is supported. Captured targets and keyframes remain independent between copies.
 
 The sequence transport includes a persistent loop preference and a keyboard-accessible seek slider. Committing a seek starts a paused sequence preview at that position; Resume continues from there. Looping restarts from the captured source scene on each cycle. These controls apply to the full stored cue sequence. Seeking does not edit project data. Browser interaction remains unverified.

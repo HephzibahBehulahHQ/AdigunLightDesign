@@ -18,6 +18,7 @@ import { blackout, createFixture, dmxFrame, fixtureProfiles, getFixtureProfile, 
 import { createCue, duplicateCue, removeCue, editCue, evaluateCue, evaluateSequence, moveCue } from "./timeline/engine.js";
 import { evaluateEffect } from "./timeline/effects.js";
 import { createPlaybackClock, playbackPosition } from "./timeline/playback-clock.js";
+import { timelineLayout } from "./timeline/layout.js";
 import { cueCsv, designTokenJson, paletteCss, paletteJson, paletteSvg, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
 import { readProjectFile } from "./domain/import-project.js";
 import { editorShortcut, isEditableTarget } from "./accessibility/shortcuts.js";
@@ -101,6 +102,7 @@ function playSequence({seek=0,paused=false}={}) {
     const scrub=document.querySelector("#sequence-seek");
     if (scrub && document.activeElement!==scrub) scrub.value=String(position.time);
     document.querySelector("#sequence-position").textContent=`${position.time.toFixed(1)} / ${duration.toFixed(1)} s`;
+    document.querySelector("#timeline-playhead").style.left=`${position.time/timelineLayout(cues).span*100}%`;
     document.querySelector("#status").textContent=`${t("playSequence")} · ${Math.min(frame.index + 1,cues.length)}/${cues.length}`;
     if (position.complete && !playbackClock.paused) { stopPlayback(); render(); }
   },100);
@@ -181,7 +183,8 @@ function render() {
   const patchedFixtures = project.fixtures.filter((fixture) => fixture.patchAssignment);
   const virtualFrame = dmxFrame(project.fixtures);
   const activeCue=project.cues.find((cue)=>cue.id===preferences.cueId) ?? project.cues.at(-1);
-  const cueBlocks = project.cues.map((cue) => `<button type="button" class="cue-block" data-cue="${esc(cue.id)}" aria-pressed="${cue.id===activeCue?.id}" style="--cue-width:${Math.max(55, cue.duration * 25)}px">${esc(cue.name)} · ${cue.duration}s</button>`).join("") || `<small class="empty-cues">${t("noCues")}</small>`;
+  const timeline=timelineLayout(project.cues);
+  const cueBlocks = `<div class="timeline-scale"><div class="timeline-ruler">${timeline.ticks.map((tick)=>`<span style="left:${tick.left}%">${Number(tick.time.toFixed(1))}s</span>`).join("")}</div><div class="timeline-lane">${project.cues.map((cue,index) => `<button type="button" class="cue-block" data-cue="${esc(cue.id)}" aria-pressed="${cue.id===activeCue?.id}" title="${esc(cue.name)} · ${cue.duration}s" style="left:${timeline.segments[index].left}%;width:${timeline.segments[index].width}%">${esc(cue.name)} · ${cue.duration}s</button>`).join("") || `<small class="empty-cues">${t("noCues")}</small>`}</div><div id="timeline-playhead" class="timeline-playhead" aria-hidden="true"></div></div>`;
   app.innerHTML = `
     <header class="topbar">
       <div class="brand-lockup" aria-label="${t("brandAlt")}">

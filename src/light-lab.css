@@ -22,7 +22,14 @@
 .dmx-actions button:first-child { background:linear-gradient(135deg,#743ae4,#a943e8); }
 .dmx-actions span { margin-left:auto; white-space:nowrap; }
 .cue-track { min-height:42px; margin:0 12px 12px; padding:7px; display:flex; gap:6px; align-items:center; overflow:auto; border-top:1px solid var(--line); background:#0f172a66; }
-.cue-block { flex:0 0 var(--cue-width); padding:7px; border-radius:4px; background:linear-gradient(90deg,#7133af,#8066ee); color:white; font-size:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.cue-block { position:absolute; top:4px; height:26px; padding:4px 6px; border-radius:4px; border:1px solid #aa80ee; background:linear-gradient(90deg,#7133af,#8066ee); color:white; font-size:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.timeline-scale { position:relative; flex:1 0 360px; margin:0 12px; }
+.timeline-ruler { position:relative; height:24px; border-bottom:1px solid var(--line); }
+.timeline-ruler span { position:absolute; top:0; transform:translateX(-50%); color:var(--muted); font-size:10px; }
+.timeline-ruler span::after { content:""; position:absolute; left:50%; top:15px; height:8px; border-left:1px solid var(--line); }
+.timeline-lane { position:relative; height:36px; background:repeating-linear-gradient(90deg,transparent 0 calc(16.6667% - 1px),#8290a21c calc(16.6667% - 1px) 16.6667%),#28324766; }
+.timeline-playhead { position:absolute; top:17px; bottom:0; left:0; width:1px; background:#d7a9ff; pointer-events:none; box-shadow:0 0 5px #ba78ff; }
+.timeline-playhead::before { content:""; position:absolute; left:-4px; top:-4px; width:9px; height:9px; background:#d7a9ff; transform:rotate(45deg); }
 .empty-cues { color:var(--muted); }
 .export-drawer { position:fixed; z-index:20; width:min(560px,calc(100vw - 28px)); left:50%; top:50%; transform:translate(-50%,-50%); border-color:#7c3aed; }
 .library-drawer { position:fixed; z-index:20; width:min(620px,calc(100vw - 28px)); left:50%; top:50%; transform:translate(-50%,-50%); border-color:#22d3ee; }
