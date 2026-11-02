@@ -1,5 +1,9 @@
 # Development
 
+The required goal also includes the [live co-pilot extension](LIVE_COPILOT_REQUIREMENTS.md).
+It preserves the master specification and desktop visual target. Its acceptance
+gates are additional work, not completed by the existing request-based Lux UI.
+
 The project is intentionally initialized as a static, offline-capable core with no downloaded runtime dependencies. Node 24 or later is required for validation.
 
 ```text
