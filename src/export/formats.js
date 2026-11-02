@@ -1,6 +1,7 @@
 import { paletteCssVariables } from "../domain/palette-store.js";
 import { normalizeHex } from "../domain/color-engine.js";
 import { swatchCssColor } from "../domain/swatch-opacity.js";
+import { arrangeTracks } from "../timeline/tracks.js";
 
 const xmlText=(value)=>String(value ?? "").replace(/[&<>"']/g,(char)=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&apos;"})[char]);
 export function designTokenJson(palette) {
@@ -33,13 +34,15 @@ export function paletteJson(palette) { return JSON.stringify({ schemaVersion:1, 
 export function paletteCss(palette) { return paletteCssVariables(palette.colors); }
 export function patchCsv(fixtures) { return ["Fixture,Profile,Mode,Universe,Start address,Footprint", ...fixtures.filter((fixture)=>fixture.patchAssignment).map((fixture)=>[fixture.name,fixture.profileId,fixture.modeId,fixture.patchAssignment.universe,fixture.patchAssignment.startAddress,fixture.patchAssignment.channelFootprint].map(escapeCsv).join(","))].join("\n"); }
 export function cueCsv(cues) {
+  const schedule=new Map(arrangeTracks(cues).flatMap((track)=>track.entries.map((entry)=>[entry.cue,{track:track.id,start:entry.start}])));
   let start=0;
   const rows=cues.map((cue,index)=>{
     const end=start + cue.duration;
-    const row=[cue.name,cue.duration,cue.fade,cue.delay ?? 0,cue.targets.length,index + 1,start,end].map(escapeCsv).join(",");
+    const timing=schedule.get(cue),fadeOut=cue.fadeOut ?? 0,hold=cue.duration-(cue.delay ?? 0)-cue.fade-fadeOut;
+    const row=[cue.name,cue.duration,cue.fade,cue.delay ?? 0,cue.targets.length,index + 1,start,end,fadeOut,Number(hold.toFixed(6)),timing.track,timing.start,timing.start+cue.duration].map(escapeCsv).join(",");
     start=end;
     return row;
   });
-  return ["Cue,Duration seconds,Fade seconds,Delay seconds,Fixture targets,Sequence order,Start seconds,End seconds",...rows].join("\n");
+  return ["Cue,Duration seconds,Fade seconds,Delay seconds,Fixture targets,Sequence order,Start seconds,End seconds,Fade-out seconds,Hold seconds,Track,Track start seconds,Track end seconds",...rows].join("\n");
 }
 export function safeFileStem(name) { return String(name).trim().toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"") || "adigun-light-design"; }

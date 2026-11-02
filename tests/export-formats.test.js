@@ -29,6 +29,13 @@ test("creates safe downloaded filenames", () => { assert.equal(safeFileStem(" St
 test("cue report preserves sequence order and cumulative timing after reordering", () => {
   const a={name:"A",duration:5,fade:1,delay:2,targets:[]},b={name:"B",duration:3,fade:0,targets:[]};
   const rows=cueCsv([b,a]).split("\n");
-  assert.equal(rows[1],'"B","3","0","0","0","1","0","3"');
-  assert.equal(rows[2],'"A","5","1","2","0","2","3","8"');
+  assert.equal(rows[1],'"B","3","0","0","0","1","0","3","0","3","Main","0","3"');
+  assert.equal(rows[2],'"A","5","1","2","0","2","3","8","0","2","Main","3","8"');
+});
+test("cue report distinguishes sequential timing from simultaneous tracks and includes fade-out",()=>{
+  const cues=[{name:"Key",duration:8,fade:2,delay:1,fadeOut:2,trackId:'Key, "A"',startTime:4,targets:[]},{name:"Fill",duration:5,fade:1,trackId:"Fill",startTime:0,targets:[]}];
+  const rows=cueCsv(cues).split("\n");
+  assert.match(rows[0],/Fade-out seconds,Hold seconds,Track,Track start seconds,Track end seconds$/);
+  assert.equal(rows[1],'"Key","8","2","1","0","1","0","8","2","3","Key, ""A""","4","12"');
+  assert.equal(rows[2],'"Fill","5","1","0","0","2","8","13","0","4","Fill","0","5"');
 });
