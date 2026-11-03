@@ -2,10 +2,9 @@
 
 Every milestone must run `npm test`, `npm run check` and `npm run build`.
 
-Run `npm run typecheck` as well. The incremental strict TypeScript gate currently
+Run `npm run lint` for JavaScript and TypeScript correctness and `npm run typecheck` for migrated TypeScript. The incremental strict TypeScript gate currently
 checks `src/**/*.ts`, covering the playback clock, timeline layout, preview quality budgets, room dimensions, stage settings browser-storage adapters viewport picking shared camera/projection math project history the core color engine, opacity compositing, scene materials native canvas operations the virtual DMX engine, channel preview, virtual effects, cue evaluation, channel keyframes track scheduling, palette editing and temperature variants. Existing JavaScript
-modules are not silently covered by this command; full application typing and
-lint remain open release gates. Their JavaScript entry points re-export
+modules are not silently covered by this command; full application typing remains an open release gate. Their JavaScript entry points re-export
 the typed implementation so existing consumers and tests retain their imports.
 Node 24 executes its erasable syntax; Vite bundles it for the browser. CI runs
 this typecheck before the existing test/check/build jobs.

@@ -1,0 +1,21 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "categories": { "correctness": "off" },
+  "rules": {
+    "eslint/no-undef": "error",
+    "eslint/no-dupe-keys": "error",
+    "eslint/no-duplicate-case": "error",
+    "eslint/no-import-assign": "error",
+    "eslint/no-unreachable": "error",
+    "eslint/no-unsafe-finally": "error"
+  },
+  "overrides": [
+    { "files": ["src/**/*"], "env": { "browser": true } },
+    {
+      "files": ["src/app.js"],
+      "globals": { "__ALD_SUPABASE_PUBLISHABLE_KEY__": "readonly" }
+    },
+    { "files": ["server/**/*", "scripts/**/*", "type-tests/**/*"], "env": { "node": true } },
+    { "files": ["tests/**/*"], "env": { "browser": true, "node": true } }
+  ]
+}
