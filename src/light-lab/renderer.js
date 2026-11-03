@@ -268,7 +268,10 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
 
 export function sceneBuffers(accent,fixtures,visibility={},room,materials={},quality="balanced",stage) {
   const opaque=sceneData(accent,fixtures,visibility,room,false,materials,quality,stage);
-  const beams=virtualFixtureVisuals(visibility.lighting===false ? [] : fixtures,previewQuality(quality).fixtures).filter((light)=>light.colour.some((value)=>value>0)).flatMap((light)=>beamVolume(light));
+  const beams=virtualFixtureVisuals(visibility.lighting===false ? [] : fixtures,previewQuality(quality).fixtures).filter((light)=>light.colour.some((value)=>value>0)).flatMap(light=>[
+    ...beamVolume(light),
+    ...beamVolume({...light,spread:light.spread*.48,colour:light.colour.map(channel=>channel*.6)})
+  ]);
   const data=new Float32Array(opaque.length+beams.length);
   data.set(opaque);data.set(beams,opaque.length);
   return {data,opaqueVertices:opaque.length/6};
