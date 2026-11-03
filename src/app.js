@@ -205,6 +205,15 @@ function playArrangement({seek=0,paused=false}={}) {
 }
 function downloadText(content, filename, type) { const file=new Blob([content],{type}); const link=document.createElement("a"); link.href=URL.createObjectURL(file); link.download=filename; link.click(); URL.revokeObjectURL(link.href); }
 function exportFile(kind) { if(kind==="ase"){try{downloadText(paletteAse(palette()),`${safeFileStem(palette().name)}.ase`,"application/octet-stream");status=t("aseExportLimit");}catch(error){status=error.message;}document.querySelector("#status").textContent=status;return;} const stem=safeFileStem(project.name); const exports={ project:[projectJson(project),`${stem}.ald.json`,"application/json"], palette:[paletteJson(palette()),`${stem}-palette.json`,"application/json"], css:[paletteCss(palette()),`${stem}-palette.css`,"text/css"], patch:[patchCsv(project.fixtures),`${stem}-patch.csv`,"text/csv"], cues:[cueCsv(project.cues),`${stem}-cues.csv`,"text/csv"] }; const [content,name,type]=exports[kind]; downloadText(content,name,type); status=`${name} downloaded.`; document.querySelector("#status").textContent=status; }
+function openCloudProject(document) {
+  const next=prepareEditorProject(document);
+  stopPlayback();
+  undoStack=[structuredClone(project)];
+  redoStack=[];
+  project=next;
+  saveProject();
+  render();
+}
 async function importNativeProject(file) { const result=await readProjectFile(file); if(!result.valid) return setStatus(result.errors.join(" ")); stopPlayback(); project=prepareEditorProject(result.project); undoStack=[];redoStack=[];saveProject();status=`${project.name} imported locally.`;render(); }
 function savePreferences() { if (!writeBrowserStorage(preferencesKey,JSON.stringify(preferences)).ok) status=t("preferencesNotSaved"); }
 function saveProject() {
@@ -475,7 +484,7 @@ function render() {
     document.querySelector(".scene-preview").append(axes);axes.querySelectorAll("[data-camera-axis]").forEach(button=>button.onclick=()=>{renderer?.setView?.(button.dataset.cameraAxis);document.querySelector("#light-canvas")?.focus();});
   }
   floatingBot.mount(document.querySelector(".lux-panel"));
-  cleanupTopMenu=bindTopMenu({project,t,onAccount:()=>openAccountDialog({account,t}),onSelect(result){
+  cleanupTopMenu=bindTopMenu({project,t,onAccount:()=>openAccountDialog({account,t,getProject:()=>project,onOpen:openCloudProject}),onSelect(result){
     stopPlayback();
     if(result.kind==="fixture"){preferences.fixtureId=result.id;preferences.inspectorMode="fixture";preferences.view="light";}
     else if(result.kind==="cue")preferences.cueId=result.id;

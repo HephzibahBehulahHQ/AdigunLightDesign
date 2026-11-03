@@ -1,3 +1,4 @@
+import {createCloudProjectStore} from "./projects.js";
 import {createClient} from "@supabase/supabase-js";
 export const sharedSupabaseUrl="https://fqcbfnktdvqojyezxeis.supabase.co";
 
@@ -25,7 +26,19 @@ export function createAccount({publishableKey="",clientFactory=createClient}={})
     if(event==="SIGNED_OUT" || !session){if(user){user=null;emit();}}
     else queueMicrotask(()=>{void verify();});
   }).data.subscription;
+  const projects=typeof client?.schema==="function" ? createCloudProjectStore({
+    client,
+    async withUser(operation){
+      const identity=await verify();
+      if(!identity) throw new Error("authRequired");
+      const version=generation;
+      const result=await operation(identity.id);
+      if(disposed || generation!==version || user?.id!==identity.id) throw new Error("cloudSessionChanged");
+      return result;
+    }
+  }) : null;
   return {
+    projects,
     get configured(){return client!==null;},
     get user(){return user ? {...user} : null;},
     subscribe(listener){listeners.add(listener);return ()=>listeners.delete(listener);},

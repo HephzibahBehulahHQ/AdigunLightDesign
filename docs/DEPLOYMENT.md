@@ -34,7 +34,9 @@ The selected Supabase Auth health endpoint returned HTTP 200 on 3 November
 2026. A guest Data API probe against the product schema returned HTTP 406
 with PGRST106. Cloud project storage requires exposing adigunlightdesign in
 the shared project while retaining its registered-user grants and RLS policies.
-An authenticated save and reopen flow still requires end-to-end verification.
+The account dialog offers owner-scoped cloud copies, recent projects, opening,
+and revision-checked updates. These requests have mocked SDK coverage.
+Authenticated save and reopen still require end-to-end verification.
 
 After deployment, the workflow compares the custom-domain HTML and generated
 assets with their build checksums. A mismatch fails the release check. Verify
