@@ -199,3 +199,8 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
     grid-template-columns:190px minmax(0,1fr) 210px;
   }
 }
+
+@media (min-width:1100px) {
+  .fixture-tab-body label { gap:3px; padding-bottom:6px; }
+  .fixture-patch-fields input { width:100%; min-width:0; }
+}

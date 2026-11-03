@@ -490,7 +490,7 @@ function render() {
     const effectControls=document.querySelector("#effect-type").closest(".dmx-actions");
     const effectScope=document.createElement("p");effectScope.textContent=t("allVirtualFixtures");bodies.effects.append(effectScope,effectControls);
     fixturePanel.append(...Object.values(bodies),apply,actions);
-    if (activeTab==="fixture") bodies.fixture.firstElementChild.append(apply);
+    if (activeTab==="fixture") bodies.fixture.firstElementChild.prepend(apply);
     apply.hidden=activeTab==="effects";actions.hidden=activeTab!=="fixture";
     inspector.querySelector(".section-title h2").textContent=`${t("selectedFixtureTitle")}: ${selectedFixture().name}`;
     inspector.querySelector(".inspector-tabs").innerHTML=keys.map((key)=>`<button data-fixture-tab="${key}" aria-pressed="${key===activeTab}" class="${key===activeTab ? "is-active" : ""}">${t({fixture:"fixtureLabel",light:"lightTab",dmx:"dmxTab",effects:"effectsTab"}[key])}</button>`).join("");
