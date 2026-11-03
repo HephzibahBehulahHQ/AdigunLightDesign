@@ -15,7 +15,7 @@ export function createLuxServicePanel({getProject,getLocale,translate,onPreview,
       catch(e){error=e.message;}
       mount(container);
     };
-    container.querySelector("[data-lux-disconnect]").onclick=()=>{epoch++;session.disconnect();reply=null;error="";if(message){message.querySelector("b").textContent=`Lux · ${t("offline")}`;message.querySelector("p").textContent=t("luxUnavailable");}mount(container);};
+    container.querySelector("[data-lux-disconnect]").onclick=()=>{epoch++;session.disconnect();reply=null;error="";if(message){message.querySelector("b").textContent=`Adigun AI · ${t("offline")}`;message.querySelector("p").textContent=t("luxUnavailable");}mount(container);};
     container.querySelector('[name="question"]').oninput=(event)=>{question=event.target.value;};
     container.querySelector("[data-lux-request]").onsubmit=async(event)=>{
       event.preventDefault();const form=event.currentTarget;
