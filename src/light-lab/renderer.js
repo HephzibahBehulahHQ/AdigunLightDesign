@@ -194,7 +194,9 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
     return floor.map(channel=>channel*shade);
   };
   data.push(...surfaceGrid([-width/2,0,-depth/2],[width,0,0],[0,0,depth],floorBoardColour,budget.columns,budget.rows));
+  const rearWallStart=data.length;
   data.push(...surfaceGrid([-width/2,0,depth/2],[width,0,0],[0,height,0],wall,budget.columns,budget.rows));
+  const rearWallEnd=data.length;
   data.push(...surfaceGrid([-width/2,0,-depth/2],[0,0,depth],[0,height,0],materials.wall ? wall : hexVector("#132746"),budget.columns,budget.rows));
   data.push(...surfaceGrid([-width/2,height,-depth/2],[width,0,0],[0,0,depth],hexVector(materials.ceiling ?? "#101726"),budget.columns,budget.rows));
   const shelfLamps=[{x:4.34,y:1.81,z:2.67},{x:4.36,y:2.51,z:2.67}];
@@ -236,8 +238,14 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
   const surfaceLights=visibility.props!==false && visibility.lighting!==false
     ? [...lights,...shelfLamps.map(lamp=>({...lamp,colour:[.85,.46,.16],range:.85}))]
     : lights;
+  // Approximate the soft bounce from each fixture's floor footprint.
+  const rearWallLights=lights.map(light=>({
+    x:light.targetX,y:.65,z:light.targetZ,
+    colour:light.colour.map(channel=>channel*.8),range:3.2
+  }));
+  const rearSurfaceLights=[...surfaceLights,...rearWallLights];
   for (let offset=0;offset<data.length;offset+=6) {
-    const colour=surfaceLighting(data.slice(offset,offset+3),data.slice(offset+3,offset+6),surfaceLights);
+    const colour=surfaceLighting(data.slice(offset,offset+3),data.slice(offset+3,offset+6),offset>=rearWallStart && offset<rearWallEnd ? rearSurfaceLights : surfaceLights);
     for (let channel=0;channel<3;channel+=1) data[offset+3+channel]=colour[channel];
   }
   lights.forEach((light)=>lightGeometry(data,light,includeBeams));

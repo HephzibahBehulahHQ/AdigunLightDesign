@@ -3,9 +3,9 @@ import { starterPalette } from "./palette-store.js";
 import { createProject } from "./project.js";
 
 const studioRig = [
-  { red:0, green:100, blue:255, beam:120 },
-  { red:255, green:126, blue:26, beam:132 },
-  { red:255, green:0, blue:184, beam:145 }
+  { red:0, green:100, blue:255, tilt:220, beam:120 },
+  { red:255, green:126, blue:26, tilt:220, beam:132 },
+  { red:255, green:0, blue:184, tilt:220, beam:145 }
 ];
 
 export function createStudioMoodProject() {
