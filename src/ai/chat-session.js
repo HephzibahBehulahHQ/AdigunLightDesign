@@ -14,15 +14,15 @@ export function createLuxChatSession({fetchImpl=globalThis.fetch}={}) {
     disconnect() {generation++;client=null;pending=false;},
     get status() {return {configured:client!==null,pending,endpoint:client?.endpoint ?? null};},
     async request({project,question,locale,consent=false}) {
-      if(!client)throw new Error("Configure a Lux service before sending a request.");
-      if(pending)throw new Error("A Lux request is already pending.");
+      if(!client)throw new Error("Configure a Adigun AI service before sending a request.");
+      if(pending)throw new Error("A Adigun AI request is already pending.");
       const requestGeneration=generation,baseline=JSON.stringify(project);
       const snapshot=structuredClone(project),context=buildLuxProjectContext(snapshot);
       pending=true;
       try {
         const result=await client.suggest({question,locale,context,consent});
-        if(requestGeneration!==generation)throw new Error("Lux connection changed. Response discarded.");
-        if(JSON.stringify(project)!==baseline)throw new Error("Project changed while Lux was responding. Request fresh suggestions.");
+        if(requestGeneration!==generation)throw new Error("Adigun AI connection changed. Response discarded.");
+        if(JSON.stringify(project)!==baseline)throw new Error("Project changed while Adigun AI was responding. Request fresh suggestions.");
         // No native action is executed here. Each proposed call needs its own review.
         return {...result,calls:structuredClone(result.calls),baseline};
       } finally {if(requestGeneration===generation)pending=false;}

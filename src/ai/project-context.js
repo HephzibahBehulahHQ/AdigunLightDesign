@@ -12,6 +12,6 @@ export function buildLuxProjectContext(project) {
     cues:project.cues.slice(0,32).map((cue)=>({id:cue.id,name:short(cue.name),duration:cue.duration,fade:cue.fade,delay:cue.delay ?? 0,fadeOut:cue.fadeOut ?? 0,capturedFixtureCount:cue.targets.length})),
     exclusions:["raw images","asset files","history","credentials","project description","canvas artwork"]
   };
-  if(JSON.stringify(context).length>40000)throw new Error("Project summary exceeds the Lux context budget.");
+  if(JSON.stringify(context).length>40000)throw new Error("Project summary exceeds the Adigun AI context budget.");
   return context;
 }
