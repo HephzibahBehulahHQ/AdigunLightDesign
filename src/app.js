@@ -327,7 +327,7 @@ function render() {
   const sequenceDuration=project.cues.reduce((sum,cue)=>sum+cue.duration,0);
   const tracks=arrangeTracks(project.cues);
   const sequenceTrack=document.querySelector(".timeline > .cue-track");
-  sequenceTrack.insertAdjacentHTML("beforebegin",arrangementTimelineMarkup(project.cues,activeCue?.id,t("noCues")));
+  document.querySelector(".timeline > .section-title").insertAdjacentHTML("afterend",arrangementTimelineMarkup(project.cues,activeCue?.id,t("noCues")));
   const sequenceDetails=document.createElement("details");sequenceDetails.className="fixture-group-editor";sequenceDetails.id="sequence-preview-details";
   sequenceDetails.innerHTML=`<summary>${t("playSequence")}</summary>`;
   sequenceTrack.replaceWith(sequenceDetails);sequenceDetails.append(sequenceTrack);
@@ -420,6 +420,13 @@ function render() {
   projectionButton.setAttribute("aria-label",t("switchProjection"));
   document.querySelector("#effect-type").insertAdjacentHTML("beforeend", `<option value="panTilt">${t("panTilt")}</option>`);
   document.querySelector("#play-tracks").insertAdjacentHTML("afterend", `<label>${t("seekTracks")} <input id="arrangement-seek" type="range" min="0" max="${arrangementEnd}" step="0.1" value="0" ${arrangementEnd ? "" : "disabled"}></label><output id="arrangement-position">0 / ${arrangementEnd.toFixed(1)} s</output>`);
+  const timelineTransport=document.createElement("div");
+  timelineTransport.className="timeline-transport";
+  for (const id of ["play-tracks","stop-cue","arrangement-position"]) {
+    timelineTransport.append(document.getElementById(id));
+  }
+  document.querySelector(".timeline > .section-title").append(timelineTransport);
+  document.querySelector(".timeline > p").append(" ", document.querySelector(".timeline > .section-title .m-badge"));
   const timingDetails=document.createElement("details");
   document.querySelector("#cue-delay").parentElement.insertAdjacentHTML("afterend", `<label>${t("fadeOut")} (s)<input id="cue-fadeOut" type="number" min="0" step="0.1" required value="0"></label>`);
   if (activeCue) document.querySelector("#edit-cue-delay").parentElement.insertAdjacentHTML("afterend", `<label>${t("fadeOut")} (s)<input id="edit-cue-fadeOut" type="number" min="0" step="0.1" required value="${activeCue.fadeOut ?? 0}"></label><small>${t("holdTime")}: ${Math.max(0,activeCue.duration-(activeCue.delay ?? 0)-activeCue.fade-(activeCue.fadeOut ?? 0)).toFixed(1)} s</small>`);
