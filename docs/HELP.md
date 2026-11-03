@@ -115,3 +115,5 @@ In 2D, select a rectangle or ellipse and drag its cyan lower-right handle to res
 The scheduled timeline ruler supports pointer scrubbing: drag to preview the playhead and release to pause the virtual arrangement at that time. Cancellation restores the indicator. Focus the ruler and use arrow keys (0.1s), Shift+arrow (1s), Home or End. Seeking is bounded by the actual arrangement duration; this does not alter cues or send hardware output.
 
 Ruler seeking preserves fractional arrangement endpoints (including durations below 0.1 seconds) and restores the wrapped playhead position when looping playback causes an editor refresh.
+
+Undo/redo retains the most recent 100 project snapshots per session. After more edits, the oldest undo snapshots are discarded; the current project remains intact. A new edit clears redo. Failed mutations do not change the source project. Snapshot count is bounded, but memory usage still depends on project size.
