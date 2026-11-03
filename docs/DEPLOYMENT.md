@@ -16,3 +16,19 @@ product storage exists, but frontend Auth is unavailable in builds without
 outside version control; secret/service-role keys are rejected. No production
 credentials are committed. AI providers and physical-DMX bridges require separate
 server infrastructure. No deployment is performed by the build or validation CI.
+
+## Editor release workflow
+
+The editor workflow is manual and runs from main. Before dispatching it,
+review and merge the application PR through the repository's normal controls.
+In Pages settings, select GitHub Actions as the publishing source and retain
+the existing custom domain. Restrict the github-pages environment to main and
+keep its required reviewers enabled where configured.
+
+The build job runs typecheck, tests, the project contract check, and the static
+build before uploading dist. The deployment job uses the github-pages
+environment. The optional ALD_SUPABASE_PUBLISHABLE_KEY repository variable
+enables the browser Auth client in the build.
+
+After deployment, verify the custom-domain page loads the editor bundle from
+the released build. Confirm sign-in only if a public client key was configured.
