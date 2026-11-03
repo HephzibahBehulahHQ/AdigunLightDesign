@@ -51,3 +51,6 @@ test("separates normal and large-text contrast outcomes near the AA threshold",(
 });
 test("preserves locked swatches during deterministic reroll and exports CSS", () => { const source = starterPalette.map((swatch, index) => index === 0 ? { ...swatch, locked:true } : swatch); const rerolled = rerollUnlocked(source, "#FF0000", "triadic"); assert.equal(rerolled[0].hex, source[0].hex); assert.match(paletteCssVariables(rerolled), /--ald-deep-blue/); });
 test("converts RGB, HSV, Lab and OKLab without hiding gamut loss", () => { const red=hexToRgb("#FF0000"), hsv=rgbToHsv(red), lab=rgbToLab(red), recovered=labToRgb(lab); assert.deepEqual(hsvToRgb(hsv),red); assert.ok(Math.abs(lab.l-53.24)<.2); assert.ok(Math.abs(recovered.r-255)<.1); assert.ok(rgbToOklab(red).l>.6); assert.equal(isSrgbGamut({r:256,g:0,b:0}),false); });
+test('unknown harmony names cannot resolve inherited object properties',()=>{
+ for(const name of ['constructor','toString','__proto__','unknown'])assert.deepEqual(harmony('#ff0000',name),['#FF0000']);
+});
