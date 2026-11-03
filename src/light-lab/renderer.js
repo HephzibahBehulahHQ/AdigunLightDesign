@@ -101,7 +101,12 @@ export function surfaceLighting(position, baseColour, lights) {
 export function surfaceGrid(origin, horizontal, vertical, colour, columns=20, rows=16) {
   const data=[];
   const point=(x,y)=>origin.map((value,axis)=>value+horizontal[axis]*x/columns+vertical[axis]*y/rows);
-  for (let row=0;row<rows;row+=1) for (let column=0;column<columns;column+=1) quad(data,point(column,row),point(column+1,row),point(column+1,row+1),point(column,row+1),colour);
+  for(let row=0;row<rows;row++){
+    for(let column=0;column<columns;column++){
+      const cellColour=typeof colour==="function" ? colour(column,row) : colour;
+      quad(data,point(column,row),point(column+1,row),point(column+1,row+1),point(column,row+1),cellColour);
+    }
+  }
   return data;
 }
 export function studioPlant(x,z,height=2.1) {
@@ -178,10 +183,15 @@ function studioWallArt(data, room, frameColour) {
 }
 
 export function sceneData(accent, fixtures, visibility={}, room,includeBeams=true,materials={},quality="balanced",stage) {
-  const data=[],floor=hexVector(materials.floor ?? "#172238"),wall=hexVector(materials.wall ?? "#27324A"),couch=hexVector("#9C4F48"),wood=hexVector("#67442F"),metal=hexVector("#151D2D");
+  const data=[],floor=hexVector(materials.floor ?? "#4A3431"),wall=hexVector(materials.wall ?? "#27324A"),couch=hexVector("#9C4F48"),wood=hexVector("#67442F"),metal=hexVector("#151D2D");
   const {width,height,depth}=roomDimensions(room);
   const budget=previewQuality(quality);
-  data.push(...surfaceGrid([-width/2,0,-depth/2],[width,0,0],[0,0,depth],floor,budget.columns,budget.rows));
+  const floorBoardColour=(column,row)=>{
+    const board=Math.floor((row+(column%3))/4);
+    const shade=.82+((column*7+board*3)%9)*.025;
+    return floor.map(channel=>channel*shade);
+  };
+  data.push(...surfaceGrid([-width/2,0,-depth/2],[width,0,0],[0,0,depth],floorBoardColour,budget.columns,budget.rows));
   data.push(...surfaceGrid([-width/2,0,depth/2],[width,0,0],[0,height,0],wall,budget.columns,budget.rows));
   data.push(...surfaceGrid([-width/2,0,-depth/2],[0,0,depth],[0,height,0],materials.wall ? wall : hexVector("#132746"),budget.columns,budget.rows));
   data.push(...surfaceGrid([-width/2,height,-depth/2],[width,0,0],[0,0,depth],hexVector(materials.ceiling ?? "#101726"),budget.columns,budget.rows));
