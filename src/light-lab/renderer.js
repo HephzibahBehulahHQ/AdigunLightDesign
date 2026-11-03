@@ -96,7 +96,7 @@ export function surfaceLighting(position, baseColour, lights) {
     }
     const falloff=light.range ? Math.max(0,1-distance/light.range)**2 : 1;
     const strength=below * cone * falloff / (1 + distance * distance * .12);
-    for (let channel=0;channel<3;channel+=1) result[channel]+=light.colour[channel]*strength*(.25 + baseColour[channel]*.5);
+    for (let channel=0;channel<3;channel+=1) result[channel]+=light.colour[channel]*strength*(.48 + baseColour[channel]*.65);
   }
   return result.map((value)=>Math.max(0,Math.min(1,value)));
 }
