@@ -21,7 +21,7 @@ these estimates when stronger evidence becomes available.
 | M4 fixtures/virtual DMX | 10 | 5 | Validated generic profiles, allocation, groups and virtual channel state. Only three generic profiles; extended licensed catalog, GDTF interchange and physical output are not complete. |
 | M5 timeline | 10 | 6 | Track scheduling, keyframes, fades/effects, clock/playback and pointer/keyboard seeking have automated coverage. Browser editing/playback and reference appearance remain unverified. |
 | M6 Lux | 10 | 3 | Context/tool boundaries, preview/confirm, receipts/undo, optional HTTP adapter and local live suggestions have tests. Live provider, real authenticated action flow, voice/image workflows and production service operation remain open. |
-| M7 exports | 5 | 2 | Native JSON, CSS, SVG/raster, CSV, experimental ASE and raster-backed palette PDF. Actual browser downloads, cue PDF and validated advanced interchange remain open. |
+| M7 exports | 5 | 2 | Native JSON, CSS, SVG/raster, CSV, experimental ASE and raster-backed palette and cue PDFs. Browser downloads and advanced interchange validation remain open. |
 | M8 hardening/release | 10 | 2 | Documentation, automated CI and strict contracts across migrated domain engines exist. Full TypeScript coverage/lint, accessibility, performance, localization/security acceptance, cloud integration and production editor release remain open. |
 | Total | 100 | 48 | Estimated remaining work: 52%. |
 
@@ -56,7 +56,7 @@ not silently substituted with local simulation.
 3. Complete strict typing/lint and browser end-to-end gates from the master spec.
 4. Verify actual account/cloud and configured Lux flows before claiming them
    operational. Preserve registered-user authorization and project isolation.
-5. Finish cue PDF and validate every advertised interchange adapter externally.
+5. Verify cue PDF browser downloads and validate advertised interchange adapters externally.
 6. Complete accessibility, translation, performance and security acceptance.
 7. Prepare a reviewable canonical-domain release. Current instructions prohibit
    merge/deployment, force pushes and history rewriting; source publication alone
