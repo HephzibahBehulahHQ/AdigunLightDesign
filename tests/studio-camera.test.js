@@ -25,3 +25,10 @@ test("camera snapshots round-trip and reject nonfinite or out-of-range saved con
   const state={...cameraAxisView("x"),distance:7};assert.deepEqual(normalizeCameraState(state),state);assert.deepEqual(normalizeCameraState(null),{yaw:-.25,pitch:.1,distance:11});
   const bounded=normalizeCameraState({yaw:NaN,pitch:100,distance:-5});assert.equal(bounded.yaw,-.25);assert.equal(bounded.pitch,cameraPitchLimit);assert.equal(bounded.distance,4);
 });
+test('matrix multiplication rejects malformed size and nonfinite elements',()=>{
+ const identity=new Float32Array([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]);
+ assert.deepEqual(multiply(identity,identity),identity);
+ assert.throws(()=>multiply(new Float32Array(15),identity),/4x4/);
+ const invalid=new Float32Array(identity);invalid[7]=NaN;assert.throws(()=>multiply(identity,invalid),/4x4/);
+ assert.throws(()=>multiply(invalid,identity),/4x4/);
+});
