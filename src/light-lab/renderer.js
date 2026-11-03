@@ -32,13 +32,15 @@ export function virtualFixtureVisuals(fixtures = [],limit=12) {
 }
 export function beamVolume(light, segments=16) {
   const data=[],tip=[light.x,light.y-.11,light.z],center=[light.targetX ?? light.x,.03,light.targetZ ?? light.z+1.35];
+  const tipColour=light.colour.map(value=>value*.38);
+  const rimColour=light.colour.map(value=>value*.06);
+  const centerColour=light.colour.map(value=>value*.55);
   for (let index=0;index<segments;index+=1) {
     const angle=index / segments * Math.PI * 2,next=(index + 1) / segments * Math.PI * 2;
     const a=[center[0]+Math.cos(angle)*light.spread,center[1],center[2]+Math.sin(angle)*light.spread];
     const b=[center[0]+Math.cos(next)*light.spread,center[1],center[2]+Math.sin(next)*light.spread];
-    const shade=.12 + .16 * (1 + Math.cos(angle)) / 2;
-    for (const point of [tip,a,b]) data.push(...point,...light.colour.map((value)=>value*shade));
-    for (const point of [center,b,a]) data.push(...point,...light.colour.map((value)=>value*.55));
+    data.push(...tip,...tipColour,...a,...rimColour,...b,...rimColour);
+    data.push(...center,...centerColour,...b,...rimColour,...a,...rimColour);
   }
   return data;
 }
