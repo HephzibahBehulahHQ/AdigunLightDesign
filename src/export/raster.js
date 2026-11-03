@@ -1,11 +1,16 @@
 import { paletteSvg } from "./formats.js";
 
 export async function paletteRaster(palette,type="image/png") {
+  validateRasterType(type);
   return svgRaster(paletteSvg(palette),type);
 }
 
-export async function svgRaster(svg,type="image/png") {
+function validateRasterType(type) {
   if (!["image/png","image/jpeg"].includes(type)) throw new Error("Unsupported image export format.");
+}
+
+export async function svgRaster(svg,type="image/png") {
+  validateRasterType(type);
   const url=URL.createObjectURL(new Blob([svg],{type:"image/svg+xml"}));
   try {
     const image=new Image();
