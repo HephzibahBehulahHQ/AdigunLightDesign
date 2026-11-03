@@ -205,7 +205,14 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
   const platform=stageSettings(stage);
   if(platform.enabled)box(data,platform.x,platform.y,platform.z,platform.width,platform.height,platform.depth,hexVector(platform.color));
   box(data,-2.45,.01,-.95,4.9,.02,3.65,hexVector("#342647"));
-  box(data,-2.36,.025,-.86,4.72,.012,3.47,hexVector("#665477"));
+  const rugColour=hexVector("#665477");
+  data.push(...surfaceGrid([-2.36,.037,-.86],[4.72,0,0],[0,0,3.47],(column,row)=>{
+    const x=(column+.5)/24*4.72-2.36;
+    const z=(row+.5)/18*3.47-.86;
+    const sofaShadow=Math.exp(-((x/1.65)**4+((z-1.62)/.65)**2));
+    const tableShadow=Math.exp(-(((x+.2)/.88)**2+((z-.25)/.76)**2));
+    return rugColour.map(channel=>channel*(1-.3*sofaShadow-.24*tableShadow));
+  },24,18));
   box(data,-1.7,.25,1.4,3.4,.8,.75,couch);
   box(data,-1.45,1.05,1.55,2.9,.55,.35,couch.map((value)=>Math.min(1,value*1.2)));
   box(data,-1.9,.25,1.3,.3,1,.95,couch);
