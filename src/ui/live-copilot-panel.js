@@ -1,0 +1,41 @@
+import {createLiveCopilot} from "../ai/live-copilot.js";
+import {escapeHtml as esc} from "./html.js";
+import {explainSelection} from "../ai/selection-explanation.js";
+
+export function createLiveCopilotPanel({feed,getLocale,translate,documentRef=document,now=Date.now,schedule=setInterval,cancel=clearInterval,onNotify=()=>{},canAccept=()=>false,onAccept=async()=>{},onError=()=>{}}) {
+  let host=null,suggestion=null,enabled=true,goal="",expanded=false,timer=null,projectId=null,explanation=null;
+  const t=key=>translate(getLocale(),key);
+  const bot=createLiveCopilot({feed,now,onSuggestion(value){suggestion=value;expanded=false;paint();onNotify(value);}});
+  bot.setEnabled(true);
+  const unsubscribe=feed.subscribe(state=>{if(projectId!==null && projectId!==state.project.id)goal="";projectId=state.project.id;explanation=explainSelection(state);suggestion=null;paint();});
+  function paint(){
+    if(!host?.isConnected)return;
+    host.innerHTML=`<label><input data-live-enabled type="checkbox" ${enabled ? "checked" : ""} /> ${t("liveCopilot")}</label><details><summary>${t("liveProjectGoal")}</summary><form data-live-goal><label>${t("liveGoalQuestion")}<input name="goal" maxlength="1000" value="${esc(goal)}" /></label><button>${t("liveRememberGoal")}</button></form></details>${suggestion ? `<section class="live-suggestion" aria-live="polite"><p>${t(suggestion.messageKey)} ${esc(suggestion.subject ?? "")}</p><button data-live-dismiss>${t("liveDismiss")}</button><button data-live-more>${t("liveTellMore")}</button>${suggestion.kind==="offer" ? `<button data-live-accept ${canAccept() ? "" : "disabled"} title="${t(canAccept() ? "liveReviewBeforeApply" : "authRequired")}">${t("liveAccept")}</button><small>${t(canAccept() ? "liveReviewBeforeApply" : "authRequired")}</small>` : ""}${expanded ? `<p>${t(suggestion.explanationKey)}</p>` : ""}</section>` : ""}`;
+    if(explanation)host.insertAdjacentHTML("beforeend",`<details class="live-selection"><summary>${t("explainSelection")}: ${esc(explanation.name)}</summary><p>${t(explanation.descriptionKey)}</p><dl>${explanation.facts.map(fact=>`<dt>${t(fact.key)}</dt><dd>${esc(fact.valueKey ? t(fact.valueKey) : fact.value ?? t("explainUnpatched"))}</dd>`).join("")}</dl></details>`);
+    host.querySelector("[data-live-enabled]").onchange=event=>{enabled=event.target.checked;bot.setEnabled(enabled);if(!enabled)suggestion=null;paint();};
+    host.querySelector("[data-live-goal]").onsubmit=event=>{event.preventDefault();goal=event.currentTarget.elements.goal.value.trim();bot.setGoal(goal);if(suggestion?.kind==="question"){bot.dismiss(suggestion.id);suggestion=null;}paint();};
+    const dismiss=host.querySelector("[data-live-dismiss]");if(dismiss)dismiss.onclick=()=>{bot.dismiss(suggestion.id);suggestion=null;paint();};
+    const more=host.querySelector("[data-live-more]");if(more)more.onclick=()=>{expanded=!expanded;paint();};
+    const accept=host.querySelector("[data-live-accept]");if(accept)accept.onclick=async()=>{
+      const current=suggestion;accept.disabled=true;
+      try{await onAccept(current,()=>suggestion===current);}catch(error){onError(error.message);}finally{if(host?.isConnected)paint();}
+    };
+  }
+  const input=()=>bot.activity({typing:true}),down=()=>bot.activity({dragging:true}),up=()=>bot.activity({dragging:false});
+  documentRef.addEventListener("input",input,true);documentRef.addEventListener("keydown",input,true);
+  documentRef.addEventListener("pointerdown",down,true);documentRef.addEventListener("pointerup",up,true);documentRef.addEventListener("pointercancel",up,true);
+  const blur=()=>bot.activity({dragging:false});documentRef.defaultView?.addEventListener("blur",blur);
+  return {
+    mount(container){host=container;paint();if(timer===null)timer=schedule(()=>{
+      if(!host?.isConnected || documentRef.hidden)return;
+      const active=documentRef.activeElement;
+      if(active?.matches('input,textarea,select,[contenteditable="true"]'))return;
+      bot.tick();
+    },1000);},
+    dispose(){if(timer!==null)cancel(timer);timer=null;bot.dispose();unsubscribe();host=null;
+      documentRef.removeEventListener("input",input,true);documentRef.removeEventListener("keydown",input,true);
+      documentRef.removeEventListener("pointerdown",down,true);documentRef.removeEventListener("pointerup",up,true);documentRef.removeEventListener("pointercancel",up,true);
+      documentRef.defaultView?.removeEventListener("blur",blur);
+    }
+  };
+}

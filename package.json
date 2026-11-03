@@ -1,0 +1,26 @@
+{
+  "name": "adigun-light-design",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "check": "node scripts/check-project.mjs",
+    "build": "node scripts/build.mjs",
+    "serve:lux": "node server/start-lux.js",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "oxlint --deny-warnings src server scripts tests type-tests"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "devDependencies": {
+    "oxlint": "1.90.0",
+    "typescript": "7.0.2",
+    "vite": "8.3.5"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.118.0",
+    "pdf-lib": "1.17.1"
+  }
+}

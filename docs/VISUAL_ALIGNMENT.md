@@ -1,0 +1,96 @@
+# Visual alignment evidence
+
+The user reaffirmed the delivery reference on 3 November 2026:
+`codex-clipboard-5b6caab9-9259-4364-a4d9-642494b849c2.png`.
+The original attachment is a 1672 × 941 PNG, SHA-256
+`13b35cd250ac8c587b9696fd802b57703e406c2894968003cf1a8f45dee126c4`.
+Use this composition and styling as the visual acceptance target, incorporating
+the explicitly requested floating Bot and compact top-menu updates. The
+1440 × 900 desktop check remains additional responsive coverage. This reference
+identification is not evidence that the current interface matches it.
+
+Studio camera corrections now honor the document's positive-Z rear-wall
+convention, keeping that wall behind the sofa instead of between the viewer and
+furniture. The camera aims at 55% of room height, rather than near the floor.
+The generic OpenGL matrix helper remains unchanged. Projection/depth tests cover
+both perspective and orthographic picking, including near-equal projected-center
+distances where the closer fixture must win.
+
+The viewport has functional X/Y/Z view buttons, localized labels and keyboard
+access. Camera orientation/zoom survives editor re-renders in session memory.
+Axis changes reuse geometry buffers and remain disabled without WebGL. Y is an
+overhead exterior view; the existing ceiling remains real geometry. These are
+math/lifecycle guarantees, not screenshot evidence or exact visual acceptance.
+
+Latest camera validation: the full local suite passed 221 tests, zero failures
+or skips; project checks and the Vite build passed. Renderer checks also verify
+that axis changes reuse geometry and camera snapshots are defensive copies.
+The build remains Auth-unconfigured, and no editor deployment was performed.
+
+The user's supplied desktop reference remains the acceptance target. Current
+source layout includes the brand/navigation header, layers/tools, scene viewport,
+fixture inspector, palette, timeline and Lux panel. A five-card lower overview
+now follows the editor: product branding, available features, implementation,
+milestones and honest integration constraints. All overview copy has four locale
+entries. Desktop workspace height reserves room for this strip; narrow screens
+reflow the cards into three columns, then one.
+
+The overview reports the actual static/WebGL stack and three generic fixture
+profiles. It does not repeat the reference's unsupported claims of delivered
+20,000-profile data, advanced interchange exports or a configured live AI service.
+The brand card uses a code-native lighting icon, not a new corporate logo.
+
+This is a source-level alignment change. No screenshot comparison, measured
+pixel difference, browser layout acceptance or exact visual match is established.
+The studio rendering, typography, density and reference artwork still require
+visual verification and further refinement. This document is not acceptance.
+
+The renderer now retains the selected fixture's outline when cue/effect preview
+updates supply fixture values without UI selection markers. Explicit selection
+flags still replace that selection; removal drops the missing fixture naturally.
+A mocked WebGL regression checks retained outline geometry, explicit deselection
+and absence of mutation in source fixtures. This does not verify the outline's
+browser appearance against the reference.
+
+The primary timeline now displays the existing scheduled track arrangement,
+including its actual cue start times, independent colored lanes and a time ruler.
+The sequential view remains in an expandable section and opens when sequence
+playback starts. Both playheads and playback controls remain present. Markup
+tests cover track separation, scheduled proportions, selected cues, empty state
+and escaping. Browser interaction and reference matching remain unverified.
+
+Fixture dimmer and beam controls now use keyboard-accessible native sliders.
+Intensity displays the normalized percentage alongside the exact 0–255 channel
+value; beam displays its actual 0–255 value without inventing a calibrated angle.
+Changes remain staged until the existing Apply action commits the validated,
+undoable fixture transaction. A handler test covers exact values, endpoint labels,
+missing profile controls and accessible value text. Browser interaction remains
+unverified.
+
+The Measure tool now performs temporary 2D canvas-coordinate measurements using
+SVG screen transforms. It has pointer and keyboard operation, a visible line and
+distance label, localized instructions and live status output. Measurement mode
+does not bind object dragging. Focused tests cover scaled coordinates, pointer
+identity, cancellation, keyboard increments/reset and cleanup. No physical-unit
+calibration or browser interaction acceptance is claimed.
+
+The reference's implemented tool shortcuts now invoke their existing button
+actions. Enabled tools expose `aria-keyshortcuts` and shortcut tooltips. Text
+editing, composition, modifier combinations, handled events and repeated
+keydowns are excluded. Disabled AI Pin stays unavailable. Focused shortcut
+tests passed; real-browser keyboard/focus acceptance remains pending.
+
+Studio props now include nested round coffee tables, sofa seat/cushion detail
+and vertical acoustic slats following the configured right-wall dimensions.
+They are native scene geometry receiving the existing artistic lighting and
+obey the props visibility control. Geometry tests cover finite bounds, closed
+table topology, room-sized slats and lighting response. No photorealistic
+materials, calibrated reflections or exact reference appearance is established.
+
+At desktop widths above 1320px and heights at least 700px, the normal open floating Bot now reserves 350px beside the editor. Closing, minimizing or maximizing releases that space; dragging and resizing remain available. This protects the default inspector from the assistant overlay while retaining the requested floating behavior. Resized or moved windows may intentionally overlay the workspace. State-transition tests cover reservation release/restoration and disposal; rendered desktop/mobile acceptance remains pending.
+
+Reservation now follows the actual right-edge window width and gap. Moving the Bot more than 24px from that edge releases the space; very wide windows float over the editor rather than reducing it below a 900px overall workspace budget. CSS applies reservation only at the existing desktop breakpoint. Four mocked floating-window tests passed, including edge resize, movement and width-limit transitions; browser geometry remains unverified.
+
+Generic preview fixtures now have aimed cylindrical housings, lens rims, colored lens faces and support brackets instead of a single colored box. Geometry follows the same artistic target as the beam; this is a generic visual model, not manufacturer geometry or calibrated mechanical movement. Automated geometry/renderer tests cover finite triangles, aim response, lens color and nonmutation. Exact rendered resemblance remains unverified.
+
+The selected-fixture frame now derives its bounds from every actual housing vertex, with 4cm visual padding. It follows pan/tilt aiming rather than retaining the former small box around the old fixture marker. Tests verify enclosure for multiple aiming directions and renderer buffer lifecycle. This is a selection aid, not physical clearance or collision validation.

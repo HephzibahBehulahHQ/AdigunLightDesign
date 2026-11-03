@@ -1,0 +1,81 @@
+name: Release editor to GitHub Pages
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: editor-pages-release
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      digests: ${{ steps.release-digests.outputs.manifest }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run check
+      - run: npm run build
+        env:
+          ALD_SUPABASE_PUBLISHABLE_KEY: ${{ vars.ALD_SUPABASE_PUBLISHABLE_KEY }}
+      - name: Record editor checksums
+        id: release-digests
+        working-directory: dist
+        run: |
+          manifest=$(sha256sum index.html assets/* | base64 -w 0)
+          printf 'manifest=%s\n' "$manifest" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/deploy-pages@v4
+        id: deployment
+      - name: Verify the custom-domain editor
+        env:
+          RELEASE_DIGESTS: ${{ needs.build.outputs.digests }}
+        run: |
+          test -n "$RELEASE_DIGESTS"
+          manifest=$(mktemp)
+          download=$(mktemp)
+          printf '%s' "$RELEASE_DIGESTS" | base64 --decode > "$manifest"
+          test -s "$manifest"
+          for attempt in {1..12}; do
+            verified=true
+            while read -r digest path; do
+              if ! curl --fail --silent --show-error --max-time 10 \
+                "https://adigunlightdesign.hephzibahbehulah.com/$path?release=$GITHUB_SHA" \
+                --output "$download" ||
+                ! printf '%s  %s\n' "$digest" "$download" | sha256sum --check --status; then
+                verified=false
+                echo "Release content differs at $path (attempt $attempt)"
+                break
+              fi
+            done < "$manifest"
+            if "$verified"; then
+              echo "The custom domain serves the released editor and assets."
+              exit 0
+            fi
+            sleep 10
+          done
+          exit 1
