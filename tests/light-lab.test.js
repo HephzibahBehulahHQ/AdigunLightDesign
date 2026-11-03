@@ -108,3 +108,10 @@ test("RGBW preview mixes white with RGB and respects blackout", () => {
   fixture.properties.dimmer=0;
   assert.deepEqual(virtualFixtureVisuals([fixture])[0].colour,[0,0,0]);
 });
+test("decorative lamp spill stays local and warm",()=>{
+  const lamp={x:0,y:1,z:0,colour:[.85,.46,.16],range:.85};
+  const base=[.2,.2,.2];
+  const nearby=surfaceLighting([0,.9,0],base,[lamp]);
+  assert.ok(nearby[0]>nearby[1] && nearby[1]>nearby[2]);
+  assert.deepEqual(surfaceLighting([0,0,0],base,[lamp]),surfaceLighting([0,0,0],base,[]));
+});

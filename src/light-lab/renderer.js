@@ -92,7 +92,8 @@ export function surfaceLighting(position, baseColour, lights) {
       const edge=length/Math.hypot(length,light.spread);
       cone=Math.max(0,Math.min(1,(cosine-edge)/Math.max(.0001,1-edge)));
     }
-    const strength=below * cone / (1 + distance * distance * .12);
+    const falloff=light.range ? Math.max(0,1-distance/light.range)**2 : 1;
+    const strength=below * cone * falloff / (1 + distance * distance * .12);
     for (let channel=0;channel<3;channel+=1) result[channel]+=light.colour[channel]*strength*(.25 + baseColour[channel]*.5);
   }
   return result.map((value)=>Math.max(0,Math.min(1,value)));
@@ -184,6 +185,7 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
   data.push(...surfaceGrid([-width/2,0,depth/2],[width,0,0],[0,height,0],wall,budget.columns,budget.rows));
   data.push(...surfaceGrid([-width/2,0,-depth/2],[0,0,depth],[0,height,0],materials.wall ? wall : hexVector("#132746"),budget.columns,budget.rows));
   data.push(...surfaceGrid([-width/2,height,-depth/2],[width,0,0],[0,0,depth],hexVector(materials.ceiling ?? "#101726"),budget.columns,budget.rows));
+  const shelfLamps=[{x:4.34,y:1.81,z:2.67},{x:4.36,y:2.51,z:2.67}];
   if (visibility.props!==false) {
   data.push(...acousticSlats(room,wood));
   const platform=stageSettings(stage);
@@ -203,8 +205,7 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
   for (const x of [3.6,4.7]) box(data,x,0,2.5,.08,2.8,.45,wood);
   for (const y of [.1,.8,1.5,2.2,2.75]) box(data,3.6,y,2.5,1.18,.07,.45,wood);
   for (let index=0;index<4;index+=1) box(data,3.85+index*.16,.87,2.6,.1,.4,.22,index%2 ? accent : hexVector("#D4AF37"));
-  studioShelfLamp(data,4.34,1.57,2.67);
-  studioShelfLamp(data,4.36,2.27,2.67);
+  for(const lamp of shelfLamps) studioShelfLamp(data,lamp.x,lamp.y-.24,lamp.z);
   studioWallArt(data,{width,height,depth},wood);
   data.push(...studioPlant(-3.65,1.8,2.4),...studioPlant(2.8,2.3,1.9));
   const chair=hexVector("#23405C");
@@ -219,8 +220,11 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
   for (const y of [3.7,3.95]) box(data,-4,y,.4,8,.06,.06,metal);
   for (let x=-4;x<=4;x+=.5) box(data,x,3.7,.4,.04,.3,.06,metal);
   const lights=virtualFixtureVisuals(visibility.lighting===false ? [] : fixtures,budget.fixtures);
+  const surfaceLights=visibility.props!==false && visibility.lighting!==false
+    ? [...lights,...shelfLamps.map(lamp=>({...lamp,colour:[.85,.46,.16],range:.85}))]
+    : lights;
   for (let offset=0;offset<data.length;offset+=6) {
-    const colour=surfaceLighting(data.slice(offset,offset+3),data.slice(offset+3,offset+6),lights);
+    const colour=surfaceLighting(data.slice(offset,offset+3),data.slice(offset+3,offset+6),surfaceLights);
     for (let channel=0;channel<3;channel+=1) data[offset+3+channel]=colour[channel];
   }
   lights.forEach((light)=>lightGeometry(data,light,includeBeams));
