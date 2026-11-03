@@ -26,9 +26,10 @@ test('PDF shortening preserves Yoruba combining accents and emoji grapheme clust
 });
 test("cue PDF paginates scheduled rows and escapes cue labels",async()=>{
  const {cuePdf}=await import("../src/export/pdf.js"),pages=[];
- const cues=Array.from({length:19},(_,i)=>({id:String(i),name:"Àwọ̀ <cue>",trackId:"Main",startTime:i*5,duration:5,fade:1,targets:[]}));
+ const cues=Array.from({length:19},(_,i)=>({id:String(i),name:i===18?"o\u0323\u0300".repeat(20):"Àwọ̀ <cue>",trackId:"Main",startTime:i*5,duration:5,fade:1,targets:[]}));
  const blob=await cuePdf(cues,{raster:async svg=>{pages.push(svg);return new Blob([png],{type:"image/png"});}});
  assert.equal((await PDFDocument.load(await blob.arrayBuffer())).getPageCount(),2);
  assert.match(pages[0],/Àwọ̀ &lt;cue&gt;/);
+ assert.ok(pages[1].includes("o\u0323\u0300".repeat(14)+"…"));
  assert.match(pages[1],/90 \/ 95 \/ 0 \/ 1 \/ 0/);
 });

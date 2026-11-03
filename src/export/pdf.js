@@ -5,13 +5,14 @@ import {paletteSvg} from "./formats.js";
 
 // Raster artwork preserves browser-rendered Unicode and opacity. It is not
 // searchable text, an editable vector palette or a color-managed print proof.
+const segmenter=new Intl.Segmenter("und",{granularity:"grapheme"});
+const shorten=(value,max)=>{const text=Array.from(segmenter.segment(String(value ?? "")),item=>item.segment);return text.length>max?text.slice(0,max-1).join("")+"…":text.join("");};
+
 export async function palettePdf(palette,{raster=paletteRaster}={}){
   paletteSvg(palette); // Validate the entire palette before doing any encoding.
   const snapshot=structuredClone(palette),doc=await PDFDocument.create();
   doc.setCreator("AdigunLightDesign");doc.setTitle(String(snapshot.name ?? "Palette"));
   const font=await doc.embedFont(StandardFonts.Helvetica),count=Math.ceil(snapshot.colors.length/10);
-  const segmenter=new Intl.Segmenter("und",{granularity:"grapheme"});
-  const shorten=(value,max)=>{const text=Array.from(segmenter.segment(String(value ?? "")),item=>item.segment);return text.length>max?text.slice(0,max-1).join("")+"…":text.join("");};
   for(let index=0;index<count;index++){
     const colors=snapshot.colors.slice(index*10,index*10+10).map(color=>({...color,name:shorten(color.name,12)}));
     const imageBlob=await raster({...snapshot,name:shorten(snapshot.name,28),colors},"image/png");
@@ -35,7 +36,7 @@ export async function cuePdf(cues,{raster=svgRaster}={}) {
   const rows=schedule.map(({cue,start,track},index)=>{
     const delay=cue.delay ?? 0, fadeOut=cue.fadeOut ?? 0;
     const timing=[start,start+cue.duration,delay,cue.fade,fadeOut].map(value=>Number(value.toFixed(6))).join(" / ");
-    return [index+1,track,cue.name,timing,cue.targets.length].map(escape);
+    return [index+1,shorten(track,10),shorten(cue.name,15),timing,cue.targets.length].map(escape);
   });
   const pageCount=Math.max(1,Math.ceil(rows.length/18));
   for(let pageIndex=0;pageIndex<pageCount;pageIndex++){
@@ -49,7 +50,7 @@ export async function cuePdf(cues,{raster=svgRaster}={}) {
     page.drawText("AdigunLightDesign | Cue sheet",{x:24,y:height-34,size:18,font});
     const scale=(width-48)/image.width;
     page.drawImage(image,{x:24,y:height-50-image.height*scale,width:image.width*scale,height:image.height*scale});
-    page.drawText(`${pageIndex+1} / ${pageCount}`,{x:24,y:24,size:10,font});
+    page.drawText(`${pageIndex+1} / ${pageCount}   |   Full cue and track labels are available in the cue CSV.`,{x:24,y:24,size:10,font});
   }
   return new Blob([await doc.save()],{type:"application/pdf"});
 }
