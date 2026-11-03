@@ -50,8 +50,8 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
 @media (min-width:1321px) and (min-height:700px) {
   .editor-layout {
     grid-template-columns:clamp(216px,15.3vw,255px) minmax(0,1fr) clamp(220px,14.5vw,250px) clamp(285px,20.4vw,340px);
-    grid-template-rows:46px minmax(300px,1fr) minmax(160px,200px);
-    height:calc(100vh - 364px);
+    grid-template-rows:46px minmax(300px,1fr) minmax(140px,16vh);
+    height:calc(100vh - 357px);
     min-height:0;
     gap:8px 10px;
   }
@@ -170,3 +170,12 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
 .arrangement-timeline .timeline-ruler[role=slider]:focus-visible { outline:2px solid var(--cyan); outline-offset:2px; }
 
 #pdf-export-limit, #cue-pdf-limit { grid-column:1 / -1; color:var(--muted); line-height:1.45; }
+
+/* Product wordmark follows the blue-to-violet lighting palette. */
+@supports (background-clip: text) {
+  .product-lockup strong span {
+    background-image: linear-gradient(95deg, #6276ff, #9a56ff 62%, #d353f5);
+    background-clip: text;
+    color: transparent;
+  }
+}
