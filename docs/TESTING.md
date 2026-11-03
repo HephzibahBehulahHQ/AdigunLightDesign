@@ -3,7 +3,7 @@
 Every milestone must run `npm test`, `npm run check` and `npm run build`.
 
 Run `npm run typecheck` as well. The incremental strict TypeScript gate currently
-checks `src/**/*.ts`, covering the playback clock, timeline layout, preview quality budgets, room dimensions, stage settings browser-storage adapters viewport picking shared camera/projection math project history and the core color engine. Existing JavaScript
+checks `src/**/*.ts`, covering the playback clock, timeline layout, preview quality budgets, room dimensions, stage settings browser-storage adapters viewport picking shared camera/projection math project history the core color engine, opacity compositing and scene materials. Existing JavaScript
 modules are not silently covered by this command; full application typing and
 lint remain open release gates. Their JavaScript entry points re-export
 the typed implementation so existing consumers and tests retain their imports.
