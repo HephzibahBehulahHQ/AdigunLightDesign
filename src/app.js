@@ -475,9 +475,22 @@ function render() {
     for (const id of ["fixture-universe","fixture-address"]) bodies.dmx.append(fixturePanel.querySelector(`#${id}`).closest("label"));
     const apply=fixturePanel.querySelector("#apply-fixture"),actions=fixturePanel.querySelector(".dmx-actions");
     for (const node of [...fixturePanel.children]) if(node!==apply && node!==actions)bodies.fixture.append(node);
+    if (activeTab==="fixture") {
+      const patchFields=document.createElement("div");
+      patchFields.className="fixture-patch-fields";
+      patchFields.append(...bodies.dmx.children);
+      const quickControls=document.createElement("div");
+      quickControls.append(patchFields);
+      for (const id of ["fixture-colour","fixture-dimmer","fixture-beam"]) {
+        const input=bodies.light.querySelector(`#${id}`);
+        if(input)quickControls.append(input.closest("label"));
+      }
+      bodies.fixture.prepend(quickControls);
+    }
     const effectControls=document.querySelector("#effect-type").closest(".dmx-actions");
     const effectScope=document.createElement("p");effectScope.textContent=t("allVirtualFixtures");bodies.effects.append(effectScope,effectControls);
     fixturePanel.append(...Object.values(bodies),apply,actions);
+    if (activeTab==="fixture") bodies.fixture.firstElementChild.append(apply);
     apply.hidden=activeTab==="effects";actions.hidden=activeTab!=="fixture";
     inspector.querySelector(".section-title h2").textContent=`${t("selectedFixtureTitle")}: ${selectedFixture().name}`;
     inspector.querySelector(".inspector-tabs").innerHTML=keys.map((key)=>`<button data-fixture-tab="${key}" aria-pressed="${key===activeTab}" class="${key===activeTab ? "is-active" : ""}">${t({fixture:"fixtureLabel",light:"lightTab",dmx:"dmxTab",effects:"effectsTab"}[key])}</button>`).join("");
