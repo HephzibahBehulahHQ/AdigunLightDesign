@@ -136,6 +136,24 @@ export function acousticSlats(room,colour){
   for(let index=0;index<count;index++)box(data,width/2-.09,0,-depth/2+index*depth/count,.075,height,Math.min(.065,depth/count*.5),colour);
   return data;
 }
+function studioShelfLamp(data,x,y,z){
+  box(data,x-.10,y,z-.10,.20,.035,.20,hexVector("#70513C"));
+  box(data,x-.018,y+.035,z-.018,.036,.14,.036,hexVector("#9A7250"));
+  const lower=.15,upper=.09;
+  const bottom=y+.15,top=y+.34;
+  const corners=(radius,height)=>[
+    [x-radius,height,z-radius],[x+radius,height,z-radius],
+    [x+radius,height,z+radius],[x-radius,height,z+radius]
+  ];
+  const base=corners(lower,bottom),rim=corners(upper,top);
+  const shades=["#FFD08A","#FFB565","#D98D47","#EDAC62"].map(hexVector);
+  for(let side=0;side<4;side++){
+    const next=(side+1)%4;
+    quad(data,base[side],base[next],rim[next],rim[side],shades[side]);
+  }
+  quad(data,...rim,hexVector("#FFE0A6"));
+}
+
 function studioWallArt(data, room, frameColour) {
   const width=Math.min(1.6,room.width*.6);
   const height=width*.6;
@@ -185,6 +203,8 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
   for (const x of [3.6,4.7]) box(data,x,0,2.5,.08,2.8,.45,wood);
   for (const y of [.1,.8,1.5,2.2,2.75]) box(data,3.6,y,2.5,1.18,.07,.45,wood);
   for (let index=0;index<4;index+=1) box(data,3.85+index*.16,.87,2.6,.1,.4,.22,index%2 ? accent : hexVector("#D4AF37"));
+  studioShelfLamp(data,4.34,1.57,2.67);
+  studioShelfLamp(data,4.36,2.27,2.67);
   studioWallArt(data,{width,height,depth},wood);
   data.push(...studioPlant(-3.65,1.8,2.4),...studioPlant(2.8,2.3,1.9));
   const chair=hexVector("#23405C");
