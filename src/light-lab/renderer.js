@@ -136,6 +136,28 @@ export function acousticSlats(room,colour){
   for(let index=0;index<count;index++)box(data,width/2-.09,0,-depth/2+index*depth/count,.075,height,Math.min(.065,depth/count*.5),colour);
   return data;
 }
+function studioWallArt(data, room, frameColour) {
+  const width=Math.min(1.6,room.width*.6);
+  const height=width*.6;
+  const bottom=Math.min(room.height*.5,room.height-height-.1);
+  const rearWall=room.depth/2;
+  box(data,-width/2,bottom,rearWall-.12,width,height,.08,frameColour);
+  const picture=(x,y,z)=>[(x-.5)*width*.9,bottom+height*(.06+y*.88),rearWall-z];
+  quad(data,picture(0,0,.123),picture(1,0,.123),picture(1,1,.123),picture(0,1,.123),hexVector("#D98C79"));
+  const ridges=[
+    {colour:"#796483",z:.125,peaks:[.34,.55,.45,.74,.46,.56,.38]},
+    {colour:"#3E405E",z:.127,peaks:[.21,.35,.25,.42,.31,.47,.29]},
+    {colour:"#24283D",z:.129,peaks:[.12,.25,.18,.31,.22,.31,.20]}
+  ];
+  for(const {colour,z,peaks} of ridges){
+    const rgb=hexVector(colour);
+    for(let i=1;i<peaks.length;i++){
+      const left=(i-1)/(peaks.length-1),right=i/(peaks.length-1);
+      quad(data,picture(left,0,z),picture(right,0,z),picture(right,peaks[i],z),picture(left,peaks[i-1],z),rgb);
+    }
+  }
+}
+
 export function sceneData(accent, fixtures, visibility={}, room,includeBeams=true,materials={},quality="balanced",stage) {
   const data=[],floor=hexVector(materials.floor ?? "#172238"),wall=hexVector(materials.wall ?? "#27324A"),couch=hexVector("#9C4F48"),wood=hexVector("#67442F"),metal=hexVector("#151D2D");
   const {width,height,depth}=roomDimensions(room);
@@ -163,8 +185,7 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
   for (const x of [3.6,4.7]) box(data,x,0,2.5,.08,2.8,.45,wood);
   for (const y of [.1,.8,1.5,2.2,2.75]) box(data,3.6,y,2.5,1.18,.07,.45,wood);
   for (let index=0;index<4;index+=1) box(data,3.85+index*.16,.87,2.6,.1,.4,.22,index%2 ? accent : hexVector("#D4AF37"));
-  box(data,-.8,2,3.88,1.6,.95,.08,wood);
-  box(data,-.7,2.1,3.78,1.4,.75,.08,accent);
+  studioWallArt(data,{width,height,depth},wood);
   data.push(...studioPlant(-3.65,1.8,2.4),...studioPlant(2.8,2.3,1.9));
   const chair=hexVector("#23405C");
   box(data,-3.4,.45,.1,1,.16,.85,chair);
