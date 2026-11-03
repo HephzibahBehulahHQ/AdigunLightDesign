@@ -217,6 +217,13 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
   for(let index=0;index<3;index++)box(data,-1.55+index*1.03,.97,1.32,.95,.12,.72,couch.map(value=>Math.min(1,value*1.12)));
   box(data,-1.45,1.15,1.33,.45,.42,.18,hexVector("#E5AE66"));
   box(data,1,1.15,1.33,.45,.42,.18,accent);
+  const upholsteryShadow=couch.map(channel=>channel*.64);
+  box(data,-1.64,.35,1.38,3.28,.055,.04,upholsteryShadow);
+  for (const x of [-1.55,1.46]) {
+    for (const z of [1.45,2.03]) box(data,x,.04,z,.09,.22,.09,metal);
+  }
+  box(data,-.85,1.08,1.39,.48,.31,.15,hexVector("#B87761"));
+  box(data,.48,1.08,1.39,.45,.31,.15,hexVector("#5E536B"));
   for (const x of [3.6,4.7]) box(data,x,0,2.5,.08,2.8,.45,wood);
   for (const y of [.1,.8,1.5,2.2,2.75]) box(data,3.6,y,2.5,1.18,.07,.45,wood);
   for (let index=0;index<4;index+=1) box(data,3.85+index*.16,.87,2.6,.1,.4,.22,index%2 ? accent : hexVector("#D4AF37"));
