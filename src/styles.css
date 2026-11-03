@@ -102,6 +102,12 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
 .live-suggestion button { margin:3px; }
 .live-suggestion small { display:block; color:var(--muted); }
 .topbar { grid-template-columns:minmax(0,1fr) auto auto; }
+@media (min-width:1321px) {
+  .topbar { grid-template-columns:minmax(0,1.18fr) auto minmax(0,1fr); }
+  .topbar .corporate-mark { width:clamp(276px,21vw,350px); min-width:0; }
+  .topbar .division { font-size:20px; }
+  .topbar .product-lockup strong { font-size:40px; }
+}
 .utility-controls.top-menu { display:flex; align-items:center; gap:12px; flex-wrap:nowrap; justify-self:end; }
 .top-menu-button { display:grid; place-items:center; width:44px; height:44px; min-width:44px; flex:0 0 44px; padding:0; border:1px solid var(--line); border-radius:10px; background:var(--panel); color:var(--text); }
 .top-menu .language { position:static; min-height:44px; }
