@@ -93,8 +93,11 @@
 .colour-space-card dt { color:var(--muted); font-size:10px; }
 .colour-space-card dd { margin:0; font:10px ui-monospace,SFMono-Regular,Consolas,monospace; text-align:right; }
 .colour-space-card small { display:inline-block; margin-top:8px; padding:3px 5px; border-radius:4px; font-size:10px; }
-.scheduled-track { margin:3px 0; }
-.scheduled-track .track-name { padding:2px 4px; font-size:10px; }
+.arrangement-timeline .timeline-scale { --track-label-width:clamp(72px,25%,152px); }
+.arrangement-timeline .timeline-ruler { margin-inline-start:var(--track-label-width); }
+.arrangement-playhead-rail { position:absolute; inset:0 0 0 var(--track-label-width); pointer-events:none; }
+.scheduled-track { display:grid; grid-template-columns:var(--track-label-width) minmax(0,1fr); margin:3px 0; }
+.scheduled-track .track-name { min-width:0; align-self:center; padding:2px 8px 2px 4px; font-size:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .scheduled-track .timeline-lane { height:25px; border-radius:4px; }
 .scheduled-track .cue-block { top:2px; height:21px; padding:2px 5px; }
 .scheduled-track:nth-of-type(3n+2) .cue-block { background:linear-gradient(90deg,#1767ad,#2196f3); border-color:#65b8ff; }

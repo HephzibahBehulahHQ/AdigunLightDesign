@@ -7,6 +7,7 @@ test("arrangement view shows independent tracks at scheduled positions and escap
   assert.equal((html.match(/class="scheduled-track"/g) ?? []).length,2);
   assert.ok(html.includes('left:10%;width:20%'));assert.ok(html.includes('left:0%;width:10%'));
   assert.ok(html.includes('&lt;Key&gt;'));assert.ok(html.includes('&lt;img&gt;'));assert.ok(!html.includes('<img>'));
+  assert.match(html, /class="arrangement-playhead-rail" aria-hidden="true"><div id="arrangement-playhead"/);
   assert.ok(html.includes('aria-pressed="true"'));assert.ok(html.includes('>30s</span>'));
   assert.ok(arrangementTimelineMarkup([],null,"Nothing yet").includes("Nothing yet"));
   assert.throws(()=>arrangementTimelineMarkup([{id:"invalid",duration:-1}],null,""));
