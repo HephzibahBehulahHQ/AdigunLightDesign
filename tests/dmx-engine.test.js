@@ -29,3 +29,8 @@ test("patches virtual fixtures and creates a 512-channel frame", () => { const f
 test("blackout changes virtual dimmers without enabling physical output", () => { const fixture=createFixture(); assert.equal(blackout([fixture])[0].properties.dimmer,0); assert.equal(fixture.properties.dimmer,255); });
 test("keeps a small provenance-labelled generic fixture library", () => { const moving=getFixtureProfile("generic-moving-head-rgbw"), fixture=createFixture(1,moving.id), patched=patchFixture([fixture],fixture.id); assert.equal(fixtureProfiles.length,3); assert.match(moving.provenance,/not manufacturer validated/i); assert.equal(patched[0].patchAssignment.channelFootprint,10); assert.equal(dmxFrame(patched)[0],127); });
 test("gives newly created virtual fixtures distinct preview positions", () => { assert.deepEqual([createFixture(1).transform.x,createFixture(2).transform.x,createFixture(3).transform.x],[-2.5,0,2.5]); });
+test('full universe rejects another fixture without modifying existing patches',()=>{
+ const fixtures=Array.from({length:85},(_,index)=>{const f=createFixture(index+1);return {...f,patchAssignment:{fixtureId:f.id,universe:1,startAddress:index*6+1,channelFootprint:6}};});
+ const extra=createFixture(86),all=[...fixtures,extra],before=structuredClone(all);
+ assert.equal(firstAvailableAddress(all,1,6),null);assert.throws(()=>patchFixture(all,extra.id,1),/Start address/);assert.deepEqual(all,before);
+});
