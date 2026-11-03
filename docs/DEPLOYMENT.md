@@ -30,5 +30,6 @@ build before uploading dist. The deployment job uses the github-pages
 environment. The optional ALD_SUPABASE_PUBLISHABLE_KEY repository variable
 enables the browser Auth client in the build.
 
-After deployment, verify the custom-domain page loads the editor bundle from
-the released build. Confirm sign-in only if a public client key was configured.
+After deployment, the workflow compares the custom-domain HTML and generated
+assets with their build checksums. A mismatch fails the release check. Verify
+the editor in a browser and confirm sign-in when a public client key is configured.
