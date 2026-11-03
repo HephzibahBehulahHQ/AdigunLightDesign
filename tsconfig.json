@@ -11,5 +11,5 @@
     "exactOptionalPropertyTypes": true,
     "types": []
   },
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*.ts", "type-tests/**/*.ts"]
 }

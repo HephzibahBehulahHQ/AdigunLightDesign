@@ -6,7 +6,7 @@ compact account/language menu and canonical domain requirements.
 
 ## Progress estimate
 
-The reported 47% is an engineering estimate, not the percentage of acceptance
+The reported 48% is an engineering estimate, not the percentage of acceptance
 tests passed. Weights emphasize the requested visual editor and core engines.
 Partial credit represents implemented, tested source; it does not close a
 milestone whose browser, integration or release gate remains open. Reassess
@@ -22,8 +22,8 @@ these estimates when stronger evidence becomes available.
 | M5 timeline | 10 | 6 | Track scheduling, keyframes, fades/effects, clock/playback and pointer/keyboard seeking have automated coverage. Browser editing/playback and reference appearance remain unverified. |
 | M6 Lux | 10 | 3 | Context/tool boundaries, preview/confirm, receipts/undo, optional HTTP adapter and local live suggestions have tests. Live provider, real authenticated action flow, voice/image workflows and production service operation remain open. |
 | M7 exports | 5 | 2 | Native JSON, CSS, SVG/raster, CSV, experimental ASE and raster-backed palette PDF. Actual browser downloads, cue PDF and validated advanced interchange remain open. |
-| M8 hardening/release | 10 | 1 | Documentation and automated CI exist. Strict TypeScript/lint, accessibility, performance, localization/security acceptance, cloud integration and production editor release remain open. |
-| Total | 100 | 47 | Estimated remaining work: 53%. |
+| M8 hardening/release | 10 | 2 | Documentation, automated CI and strict contracts across migrated domain engines exist. Full TypeScript coverage/lint, accessibility, performance, localization/security acceptance, cloud integration and production editor release remain open. |
+| Total | 100 | 48 | Estimated remaining work: 52%. |
 
 M9 remains part of the documented advanced roadmap: physical DMX bridge,
 extended catalog, collaboration, Figma plugin, community publishing and advanced
@@ -32,10 +32,10 @@ not silently substituted with local simulation.
 
 ## Evidence boundaries
 
-- Last full local suite: 232 passed, zero failures/skips, before the subsequent
-  Unicode-label regression test was added. Latest focused PDF/locale run: six
-  passed. Project check and production build passed. Do not add these counts
-  together or report the full suite as rerun after that change.
+- Last full local suite: 238 passed, zero failures/skips. Incremental strict
+  checking, compile-only domain contract regressions, project check and production
+  build passed. The one-point M8 estimate increase reflects the implemented
+  connected domain typing and enforced compiler gate, not additional test count.
 - CI executes dependency installation, tests, project check and production build.
   It now executes an incremental strict TypeScript gate for migrated `.ts` source, beginning with the playback clock. It does not establish full application typing and does not execute browser acceptance, lint or deployment.
 - Draft PR #1 contains the application on `codex/adigunlightdesign-m0-foundation`.

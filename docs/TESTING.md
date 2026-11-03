@@ -9,6 +9,9 @@ lint remain open release gates. Their JavaScript entry points re-export
 the typed implementation so existing consumers and tests retain their imports.
 Node 24 executes its erasable syntax; Vite bundles it for the browser. CI runs
 this typecheck before the existing test/check/build jobs.
+Compile-only positive and expected-error examples in `type-tests/` verify that
+invalid color, artwork, storage, fixture, cue and effect calls are rejected.
+These examples are typechecked but never executed or shipped.
 
 - Unit tests: color conversion/harmony/contrast, address allocation, interpolation, migrations, undo and locale switching.
 - Integration tests: palette-to-material, fixture-to-scene, patch-to-cue, cue-to-renderer and validated AI action-to-project mutation.
