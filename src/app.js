@@ -504,6 +504,11 @@ function render() {
     document.querySelector(".scene-preview").append(axes);axes.querySelectorAll("[data-camera-axis]").forEach(button=>button.onclick=()=>{renderer?.setView?.(button.dataset.cameraAxis);document.querySelector("#light-canvas")?.focus();});
   }
   floatingBot.mount(document.querySelector(".lux-panel"));
+  const composer=document.querySelector(".floating-bot [data-lux-request]");
+  if (composer && !composer.classList.contains("bot-composer")) {
+    composer.classList.add("bot-composer");
+    composer.closest(".floating-bot").append(composer);
+  }
   cleanupTopMenu=bindTopMenu({project,t,onAccount:()=>openAccountDialog({account,t,getProject:()=>project,onOpen:openCloudProject}),onSelect(result){
     stopPlayback();
     if(result.kind==="fixture"){preferences.fixtureId=result.id;preferences.inspectorMode="fixture";preferences.view="light";}

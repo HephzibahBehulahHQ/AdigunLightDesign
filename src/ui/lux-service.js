@@ -5,6 +5,8 @@ export function createLuxServicePanel({getProject,getLocale,translate,onPreview,
   const session=createLuxChatSession({fetchImpl});
   let reply=null,error="",question="",epoch=0;
   function mount(container) {
+    const floatingPanel=container.closest(".floating-bot");
+    floatingPanel?.querySelector(":scope > .bot-composer")?.remove();
     const t=(key)=>translate(getLocale(),key),state=session.status;
     const message=container.closest(".lux-panel")?.querySelector(".lux-message");
     if(message && state.configured){message.querySelector("b").textContent=t("luxServiceConfigured");message.querySelector("p").textContent=t("luxServiceNotice");}
@@ -17,7 +19,8 @@ export function createLuxServicePanel({getProject,getLocale,translate,onPreview,
     };
     container.querySelector("[data-lux-disconnect]").onclick=()=>{epoch++;session.disconnect();reply=null;error="";if(message){message.querySelector("b").textContent=`Adigun AI · ${t("offline")}`;message.querySelector("p").textContent=t("luxUnavailable");}mount(container);};
     container.querySelector('[name="question"]').oninput=(event)=>{question=event.target.value;};
-    container.querySelector("[data-lux-request]").onsubmit=async(event)=>{
+    const requestForm=container.querySelector("[data-lux-request]");
+    requestForm.onsubmit=async(event)=>{
       event.preventDefault();const form=event.currentTarget;
       question=form.elements.question.value;const consent=form.elements.consent.checked,requestEpoch=epoch;
       try {
@@ -28,6 +31,10 @@ export function createLuxServicePanel({getProject,getLocale,translate,onPreview,
       // The editor may have re-rendered or closed while the request was pending.
       const current=findContainer();if(current)mount(current);
     };
+    if (floatingPanel) {
+      requestForm.classList.add("bot-composer");
+      floatingPanel.append(requestForm);
+    }
     container.querySelectorAll("[data-lux-review]").forEach(button=>button.onclick=()=>{
       try {
         const review=session.review(getProject(),reply,Number(button.dataset.luxReview),{imageAssets});
