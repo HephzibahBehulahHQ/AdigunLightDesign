@@ -1,8 +1,12 @@
 import { paletteSvg } from "./formats.js";
 
 export async function paletteRaster(palette,type="image/png") {
+  return svgRaster(paletteSvg(palette),type);
+}
+
+export async function svgRaster(svg,type="image/png") {
   if (!["image/png","image/jpeg"].includes(type)) throw new Error("Unsupported image export format.");
-  const svg=paletteSvg(palette),url=URL.createObjectURL(new Blob([svg],{type:"image/svg+xml"}));
+  const url=URL.createObjectURL(new Blob([svg],{type:"image/svg+xml"}));
   try {
     const image=new Image();
     await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=()=>reject(new Error("Palette image could not be rendered."));image.src=url;});

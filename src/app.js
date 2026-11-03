@@ -363,7 +363,7 @@ function render() {
     update();
   }
   if (project.fixtures.length) document.querySelector(".layer-list").insertAdjacentHTML("afterend", `<ul class="fixture-layer-list" aria-label="${t("layersLighting")}">${project.fixtures.map((fixture)=>`<li><button data-layer-fixture="${esc(fixture.id)}" aria-pressed="${fixture.id===selectedFixture()?.id}"><span>☼</span> ${esc(fixture.name)}</button></li>`).join("")}</ul>`);
-  document.querySelector(".export-grid")?.insertAdjacentHTML("beforeend", `<button id="export-svg">SVG</button><button id="export-pdf" aria-describedby="pdf-export-limit">PDF · PNG</button><small id="pdf-export-limit">${t("pdfPaletteLimit")}</small><button id="export-tokens">${t("designTokens")}</button>`);
+  document.querySelector(".export-grid")?.insertAdjacentHTML("beforeend", `<button id="export-svg">SVG</button><button id="export-pdf" aria-describedby="pdf-export-limit">PDF · PNG</button><small id="pdf-export-limit">${t("pdfPaletteLimit")}</small><button id="export-cue-pdf" title="Cue sheet PDF (image text)">DMX PDF</button><button id="export-tokens">${t("designTokens")}</button>`);
   document.querySelector(".palette-actions").insertAdjacentHTML("beforeend", `<button id="extract-image">${t("extractImage")}</button><input id="palette-image" type="file" accept="image/png,image/jpeg,image/webp" hidden />`);
   const swatchIndex=palette().colors.indexOf(active);
   document.querySelector("#lock-swatch").insertAdjacentHTML("afterend", `<div class="palette-actions"><button data-move-swatch="-1" ${swatchIndex===0 ? "disabled" : ""}>← ${t("earlier")}</button><button data-move-swatch="1" ${swatchIndex===palette().colors.length-1 ? "disabled" : ""}>${t("later")} →</button><button id="remove-swatch" ${palette().colors.length<2 ? "disabled" : ""}>${t("removeColor")}</button></div>`);
@@ -738,6 +738,17 @@ function bind() {
     catch(error) { document.querySelector("#status").textContent=status=error.message; }
   };
   const svgButton=document.querySelector("#export-svg");
+  const cuePdfButton=document.querySelector("#export-cue-pdf");
+  if(cuePdfButton)cuePdfButton.onclick=async()=>{
+    const snapshot=structuredClone(project.cues);
+    const filename=`${safeFileStem(project.name)}-cues.pdf`;
+    cuePdfButton.disabled=true;
+    try {
+      const {cuePdf}=await import("./export/pdf.js");
+      downloadText(await cuePdf(snapshot),filename,"application/pdf");
+    }catch(error){setStatus(error.message);}
+    finally{cuePdfButton.disabled=false;}
+  };
   const pdfButton=document.querySelector("#export-pdf");
   if(pdfButton)pdfButton.onclick=async()=>{
     const snapshot=structuredClone(palette()),filename=`${safeFileStem(project.name)}-palette.pdf`;pdfButton.disabled=true;

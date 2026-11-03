@@ -24,3 +24,11 @@ test('PDF shortening preserves Yoruba combining accents and emoji grapheme clust
  assert.equal(calls[0].name,cluster.repeat(27)+'…');assert.equal(calls[0].colors[0].name,cluster.repeat(11)+'…');
  assert.equal(calls[0].colors[1].name,emoji.repeat(11)+'…');assert.equal(source.colors[0].name,cluster.repeat(14));
 });
+test("cue PDF paginates scheduled rows and escapes cue labels",async()=>{
+ const {cuePdf}=await import("../src/export/pdf.js"),pages=[];
+ const cues=Array.from({length:19},(_,i)=>({id:String(i),name:"Àwọ̀ <cue>",trackId:"Main",startTime:i*5,duration:5,fade:1,targets:[]}));
+ const blob=await cuePdf(cues,{raster:async svg=>{pages.push(svg);return new Blob([png],{type:"image/png"});}});
+ assert.equal((await PDFDocument.load(await blob.arrayBuffer())).getPageCount(),2);
+ assert.match(pages[0],/Àwọ̀ &lt;cue&gt;/);
+ assert.match(pages[1],/90 \/ 95 \/ 0 \/ 1 \/ 0/);
+});
