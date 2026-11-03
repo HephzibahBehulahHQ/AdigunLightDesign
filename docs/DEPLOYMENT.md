@@ -30,6 +30,12 @@ build before uploading dist. The deployment job uses the github-pages
 environment. The optional ALD_SUPABASE_PUBLISHABLE_KEY repository variable
 enables the browser Auth client in the build.
 
+The selected Supabase Auth health endpoint returned HTTP 200 on 3 November
+2026. A guest Data API probe against the product schema returned HTTP 406
+with PGRST106. Cloud project storage requires exposing adigunlightdesign in
+the shared project while retaining its registered-user grants and RLS policies.
+An authenticated save and reopen flow still requires end-to-end verification.
+
 After deployment, the workflow compares the custom-domain HTML and generated
 assets with their build checksums. A mismatch fails the release check. Verify
 the editor in a browser and confirm sign-in when a public client key is configured.
