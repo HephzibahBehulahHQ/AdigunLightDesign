@@ -180,3 +180,13 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
     color: transparent;
   }
 }
+
+.timeline-transport { display:flex; align-items:center; flex-wrap:wrap; gap:4px; }
+.timeline-transport button { padding:4px 6px; border-radius:5px; background:var(--panel-2, #24283b); }
+.timeline-transport output { white-space:nowrap; font-variant-numeric:tabular-nums; }
+
+@media (min-width:1321px) and (min-height:700px) {
+  .timeline > .section-title { padding:5px 8px; min-height:36px; gap:6px; flex-wrap:wrap; }
+  .arrangement-timeline .scheduled-track .timeline-lane { height:18px; }
+  .arrangement-timeline .scheduled-track .cue-block { top:1px; height:16px; padding-block:0; }
+}
