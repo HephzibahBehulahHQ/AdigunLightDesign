@@ -59,6 +59,7 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
   .left-rail { grid-column:1; grid-row:1 / 4; overflow-y:auto; }
   .workspace-tabs { grid-column:2 / 4; grid-row:1; }
   .scene-preview { grid-column:2; grid-row:2; min-height:0; }
+  .scene-preview.light-canvas { min-height:0; }
   .inspector { grid-column:3; grid-row:2; max-height:none; min-height:0; overflow-y:auto; }
   .lower-workspace { grid-column:2 / 4; grid-row:3; min-height:0; grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr); }
   .lower-workspace > .panel { min-height:0; overflow-y:auto; }

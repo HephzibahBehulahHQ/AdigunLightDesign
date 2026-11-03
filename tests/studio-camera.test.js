@@ -22,8 +22,8 @@ test("axis presets produce finite distinct views with a bounded overhead angle",
   const matrices=["x","y","z"].map(axis=>studioCameraMatrix({...cameraAxisView(axis),distance:11}));assert.ok(matrices.every(matrix=>[...matrix].every(Number.isFinite)));assert.notDeepEqual(matrices[0],matrices[2]);assert.notDeepEqual(matrices[1],matrices[2]);assert.throws(()=>cameraAxisView("invalid"));
 });
 test("camera snapshots round-trip and reject nonfinite or out-of-range saved controls",()=>{
-  const state={...cameraAxisView("x"),distance:7};assert.deepEqual(normalizeCameraState(state),state);assert.deepEqual(normalizeCameraState(null),{yaw:-.25,pitch:.1,distance:11});
-  const bounded=normalizeCameraState({yaw:NaN,pitch:100,distance:-5});assert.equal(bounded.yaw,-.25);assert.equal(bounded.pitch,cameraPitchLimit);assert.equal(bounded.distance,4);
+  const state={...cameraAxisView("x"),distance:7};assert.deepEqual(normalizeCameraState(state),state);assert.deepEqual(normalizeCameraState(null),{yaw:-.08,pitch:.1,distance:9.8});
+  const bounded=normalizeCameraState({yaw:NaN,pitch:100,distance:-5});assert.equal(bounded.yaw,-.08);assert.equal(bounded.pitch,cameraPitchLimit);assert.equal(bounded.distance,4);
 });
 test('matrix multiplication rejects malformed size and nonfinite elements',()=>{
  const identity=new Float32Array([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]);

@@ -28,7 +28,7 @@ export function studioCameraMatrix({targetHeight=2.2,...options}:Partial<CameraS
 export const cameraPitchLimit=Math.PI/2-.01;
 export function normalizeCameraState(value:unknown={}){
   const finite=(key:keyof CameraState,fallback:number)=>{const raw=(value as Partial<CameraState>|null)?.[key];return typeof raw==="number" && Number.isFinite(raw) ? raw : fallback;};
-  return {yaw:finite("yaw",-.25),pitch:Math.max(-cameraPitchLimit,Math.min(cameraPitchLimit,finite("pitch",.1))),distance:Math.max(4,Math.min(24,finite("distance",11)))};
+  return {yaw:finite("yaw",-.08),pitch:Math.max(-cameraPitchLimit,Math.min(cameraPitchLimit,finite("pitch",.1))),distance:Math.max(4,Math.min(24,finite("distance",9.8)))};
 }
 export function cameraAxisView(axis:string){
   if(axis==="x")return {yaw:-Math.PI/2,pitch:0};
