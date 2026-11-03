@@ -29,7 +29,7 @@ export function createFloatingBot({getProjectId,getLocale,translate,getUserId=()
     element.onpointerup=end;element.onpointercancel=end;element.onlostpointercapture=end;
     element.onkeydown=event=>{if(event.target!==element || !["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(event.key))return;event.preventDefault();const step=event.shiftKey ? 10 : 1,dx=event.key==="ArrowLeft" ? -step : event.key==="ArrowRight" ? step : 0,dy=event.key==="ArrowUp" ? -step : event.key==="ArrowDown" ? step : 0,rect=store.state.rect;dispatch(kind==="move" ? {type:"move",x:rect.x+dx,y:rect.y+dy} : {type:"resize",width:rect.width+dx,height:rect.height+dy});};
   }
-  const onResize=()=>{if(store)dispatch({type:"viewport"});};windowRef.addEventListener("resize",onResize);
+  const onResize=()=>{if(store)paint();};windowRef.addEventListener("resize",onResize);
   return {
     mount(panel){
       host=panel;const nextScope=`${getUserId()}/${getProjectId()}`;if(scope!==nextScope){scope=nextScope;store=createBotWindowStore({projectId:getProjectId(),userId:getUserId(),viewport,storage});}

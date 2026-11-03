@@ -23,11 +23,14 @@ export function updateBotWindow(state,action,viewport){
   else if(action.type==="unread")next.unread=action.value===true;
   else if(action.type==="move" && next.mode!=="maximized")next.rect={...next.rect,x:action.x,y:action.y};
   else if(action.type==="resize" && next.mode==="normal")next.rect={...next.rect,width:action.width,height:action.height};
-  return normalizeBotWindow(next,viewport);
+  if(action.type==="move" || action.type==="resize")return normalizeBotWindow(next,viewport);
+  return {...next,rect:state.rect ?? next.rect};
 }
 export function createBotWindowStore({projectId,userId="guest",viewport,storage=()=>globalThis.localStorage}){
   const key=`adigunlightdesign/bot-window/v1/${encodeURIComponent(userId)}/${encodeURIComponent(projectId)}`;
   let raw;try{raw=JSON.parse(readBrowserStorage(key,storage).value);}catch{}
-  let state=normalizeBotWindow(raw ?? {},viewport());
+  const initialViewport=viewport();
+  const desktopViewport=initialViewport.width<=670 ? {width:1440,height:900} : initialViewport;
+  let state=normalizeBotWindow(raw ?? {},desktopViewport);
   return {get state(){return structuredClone(state);},dispatch(action,{persist=true}={}){state=updateBotWindow(state,action,viewport());return {state:structuredClone(state),persisted:persist ? writeBrowserStorage(key,JSON.stringify(state),storage).ok : false};}};
 }
