@@ -35,15 +35,16 @@ export async function cuePdf(cues,{raster=svgRaster}={}) {
   const escape=value=>String(value).replace(/[&<>]/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;"})[char]);
   const rows=schedule.map(({cue,start,track},index)=>{
     const delay=cue.delay ?? 0, fadeOut=cue.fadeOut ?? 0;
-    const timing=[start,start+cue.duration,delay,cue.fade,fadeOut].map(value=>Number(value.toFixed(6))).join(" / ");
-    return [index+1,shorten(track,10),shorten(cue.name,15),timing,cue.targets.length].map(escape);
+    const timing=[start,start+cue.duration,delay,cue.fade,fadeOut].map(value=>Number(value.toFixed(6)));
+    return [index+1,shorten(track,10),shorten(cue.name,15),...timing,cue.targets.length].map(escape);
   });
   const pageCount=Math.max(1,Math.ceil(rows.length/18));
   for(let pageIndex=0;pageIndex<pageCount;pageIndex++){
     const contents=rows.slice(pageIndex*18,pageIndex*18+18);
-    const columns=[24,76,302,634,1080], widths=[48,216,322,436,86];
-    const cells=(values,y)=>values.map((value,i)=>`<svg x="${columns[i]}" y="${y}" width="${widths[i]}" height="30" overflow="hidden"><text x="0" y="21">${value}</text></svg>`).join("");
-    const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="${60+Math.max(1,contents.length)*34}"><rect width="100%" height="100%" fill="white"/><g font-family="sans-serif" font-size="20" fill="#0b1220">${cells(["#","Track","Cue","Start / End / Delay / Fade / Out (s)","Targets"],12)}${contents.map((row,i)=>cells(row,48+i*34)).join("")}</g></svg>`;
+    const columns=[24,70,275,580,686,792,898,1004,1110];
+    const widths=[44,200,300,102,102,102,102,102,86];
+    const cells=(values,y)=>values.map((value,i)=>`<svg x="${columns[i]}" y="${y}" width="${widths[i]}" height="30" overflow="hidden"><text x="0" y="21"${i>=3 ? ` font-size="16"${value.length>10 ? ` textLength="${widths[i]-4}" lengthAdjust="spacingAndGlyphs"` : ""}` : ""}>${value}</text></svg>`).join("");
+    const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="${60+Math.max(1,contents.length)*34}"><rect width="100%" height="100%" fill="white"/><g font-family="sans-serif" font-size="20" fill="#0b1220">${cells(["#","Track","Cue","Start (s)","End (s)","Delay (s)","Fade (s)","Out (s)","Targets"],12)}${contents.map((row,i)=>cells(row,48+i*34)).join("")}</g></svg>`;
     const image=await doc.embedPng(await (await raster(svg)).arrayBuffer());
     const [height,width]=PageSizes.A4;
     const page=doc.addPage([width,height]);

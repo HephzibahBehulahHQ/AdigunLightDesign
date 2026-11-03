@@ -31,5 +31,6 @@ test("cue PDF paginates scheduled rows and escapes cue labels",async()=>{
  assert.equal((await PDFDocument.load(await blob.arrayBuffer())).getPageCount(),2);
  assert.match(pages[0],/Àwọ̀ &lt;cue&gt;/);
  assert.ok(pages[1].includes("o\u0323\u0300".repeat(14)+"…"));
- assert.match(pages[1],/90 \/ 95 \/ 0 \/ 1 \/ 0/);
+ assert.match(pages[1],/>90<.*>95<.*>0<.*>1<.*>0</);
+ assert.match(pages[0],/>Start \(s\)</);
 });
