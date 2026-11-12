@@ -116,6 +116,18 @@ export function surfaceGrid(origin, horizontal, vertical, colour, columns=20, ro
   }
   return data;
 }
+const studioContactShadows=[
+  {x:-2.9,z:.5,rx:.8,rz:.55,opacity:.18},
+  {x:-2.51,z:1.69,rx:.36,rz:.34,opacity:.16},
+  {x:-3.65,z:1.8,rx:.48,rz:.4,opacity:.23},
+  {x:2.8,z:2.3,rx:.46,rz:.4,opacity:.2},
+  {x:4.2,z:2.72,rx:.82,rz:.42,opacity:.2},
+];
+export function studioFloorShade(x,z,propsVisible=true) {
+  if (!propsVisible) return 1;
+  const occlusion=studioContactShadows.reduce((sum,shadow)=>sum+shadow.opacity*Math.exp(-3*((x-shadow.x)**2/shadow.rx**2+(z-shadow.z)**2/shadow.rz**2)),0);
+  return Math.max(.72,1-occlusion);
+}
 export function studioPlant(x,z,height=2.1) {
   const data=[],pot=hexVector("#44313D"),leaf=hexVector("#235E45"),stem=hexVector("#4A6040");
   for (let segment=0;segment<16;segment++) {
@@ -193,10 +205,12 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
   const data=[],floor=hexVector(materials.floor ?? "#4A3431"),wall=hexVector(materials.wall ?? "#27324A"),couch=hexVector("#9C4F48"),wood=hexVector("#67442F"),metal=hexVector("#151D2D");
   const {width,height,depth}=roomDimensions(room);
   const budget=previewQuality(quality);
+  const propsVisible=visibility.props!==false;
   const floorBoardColour=(column,row)=>{
     const board=Math.floor((row+(column%3))/4);
     const shade=.82+((column*7+board*3)%9)*.025;
-    return floor.map(channel=>channel*shade);
+    const x=-width/2+(column+.5)*width/budget.columns,z=-depth/2+(row+.5)*depth/budget.rows;
+    return floor.map(channel=>channel*shade*studioFloorShade(x,z,propsVisible));
   };
   data.push(...surfaceGrid([-width/2,0,-depth/2],[width,0,0],[0,0,depth],floorBoardColour,budget.columns,budget.rows));
   const rearWallStart=data.length;
