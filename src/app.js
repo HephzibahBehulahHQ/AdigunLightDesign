@@ -52,7 +52,7 @@ import {createAccount} from "./cloud/account.js";
 import {openAccountDialog} from "./ui/account-dialog.js";
 import {previewUnpatchedFixture,confirmAuthenticatedAction} from "./ai/authenticated-actions.js";
 import { canFullscreen,toggleViewportFullscreen } from "./ui/fullscreen.js";
-import { groupFixtures,saveFixtureGroup } from "./domain/fixture-groups.js";
+import { groupFixtures,saveFixtureGroup } from "./domain/fixture-groups.ts";
 import { cueCsv, designTokenJson, paletteCss, paletteJson, paletteSvg, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
 import { readProjectFile } from "./domain/import-project.js";
 import { editorShortcut, isEditableTarget,toolShortcut,toolKeys } from "./accessibility/shortcuts.js";
