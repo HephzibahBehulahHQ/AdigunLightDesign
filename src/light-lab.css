@@ -85,6 +85,8 @@
 .inspector-tabs button[aria-pressed="true"] { background:#6d35be33; border-radius:6px 6px 0 0; }
 .fixture-inspector label { display:grid; gap:4px; padding:0 0 7px; font-size:10px; }.fixture-inspector input,.fixture-inspector select { min-width:0; width:100%; font-size:11px; padding:5px; }
 .fixture-grid { display:grid; grid-template-columns:1fr 1fr; gap:0 6px; }
+.fixture-placement { min-width:0; margin:2px 0 8px; padding:6px 8px 2px; border:1px solid var(--line); border-radius:6px; }
+.fixture-placement legend { padding:0 4px; color:var(--muted); font-size:10px; }
 @media (max-width:670px) { .fixture-library { grid-template-columns:1fr; } }
 .colour-space-card { margin:10px 12px; padding:10px; border:1px solid var(--line); border-radius:8px; background:#10182766; }
 .colour-space-card h3 { margin:0 0 7px; font-size:12px; }
@@ -106,3 +108,4 @@
 .fixture-slider-value { display:block; text-align:right; font-variant-numeric:tabular-nums; color:var(--text); font-size:11px; }
 .canvas-measurement line { stroke:#22d3ee; stroke-width:2; stroke-dasharray:6 3; }
 .canvas-measurement text { fill:#f8fafc; stroke:#0b1220; stroke-width:3; paint-order:stroke; font-size:15px; text-anchor:middle; }
+
