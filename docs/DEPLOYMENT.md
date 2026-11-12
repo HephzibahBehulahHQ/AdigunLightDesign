@@ -19,8 +19,8 @@ server infrastructure. No deployment is performed by the build or validation CI.
 
 ## Editor release workflow
 
-The editor workflow is manual and runs from main. Before dispatching it,
-review and merge the application PR through the repository's normal controls.
+The editor workflow runs automatically after a change merges to main. Manual
+dispatch from main remains available for recovery or a deliberate re-release.
 In Pages settings, select GitHub Actions as the publishing source and retain
 the existing custom domain. Restrict the github-pages environment to main and
 keep its required reviewers enabled where configured.
