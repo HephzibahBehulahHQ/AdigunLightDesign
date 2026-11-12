@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createImageAssetStore } from "../src/domain/image-assets.js";
+import { createImageAssetStore } from "../src/domain/image-assets.ts";
 import { previewNativeToolAction,confirmNativeToolAction } from "../src/ai/action-preview.js";
 import { createStudioMoodProject } from "../src/domain/studio-mood.js";
 const asset=()=>({pixels:new Uint8ClampedArray([255,0,0,255,0,0,255,255]),width:2,height:1,name:"Local test"});
