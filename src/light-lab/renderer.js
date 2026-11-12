@@ -136,11 +136,22 @@ export function studioPlant(x,z,height=2.1) {
   }
   box(data,x-.025,.45,z-.025,.05,height-.45,.05,stem);
   for (let index=0;index<24;index++) {
-    const angle=index*2.399963,reach=.45+(index%4)*.13,y=.75+(index/24)*(height-.6);
-    const tip=[x+Math.cos(angle)*reach,y+.12,z+Math.sin(angle)*reach],root=[x,y-.12,z];
-    const middle=[x+Math.cos(angle)*reach*.5,y+.25,z+Math.sin(angle)*reach*.5];
-    const side=[Math.sin(angle)*.13,0,-Math.cos(angle)*.13];
-    quad(data,root,middle.map((value,axis)=>value+side[axis]),tip,middle.map((value,axis)=>value-side[axis]),leaf.map((value)=>value*(.7+(index%3)*.15)));
+    const angle=index*2.399963,reach=.45+(index%4)*.13,baseY=.62+(index/24)*(height-.85);
+    const along=[Math.cos(angle),Math.sin(angle)],across=[-Math.sin(angle),Math.cos(angle)];
+    const positions=[0,.25,.5,.75,1].map((t)=>[x+along[0]*reach*t,baseY+.12*t+.16*Math.sin(Math.PI*t),z+along[1]*reach*t]);
+    const widths=[.012,.072,.12,.068,.004].map((value)=>value*(.88+(index%3)*.08));
+    const shade=.76+(index%4)*.08,vein=hexVector("#6B9B5E");
+    for(let segment=0;segment<4;segment++){
+      const edge=(point,amount,fold)=>[point[0]+across[0]*amount,point[1]-fold,point[2]+across[1]*amount];
+      const leftA=edge(positions[segment],-widths[segment],widths[segment]*.12);
+      const rightA=edge(positions[segment],widths[segment],widths[segment]*.12);
+      const leftB=edge(positions[segment+1],-widths[segment+1],widths[segment+1]*.12);
+      const rightB=edge(positions[segment+1],widths[segment+1],widths[segment+1]*.12);
+      quad(data,leftA,rightA,rightB,leftB,leaf.map((value)=>value*shade));
+      const ribA=edge(positions[segment],widths[segment]*.1,-.012),ribB=edge(positions[segment+1],widths[segment+1]*.1,-.012);
+      const ribC=edge(positions[segment+1],-widths[segment+1]*.1,-.012),ribD=edge(positions[segment],-widths[segment]*.1,-.012);
+      quad(data,ribA,ribB,ribC,ribD,vein);
+    }
   }
   return data;
 }
