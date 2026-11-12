@@ -1,5 +1,5 @@
 import { validateProject } from "./domain/project.js";
-import { prepareEditorProject } from "./domain/editor-project.js";
+import { prepareEditorProject } from "./domain/editor-project.ts";
 import { moveSwatch, removeSwatch, reorderSwatch } from "./domain/palette-store.js";
 import { readImagePalette } from "./domain/image-file.js";
 import { customHueHarmony,perceptualScale } from "./domain/color-engine.js";
