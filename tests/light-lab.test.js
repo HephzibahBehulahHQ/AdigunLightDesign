@@ -29,7 +29,7 @@ test("soft studio contact shadows add depth under props and disappear with the p
 });
 test("studio sofa cushions include visible piping and omit it with the props layer",()=>{
   const scene=sceneData([.2,.3,.4],[]),hidden=sceneData([.2,.3,.4],[],{props:false});
-  const thread=[156/255*1.12*.7,79/255*1.12*.7,72/255*1.12*.7];
+  const thread=[156/255*.78*.7,79/255*.78*.7,72/255*.78*.7];
   const pipingVertices=Array.from({length:scene.length/6},(_,index)=>scene.slice(index*6,index*6+6))
     .filter((vertex)=>Math.abs(vertex[1]-1.091)<1e-6 && vertex.slice(3).every((value,channel)=>Math.abs(value-thread[channel])<1e-7));
   assert.equal(pipingVertices.length,72);
