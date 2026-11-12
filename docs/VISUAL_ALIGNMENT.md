@@ -27,23 +27,23 @@ or skips; project checks and the Vite build passed. Renderer checks also verify
 that axis changes reuse geometry and camera snapshots are defensive copies.
 The build remains Auth-unconfigured, and no editor deployment was performed.
 
-The user's supplied desktop reference remains the acceptance target. Current
-source layout includes the brand/navigation header, layers/tools, scene viewport,
-fixture inspector, palette, timeline and Lux panel. A five-card lower overview
-now follows the editor: product branding, available features, implementation,
-milestones and honest integration constraints. All overview copy has four locale
-entries. Desktop workspace height reserves room for this strip; narrow screens
-reflow the cards into three columns, then one.
+The 3 November desktop reference remains the visual target for the studio and
+controls. The user later explicitly rejected the five-card project-overview
+strip and dead workspace; that correction takes precedence for the editor layout.
 
-The overview reports the actual static/WebGL stack and three generic fixture
-profiles. It does not repeat the reference's unsupported claims of delivered
-20,000-profile data, advanced interchange exports or a configured live AI service.
-The brand card uses a code-native lighting icon, not a new corporate logo.
+Keep the workspace to the top header/navigation, bottom status trailer,
+full-height left layers/tools, central scene with palette and timeline dock, and
+full-height right inspector. Do not add internal implementation, milestone,
+constraint or placeholder cards to the working area.
 
-This is a source-level alignment change. No screenshot comparison, measured
-pixel difference, browser layout acceptance or exact visual match is established.
-The studio rendering, typography, density and reference artwork still require
-visual verification and further refinement. This document is not acceptance.
+Desktop uses three tracks: left tools, center scene/dock, right inspector. Lux
+floats outside the grid and reserves right-side room only while open. Live
+browser checks at 1880 × 690 and 1672 × 941 confirmed that the editor fills the
+available frame without page overflow.
+
+The WebGL scene remains an artistic previsualization rather than calibrated
+photometry. Exact visual match, richer material fidelity and hardware
+performance acceptance remain open.
 
 The renderer now retains the selected fixture's outline when cue/effect preview
 updates supply fixture values without UI selection markers. Explicit selection

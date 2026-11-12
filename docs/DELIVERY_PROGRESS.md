@@ -161,6 +161,18 @@ On 12 November 2026, two M8 typing increments were merged and deployed:
   passed deployment and custom-domain verification for commit `bc83267`. Live
   browser checks found no horizontal page overflow at 1672 x 941, 1440 x 900
   or 390 x 844; mobile fixture selection opened Libraries & Assets.
+- [PR #78](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/pull/78)
+  replaced the unused desktop assistant column with a three-track, full-height
+  workspace: tools, scene plus palette/timeline dock, and inspector. CI passed;
+  Pages run [43304456636](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/43304456636)
+  passed deployment and custom-domain verification for commit `c24b31b`. Live
+  browser checks at 1880 x 690 and 1672 x 941 confirmed no page overflow or
+  unused grid track; Lux reserves 352px only while open.
+- [PR #77](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/pull/77)
+  made beam-cone detail follow preview quality (12/24/40 segments). All 271
+  tests and CI passed; focused geometry tests passed 25/25. Pages run
+  [43305031932](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/43305031932)
+  passed deployment and custom-domain verification for commit `dc58182`.
 
 These increments improve strict typing, the artistic scene preview and editor
 workspace. They do not complete M3 or M8, and do not recalculate the overall
@@ -173,9 +185,10 @@ not silently substituted with local simulation.
 
 ## Evidence boundaries
 
-- Latest recorded full suite: PR #75 CI passed on 12 November 2026 with 271
-  tests, zero failures/skips. Mobile tools and fixture selection were verified
-  in the live browser at 390 x 844. For the earlier Help-link increment,
+- Latest recorded full suite: PR #77 CI passed on 12 November 2026 with 271
+  tests, zero failures/skips. Mobile tools, desktop workspace geometry and
+  fixture selection have live browser checks at 390 x 844, 1880 x 690 and
+  1672 x 941. For the earlier Help-link increment,
   focused top-menu suite passed 3/3, and local lint,
   typecheck, project check and production build passed. PR #16 also passed the
   full GitHub Actions validation workflow.
@@ -195,9 +208,10 @@ not silently substituted with local simulation.
 
 ## Required next acceptance work
 
-1. Rendered views were checked at 1672 × 941, 1440 × 900 and 390 × 844. Compare
-   the actual editor against the latest exact visual target, including the
-   floating-Bot/menu requirements; additional mobile widths remain unverified.
+1. Rendered views were checked at 1880 × 690, 1672 × 941, 1440 × 900 and
+   390 × 844. Desktop workspace geometry now fills the viewport without page
+   overflow. Compare the scene against the exact target, including Lux/menu
+   styling; additional mobile widths remain unverified.
    Do not bypass a blocked browser action.
 2. Resolve substantive 3D fidelity/material/lighting gaps using real scene state;
    a background screenshot cannot stand in for the functional scene editor.
