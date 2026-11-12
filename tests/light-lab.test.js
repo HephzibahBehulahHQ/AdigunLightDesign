@@ -52,6 +52,14 @@ test("artistic surface spill follows fixture colour, distance and blackout",()=>
   assert.deepEqual(surfaceLighting([0,0,0],base,[{...light,colour:[0,0,0]}]),base.map((value)=>value*.7));
   assert.deepEqual(base,[.2,.2,.2]);
 });
+test("surface spill respects two-sided face orientation",()=>{
+  const base=[.2,.2,.2],light={x:0,y:3,z:0,colour:[1,0,0]};
+  const upward=surfaceLighting([0,0,0],base,[light],[0,1,0]);
+  const sideFacing=surfaceLighting([0,0,0],base,[light],[1,0,0]);
+  assert.ok(upward[0]>sideFacing[0]);
+  assert.deepEqual(sideFacing,base.map((value)=>value*.7));
+  assert.deepEqual(surfaceLighting([0,0,0],base,[],[0,1,0]),base.map((value)=>value*.7));
+});
 import { sceneData } from "../src/light-lab/renderer.js";
 test("studio furniture produces finite interleaved triangle geometry",()=>{
   const data=sceneData([.5,.1,.7],[]);
@@ -118,3 +126,4 @@ test("decorative lamp spill stays local and warm",()=>{
   assert.ok(nearby[0]>nearby[1] && nearby[1]>nearby[2]);
   assert.deepEqual(surfaceLighting([0,0,0],base,[lamp]),surfaceLighting([0,0,0],base,[]));
 });
+
