@@ -1,5 +1,5 @@
 import { fixtureProfiles } from "../dmx/engine.js";
-import { validateFixtureGroups } from "./fixture-groups.js";
+import { validateFixtureGroups } from "./fixture-groups.ts";
 import { arrangeTracks } from "../timeline/tracks.js";
 import { validateChannelKeyframes } from "../timeline/keyframes.js";
 import { roomDimensions } from "./room.js";
@@ -108,3 +108,4 @@ export function validateProject(project) {
   }
   return { valid: errors.length === 0, errors };
 }
+
