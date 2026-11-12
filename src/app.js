@@ -37,7 +37,7 @@ import { icon } from "./ui/icons.js";
 import { previewQuality,previewQualities } from "./light-lab/quality.js";
 import { temperaturePalette } from "./domain/temperature.js";
 import { stageSettings,updateStage } from "./domain/stage.js";
-import { createImageAssetStore } from "./domain/image-assets.js";
+import { createImageAssetStore } from "./domain/image-assets.ts";
 import { createLuxServicePanel } from "./ui/lux-service.js";
 import { createCanvasStateFeed } from "./ai/live-copilot.js";
 import { createLiveCopilotPanel } from "./ui/live-copilot-panel.js";
