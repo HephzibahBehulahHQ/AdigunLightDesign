@@ -73,7 +73,7 @@ Clicking near a projected fixture center selects it and opens its inspector. Dra
 
 The viewport projection control toggles perspective and orthographic modes and persists the choice locally. Both retain orbit and zoom; changing mode rebuilds the viewport at its default camera pose. Orthographic zoom changes the view volume, preserving depth-independent object size. Matrix behavior has automated coverage; actual browser appearance remains unverified.
 
-The studio geometry includes two potted plants, a side chair and a floor-lamp model alongside the sofa, table and shelf. These are procedural, vertex-colored approximations that receive the existing artistic fixture spill and follow props-layer visibility. The decorative lamp does not add a calibrated light source. Geometry tests do not establish photorealism or screenshot fidelity.
+The studio geometry includes two potted plants, a side chair and a floor-lamp model alongside the sofa, table and shelf. These procedural, vertex-colored approximations receive face-oriented, two-sided diffuse fixture spill with distance attenuation and follow props-layer visibility. This remains artistic preview shading; it is not calibrated photometry, and the decorative lamp does not add a calibrated light source. Geometry tests do not establish photorealism or screenshot fidelity.
 
 Layer visibility buttons save optional boolean `scene.visibility` settings for lighting, props and the palette panel through undoable transactions. Hiding lighting removes its preview geometry and artistic surface contribution, while virtual DMX and cue data stay unchanged. Hiding props retains the room and rig. Legacy scenes default to visible layers. These controls affect previews and panel visibility, not physical output. Domain geometry and import validation have coverage; browser interaction remains unverified.
 
@@ -82,4 +82,5 @@ The inspector has functional Fixture and Palette selectors. Opening 3D selects f
 At desktop sizes above 1320 × 700, the editor grid places the toolbar across the viewport and inspector, with the palette/timeline row spanning the same combined width below. The project rail and Lux panel span the editor height. Secondary controls scroll inside their panels. Smaller windows retain the existing stacked layout. This structural change has not been visually accepted against the reference; browser screenshot verification remains required.
 
 The desktop target is a 1440 × 900 dark navy editor. Its surface hierarchy is: brand/header; module navigation; left workspace rail; central canvas/viewport; inspector; palette/timeline; one assistant panel. Narrow layouts collapse secondary panels rather than creating page overflow. Exact visual comparison needs the production corporate logo asset, licensed imagery and a browser regression baseline; absent assets must not be substituted with fabricated equivalents.
+
 
