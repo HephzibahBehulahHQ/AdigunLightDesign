@@ -12,6 +12,10 @@ test("preview quality changes surface resolution without altering saved fixture 
   const fixtures=[{id:"a",properties:{dimmer:100,red:255}}],before=structuredClone(fixtures);
   const low=sceneBuffers([.2,.3,.4],fixtures,{},undefined,{},"performance"),high=sceneBuffers([.2,.3,.4],fixtures,{},undefined,{},"quality");
   assert.ok(high.opaqueVertices>low.opaqueVertices);
+  const beamVertices=scene=>scene.data.length/6-scene.opaqueVertices;
+  assert.equal(beamVertices(low),previewQuality("performance").beamSegments*6);
+  assert.equal(beamVertices(high),previewQuality("quality").beamSegments*6);
+  assert.ok(beamVertices(high)>beamVertices(low));
   assert.deepEqual(fixtures,before);
   assert.ok(high.data.every(Number.isFinite));
 });

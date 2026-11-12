@@ -133,7 +133,7 @@ export function fixtureSelectionBounds(housing){
   }
   return {min,max};
 }
-function lightGeometry(data, light,includeBeams=true) {
+function lightGeometry(data, light,includeBeams=true,beamSegments=16) {
   const housing=fixtureHousing(light);data.push(...housing);
   if (light.selected) {
     const colour=hexVector("#22D3EE"),{min,max}=fixtureSelectionBounds(housing),[x,y,z]=min,[w,h,d]=max.map((value,axis)=>value-min[axis]);
@@ -141,7 +141,7 @@ function lightGeometry(data, light,includeBeams=true) {
     for (const dx of [0,w]) for (const dz of [0,d]) box(data,x+dx,y,z+dz,.015,h+.015,.015,colour);
     for (const dx of [0,w]) for (const dy of [0,h]) box(data,x+dx,y+dy,z,.015,.015,d+.015,colour);
   }
-  if (includeBeams && light.colour.some((value)=>value>0)) data.push(...beamVolume(light));
+  if (includeBeams && light.colour.some((value)=>value>0)) data.push(...beamVolume(light,beamSegments));
 }
 export function surfaceLighting(position, baseColour, lights, normal) {
   const result=baseColour.map((value)=>value*.7);
@@ -473,13 +473,14 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
       for (let channel=0;channel<3;channel+=1) data[offset+3+channel]=colour[channel];
     }
   }
-  lights.forEach((light)=>lightGeometry(data,light,includeBeams));
+  lights.forEach((light)=>lightGeometry(data,light,includeBeams,budget.beamSegments));
   return new Float32Array(data);
 }
 
 export function sceneBuffers(accent,fixtures,visibility={},room,materials={},quality="balanced",stage) {
   const opaque=sceneData(accent,fixtures,visibility,room,false,materials,quality,stage);
-  const beams=virtualFixtureVisuals(visibility.lighting===false ? [] : fixtures,previewQuality(quality).fixtures).filter((light)=>light.colour.some((value)=>value>0)).flatMap((light)=>beamVolume(light));
+  const budget=previewQuality(quality);
+  const beams=virtualFixtureVisuals(visibility.lighting===false ? [] : fixtures,budget.fixtures).filter((light)=>light.colour.some((value)=>value>0)).flatMap((light)=>beamVolume(light,budget.beamSegments));
   const data=new Float32Array(opaque.length+beams.length);
   data.set(opaque);data.set(beams,opaque.length);
   return {data,opaqueVertices:opaque.length/6};
