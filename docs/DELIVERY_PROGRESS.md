@@ -106,6 +106,12 @@ On 12 November 2026, two M8 typing increments were merged and deployed:
   tests, lint, typecheck, project check and build passed. Pages release run
   [43275423233](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/43275423233)
   passed including custom-domain verification, for commit `c492512`.
+- [PR #58](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/pull/58)
+  added Shift-drag fixture placement at an angled camera view with live preview,
+  one undoable update on release, and restore-on-cancel. All 264 tests, lint,
+  typecheck, project check and build passed. Pages release run
+  [43279482575](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/43279482575)
+  passed including custom-domain verification, for commit `0836944`.
 
 These increments improve strict typing and the artistic scene preview. They do
 not complete M3 or M8, and do not recalculate the overall engineering estimate
