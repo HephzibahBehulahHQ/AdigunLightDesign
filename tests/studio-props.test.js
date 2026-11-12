@@ -5,6 +5,9 @@ test("studio wall art includes bounded snowy caps on the distant mountain ridge"
   const data=[],room={width:8,height:3,depth:6},snow=[242/255,230/255,212/255];
   studioWallArt(data,room,[.4,.3,.2]);
   assert.ok(data.length>0 && data.every(Number.isFinite));
+  const skyVertices=Array.from({length:data.length/6},(_,index)=>data.slice(index*6,index*6+6)).filter(([,y,z])=>Math.abs(z-2.877)<1e-9&&y>=.4&&y<=2.7);
+  const skyColours=new Set(skyVertices.map(vertex=>vertex.slice(3).map(channel=>channel.toFixed(6)).join(",")));
+  assert.ok(skyColours.size>=20,"the framed artwork has a smooth, multi-tone sky gradient");
   const snowVertices=Array.from({length:data.length/6},(_,index)=>data.slice(index*6,index*6+6)).filter(vertex=>vertex.slice(3).every((channel,index)=>Math.abs(channel-snow[index])<1e-9));
   assert.ok(snowVertices.length>=6);
   assert.ok(snowVertices.every(([,y,z])=>y>=.4&&y<=2.7&&Math.abs(z-2.874)<1e-9));

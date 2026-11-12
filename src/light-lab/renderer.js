@@ -335,7 +335,17 @@ export function studioWallArt(data, room, frameColour) {
   const rearWall=room.depth/2;
   box(data,-width/2,bottom,rearWall-.12,width,height,.08,frameColour);
   const picture=(x,y,z)=>[(x-.5)*width*.9,bottom+height*(.06+y*.88),rearWall-z];
-  quad(data,picture(0,0,.123),picture(1,0,.123),picture(1,1,.123),picture(0,1,.123),hexVector("#D98C79"));
+  const stops=[{at:0,colour:hexVector("#D98C79")},{at:.54,colour:hexVector("#A9778D")},{at:1,colour:hexVector("#68738C")}];
+  const skyColour=(amount)=>{
+    const index=amount<=stops[1].at?0:1,lower=stops[index],upper=stops[index+1],mix=(amount-lower.at)/(upper.at-lower.at);
+    return lower.colour.map((channel,axis)=>channel+(upper.colour[axis]-channel)*mix);
+  };
+  const bands=20;
+  for(let row=0;row<bands;row++){
+    const lower=row/bands,upper=(row+1)/bands,lowerColour=skyColour(lower),upperColour=skyColour(upper);
+    const a=picture(0,lower,.123),b=picture(1,lower,.123),c=picture(1,upper,.123),d=picture(0,upper,.123);
+    data.push(...a,...lowerColour,...b,...lowerColour,...c,...upperColour,...a,...lowerColour,...c,...upperColour,...d,...upperColour);
+  }
   const ridges=[
     {colour:"#796483",z:.125,peaks:[.34,.55,.45,.74,.46,.56,.38]},
     {colour:"#3E405E",z:.127,peaks:[.21,.35,.25,.42,.31,.47,.29]},
