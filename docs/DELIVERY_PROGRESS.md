@@ -124,6 +124,11 @@ On 12 November 2026, two M8 typing increments were merged and deployed:
   project check and build passed in CI. Pages run
   [43285107761](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/43285107761)
   passed deployment and custom-domain verification for commit `3b4154c`.
+- [PR #64](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/pull/64)
+  wrapped workspace toolbar controls between 671 and 940 px to avoid compressed
+  labels. All 269 tests, lint, typecheck, project check and build passed. Pages
+  run [43287446392](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/43287446392)
+  passed deployment and custom-domain verification for commit `281637c`.
 
 These increments improve strict typing and the artistic scene preview. They do
 not complete M3 or M8, and do not recalculate the overall engineering estimate
