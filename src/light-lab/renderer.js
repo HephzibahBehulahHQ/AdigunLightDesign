@@ -232,6 +232,27 @@ export function acousticSlats(room,colour){
   for(let index=0;index<count;index++)box(data,width/2-.09,0,-depth/2+index*depth/count,.075,height,Math.min(.065,depth/count*.5),colour);
   return data;
 }
+export function studioFloorGrain(width,depth,colour,lineCount=9,segments=32) {
+  if(![width,depth].every(Number.isFinite) || width<=0 || depth<=0 ||
+      !Number.isInteger(lineCount) || lineCount<1 || lineCount>32 ||
+      !Number.isInteger(segments) || segments<2 || segments>64) {
+    throw new Error("Invalid studio floor grain geometry.");
+  }
+  const data=[],grainColour=colour.map(value=>value*.78);
+  for(let line=0;line<lineCount;line++){
+    const baseZ=-depth/2+(line+1)/(lineCount+1)*depth,phase=line*1.73;
+    const point=(index)=>{
+      const t=index/segments,x=-width/2+t*width;
+      const z=baseZ+.018*Math.sin(t*Math.PI*2+phase)+.006*Math.sin(t*Math.PI*10-phase);
+      return [x,.002,z];
+    };
+    for(let segment=0;segment<segments;segment++){
+      const a=point(segment),b=point(segment+1),halfWidth=.0025;
+      quad(data,[a[0],a[1],a[2]-halfWidth],[b[0],b[1],b[2]-halfWidth],[b[0],b[1],b[2]+halfWidth],[a[0],a[1],a[2]+halfWidth],grainColour);
+    }
+  }
+  return data;
+}
 function studioShelfLamp(data,x,y,z){
   box(data,x-.10,y,z-.10,.20,.035,.20,hexVector("#70513C"));
   box(data,x-.018,y+.035,z-.018,.036,.14,.036,hexVector("#9A7250"));
@@ -284,6 +305,7 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
     return floor.map(channel=>channel*shade*studioFloorShade(x,z,propsVisible));
   };
   data.push(...surfaceGrid([-width/2,0,-depth/2],[width,0,0],[0,0,depth],floorBoardColour,budget.columns,budget.rows));
+  data.push(...studioFloorGrain(width,depth,floor));
   const rearWallStart=data.length;
   data.push(...surfaceGrid([-width/2,0,depth/2],[width,0,0],[0,height,0],wall,budget.columns,budget.rows));
   const rearWallEnd=data.length;
