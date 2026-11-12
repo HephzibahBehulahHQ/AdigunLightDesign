@@ -93,6 +93,19 @@ On 12 November 2026, two M8 typing increments were merged and deployed:
   preserving room-sized walls, slats, artwork, and user stage settings. CI
   passed, and [Pages release run 43272317916](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/43272317916)
   passed, including custom-domain verification, for commit `925087a`.
+- [PR #55](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/pull/55)
+  corrected scene documentation to match the existing artistic fixture, beam,
+  spill, room-fit rig and furniture behavior while preserving photometry and
+  browser-acceptance limits. CI and Pages release run
+  [43274077359](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/43274077359)
+  passed, including custom-domain verification, for commit `aebaf89`; the live
+  custom domain returned HTTP 200.
+- [PR #56](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/pull/56)
+  added editable fixture X/Y/Z coordinates in meters and rotation in degrees to
+  the inspector, connecting them to the existing validated undo flow. All 262
+  tests, lint, typecheck, project check and build passed. Pages release run
+  [43275423233](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/43275423233)
+  passed including custom-domain verification, for commit `c492512`.
 
 These increments improve strict typing and the artistic scene preview. They do
 not complete M3 or M8, and do not recalculate the overall engineering estimate
@@ -142,4 +155,5 @@ not silently substituted with local simulation.
 
 This ledger is not a completion declaration. A milestone closes only when its
 full required behavior and corresponding acceptance evidence are established.
+
 
