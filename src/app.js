@@ -22,7 +22,7 @@ import { timelineLayout } from "./timeline/layout.js";
 import { arrangeTracks,arrangementDuration,evaluateTracks,scheduleCue } from "./timeline/tracks.js";
 import { setChannelKeyframe } from "./timeline/keyframes.js";
 import { roomDimensions } from "./domain/room.js";
-import { duplicateFixture,deleteFixture } from "./domain/fixture-operations.js";
+import { duplicateFixture,deleteFixture } from "./domain/fixture-operations.ts";
 import { readBrowserStorage,writeBrowserStorage } from "./domain/browser-storage.js";
 import { applySceneMaterial } from "./domain/scene-materials.js";
 import { escapeHtml as esc,fixtureOptions,swatchButton } from "./ui/html.js";
