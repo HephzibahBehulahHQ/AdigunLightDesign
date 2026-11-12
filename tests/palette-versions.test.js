@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { comparePalettes } from "../src/domain/palette-versions.js";
+import { comparePalettes } from "../src/domain/palette-versions.ts";
 test("comparison matches stable ids across changes, additions and removals",()=>{
   const saved={colors:[{id:"a",hex:"#FF0000",name:"A",locked:false},{id:"b",hex:"#000000"}]};
   const current={colors:[{...saved.colors[0],hex:"#FFFFFF"},{id:"c",hex:"#0000FF"}]};
@@ -12,7 +12,7 @@ test("comparison matches stable ids across changes, additions and removals",()=>
   rows[0].current.hex="#ABCDEF";
   assert.equal(current.colors[0].hex,"#FFFFFF");
 });
-import { snapshotPalette,restorePalette } from "../src/domain/palette-versions.js";
+import { snapshotPalette,restorePalette } from "../src/domain/palette-versions.ts";
 test("palette snapshots retain colors and locks independent of future edits",()=>{
   const source={id:"p",name:"Studio",harmonyType:"triadic",colors:[{id:"c",hex:"#FF0000",locked:true}]};
   const saved=snapshotPalette(source,"Version 1");
