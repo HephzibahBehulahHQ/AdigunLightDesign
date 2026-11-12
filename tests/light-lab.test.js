@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { studioBackCushion, studioFloorGrain, studioPlant, studioSeatCushion } from "../src/light-lab/renderer.js";
+import { studioBackCushion, studioFloorGrain, studioPlant, studioRugBorder, studioSeatCushion } from "../src/light-lab/renderer.js";
 test("studio plants have deterministic finite leaves and pots at the requested position",()=>{
   const data=studioPlant(2,1,2.4);
   assert.equal(data.length%18,0);
@@ -66,6 +66,17 @@ test("studio floor grain follows the editable floor color with bounded determini
   assert.ok(positions.every(([x,y,z])=>x>=-4&&x<=4&&y===.002&&z>-4&&z<4));
   assert.deepEqual(grain.slice(3,6),[.4*.78,.3*.78,.2*.78]);
   assert.throws(()=>studioFloorGrain(8,8,[.4,.3,.2],0),/Invalid studio floor grain geometry/);
+});
+test("studio rug border creates two bounded, deterministic woven accent bands",()=>{
+  const outer=[.4,.3,.2],inner=[.7,.5,.3],border=studioRugBorder(-2.36,-.86,4.72,3.47,outer,inner);
+  const vertices=Array.from({length:border.length/6},(_,index)=>border.slice(index*6,index*6+6));
+  assert.equal(border.length,2*4*6*6);
+  assert.ok(border.every(Number.isFinite));
+  assert.deepEqual(studioRugBorder(-2.36,-.86,4.72,3.47,outer,inner),border);
+  assert.ok(vertices.every(([x,y,z])=>x>=-2.36&&x<=2.36&&y===.04&&z>=-.86&&z<=2.61));
+  assert.deepEqual(vertices[0].slice(3),outer);
+  assert.deepEqual(vertices[24].slice(3),inner);
+  assert.throws(()=>studioRugBorder(0,0,.4,3,outer,inner),/Invalid studio rug border geometry/);
 });
 test("surface grid includes interior vertices for localized illumination",()=>{
   const data=surfaceGrid([0,0,0],[2,0,0],[0,0,2],[.2,.3,.4],2,2);
