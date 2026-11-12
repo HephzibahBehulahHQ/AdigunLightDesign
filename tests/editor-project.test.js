@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createProject } from "../src/domain/project.js";
-import { prepareEditorProject } from "../src/domain/editor-project.js";
+import { prepareEditorProject } from "../src/domain/editor-project.ts";
 
 test("opens palette-free projects while retaining their identity and data",()=>{
   const source=createProject({name:"Imported rig"});
