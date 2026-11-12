@@ -118,6 +118,12 @@ On 12 November 2026, two M8 typing increments were merged and deployed:
   lint, typecheck, project check and build passed. Pages release run
   [43283009596](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/43283009596)
   passed including custom-domain verification, for commit `ec66430`.
+- [PR #62](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/pull/62)
+  added direct ray intersection against fixture housing triangles with opaque
+  scene occlusion and projected-center fallback. All 269 tests, lint, typecheck,
+  project check and build passed in CI. Pages run
+  [43285107761](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/43285107761)
+  passed deployment and custom-domain verification for commit `3b4154c`.
 
 These increments improve strict typing and the artistic scene preview. They do
 not complete M3 or M8, and do not recalculate the overall engineering estimate
