@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 6157)
+Total output lines: 357
+
 import { studioCameraMatrix,cameraAxisView,cameraPitchLimit,normalizeCameraState, hexVector, multiply, viewportProjection } from "./math.js";
 import { viewportPng } from "../export/viewport.js";
 import { pickScenePoint } from "./picking.js";
@@ -80,8 +83,9 @@ function lightGeometry(data, light,includeBeams=true) {
   }
   if (includeBeams && light.colour.some((value)=>value>0)) data.push(...beamVolume(light));
 }
-export function surfaceLighting(position, baseColour, lights) {
+export function surfaceLighting(position, baseColour, lights, normal) {
   const result=baseColour.map((value)=>value*.7);
+  const normalLength=normal ? Math.hypot(...normal) : 0;
   for (const light of lights) {
     const distance=Math.hypot(position[0]-light.x,position[1]-light.y,position[2]-light.z);
     const below=position[1] <= light.y ? 1 : .15;
@@ -95,7 +99,11 @@ export function surfaceLighting(position, baseColour, lights) {
       cone=Math.max(0,Math.min(1,(cosine-edge)/Math.max(.0001,1-edge)));
     }
     const falloff=light.range ? Math.max(0,1-distance/light.range)**2 : 1;
-    const strength=below * cone * falloff / (1 + distance * distance * .12);
+    const directionToLight=[light.x-position[0],light.y-position[1],light.z-position[2]];
+    const incidence=normalLength>0 && distance>0
+      ? Math.abs(normal.reduce((sum,value,index)=>sum+value*directionToLight[index],0))/(normalLength*distance)
+      : 1;
+    const strength=below * cone * incidence * falloff / (1 + distance * distance * .12);
     for (let channel=0;channel<3;channel+=1) result[channel]+=light.colour[channel]*strength*(.48 + baseColour[channel]*.65);
   }
   return result.map((value)=>Math.max(0,Math.min(1,value)));
@@ -178,17 +186,7 @@ function studioWallArt(data, room, frameColour) {
   for(const {colour,z,peaks} of ridges){
     const rgb=hexVector(colour);
     for(let i=1;i<peaks.length;i++){
-      const left=(i-1)/(peaks.length-1),right=i/(peaks.length-1);
-      quad(data,picture(left,0,z),picture(right,0,z),picture(right,peaks[i],z),picture(left,peaks[i-1],z),rgb);
-    }
-  }
-}
-
-export function sceneData(accent, fixtures, visibility={}, room,includeBeams=true,materials={},quality="balanced",stage) {
-  const data=[],floor=hexVector(materials.floor ?? "#4A3431"),wall=hexVector(materials.wall ?? "#27324A"),couch=hexVector("#9C4F48"),wood=hexVector("#67442F"),metal=hexVector("#151D2D");
-  const {width,height,depth}=roomDimensions(room);
-  const budget=previewQuality(quality);
-  const floorBoardColour=(column,row)=>{
+     …157 tokens truncated…umn,row)=>{
     const board=Math.floor((row+(column%3))/4);
     const shade=.82+((column*7+board*3)%9)*.025;
     return floor.map(channel=>channel*shade);
@@ -258,9 +256,15 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
     colour:light.colour.map(channel=>channel*.8),range:3.2
   }));
   const rearSurfaceLights=[...surfaceLights,...rearWallLights];
-  for (let offset=0;offset<data.length;offset+=6) {
-    const colour=surfaceLighting(data.slice(offset,offset+3),data.slice(offset+3,offset+6),offset>=rearWallStart && offset<rearWallEnd ? rearSurfaceLights : surfaceLights);
-    for (let channel=0;channel<3;channel+=1) data[offset+3+channel]=colour[channel];
+  for (let triangle=0;triangle<data.length;triangle+=18) {
+    const a=data.slice(triangle,triangle+3),b=data.slice(triangle+6,triangle+9),c=data.slice(triangle+12,triangle+15);
+    const ab=b.map((value,axis)=>value-a[axis]),ac=c.map((value,axis)=>value-a[axis]);
+    const normal=[ab[1]*ac[2]-ab[2]*ac[1],ab[2]*ac[0]-ab[0]*ac[2],ab[0]*ac[1]-ab[1]*ac[0]];
+    const lights=triangle>=rearWallStart && triangle<rearWallEnd ? rearSurfaceLights : surfaceLights;
+    for (const offset of [triangle,triangle+6,triangle+12]) {
+      const colour=surfaceLighting(data.slice(offset,offset+3),data.slice(offset+3,offset+6),lights,normal);
+      for (let channel=0;channel<3;channel+=1) data[offset+3+channel]=colour[channel];
+    }
   }
   lights.forEach((light)=>lightGeometry(data,light,includeBeams));
   return new Float32Array(data);
@@ -343,3 +347,4 @@ export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = 
   canvas.addEventListener("lostpointercapture",up);
   return { supported:true, cameraState(){return {yaw,pitch,distance};}, capturePng(){return viewportPng(canvas,draw);}, setAccent(value){selectedAccent=value;geometry=null;draw();}, setFixtures(value){const selectedId=virtualFixtures.find(fixture=>fixture.selected)?.id;virtualFixtures=value.some(fixture=>Object.hasOwn(fixture,"selected")) ? value : value.map(fixture=>({...fixture,selected:fixture.id===selectedId}));geometry=null;draw();}, setView(axis){const view=cameraAxisView(axis);yaw=view.yaw;pitch=view.pitch;draw();}, reset(){({yaw,pitch,distance}=normalizeCameraState({}));draw();}, destroy(){resize.disconnect();canvas.removeEventListener("wheel",wheel);canvas.removeEventListener("keydown",keydown);canvas.removeEventListener("pointercancel",up);canvas.removeEventListener("lostpointercapture",up);canvas.removeEventListener("pointerdown",down);canvas.removeEventListener("pointermove",move);canvas.removeEventListener("pointerup",up);geometry=null;gl.deleteBuffer(buffer);gl.deleteProgram(program);} };
 }
+
