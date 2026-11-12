@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { studioBackCushion, studioPlant, studioSeatCushion } from "../src/light-lab/renderer.js";
+import { studioBackCushion, studioFloorGrain, studioPlant, studioSeatCushion } from "../src/light-lab/renderer.js";
 test("studio plants have deterministic finite leaves and pots at the requested position",()=>{
   const data=studioPlant(2,1,2.4);
   assert.equal(data.length%18,0);
@@ -57,6 +57,16 @@ test("studio sofa cushions include visible piping and omit it with the props lay
   assert.ok(!hidden.some((value,index)=>index%6===1 && Math.abs(value-1.091)<1e-6));
 });
 import { surfaceGrid } from "../src/light-lab/renderer.js";
+test("studio floor grain follows the editable floor color with bounded deterministic strips",()=>{
+  const grain=studioFloorGrain(8,8,[.4,.3,.2]);
+  const positions=Array.from({length:grain.length/6},(_,index)=>grain.slice(index*6,index*6+3));
+  assert.equal(grain.length%18,0);
+  assert.ok(grain.every(Number.isFinite));
+  assert.deepEqual(studioFloorGrain(8,8,[.4,.3,.2]),grain);
+  assert.ok(positions.every(([x,y,z])=>x>=-4&&x<=4&&y===.002&&z>-4&&z<4));
+  assert.deepEqual(grain.slice(3,6),[.4*.78,.3*.78,.2*.78]);
+  assert.throws(()=>studioFloorGrain(8,8,[.4,.3,.2],0),/Invalid studio floor grain geometry/);
+});
 test("surface grid includes interior vertices for localized illumination",()=>{
   const data=surfaceGrid([0,0,0],[2,0,0],[0,0,2],[.2,.3,.4],2,2);
   assert.equal(data.length,4*6*6);
