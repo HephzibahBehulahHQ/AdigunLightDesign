@@ -6,6 +6,9 @@ test("studio plants have deterministic finite leaves and pots at the requested p
   assert.equal(data.length%18,0);
   assert.ok(data.every(Number.isFinite));
   assert.deepEqual(studioPlant(2,1,2.4),data);
+  const vein=[107/255,155/255,94/255];
+  assert.ok(Array.from({length:data.length/6},(_,index)=>data.slice(index*6+3,index*6+6))
+    .some((colour)=>colour.every((value,channel)=>Math.abs(value-vein[channel])<1e-7)));
   const positions=Array.from({length:data.length/6},(_,index)=>data.slice(index*6,index*6+3));
   assert.ok(positions.every(([x,y,z])=>x>1 && x<3 && y>=0 && y<3 && z>0 && z<2));
 });
