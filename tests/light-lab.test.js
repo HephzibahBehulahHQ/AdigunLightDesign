@@ -27,6 +27,15 @@ test("soft studio contact shadows add depth under props and disappear with the p
   assert.equal(studioFloorShade(-3.65,1.8,false),1);
   assert.ok([plantBase,clearFloor].every(Number.isFinite));
 });
+test("studio sofa cushions include visible piping and omit it with the props layer",()=>{
+  const scene=sceneData([.2,.3,.4],[]),hidden=sceneData([.2,.3,.4],[],{props:false});
+  const thread=[156/255*1.12*.7,79/255*1.12*.7,72/255*1.12*.7];
+  const pipingVertices=Array.from({length:scene.length/6},(_,index)=>scene.slice(index*6,index*6+6))
+    .filter((vertex)=>Math.abs(vertex[1]-1.091)<1e-6 && vertex.slice(3).every((value,channel)=>Math.abs(value-thread[channel])<1e-7));
+  assert.equal(pipingVertices.length,72);
+  assert.ok(pipingVertices.every(([x,,z])=>x>-1.51 && x<1.51 && z>1.36 && z<2.04));
+  assert.ok(!hidden.some((value,index)=>index%6===1 && Math.abs(value-1.091)<1e-6));
+});
 import { surfaceGrid } from "../src/light-lab/renderer.js";
 test("surface grid includes interior vertices for localized illumination",()=>{
   const data=surfaceGrid([0,0,0],[2,0,0],[0,0,2],[.2,.3,.4],2,2);
