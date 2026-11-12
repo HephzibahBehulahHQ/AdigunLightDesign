@@ -154,6 +154,13 @@ On 12 November 2026, two M8 typing increments were merged and deployed:
   [43299206613](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/43299206613)
   passed deployment and custom-domain verification; the live domain returned
   HTTP 200 for commit `086411c`.
+- [PR #75](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/pull/75)
+  kept the editor Tools section available on narrow screens. All 271 tests,
+  lint, typecheck, project check and build passed locally and in full CI. Pages
+  run [43301508303](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/43301508303)
+  passed deployment and custom-domain verification for commit `bc83267`. Live
+  browser checks found no horizontal page overflow at 1672 x 941, 1440 x 900
+  or 390 x 844; mobile fixture selection opened Libraries & Assets.
 
 These increments improve strict typing, the artistic scene preview and editor
 workspace. They do not complete M3 or M8, and do not recalculate the overall
@@ -166,8 +173,9 @@ not silently substituted with local simulation.
 
 ## Evidence boundaries
 
-- Latest recorded full suite: CI passed on 12 November 2026 (PR #73 release);
-  the full suite had 271 tests, zero failures/skips. For the earlier Help-link increment, the
+- Latest recorded full suite: PR #75 CI passed on 12 November 2026 with 271
+  tests, zero failures/skips. Mobile tools and fixture selection were verified
+  in the live browser at 390 x 844. For the earlier Help-link increment,
   focused top-menu suite passed 3/3, and local lint,
   typecheck, project check and production build passed. PR #16 also passed the
   full GitHub Actions validation workflow.
@@ -187,9 +195,10 @@ not silently substituted with local simulation.
 
 ## Required next acceptance work
 
-1. Obtain permitted rendered evidence at 1672 × 941, 1440 × 900 and mobile widths;
-   compare the actual editor against the attached target, including the later
-   floating-Bot/menu requirements. Do not bypass a blocked browser action.
+1. Rendered views were checked at 1672 × 941, 1440 × 900 and 390 × 844. Compare
+   the actual editor against the latest exact visual target, including the
+   floating-Bot/menu requirements; additional mobile widths remain unverified.
+   Do not bypass a blocked browser action.
 2. Resolve substantive 3D fidelity/material/lighting gaps using real scene state;
    a background screenshot cannot stand in for the functional scene editor.
 3. Complete strict typing/lint and browser end-to-end gates from the master spec.
