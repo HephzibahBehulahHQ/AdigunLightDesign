@@ -87,9 +87,16 @@ obey the props visibility control. Geometry tests cover finite bounds, closed
 table topology, room-sized slats and lighting response. No photorealistic
 materials, calibrated reflections or exact reference appearance is established.
 
-At desktop widths above 1320px and heights at least 700px, the normal open floating Bot now reserves 350px beside the editor. Closing, minimizing or maximizing releases that space; dragging and resizing remain available. This protects the default inspector from the assistant overlay while retaining the requested floating behavior. Resized or moved windows may intentionally overlay the workspace. State-transition tests cover reservation release/restoration and disposal; rendered desktop/mobile acceptance remains pending.
+At desktop widths starting at 1100px, the studio uses a viewport-height shell
+with docked left tools, central canvas, palette/timeline and right inspector.
+When Lux is open at the right edge, the shell reserves its width so it does not
+cover the workspace.
 
-Reservation now follows the actual right-edge window width and gap. Moving the Bot more than 24px from that edge releases the space; very wide windows float over the editor rather than reducing it below a 900px overall workspace budget. CSS applies reservation only at the existing desktop breakpoint. Four mocked floating-window tests passed, including edge resize, movement and width-limit transitions; browser geometry remains unverified.
+PR #83 extended this layout to the laptop targets 1280 × 720, 1366 × 768,
+1440 × 900 and 1920 × 1080. Playwright checks on the deployed release confirm
+no document overflow, no collision between the workspace and Lux, and working
+2D/3D view switching. These checks do not prove exact-reference match or
+additional mobile geometry.
 
 Generic preview fixtures now have aimed cylindrical housings, lens rims, colored lens faces and support brackets instead of a single colored box. Geometry follows the same artistic target as the beam; this is a generic visual model, not manufacturer geometry or calibrated mechanical movement. Automated geometry/renderer tests cover finite triangles, aim response, lens color and nonmutation. Exact rendered resemblance remains unverified.
 

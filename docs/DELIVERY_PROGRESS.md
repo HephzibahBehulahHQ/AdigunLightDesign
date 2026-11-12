@@ -27,6 +27,22 @@ these estimates when stronger evidence becomes available.
 
 ## Recent verified increments
 
+The latest viewport increment was merged on 12 November 2026:
+
+- [PR #83](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/pull/83)
+  constrained the desktop studio to one viewport and reserved room for the open
+  Lux window. The 273-test suite, lint, typecheck, project check and build passed
+  in CI. Main-branch validation run
+  [43312650394](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/43312650394)
+  and Pages release run
+  [43312650389](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/43312650389)
+  passed for merge commit `212f8866fa75df219ba178b26be2a7f546ac33a8`, including
+  custom-domain checksum verification. Deployed Playwright checks at 1280 × 720,
+  1366 × 768, 1440 × 900 and 1920 × 1080 found no document overflow or workspace/Lux
+  collision; 2D and 3D view switching worked.
+
+On 12 November 2026, two M8 typing increments were merged and deployed:
+
 On 12 November 2026, two M8 typing increments were merged and deployed:
 
 - [PR #25](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/pull/25)
@@ -185,10 +201,11 @@ not silently substituted with local simulation.
 
 ## Evidence boundaries
 
-- Latest recorded full suite: PR #77 CI passed on 12 November 2026 with 271
-  tests, zero failures/skips. Mobile tools, desktop workspace geometry and
-  fixture selection have live browser checks at 390 x 844, 1880 x 690 and
-  1672 x 941. For the earlier Help-link increment,
+- Latest recorded full suite: PR #83 CI passed on 12 November 2026 with 273
+  tests and no failures or skips. The deployed studio was checked at 1280 × 720,
+  1366 × 768, 1440 × 900 and 1920 × 1080 for document overflow, panel collision
+  and 2D/3D tab operation. Earlier mobile tools and fixture-selection checks
+  cover 390 × 844; other mobile widths remain unverified. For the earlier Help-link increment,
   focused top-menu suite passed 3/3, and local lint,
   typecheck, project check and production build passed. PR #16 also passed the
   full GitHub Actions validation workflow.
@@ -208,10 +225,10 @@ not silently substituted with local simulation.
 
 ## Required next acceptance work
 
-1. Rendered views were checked at 1880 × 690, 1672 × 941, 1440 × 900 and
-   390 × 844. Desktop workspace geometry now fills the viewport without page
-   overflow. Compare the scene against the exact target, including Lux/menu
-   styling; additional mobile widths remain unverified.
+1. Desktop views were checked at 1280 × 720, 1366 × 768, 1440 × 900 and
+   1920 × 1080; the document matched each viewport and the workspace did not
+   collide with Lux. Prior 390 × 844 mobile tool checks still apply. Exact scene,
+   Lux/menu reference fidelity and additional mobile widths remain unverified.
    Do not bypass a blocked browser action.
 2. Resolve substantive 3D fidelity/material/lighting gaps using real scene state;
    a background screenshot cannot stand in for the functional scene editor.
