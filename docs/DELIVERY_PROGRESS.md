@@ -141,8 +141,9 @@ not silently substituted with local simulation.
 
 ## Evidence boundaries
 
-- Latest recorded full local suite: 238 passed, zero failures/skips. For the
-  Help-link increment, the focused top-menu suite passed 3/3, and local lint,
+- Latest recorded full local suite: 269 passed, zero failures/skips on
+  12 November 2026 (PR #64 release). For the earlier Help-link increment, the
+  focused top-menu suite passed 3/3, and local lint,
   typecheck, project check and production build passed. PR #16 also passed the
   full GitHub Actions validation workflow.
 - Current CI (`.github/workflows/ci.yml`) runs dependency installation, lint,
