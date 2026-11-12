@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 24966)
+Total output lines: 962
+
 import { validateProject } from "./domain/project.js";
 import { prepareEditorProject } from "./domain/editor-project.js";
 import { moveSwatch, removeSwatch, reorderSwatch } from "./domain/palette-store.js";
@@ -52,7 +55,7 @@ import {createAccount} from "./cloud/account.js";
 import {openAccountDialog} from "./ui/account-dialog.js";
 import {previewUnpatchedFixture,confirmAuthenticatedAction} from "./ai/authenticated-actions.js";
 import { canFullscreen,toggleViewportFullscreen } from "./ui/fullscreen.js";
-import { groupFixtures,saveFixtureGroup } from "./domain/fixture-groups.js";
+import { groupFixtures,saveFixtureGroup } from "./domain/fixture-groups.ts";
 import { cueCsv, designTokenJson, paletteCss, paletteJson, paletteSvg, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
 import { readProjectFile } from "./domain/import-project.js";
 import { editorShortcut, isEditableTarget,toolShortcut,toolKeys } from "./accessibility/shortcuts.js";
@@ -348,124 +351,7 @@ function render() {
     const color=rgbToHex({r:properties.red ?? 0,g:properties.green ?? 0,b:properties.blue ?? 0});
     document.querySelector("#apply-fixture").insertAdjacentHTML("beforebegin", `<label>${t("selectedColour")}<input id="fixture-colour" type="color" value="${color}" /></label>`);
     const fixture=selectedFixture(),profile=getFixtureProfile(fixture.profileId);
-    document.querySelector("#apply-fixture").insertAdjacentHTML("beforebegin", `<div class="fixture-grid">${["x","y","z"].map((axis)=>`<label>${axis.toUpperCase()} (m)<input id="fixture-${axis}" type="number" required step="any" value="${fixture.transform?.[axis] ?? 0}" /></label>`).join("")}</div>`);
-    const mode=profile.modes.find((item)=>item.id===fixture.modeId);
-    document.querySelector("#apply-fixture").insertAdjacentHTML("beforebegin", `<label>${t("fixtureRotation")} (°)<input id="fixture-rotation" type="number" required step="any" value="${fixture.transform?.rotation ?? 0}"></label>`);
-    if (!mode?.channels.includes("beam")) document.querySelector("#fixture-beam").closest("label").remove();
-    for (const key of ["pan","tilt"]) if (mode?.channels.includes(key)) document.querySelector("#apply-fixture").insertAdjacentHTML("beforebegin", `<label>${t(key)} (0–255)<input id="fixture-${key}" type="number" required min="0" max="255" step="1" value="${properties[key] ?? 127}" /></label>`);
-    if (mode?.channels.includes("white")) document.querySelector("#apply-fixture").insertAdjacentHTML("beforebegin", `<label>${t("whiteChannel")}<input id="fixture-white" type="number" required min="0" max="255" step="1" value="${properties.white ?? 0}" /></label>`);
-  }
-  for (const id of ["fixture-dimmer","fixture-beam"]) {
-    const input=document.querySelector(`#${id}`);
-    if (!input) continue;
-    input.type="range";
-    input.step="1";
-    const output=document.createElement("output");
-    output.htmlFor=id;
-    output.id=`${id}-value`;
-    const update=()=>{
-      output.textContent=id === "fixture-dimmer" ? `${Math.round(Number(input.value) / 255 * 100)}%` : `${input.value} / 255`;
-      input.setAttribute("aria-valuetext",output.textContent);
-    };
-    input.insertAdjacentElement("afterend",output);
-    input.oninput=update;
-    update();
-  }
-  if (project.fixtures.length) document.querySelector(".layer-list").insertAdjacentHTML("afterend", `<ul class="fixture-layer-list" aria-label="${t("layersLighting")}">${project.fixtures.map((fixture)=>`<li><button data-layer-fixture="${esc(fixture.id)}" aria-pressed="${fixture.id===selectedFixture()?.id}"><span>☼</span> ${esc(fixture.name)}</button></li>`).join("")}</ul>`);
-  document.querySelector(".export-grid")?.insertAdjacentHTML("beforeend", `<button id="export-svg">SVG</button><button id="export-pdf" aria-describedby="pdf-export-limit">${t("paletteSheetPdf")}</button><small id="pdf-export-limit">${t("pdfPaletteLimit")}</small><button id="export-cue-pdf" aria-describedby="cue-pdf-limit">${t("cueSheetPdf")}</button><small id="cue-pdf-limit">${t("cuePdfLimit")}</small><button id="export-tokens">${t("designTokens")}</button>`);
-  document.querySelector(".palette-actions").insertAdjacentHTML("beforeend", `<button id="extract-image">${t("extractImage")}</button><input id="palette-image" type="file" accept="image/png,image/jpeg,image/webp" hidden />`);
-  const swatchIndex=palette().colors.indexOf(active);
-  document.querySelector("#lock-swatch").insertAdjacentHTML("afterend", `<div class="palette-actions"><button data-move-swatch="-1" ${swatchIndex===0 ? "disabled" : ""}>← ${t("earlier")}</button><button data-move-swatch="1" ${swatchIndex===palette().colors.length-1 ? "disabled" : ""}>${t("later")} →</button><button id="remove-swatch" ${palette().colors.length<2 ? "disabled" : ""}>${t("removeColor")}</button></div>`);
-  document.querySelector("#apply-colour").insertAdjacentHTML("afterend", `<button id="copy-hex">${t("copy")}</button>`);
-  const hsl=rgbToHsl(hexToRgb(active.hex));
-  document.querySelector("#lock-swatch").insertAdjacentHTML("beforebegin", `<section class="colour-space-card">${[["hue",hsl.h,360],["saturation",hsl.s*100,100],["lightness",hsl.l*100,100]].map(([key,value,max])=>`<label>${t(key)}<input id="color-${key}" type="number" min="0" max="${max}" step="any" value="${compact(value,2)}" /></label>`).join("")}<button id="apply-hsl" class="wide">${t("apply")} HSL</button></section>`);
-  document.querySelector(".export-grid")?.insertAdjacentHTML("beforeend", `<button data-raster="image/png">PNG</button><button data-raster="image/jpeg">JPEG</button>`);
-  const contrastCard=document.querySelector(".contrast-card");
-  contrastCard.querySelector("small").textContent=contrastBackground;
-  contrastCard.insertAdjacentHTML("beforeend", `<label>${t("contrastBackground")}<input id="contrast-background" type="color" value="${contrastBackground}" /></label><dl>${[["normalText","AA",contrast.aa],["normalText","AAA",contrast.aaa],["largeText","AA",contrast.largeAa],["largeText","AAA",contrast.largeAaa]].map(([key,level,pass])=>`<div><dt>${t(key)} ${level}</dt><dd class="${pass ? "pass" : "fail"}">${t(pass ? "passes" : "fails")}</dd></div>`).join("")}</dl>`);
-  const contrastSuggestion=contrast.aa || (active.opacity ?? 1)<1 ? null : suggestContrast(active.hex,contrastBackground);
-  if (contrastSuggestion) contrastCard.insertAdjacentHTML("beforeend", `<button id="apply-contrast" class="wide">${t("improveContrast")} ${contrastSuggestion}</button>`);
-  const oklch=oklabToOklch(rgbToOklab(hexToRgb(active.hex)));
-  document.querySelector("#lock-swatch").insertAdjacentHTML("beforebegin", `<section class="colour-space-card"><h3>OKLCH</h3>${[["l",oklch.l,1,t("lightness")],["c",oklch.c,1,t("chroma")],["h",oklch.h,360,t("hue")]].map(([key,value,max,label])=>`<label>${label} (0–${max})<input id="oklch-${key}" type="number" required min="0" max="${max}" step="any" value="${compact(value,4)}" /></label>`).join("")}<button id="apply-oklch" class="wide">${t("apply")} OKLCH</button></section>`);
-  document.querySelector("#oklch-l").closest("label").firstChild.textContent="L (0–1)";
-  document.querySelector(".palette-panel").insertAdjacentHTML("beforeend", `<div class="palette-actions"><button id="save-version">${t("saveVersion")}</button><select id="palette-version" aria-label="${t("savedVersions")}">${project.palettes.slice(1).map((item)=>`<option value="${esc(item.id)}">${esc(item.name)}</option>`).join("")}</select><button id="restore-version" ${project.palettes.length<2 ? "disabled" : ""}>${t("restoreVersion")}</button></div>`);
-  if (project.palettes.length>1) document.querySelector(".palette-panel").insertAdjacentHTML("beforeend", `<details class="palette-comparison"><summary>${t("compareVersions")}</summary><div id="version-comparison"></div></details>`);
-  document.querySelector("#lock-swatch").insertAdjacentHTML("beforebegin", `<label>${t("opacity")} (%)<input id="swatch-opacity" type="number" required min="0" max="100" step="any" value="${(active.opacity ?? 1)*100}" /></label><button id="apply-opacity" class="wide">${t("apply")}</button>`);
-  for (const button of document.querySelectorAll("[data-swatch]")) {
-    const swatch=palette().colors.find((item)=>item.id===button.dataset.swatch);
-    button.querySelector("span").style.background=swatchCssColor(swatch);
-  }
-  document.querySelector(".selected-preview").style.background=swatchCssColor(active);
-  document.querySelector(".palette-panel").insertAdjacentHTML("beforeend", `<div class="palette-actions"><label>${t("hueSpacing")}<input id="custom-spacing" type="number" min="-360" max="360" step="any" value="30" /></label><button id="custom-hues">${t("customHues")}</button><button id="perceptual-scale">${t("perceptualScale")}</button></div>`);
-  const arrangementEnd=arrangementDuration(project.cues);
-  document.querySelector(".palette-panel").insertAdjacentHTML("beforeend", `<div class="palette-actions"><label>${t("temperatureStrength")} (%)<input id="temperature-strength" type="number" min="0" max="100" step="1" required value="20"></label><button data-temperature="warm">${t("warmPalette")}</button><button data-temperature="cool">${t("coolPalette")}</button></div>`);
-  document.querySelectorAll("[data-module]").forEach((button)=>{button.querySelector("span").innerHTML=icon(button.dataset.module);});
-  document.querySelectorAll("[data-tool]").forEach((button)=>{button.querySelector("span").innerHTML=icon(button.dataset.tool);});
-  document.querySelector(".language > span").innerHTML=icon("globe");
-  document.querySelector(".language").insertAdjacentHTML("beforeend", `<span class="locale-code" aria-hidden="true">${supportedLocales.includes(preferences.locale) ? preferences.locale.toUpperCase() : "EN"} ⌄</span>`);
-  document.querySelector("#theme").innerHTML=icon(preferences.theme==="dark" ? "light" : "moon");
-  document.querySelector(".lux-icon").innerHTML=icon("copilot");
-  if (preferences.luxOpen) {
-    document.querySelector(".lux-message").insertAdjacentHTML("afterend", `<section class="lux-local-actions"><h3>${t("localPaletteAction")}</h3><button id="preview-lux-palette" ${project.fixtures.length ? "" : "disabled"}>${t("previewPaletteLighting")}</button>${luxProposal ? `<div class="lux-action-preview"><h4>${t("reviewChanges")}</h4><ul>${luxProposal.changes.map((change)=>`<li>${esc(change.after?.name ?? change.before?.name ?? change.id)}<details><summary>${t("reviewChanges")}: ${esc(change.collection)}</summary><pre>${esc(JSON.stringify({before:change.before,after:change.after},null,2))}</pre></details></li>`).join("") || t("noActionChanges")}</ul><small>${t(account.user ? "liveReviewBeforeApply" : "authRequired")}</small><button id="confirm-lux-action" ${luxProposal.changes.length && account.user && !luxConfirmationPending ? "" : "disabled"} title="${t(account.user ? "confirmAction" : "authRequired")}">${t("confirmAction")}</button><button id="cancel-lux-action">${t("cancelAction")}</button></div>` : ""}</section>`);
-  }
-  const projectionButton=document.querySelector(".view-menu");
-  document.querySelector(".workspace-tabs").insertAdjacentHTML("beforeend", `<button id="viewport-fullscreen" class="view-menu" aria-label="${t("fullscreenViewport")}" title="${t("fullscreenViewport")}" ${canFullscreen(document.querySelector(".scene-preview"),document) ? "" : "disabled"}>${icon("fullscreen")}</button>`);
-  projectionButton.insertAdjacentHTML("beforebegin", `<label class="preview-quality">${t("previewQuality")} <select id="preview-quality" ${preferences.view==="light" ? "" : "disabled"}>${Object.keys(previewQualities).map((key)=>`<option value="${key}" ${key===(preferences.previewQuality ?? "balanced") ? "selected" : ""}>${t(`quality_${key}`)}</option>`).join("")}</select></label>`);
-  if (preferences.view==="light") document.querySelector(".scene-title small").textContent=`${t("webglPreview")} · ${phrase("previewFixtureCount",{shown:scene().visibility?.lighting===false ? 0 : Math.min(project.fixtures.length,previewQuality(preferences.previewQuality).fixtures),total:project.fixtures.length})}`;
-  projectionButton.insertAdjacentHTML("afterend", `<button id="export-canvas" class="view-menu" ${preferences.view==="palette" ? "" : "disabled"}>↗ ${t("exportCanvas")}</button>`);
-  const materialButton=document.querySelector("#apply-scene");
-  if (materialButton) materialButton.insertAdjacentHTML("beforebegin", `<label>${t("materialTarget")} <select id="material-target">${["accent","wall","floor","ceiling"].map((target)=>`<option value="${target}" ${preferences.materialTarget===target ? "selected" : ""}>${t(`surface_${target}`)}</option>`).join("")}</select></label>`);
-  projectionButton.insertAdjacentHTML("afterend", `<button id="export-viewport" class="view-menu" ${preferences.view==="light" ? "" : "disabled"}>▣ ${t("exportViewport")}</button>`);
-  projectionButton.textContent=`${t(preferences.projection==="orthographic" ? "orthographic" : "perspective")} ⌄`;
-  projectionButton.setAttribute("aria-label",t("switchProjection"));
-  document.querySelector("#effect-type").insertAdjacentHTML("beforeend", `<option value="panTilt">${t("panTilt")}</option>`);
-  document.querySelector("#play-tracks").insertAdjacentHTML("afterend", `<label>${t("seekTracks")} <input id="arrangement-seek" type="range" min="0" max="${arrangementEnd}" step="0.1" value="0" ${arrangementEnd ? "" : "disabled"}></label><output id="arrangement-position">0 / ${arrangementEnd.toFixed(1)} s</output>`);
-  const timelineTransport=document.createElement("div");
-  timelineTransport.className="timeline-transport";
-  for (const id of ["play-tracks","stop-cue","arrangement-position"]) {
-    timelineTransport.append(document.getElementById(id));
-  }
-  document.querySelector(".timeline > .section-title").append(timelineTransport);
-  document.querySelector(".timeline > p").append(" ", document.querySelector(".timeline > .section-title .m-badge"));
-  const timingDetails=document.createElement("details");
-  document.querySelector("#cue-delay").parentElement.insertAdjacentHTML("afterend", `<label>${t("fadeOut")} (s)<input id="cue-fadeOut" type="number" min="0" step="0.1" required value="0"></label>`);
-  if (activeCue) document.querySelector("#edit-cue-delay").parentElement.insertAdjacentHTML("afterend", `<label>${t("fadeOut")} (s)<input id="edit-cue-fadeOut" type="number" min="0" step="0.1" required value="${activeCue.fadeOut ?? 0}"></label><small>${t("holdTime")}: ${Math.max(0,activeCue.duration-(activeCue.delay ?? 0)-activeCue.fade-(activeCue.fadeOut ?? 0)).toFixed(1)} s</small>`);
-  timingDetails.className="fixture-group-editor";
-  const timingSummary=document.createElement("summary");
-  timingSummary.textContent=t("cueSettings");timingDetails.append(timingSummary);
-  document.querySelectorAll(".cue-timing").forEach((node)=>timingDetails.append(node));
-  document.querySelector(".timeline").append(timingDetails);
-  if (preferences.view==="palette") document.querySelector(".scene-preview").innerHTML=canvasMarkup(scene().canvasObjects ?? [],preferences.objectId,t("designCanvas"))+`<div class="canvas-actions"><label>${t("shapeKind")} <select id="shape-kind"><option value="rect" ${preferences.shapeKind!=="ellipse" ? "selected" : ""}>${t("rectangle")}</option><option value="ellipse" ${preferences.shapeKind==="ellipse" ? "selected" : ""}>${t("ellipse")}</option></select></label><button id="add-canvas-shape">＋ ${t("shapes")}</button></div>`;
-  document.querySelector(".timeline").insertAdjacentHTML("beforeend", `<details class="fixture-group-editor"><summary>${t("virtualDmx")} · ${t("outputDisabled")}</summary><pre id="virtual-dmx-monitor"></pre></details>`);
-  updateDmxFeedback(project.fixtures);
-  const room=roomDimensions(scene().room);
-  const stage=stageSettings(scene().stage);
-  document.querySelector(".left-rail").insertAdjacentHTML("beforeend", `<details class="fixture-group-editor"><summary>${t("stagePlatform")}</summary><label><input id="stage-enabled" type="checkbox" ${stage.enabled ? "checked" : ""}> ${t("showStage")}</label>${["x","y","z","width","height","depth"].map((key)=>`<label>${["x","y","z"].includes(key) ? key.toUpperCase() : t(key)} (m)<input id="stage-${key}" type="number" step="any" required value="${stage[key]}"></label>`).join("")}<label>${t("selectedColour")}<input id="stage-color" type="color" value="${stage.color}"></label><button id="apply-stage">${t("apply")}</button></details>`);
-  document.querySelector(".left-rail").insertAdjacentHTML("beforeend", `<details class="fixture-group-editor"><summary>${t("roomDimensions")}</summary>${["width","height","depth"].map((key)=>`<label>${t(key)} (m)<input id="room-${key}" type="number" required min="2" max="${key==="height" ? 20 : 50}" step="any" value="${room[key]}"></label>`).join("")}<button id="apply-room">${t("apply")}</button></details>`);
-  for (const [index,key] of ["lighting","palette","props"].entries()) {
-    const item=document.querySelectorAll(".layer-list li")[index],visible=scene().visibility?.[key]!==false;
-    item.querySelector("span").outerHTML=`<button data-layer-visibility="${key}" aria-pressed="${visible}" aria-label="${t("layerVisibility")}: ${t(["layersLighting","layersPalette","layersScene"][index])}">${visible ? "◉" : "○"}</button>`;
-  }
-  document.querySelector(".palette-panel").hidden=scene().visibility?.palette===false;
-  document.querySelector(".scene-preview").classList.toggle("hide-lighting",scene().visibility?.lighting===false);
-  document.querySelector(".scene-preview").classList.toggle("hide-props",scene().visibility?.props===false);
-  if (activeCue) {
-    const channels=activeCue.targets.flatMap((target)=>Object.keys(target.properties).map((property)=>({fixtureId:target.fixtureId,property})));
-    timingDetails.insertAdjacentHTML("beforeend", `<fieldset><legend>${t("channelKeyframes")}</legend><label>${t("channel")}<select id="keyframe-channel">${channels.map((channel)=>`<option value="${esc(JSON.stringify(channel))}">${esc(project.fixtures.find((fixture)=>fixture.id===channel.fixtureId)?.name ?? channel.fixtureId)} · ${esc(channel.property)}</option>`).join("")}</select></label><label>${t("startTime")}<input id="keyframe-time" type="number" min="0" max="${activeCue.duration}" step="0.1" value="0" required></label><label>${t("channelValue")}<input id="keyframe-value" type="number" min="0" max="255" step="1" value="127" required></label><button id="save-keyframe" ${channels.length ? "" : "disabled"}>${t("saveKeyframe")}</button>${(activeCue.channelKeyframes ?? []).map((frame,index)=>`<p>${esc(frame.fixtureId)} · ${esc(frame.property)} · ${frame.time}s → ${frame.value} <button data-remove-keyframe="${index}" aria-label="${t("removeKeyframe")}">×</button></p>`).join("")}</fieldset>`);
-  }
-  const inspector=document.querySelector(".inspector"),fixturePanel=inspector.querySelector(".fixture-inspector");
-  if (fixturePanel) fixturePanel.insertAdjacentHTML("beforeend", `<div class="dmx-actions"><button id="duplicate-fixture">${t("duplicateFixture")}</button><button id="delete-fixture">${t("deleteFixture")}</button></div>`);
-  const mode=(preferences.inspectorMode ?? (preferences.view==="light" ? "fixture" : "palette"))==="fixture" && fixturePanel ? "fixture" : "palette";
-  const palettePanel=document.createElement("div");palettePanel.id="palette-inspector-panel";
-  for (const node of [...inspector.children]) if (!node.classList.contains("section-title") && !node.classList.contains("inspector-tabs") && node!==fixturePanel) palettePanel.append(node);
-  inspector.append(palettePanel);
-  const canvasObject=scene().canvasObjects?.find((object)=>object.id===preferences.objectId);
-  if (canvasObject && preferences.view==="palette") palettePanel.insertAdjacentHTML("beforeend", `<fieldset class="canvas-object-editor"><legend>${t("canvasObject")}</legend>${["x","y",...(canvasObject.type!=="text" ? ["width","height"] : ["fontSize"])].map((key)=>`<label>${["x","y"].includes(key) ? key.toUpperCase() : t(key)}<input data-object-value="${key}" type="number" step="any" required value="${canvasObject[key]}"></label>`).join("")}${canvasObject.type==="text" ? `<label>${t("text")}<input id="canvas-text" maxlength="2048" value="${esc(canvasObject.text)}"></label>` : ""}<button id="apply-object">${t("apply")}</button><button id="paint-object">${t("applySwatch")}</button><button id="delete-object">${t("deleteObject")}</button><button id="copy-object">${t("duplicateObject")}</button><button data-object-stack="-1">${t("sendBackward")}</button><button data-object-stack="1">${t("bringForward")}</button></fieldset>`);
-  for (const key of ["shapes","text","measure"]) {const button=document.querySelector(`[data-tool="${key}"]`);button.disabled=false;button.removeAttribute("title");}
-  for(const [key,tool] of Object.entries(toolKeys)){const button=document.querySelector(`[data-tool="${tool}"]`);if(button && !button.disabled){button.setAttribute("aria-keyshortcuts",key.toUpperCase());button.title=`${t(tool)} (${key.toUpperCase()})`;}}
-  palettePanel.hidden=mode!=="palette";
-  if (fixturePanel) {fixturePanel.id="fixture-inspector-panel";fixturePanel.hidden=mode!=="fixture";}
-  inspector.querySelector(".inspector-tabs").innerHTML=`<button data-inspector="fixture" aria-pressed="${mode==="fixture"}" class="${mode==="fixture" ? "is-active" : ""}" ${fixturePanel ? "" : "disabled"}>${t("fixtureLabel")}</button><button data-inspector="palette" aria-pressed="${mode==="palette"}" class="${mode==="palette" ? "is-active" : ""}">${t("palette")}</button>`;
+    document.querySelector("#apply-fixture").insertAdjacentHTML("beforebegin", `<d…4966 tokens truncated…ton data-inspector="fixture" aria-pressed="${mode==="fixture"}" class="${mode==="fixture" ? "is-active" : ""}" ${fixturePanel ? "" : "disabled"}>${t("fixtureLabel")}</button><button data-inspector="palette" aria-pressed="${mode==="palette"}" class="${mode==="palette" ? "is-active" : ""}">${t("palette")}</button>`;
   if (fixturePanel && mode==="fixture") {
     const keys=["fixture","light","dmx","effects"],activeTab=keys.includes(preferences.fixtureTab) ? preferences.fixtureTab : "fixture";
     const bodies=Object.fromEntries(keys.map((key)=>{const body=document.createElement("div");body.hidden=key!==activeTab;body.className="fixture-tab-body";return [key,body];}));
@@ -959,3 +845,4 @@ function downloadCss() { const file = new Blob([paletteCssVariables(palette().co
 window.addEventListener("keydown", (event) => { if (isEditableTarget(event.target) || event.defaultPrevented || event.isComposing) return; const tool=toolShortcut(event);if(tool){const button=document.querySelector(`[data-tool="${tool}"]`);if(button && !button.disabled){event.preventDefault();button.click();}return;} const shortcut=editorShortcut(event); if (!shortcut) return; event.preventDefault(); if (shortcut === "save") { saveProject(); render(); } else if (shortcut === "undo") undo(); else redo(); });
 account.subscribe(()=>render());
 render();
+
