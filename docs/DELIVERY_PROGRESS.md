@@ -58,9 +58,10 @@ not silently substituted with local simulation.
    operational. Preserve registered-user authorization and project isolation.
 5. Verify cue PDF browser downloads and validate advertised interchange adapters externally.
 6. Complete accessibility, translation, performance and security acceptance.
-7. Prepare a reviewable canonical-domain release. Current instructions prohibit
-   merge/deployment, force pushes and history rewriting; source publication alone
-   cannot close that release gate.
+7. Prepare a reviewable canonical-domain release. Push each verified increment
+   through a focused PR, merge and deploy it promptly, and record its checks,
+   commit and release run. Do not accumulate unrelated work into one large PR.
+   Force pushes and history rewriting remain prohibited.
 
 This ledger is not a completion declaration. A milestone closes only when its
 full required behavior and corresponding acceptance evidence are established.
