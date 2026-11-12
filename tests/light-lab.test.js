@@ -16,6 +16,14 @@ test("selected fixture adds viewport outline geometry without changing scene inp
   assert.ok(selected.length>normal.length);
   assert.equal(fixture.selected,undefined);
 });
+import { studioFloorShade } from "../src/light-lab/renderer.js";
+test("soft studio contact shadows add depth under props and disappear with the props layer",()=>{
+  const plantBase=studioFloorShade(-3.65,1.8),clearFloor=studioFloorShade(0,-4);
+  assert.ok(plantBase<clearFloor);
+  assert.ok(plantBase>=.72 && plantBase<1);
+  assert.equal(studioFloorShade(-3.65,1.8,false),1);
+  assert.ok([plantBase,clearFloor].every(Number.isFinite));
+});
 import { surfaceGrid } from "../src/light-lab/renderer.js";
 test("surface grid includes interior vertices for localized illumination",()=>{
   const data=surfaceGrid([0,0,0],[2,0,0],[0,0,2],[.2,.3,.4],2,2);
