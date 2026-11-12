@@ -156,7 +156,7 @@ export function surfaceLighting(position, baseColour, lights, normal) {
       const ray=position.map((value,index)=>value-[light.x,light.y,light.z][index]);
       const cosine=ray.reduce((sum,value,index)=>sum+value*direction[index],0)/Math.max(.0001,distance*length);
       const edge=length/Math.hypot(length,light.spread);
-      cone=Math.max(0,Math.min(1,(cosine-edge)/Math.max(.0001,1-edge)));
+      cone=spotlightConeCoverage(cosine,edge);
     }
     const falloff=light.range ? Math.max(0,1-distance/light.range)**2 : 1;
     const directionToLight=[light.x-position[0],light.y-position[1],light.z-position[2]];
@@ -167,6 +167,11 @@ export function surfaceLighting(position, baseColour, lights, normal) {
     for (let channel=0;channel<3;channel+=1) result[channel]+=light.colour[channel]*strength*(.48 + baseColour[channel]*.65);
   }
   return result.map((value)=>Math.max(0,Math.min(1,value)));
+}
+export function spotlightConeCoverage(cosine,edgeCosine) {
+  if(!Number.isFinite(cosine)||!Number.isFinite(edgeCosine))return 0;
+  const transition=Math.max(0,Math.min(1,(cosine-edgeCosine)/Math.max(.0001,1-edgeCosine)));
+  return transition*transition*(3-2*transition);
 }
 export function surfaceGrid(origin, horizontal, vertical, colour, columns=20, rows=16) {
   const data=[];
