@@ -1,8 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { pickScenePoint,projectScenePoint,rayOccluded,filterOccludedPoints } from "../src/light-lab/picking.js";
+import { pickScenePoint,projectScenePoint,rayHitDistance,rayOccluded,filterOccludedPoints } from "../src/light-lab/picking.js";
 import { multiply,studioCameraMatrix,viewportProjection } from "../src/light-lab/math.js";
-import { sceneData } from "../src/light-lab/renderer.js";
+import { fixtureHousing,sceneData } from "../src/light-lab/renderer.js";
 test("fixture picking projects points in both projection modes and rejects clipped points",()=>{
   for (const mode of ["perspective","orthographic"]) {
     const matrix=viewportProjection(mode,2,10);
@@ -33,6 +33,20 @@ test("fixture selection can reject geometry occluded before the fixture point",(
  assert.equal(rayOccluded(target,ray,triangle(-4,3)),false);
  assert.equal(rayOccluded(target,ray,triangle(-4),4.5),false,"margin protects the fixture's own housing volume");
  assert.equal(rayOccluded(target,ray,new Float32Array(17)),false);
+});
+
+test("fixture housing ray picking returns the nearest triangle surface",()=>{
+ const ray={origin:[0,0,0],direction:[0,0,-1],length:20};
+ const triangle=(z)=>[-1,-1,z,0,0,0,1,-1,z,0,0,0,0,1,z,0,0,0];
+ assert.equal(rayHitDistance([...triangle(-4),...triangle(-8)],ray),4);
+ assert.equal(rayHitDistance(triangle(-4),ray,3),null);
+ assert.equal(rayHitDistance(triangle(-4),{...ray,direction:[0,1,0]}),null);
+ assert.equal(rayHitDistance(new Float32Array(17),ray),null);
+});
+
+test("fixture housing geometry produces a direct ray hit",()=>{
+ const housing=fixtureHousing({x:0,y:3,z:0,targetX:0,targetZ:1.35,colour:[1,.5,.2]});
+ assert.ok(rayHitDistance(housing,{origin:[0,3,2],direction:[0,0,-1],length:10})!==null);
 });
 
 test("projected fixture centers stay inside screen coordinates and depth bounds",()=>{
