@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { duplicateFixture,deleteFixture } from "../src/domain/fixture-operations.js";
+import { duplicateFixture,deleteFixture } from "../src/domain/fixture-operations.ts";
 import { createStudioMoodProject } from "../src/domain/studio-mood.js";
 import { validateProject } from "../src/domain/project.js";
 import { createCue } from "../src/timeline/engine.js";
