@@ -253,6 +253,22 @@ export function studioFloorGrain(width,depth,colour,lineCount=9,segments=32) {
   }
   return data;
 }
+export function studioRugBorder(x,z,width,depth,outerColour,innerColour,y=.04) {
+  if(![x,z,width,depth,y].every(Number.isFinite) || width<=.5 || depth<=.5) {
+    throw new Error("Invalid studio rug border geometry.");
+  }
+  const data=[];
+  const ring=(inset,thickness,colour)=>{
+    const left=x+inset,right=x+width-inset,front=z+inset,back=z+depth-inset;
+    quad(data,[left,y,front],[right,y,front],[right,y,front+thickness],[left,y,front+thickness],colour);
+    quad(data,[left,y,back-thickness],[right,y,back-thickness],[right,y,back],[left,y,back],colour);
+    quad(data,[left,y,front+thickness],[left+thickness,y,front+thickness],[left+thickness,y,back-thickness],[left,y,back-thickness],colour);
+    quad(data,[right-thickness,y,front+thickness],[right,y,front+thickness],[right,y,back-thickness],[right-thickness,y,back-thickness],colour);
+  };
+  ring(.04,.07,outerColour);
+  ring(.135,.018,innerColour);
+  return data;
+}
 function studioShelfLamp(data,x,y,z){
   box(data,x-.10,y,z-.10,.20,.035,.20,hexVector("#70513C"));
   box(data,x-.018,y+.035,z-.018,.036,.14,.036,hexVector("#9A7250"));
@@ -325,6 +341,7 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
     const tableShadow=Math.exp(-(((x+.2)/.88)**2+((z-.25)/.76)**2));
     return rugColour.map(channel=>channel*(1-.3*sofaShadow-.24*tableShadow));
   },24,18));
+  data.push(...studioRugBorder(-2.36,-.86,4.72,3.47,hexVector("#8F654C"),hexVector("#C1A073")));
   box(data,-1.7,.25,1.4,3.4,.8,.75,couch);
   const backCushionColour=couch.map(value=>Math.min(1,value*1.2));
   for(let index=0;index<3;index++)data.push(...studioBackCushion(-1.45+index*.97,1.05,1.55,.93,.55,.35,backCushionColour));
