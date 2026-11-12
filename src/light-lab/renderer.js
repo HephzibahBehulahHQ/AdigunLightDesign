@@ -19,6 +19,32 @@ function sofaCushionPiping(target,x,y,z,width,depth,colour) {
   quad(target,[left,y,front+line],[left+line,y,front+line],[left+line,y,back-line],[left,y,back-line],colour);
   quad(target,[right-line,y,front+line],[right,y,front+line],[right,y,back-line],[right-line,y,back-line],colour);
 }
+export function studioSeatCushion(x,y,z,width,depth,height,colour,columns=10,rows=8) {
+  if (![x,y,z,width,depth,height].every(Number.isFinite) || width<=0 || depth<=0 || height<=0 ||
+      !Number.isInteger(columns) || columns<2 || columns>32 || !Number.isInteger(rows) || rows<2 || rows>32) {
+    throw new Error("Invalid studio cushion geometry.");
+  }
+  const data=[],sideColour=colour.map(value=>value*.78),bottomColour=colour.map(value=>value*.66);
+  const top=(u,v)=>[x+u*width,y+height+.024*Math.sin(Math.PI*u)*Math.sin(Math.PI*v),z+v*depth];
+  const base=(u,v)=>[x+u*width,y,z+v*depth];
+  for(let row=0;row<rows;row++)for(let column=0;column<columns;column++){
+    const u=column/columns,U=(column+1)/columns,v=row/rows,V=(row+1)/rows;
+    quad(data,top(u,v),top(U,v),top(U,V),top(u,V),colour);
+  }
+  for(let column=0;column<columns;column++){
+    const u=column/columns,U=(column+1)/columns;
+    quad(data,base(u,0),base(U,0),top(U,0),top(u,0),sideColour);
+    quad(data,base(U,1),base(u,1),top(u,1),top(U,1),sideColour);
+  }
+  for(let row=0;row<rows;row++){
+    const v=row/rows,V=(row+1)/rows;
+    quad(data,base(0,V),base(0,v),top(0,v),top(0,V),sideColour);
+    quad(data,base(1,v),base(1,V),top(1,V),top(1,v),sideColour);
+  }
+  quad(data,base(0,0),base(1,0),base(1,1),base(0,1),bottomColour);
+  return data;
+}
+
 
 const channel = (value) => Math.max(0, Math.min(255, Number(value) || 0)) / 255;
 export function virtualFixtureVisuals(fixtures = [],limit=12) {
@@ -263,7 +289,7 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
   const cushionThread=couch.map(value=>value*.78);
   for(let index=0;index<3;index++) {
     const cushionX=-1.55+index*1.03;
-    box(data,cushionX,.97,1.32,.95,.12,.72,cushionHighlight);
+    data.push(...studioSeatCushion(cushionX,.97,1.32,.95,.72,.12,cushionHighlight));
     sofaCushionPiping(data,cushionX,1.091,1.32,.95,.72,cushionThread);
   }
   box(data,-1.45,1.15,1.33,.45,.42,.18,hexVector("#E5AE66"));
