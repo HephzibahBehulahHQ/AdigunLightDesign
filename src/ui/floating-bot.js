@@ -4,6 +4,14 @@ export function createFloatingBot({getProjectId,getLocale,translate,getUserId=()
   let store=null,scope="",host=null,drag=null;
   const viewport=()=>({width:windowRef.innerWidth,height:windowRef.innerHeight}),t=key=>translate(getLocale(),key);
   const ai=()=>documentRef.querySelector('[data-module="copilot"]');
+  function fitToWorkspace(state,rect){
+    const size=viewport();
+    if(!state.open || state.mode!=="normal" || state.positioned || size.width<1321 || size.height<700)return rect;
+    const workspace=documentRef.querySelector(".editor-layout"),tabs=documentRef.querySelector(".workspace-tabs");
+    if(typeof workspace?.getBoundingClientRect!=="function" || typeof tabs?.getBoundingClientRect!=="function")return rect;
+    const top=Math.ceil(tabs.getBoundingClientRect().bottom+4),bottom=Math.floor(workspace.getBoundingClientRect().bottom)-16,height=bottom-top;
+    return height>=400 && height<rect.height ? {...rect,y:top,height} : rect;
+  }
   function paint(){
     if(!host || !store)return;
     const state=store.state,rect=botWindowRect(state,viewport());host.hidden=!state.open;
@@ -11,8 +19,9 @@ export function createFloatingBot({getProjectId,getLocale,translate,getUserId=()
     const reserve=state.open && state.mode==="normal" && rightGap<=24 && rect.width<=viewport().width-900;
     documentRef.body.classList.toggle("has-open-floating-bot",reserve);
     documentRef.body.style.setProperty("--bot-workspace-reserve",`${rect.width+rightGap}px`);
+    const fittedRect=fitToWorkspace(state,rect);
     host.classList.toggle("is-minimized",state.mode==="minimized");
-    for(const [key,value] of Object.entries({left:rect.x,top:rect.y,width:rect.width,height:rect.height}))host.style[key]=`${value}px`;
+    for(const [key,value] of Object.entries({left:fittedRect.x,top:fittedRect.y,width:fittedRect.width,height:fittedRect.height}))host.style[key]=`${value}px`;
     const maximize=host.querySelector("[data-bot-maximize]");maximize.textContent=state.mode==="maximized" ? "❐" : "□";maximize.title=t(state.mode==="maximized" ? "botRestore" : "botMaximize");maximize.setAttribute("aria-label",maximize.title);
     const minimize=host.querySelector("[data-bot-minimize]");minimize.title=t(state.mode==="minimized" ? "botRestore" : "botMinimize");minimize.setAttribute("aria-label",minimize.title);
     const button=ai();if(button){button.classList.toggle("has-bot-unread",state.unread);button.setAttribute("aria-expanded",String(state.open));button.setAttribute("aria-controls","floating-lux-window");}

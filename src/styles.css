@@ -70,24 +70,6 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
   .timeline .dmx-actions { gap:4px; padding-top:5px; padding-bottom:5px; }
   .swatch span { height:44px; }
 }
-.project-overview { display:grid; grid-template-columns:1.15fr 1fr 1fr .9fr 1fr; gap:6px; padding:6px 0; background:#fff; color:#171224; }
-.overview-card,.overview-brand { min-width:0; min-height:190px; border:1px solid #d9c9f4; border-radius:12px; overflow:hidden; }
-.overview-card { background:linear-gradient(140deg,#faf7ff,#f0ebf8); }
-.overview-card h2 { margin:0; padding:9px 10px; background:#e4d2ff; font-size:14px; }
-.overview-card ul { margin:9px 9px 9px 24px; padding:0; font-size:11px; line-height:1.5; }
-.overview-card li { margin:5px 0; padding-left:2px; }
-.overview-card li::marker { color:#8436dc; }
-.overview-constraints { background:#fff6e9; border-color:#ffdbac; }
-.overview-constraints h2 { background:#ffe7c3; }
-.overview-constraints li::marker { color:#db8c13; }
-.overview-brand { display:flex; flex-direction:column; justify-content:center; align-items:center; position:relative; padding:14px; color:#fff; text-align:center; background:radial-gradient(ellipse at 10% 5%,#7c20dc 0,transparent 55%),radial-gradient(ellipse at 90% 110%,#075ee6 0,transparent 55%),#080e20; }
-.overview-brand strong { font-size:clamp(19px,1.7vw,29px); letter-spacing:-1px; z-index:1; }
-.overview-brand strong span { color:#b754f1; }
-.overview-brand p { margin:7px 0; font-size:12px; }
-.overview-brand small { margin-top:12px; }
-.overview-light .ui-icon { width:40px; height:40px; color:#66daff; filter:drop-shadow(0 0 12px #a025ff); }
-@media (max-width:1320px) { .project-overview { grid-template-columns:repeat(3,minmax(0,1fr)); } }
-@media (max-width:670px) { .project-overview { grid-template-columns:1fr; padding:6px; }.overview-card,.overview-brand { min-height:unset; }.overview-brand { min-height:170px; } }
 .lux-service { margin:12px; font-size:12px; }
 .lux-service form,.lux-service label { display:grid; gap:7px; margin:8px 0; }
 .lux-service input,.lux-service textarea { width:100%; min-width:0; }
