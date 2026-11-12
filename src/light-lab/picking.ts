@@ -40,18 +40,7 @@ export function rayOccluded(target:readonly [number,number,number],ray:ViewportR
   if(![...target,...ray.origin,...ray.direction,ray.length,margin].every(Number.isFinite)||ray.length<=0||margin<0||vertices.length%18!==0)return false;
   const targetDistance=target.reduce((sum,value,index)=>sum+(value-ray.origin[index]!)*ray.direction[index]!,0);
   if(targetDistance<=margin)return false;
-  const dot=(a:number[],b:number[])=>a.reduce((sum,value,index)=>sum+value*b[index]!,0),cross=(a:number[],b:number[])=>[a[1]!*b[2]!-a[2]!*b[1]!,a[2]!*b[0]!-a[0]!*b[2]!,a[0]!*b[1]!-a[1]!*b[0]!];
-  for(let offset=0;offset<vertices.length;offset+=18){
-    const a=[vertices[offset]!,vertices[offset+1]!,vertices[offset+2]!],b=[vertices[offset+6]!,vertices[offset+7]!,vertices[offset+8]!],c=[vertices[offset+12]!,vertices[offset+13]!,vertices[offset+14]!];
-    if(![...a,...b,...c].every(Number.isFinite))continue;
-    const edge1=b.map((value,index)=>value-a[index]!),edge2=c.map((value,index)=>value-a[index]!),p=cross([...ray.direction],edge2),determinant=dot(edge1,p);
-    if(Math.abs(determinant)<1e-9)continue;
-    const inverse=1/determinant,s=ray.origin.map((value,index)=>value-a[index]!),u=dot(s,p)*inverse;if(u<0||u>1)continue;
-    const q=cross(s,edge1),v=dot([...ray.direction],q)*inverse;if(v<0||u+v>1)continue;
-    const distance=dot(edge2,q)*inverse;
-    if(distance>1e-5 && distance<targetDistance-margin)return true;
-  }
-  return false;
+  return rayHitDistance(vertices,ray,targetDistance-margin)!==null;
 }
 export function filterOccludedPoints(points:readonly PickPoint[],matrix:ArrayLike<number>,width:number,height:number,vertices:ArrayLike<number>){
   return points.filter(point=>{
