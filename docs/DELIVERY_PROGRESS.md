@@ -135,6 +135,12 @@ On 12 November 2026, two M8 typing increments were merged and deployed:
   margin. All 269 tests and project gates passed. Pages run
   [43289995506](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/43289995506)
   passed deployment and custom-domain verification for commit `5e44a05`.
+- [PR #69](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/pull/69)
+  aligned the assistant shell, offline status, placeholders and accessible
+  labels with the Lux — AI Co-Pilot reference in all four locales. All 270
+  tests and project gates passed. Pages run
+  [43291719882](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/43291719882)
+  passed deployment and custom-domain verification for commit `8ddff23`.
 
 These increments improve strict typing and the artistic scene preview. They do
 not complete M3 or M8, and do not recalculate the overall engineering estimate
