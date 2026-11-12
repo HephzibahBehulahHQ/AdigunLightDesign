@@ -7,7 +7,7 @@ import { addCanvasObject } from "../domain/canvas.js";
 import { starterPalette,rerollUnlocked,updateSwatch } from "../domain/palette-store.js";
 import { normalizeHex,hexToRgb } from "../domain/color-engine.js";
 import { applySceneMaterial } from "../domain/scene-materials.js";
-import { extractImagePalette } from "../domain/image-palette.js";
+import { extractImagePalette } from "../domain/image-palette.ts";
 
 function paletteById(project,id) {
   const palette=project.palettes.find((item)=>item.id===id);
