@@ -1,1 +1,1 @@
-export {pickScenePoint} from "./picking.ts";
+export {pickScenePoint,projectScenePoint,rayOccluded,filterOccludedPoints} from "./picking.ts";

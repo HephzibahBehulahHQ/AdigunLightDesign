@@ -66,8 +66,8 @@ function inverse4(matrix:ArrayLike<number>) {
   return new Float64Array(Array.from({length:4},(_,column)=>Array.from({length:4},(_,row)=>rows[row]![column+4]!)).flat());
 }
 
-export function viewportPointOnPlane(matrix:ArrayLike<number>,x:number,y:number,width:number,height:number,planeY:number){
-  if(![x,y,width,height,planeY].every(Number.isFinite)||width<=0||height<=0)return null;
+export function viewportRay(matrix:ArrayLike<number>,x:number,y:number,width:number,height:number){
+  if(![x,y,width,height].every(Number.isFinite)||width<=0||height<=0)return null;
   const inverse=inverse4(matrix);if(!inverse)return null;
   const clipX=x/width*2-1,clipY=1-y/height*2;
   const unproject=(depth:number)=>{
@@ -76,9 +76,16 @@ export function viewportPointOnPlane(matrix:ArrayLike<number>,x:number,y:number,
     return point.slice(0,3).map(value=>value/point[3]!);
   };
   const near=unproject(-1),far=unproject(1);if(!near||!far)return null;
-  const ray=far.map((value,index)=>value-near[index]!),rayLength=Math.hypot(...ray),dy=ray[1]!;if(Math.abs(dy)<rayLength*.02)return null;
-  const distance=(planeY-near[1]!)/dy;if(distance<0||distance>1)return null;
-  return [near[0]!+(far[0]!-near[0]!)*distance,planeY,near[2]!+(far[2]!-near[2]!)*distance];
+  const ray=far.map((value,index)=>value-near[index]!),length=Math.hypot(...ray);if(length<1e-9)return null;
+  return {origin:near as [number,number,number],direction:ray.map(value=>value/length) as [number,number,number],length};
+}
+
+export function viewportPointOnPlane(matrix:ArrayLike<number>,x:number,y:number,width:number,height:number,planeY:number){
+  if(!Number.isFinite(planeY))return null;
+  const ray=viewportRay(matrix,x,y,width,height);if(!ray)return null;
+  const dy=ray.direction[1];if(Math.abs(dy)<.02)return null;
+  const distance=(planeY-ray.origin[1])/dy;if(distance<0||distance>ray.length)return null;
+  return [ray.origin[0]+ray.direction[0]*distance,planeY,ray.origin[2]+ray.direction[2]*distance];
 }
 
 export function hexVector(hex:unknown) {
