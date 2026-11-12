@@ -69,7 +69,7 @@ Fixture duplication preserves profile/mode and properties, offsets X by 0.5 m an
 
 Room dimensions are optional `scene.room` values in meters: width/depth 2–50 and height 2–20, with legacy defaults 10 × 4 × 8. Undoable controls resize the cutaway floor and two walls. Built-in furniture and the ceiling rig scale to remain inside the room; fixture transforms and user-configured stage geometry retain their world coordinates. No automatic fixture arrangement or collision checking is claimed. The remaining sides stay open for viewing. Native validation rejects malformed dimensions. Geometry bounds and persistence have tests; rendered appearance is unverified.
 
-Clicking near a projected fixture center selects it and opens its inspector. Dragging continues to orbit; pointer cancellation does not select. Picking considers the first 12 rendered fixtures, rejects clipped points, and uses a 28 CSS-pixel hit radius with depth tie-breaking. It does not perform mesh raycasting or prop occlusion testing. Layer-list selection remains the keyboard-accessible alternative. Projection tests do not establish browser interaction acceptance.
+Clicking near a projected fixture center selects it and opens its inspector. Ordinary dragging orbits the camera. Shift-dragging a fixture at an angled view moves its X/Z position on the fixture's horizontal plane and commits one undoable update; pointer cancellation restores its original position. Near-parallel camera rays fall back to the numeric X/Y/Z/rotation controls. Picking considers the first 12 rendered fixtures, rejects clipped points, and uses a 28 CSS-pixel hit radius with depth tie-breaking. It does not perform mesh raycasting or prop occlusion testing. Layer-list selection remains the keyboard-accessible alternative. Projection tests do not establish browser interaction acceptance.
 
 The viewport projection control toggles perspective and orthographic modes and persists the choice locally. Both retain orbit and zoom; changing mode rebuilds the viewport at its default camera pose. Orthographic zoom changes the view volume, preserving depth-independent object size. Matrix behavior has automated coverage; actual browser appearance remains unverified.
 
@@ -82,6 +82,7 @@ The inspector has functional Fixture and Palette selectors. Opening 3D selects f
 At desktop sizes above 1320 × 700, the editor grid places the toolbar across the viewport and inspector, with the palette/timeline row spanning the same combined width below. The project rail and Lux panel span the editor height. Secondary controls scroll inside their panels. Smaller windows retain the existing stacked layout. This structural change has not been visually accepted against the reference; browser screenshot verification remains required.
 
 The desktop target is a 1440 × 900 dark navy editor. Its surface hierarchy is: brand/header; module navigation; left workspace rail; central canvas/viewport; inspector; palette/timeline; one assistant panel. Narrow layouts collapse secondary panels rather than creating page overflow. Exact visual comparison needs the production corporate logo asset, licensed imagery and a browser regression baseline; absent assets must not be substituted with fabricated equivalents.
+
 
 
 
