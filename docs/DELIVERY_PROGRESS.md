@@ -141,6 +141,12 @@ On 12 November 2026, two M8 typing increments were merged and deployed:
   tests and project gates passed. Pages run
   [43291719882](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/43291719882)
   passed deployment and custom-domain verification for commit `8ddff23`.
+- [PR #71](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/pull/71)
+  caches fixture housing meshes for repeated picking until fixture data changes.
+  All 270 tests, lint, typecheck, project check and build passed. Pages run
+  [43293979917](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/43293979917)
+  passed deployment and custom-domain verification; the live custom domain
+  returned HTTP 200 for commit `9d3df03`.
 
 These increments improve strict typing and the artistic scene preview. They do
 not complete M3 or M8, and do not recalculate the overall engineering estimate
@@ -153,8 +159,8 @@ not silently substituted with local simulation.
 
 ## Evidence boundaries
 
-- Latest recorded full local suite: 269 passed, zero failures/skips on
-  12 November 2026 (PR #64 release). For the earlier Help-link increment, the
+- Latest recorded full local suite: 270 passed, zero failures/skips on
+  12 November 2026 (PR #71 release). For the earlier Help-link increment, the
   focused top-menu suite passed 3/3, and local lint,
   typecheck, project check and production build passed. PR #16 also passed the
   full GitHub Actions validation workflow.
