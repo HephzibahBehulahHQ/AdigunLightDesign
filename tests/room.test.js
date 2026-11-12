@@ -19,6 +19,12 @@ test("room floor walls and ceiling use the chosen world dimensions",()=>{
   assert.equal(Math.max(...coordinates.map((point)=>point[2])),6);
   assert.ok(data.every(Number.isFinite));
 });
+test("studio props and ceiling rig fit the minimum editable room dimensions",()=>{
+  const room={width:2,height:2,depth:2},data=sceneData([.2,.3,.4],[],{},room,false);
+  const coordinates=Array.from({length:data.length/6},(_,index)=>data.slice(index*6,index*6+3));
+  assert.ok(data.every(Number.isFinite));
+  assert.ok(coordinates.every(([x,y,z])=>x>=-1.001&&x<=1.001&&y>=0&&y<=2.001&&z>=-1.001&&z<=1.001));
+});
 test("room resize persists through native files and undo restores the old scene",()=>{
   const project=createStudioMoodProject(),state=commitTransaction({project,undoStack:[],redoStack:[]},"resize",(draft)=>{draft.scenes[0].room={width:14,height:6,depth:12};});
   assert.equal(validateProject(JSON.parse(JSON.stringify(state.project))).valid,true);
