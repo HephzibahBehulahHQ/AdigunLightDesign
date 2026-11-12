@@ -11,7 +11,10 @@ test("painting a surface changes vertex colors while preserving geometry and oth
   for(let offset=0;offset<before.length;offset+=6) assert.deepEqual(after.slice(offset,offset+3),before.slice(offset,offset+3));
   assert.ok(after[3]>before[3]);assert.equal(after[4],0);assert.equal(after[5],0);
   const floorLength=20*16*6*6;
-  assert.deepEqual(after.slice(floorLength),before.slice(floorLength));
+  const floorGrainLength=9*32*6*6;
+  assert.ok(after[floorLength+3]>before[floorLength+3]);
+  assert.equal(after[floorLength+4],0);assert.equal(after[floorLength+5],0);
+  assert.deepEqual(after.slice(floorLength+floorGrainLength),before.slice(floorLength+floorGrainLength));
 });
 test("surface painting preserves prior materials and validates native import",()=>{
   const project=createStudioMoodProject(),original=project.scenes[0];
