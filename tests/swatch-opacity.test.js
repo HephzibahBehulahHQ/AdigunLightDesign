@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { designTokenJson } from "../src/export/formats.js";
-import { comparePalettes } from "../src/domain/palette-versions.js";
+import { comparePalettes } from "../src/domain/palette-versions.ts";
 test("token export and version comparison retain opacity differences",()=>{
   const color={id:"c",name:"Red",hex:"#FF0000",locked:false,opacity:.5};
   assert.equal(JSON.parse(designTokenJson({colors:[color]})).color.swatch_1.value,"#FF000080");
