@@ -129,6 +129,12 @@ On 12 November 2026, two M8 typing increments were merged and deployed:
   labels. All 269 tests, lint, typecheck, project check and build passed. Pages
   run [43287446392](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/43287446392)
   passed deployment and custom-domain verification for commit `281637c`.
+- [PR #67](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/pull/67)
+  made fixture-housing picking and opaque-scene occlusion share the same
+  triangle-ray intersection routine while preserving the housing self-hit
+  margin. All 269 tests and project gates passed. Pages run
+  [43289995506](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/43289995506)
+  passed deployment and custom-domain verification for commit `5e44a05`.
 
 These increments improve strict typing and the artistic scene preview. They do
 not complete M3 or M8, and do not recalculate the overall engineering estimate
