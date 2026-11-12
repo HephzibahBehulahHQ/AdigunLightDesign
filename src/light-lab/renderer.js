@@ -12,6 +12,14 @@ const fragmentSource = `precision mediump float;varying vec3 v;uniform float opa
 function compile(gl, type, source) { const value = gl.createShader(type); gl.shaderSource(value, source); gl.compileShader(value); if (!gl.getShaderParameter(value, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(value)); return value; }
 function quad(target, a, b, c, d, colour) { for (const point of [a,b,c,a,c,d]) target.push(...point, ...colour); }
 function box(target, x, y, z, w, h, d, colour) { const X=x+w,Y=y+h,Z=z+d, shade=colour.map((value)=>value*.55),mid=colour.map((value)=>value*.78); quad(target,[x,y,z],[X,y,z],[X,Y,z],[x,Y,z],colour);quad(target,[X,y,Z],[x,y,Z],[x,Y,Z],[X,Y,Z],shade);quad(target,[x,y,Z],[X,y,Z],[X,y,z],[x,y,z],mid);quad(target,[x,Y,z],[X,Y,z],[X,Y,Z],[x,Y,Z],colour);quad(target,[x,y,Z],[x,y,z],[x,Y,z],[x,Y,Z],shade);quad(target,[X,y,z],[X,y,Z],[X,Y,Z],[X,Y,z],mid); }
+function sofaCushionPiping(target,x,y,z,width,depth,colour) {
+  const inset=.045,line=.012,left=x+inset,right=x+width-inset,front=z+inset,back=z+depth-inset;
+  quad(target,[left,y,front],[right,y,front],[right,y,front+line],[left,y,front+line],colour);
+  quad(target,[left,y,back-line],[right,y,back-line],[right,y,back],[left,y,back],colour);
+  quad(target,[left,y,front+line],[left+line,y,front+line],[left+line,y,back-line],[left,y,back-line],colour);
+  quad(target,[right-line,y,front+line],[right,y,front+line],[right,y,back-line],[right-line,y,back-line],colour);
+}
+
 const channel = (value) => Math.max(0, Math.min(255, Number(value) || 0)) / 255;
 export function virtualFixtureVisuals(fixtures = [],limit=12) {
   return fixtures.slice(0,limit).map((fixture,index)=>{
@@ -251,7 +259,12 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
   data.push(...roundTableTop(.75,.5,-.15,.45,.045,metal));
   for (const x of [-.75,.3]) for (const z of [-.15,.65]) box(data,x,.04,z,.035,.61,.035,metal);
   for (const x of [.5,.95]) for (const z of [-.35,.05]) box(data,x,.04,z,.03,.46,.03,metal);
-  for(let index=0;index<3;index++)box(data,-1.55+index*1.03,.97,1.32,.95,.12,.72,couch.map(value=>Math.min(1,value*1.12)));
+  const cushionHighlight=couch.map(value=>Math.min(1,value*1.12));
+  for(let index=0;index<3;index++) {
+    const cushionX=-1.55+index*1.03;
+    box(data,cushionX,.97,1.32,.95,.12,.72,cushionHighlight);
+    sofaCushionPiping(data,cushionX,1.091,1.32,.95,.72,cushionHighlight);
+  }
   box(data,-1.45,1.15,1.33,.45,.42,.18,hexVector("#E5AE66"));
   box(data,1,1.15,1.33,.45,.42,.18,accent);
   const upholsteryShadow=couch.map(channel=>channel*.64);
