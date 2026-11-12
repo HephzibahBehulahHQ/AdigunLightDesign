@@ -4,7 +4,7 @@ import { previewQuality } from "../src/light-lab/quality.js";
 import { sceneBuffers,virtualFixtureVisuals } from "../src/light-lab/renderer.js";
 test("preview modes use explicit fixture budgets with conservative fallback",()=>{
   const fixtures=Array.from({length:40},(_,index)=>({id:String(index),properties:{dimmer:0}}));
-  for(const [mode,count] of [["performance",4],["balanced",12],["quality",32]]) assert.equal(virtualFixtureVisuals(fixtures,previewQuality(mode).fixtures).length,count);
+  for(const [mode,count] of [["performance",12],["balanced",12],["quality",32]]) assert.equal(virtualFixtureVisuals(fixtures,previewQuality(mode).fixtures).length,count);
   assert.equal(previewQuality("__proto__").fixtures,12);
   assert.equal(fixtures.length,40);
 });
@@ -18,4 +18,8 @@ test("preview quality changes surface resolution without altering saved fixture 
   assert.ok(beamVertices(high)>beamVertices(low));
   assert.deepEqual(fixtures,before);
   assert.ok(high.data.every(Number.isFinite));
+});
+test("performance preview retains all six default scene fixtures",()=>{
+  const fixtures=Array.from({length:6},(_,index)=>({id:String(index),properties:{dimmer:255}}));
+  assert.equal(virtualFixtureVisuals(fixtures,previewQuality("performance").fixtures).length,fixtures.length);
 });
