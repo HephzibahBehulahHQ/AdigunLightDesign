@@ -44,7 +44,45 @@ export function viewportProjection(mode:string,aspect:number,distance:number) {
   return new Float32Array([1/halfWidth,0,0,0,0,1/halfHeight,0,0,0,0,-2/99.9,0,0,0,-100.1/99.9,1]);
 }
 
+function inverse4(matrix:ArrayLike<number>) {
+  if(matrix.length!==16 || !Array.from(matrix).every(Number.isFinite))return null;
+  const rows=Array.from({length:4},(_,row)=>[
+    ...Array.from({length:4},(_,column)=>matrix[column*4+row]!),
+    ...Array.from({length:4},(_,column)=>Number(row===column))
+  ]);
+  for(let column=0;column<4;column+=1){
+    let pivot=column;
+    for(let row=column+1;row<4;row+=1)if(Math.abs(rows[row]![column]!)>Math.abs(rows[pivot]![column]!))pivot=row;
+    const divisor=rows[pivot]![column]!;
+    if(Math.abs(divisor)<1e-10)return null;
+    [rows[column],rows[pivot]]=[rows[pivot]!,rows[column]!];
+    for(let index=0;index<8;index+=1)rows[column]![index]=rows[column]![index]!/divisor;
+    for(let row=0;row<4;row+=1){
+      if(row===column)continue;
+      const factor=rows[row]![column]!;
+      for(let index=0;index<8;index+=1)rows[row]![index]=rows[row]![index]!-factor*rows[column]![index]!;
+    }
+  }
+  return new Float64Array(Array.from({length:4},(_,column)=>Array.from({length:4},(_,row)=>rows[row]![column+4]!)).flat());
+}
+
+export function viewportPointOnPlane(matrix:ArrayLike<number>,x:number,y:number,width:number,height:number,planeY:number){
+  if(![x,y,width,height,planeY].every(Number.isFinite)||width<=0||height<=0)return null;
+  const inverse=inverse4(matrix);if(!inverse)return null;
+  const clipX=x/width*2-1,clipY=1-y/height*2;
+  const unproject=(depth:number)=>{
+    const point=Array.from({length:4},(_,row)=>inverse[row]!*clipX+inverse[4+row]!*clipY+inverse[8+row]!*depth+inverse[12+row]!);
+    if(Math.abs(point[3]!)<1e-10)return null;
+    return point.slice(0,3).map(value=>value/point[3]!);
+  };
+  const near=unproject(-1),far=unproject(1);if(!near||!far)return null;
+  const ray=far.map((value,index)=>value-near[index]!),rayLength=Math.hypot(...ray),dy=ray[1]!;if(Math.abs(dy)<rayLength*.02)return null;
+  const distance=(planeY-near[1]!)/dy;if(distance<0||distance>1)return null;
+  return [near[0]!+(far[0]!-near[0]!)*distance,planeY,near[2]!+(far[2]!-near[2]!)*distance];
+}
+
 export function hexVector(hex:unknown) {
   const cleaned = String(hex).replace("#", "");
   return [0, 2, 4].map((index) => Number.parseInt(cleaned.slice(index, index + 2), 16) / 255);
 }
+

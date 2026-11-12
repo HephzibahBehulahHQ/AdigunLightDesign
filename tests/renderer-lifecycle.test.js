@@ -1,6 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createLightLabRenderer } from "../src/light-lab/renderer.js";
+import { multiply,studioCameraMatrix,viewportProjection } from "../src/light-lab/math.js";
+
+function screenPoint(matrix,[x,y,z],width,height){
+  const clip=[0,1,2,3].map(row=>matrix[row]*x+matrix[4+row]*y+matrix[8+row]*z+matrix[12+row]);
+  return [(clip[0]/clip[3]+1)*width/2,(1-clip[1]/clip[3])*height/2];
+}
 
 test("camera movement reuses geometry; changes invalidate it and destroy removes listeners",()=>{
   const previousWindow=Object.getOwnPropertyDescriptor(globalThis,"window");
@@ -18,7 +24,7 @@ test("camera movement reuses geometry; changes invalidate it and destroy removes
     uniformMatrix4fv:(location,transpose,matrix)=>matrices.push([...matrix]),
     bufferData:(target,data)=>{uploads+=1;uploadLengths.push(data.length);},deleteBuffer:()=>{deletedBuffers+=1;},deleteProgram:()=>{deletedPrograms+=1;},deleteShader:()=>{deletedShaders+=1;}
   },{get:(target,key)=>key in target ? target[key] : ()=>{}});
-  const canvas={clientWidth:800,clientHeight:450,width:800,height:450,
+  const canvas={clientWidth:800,clientHeight:450,width:800,height:450,getBoundingClientRect:()=>({left:0,top:0,width:800,height:450}),
     getContext:()=>gl,setPointerCapture:()=>{},
     addEventListener:(name,handler)=>events.set(name,handler),
     removeEventListener:(name,handler)=>{if(events.get(name)===handler)events.delete(name);}
@@ -28,8 +34,9 @@ test("camera movement reuses geometry; changes invalidate it and destroy removes
     observe(){} disconnect(){disconnected=true;}
   }});
   try {
-    const fixture={id:"a",properties:{dimmer:255,red:255,green:0,blue:0}};
-    const renderer=createLightLabRenderer(canvas,{fixtures:[{...fixture,selected:true}]});
+    const fixture={id:"a",transform:{x:0,y:3.65,z:.45,rotation:0},properties:{dimmer:255,red:255,green:0,blue:0}};
+    const transformed=[],selected=[];
+    const renderer=createLightLabRenderer(canvas,{fixtures:[{...fixture,selected:true}],onTransform:(id,transform)=>transformed.push({id,transform}),onSelect:id=>selected.push(id)});
     assert.deepEqual(drawStates.slice(0,2),[{depthWrites:true,blending:false},{depthWrites:false,blending:true}]);
     assert.equal(depthWrites,true);assert.equal(blending,false);
     assert.equal(uploads,1);
@@ -47,8 +54,25 @@ test("camera movement reuses geometry; changes invalidate it and destroy removes
     assert.equal(Object.hasOwn(fixture,"selected"),false,"renderer selection must not mutate project fixtures");
     renderer.setFixtures([{...fixture,selected:false}]);
     assert.ok(uploadLengths[3]<uploadLengths[2],"explicit deselection removes outline geometry");
+    renderer.reset();
+    const camera=renderer.cameraState(),matrix=multiply(viewportProjection("perspective",800/450,camera.distance),studioCameraMatrix({...camera,targetHeight:2.2}));
+    const start=screenPoint(matrix,[fixture.transform.x,fixture.transform.y,fixture.transform.z],800,450),end=screenPoint(matrix,[.5,fixture.transform.y,fixture.transform.z],800,450);
+    events.get("pointerdown")({pointerId:1,clientX:start[0],clientY:start[1],shiftKey:true});
+    events.get("pointermove")({pointerId:1,clientX:end[0],clientY:end[1]});
+    events.get("pointerup")({type:"pointerup",pointerId:1,clientX:end[0],clientY:end[1]});
+    assert.equal(transformed.length,1);assert.equal(transformed[0].id,"a");assert.ok(Math.abs(transformed[0].transform.x-.5)<1e-4);assert.ok(Math.abs(transformed[0].transform.z-.45)<1e-4);assert.deepEqual(selected,["a"]);
+    assert.deepEqual(renderer.cameraState(),camera,"moving a fixture does not orbit the camera");
+    const moved={...fixture,transform:transformed[0].transform};renderer.setFixtures([moved]);
+    const cancelStart=screenPoint(matrix,[.5,fixture.transform.y,fixture.transform.z],800,450),cancelEnd=screenPoint(matrix,[2,fixture.transform.y,fixture.transform.z],800,450);
+    events.get("pointerdown")({pointerId:2,clientX:cancelStart[0],clientY:cancelStart[1],shiftKey:true});
+    events.get("pointermove")({pointerId:2,clientX:cancelEnd[0],clientY:cancelEnd[1]});
+    events.get("pointercancel")({type:"pointercancel",pointerId:2,clientX:cancelEnd[0],clientY:cancelEnd[1]});
+    assert.equal(transformed.length,1,"canceled dragging does not commit a fixture move");
+    events.get("pointerdown")({pointerId:3,clientX:cancelEnd[0],clientY:cancelEnd[1],shiftKey:true});
+    events.get("pointerup")({type:"pointerup",pointerId:3,clientX:cancelEnd[0],clientY:cancelEnd[1]});
+    assert.deepEqual(selected,["a"],"the canceled preview returns to its original placement");
     renderer.setFixtures([]);
-    assert.equal(uploads,5);
+    assert.equal(uploads,9);
     renderer.destroy();
     assert.equal(events.size,0);
     assert.equal(disconnected,true);
@@ -60,3 +84,4 @@ test("camera movement reuses geometry; changes invalidate it and destroy removes
     if(previousObserver)Object.defineProperty(globalThis,"ResizeObserver",previousObserver);else delete globalThis.ResizeObserver;
   }
 });
+

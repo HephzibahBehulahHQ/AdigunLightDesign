@@ -1,1 +1,2 @@
-export {radians,multiply,perspective,cameraMatrix,studioCameraMatrix,cameraPitchLimit,normalizeCameraState,cameraAxisView,viewportProjection,hexVector} from "./math.ts";
+export {radians,multiply,perspective,cameraMatrix,studioCameraMatrix,cameraPitchLimit,normalizeCameraState,cameraAxisView,viewportProjection,viewportPointOnPlane,hexVector} from "./math.ts";
+

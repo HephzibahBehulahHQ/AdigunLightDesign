@@ -5,9 +5,11 @@ const axes = [
   ["rotation", "Rotation (°)", "1"]
 ];
 
-export function fixturePlacementMarkup(transform, heading) {
+export function fixturePlacementMarkup(transform, heading, hint) {
   const safeHeading = String(heading).replace(/[&<>"']/g, (character) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[character]));
+  const safeHint = String(hint).replace(/[&<>"']/g, (character) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[character]));
   const fields = axes.map(([axis, label, step]) => `<label>${label}<input id="fixture-${axis}" type="number" step="${step}" value="${transform[axis]}" /></label>`).join("");
-  return `<fieldset class="fixture-placement"><legend>${safeHeading}</legend><div class="fixture-grid">${fields}</div></fieldset>`;
+  return `<fieldset class="fixture-placement"><legend>${safeHeading}</legend><small>${safeHint}</small><div class="fixture-grid">${fields}</div></fieldset>`;
 }
+
 
