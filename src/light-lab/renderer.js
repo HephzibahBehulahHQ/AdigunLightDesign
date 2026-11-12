@@ -12,6 +12,9 @@ const fragmentSource = `precision mediump float;varying vec3 v;uniform float opa
 function compile(gl, type, source) { const value = gl.createShader(type); gl.shaderSource(value, source); gl.compileShader(value); if (!gl.getShaderParameter(value, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(value)); return value; }
 function quad(target, a, b, c, d, colour) { for (const point of [a,b,c,a,c,d]) target.push(...point, ...colour); }
 function box(target, x, y, z, w, h, d, colour) { const X=x+w,Y=y+h,Z=z+d, shade=colour.map((value)=>value*.55),mid=colour.map((value)=>value*.78); quad(target,[x,y,z],[X,y,z],[X,Y,z],[x,Y,z],colour);quad(target,[X,y,Z],[x,y,Z],[x,Y,Z],[X,Y,Z],shade);quad(target,[x,y,Z],[X,y,Z],[X,y,z],[x,y,z],mid);quad(target,[x,Y,z],[X,Y,z],[X,Y,Z],[x,Y,Z],colour);quad(target,[x,y,Z],[x,y,z],[x,Y,z],[x,Y,Z],shade);quad(target,[X,y,z],[X,y,Z],[X,Y,Z],[X,Y,z],mid); }
+function scaleGeometryPositions(data,start,end,scale) {
+  for(let offset=start;offset<end;offset+=6){data[offset]*=scale;data[offset+1]*=scale;data[offset+2]*=scale;}
+}
 function sofaCushionPiping(target,x,y,z,width,depth,colour) {
   const inset=.045,line=.012,left=x+inset,right=x+width-inset,front=z+inset,back=z+depth-inset;
   quad(target,[left,y,front],[right,y,front],[right,y,front+line],[left,y,front+line],colour);
@@ -375,11 +378,12 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
   const {width,height,depth}=roomDimensions(room);
   const budget=previewQuality(quality);
   const propsVisible=visibility.props!==false;
+  const studioPropsScale=Math.min(1,(width/2-.08)/4.78,(depth/2-.08)/2.95,(height-.05)/2.8);
   const floorBoardColour=(column,row)=>{
     const board=Math.floor((row+(column%3))/4);
     const shade=.82+((column*7+board*3)%9)*.025;
     const x=-width/2+(column+.5)*width/budget.columns,z=-depth/2+(row+.5)*depth/budget.rows;
-    return floor.map(channel=>channel*shade*studioFloorShade(x,z,propsVisible));
+    return floor.map(channel=>channel*shade*studioFloorShade(x/studioPropsScale,z/studioPropsScale,propsVisible));
   };
   data.push(...surfaceGrid([-width/2,0,-depth/2],[width,0,0],[0,0,depth],floorBoardColour,budget.columns,budget.rows));
   data.push(...studioFloorGrain(width,depth,floor));
@@ -393,13 +397,15 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
   data.push(...acousticSlats(room,wood));
   const platform=stageSettings(stage);
   if(platform.enabled)box(data,platform.x,platform.y,platform.z,platform.width,platform.height,platform.depth,hexVector(platform.color));
+  const furnitureStart=data.length;
   box(data,-2.45,.01,-.95,4.9,.02,3.65,hexVector("#342647"));
   const rugColour=hexVector("#665477");
   data.push(...surfaceGrid([-2.36,.037,-.86],[4.72,0,0],[0,0,3.47],(column,row)=>{
     const x=(column+.5)/24*4.72-2.36;
     const z=(row+.5)/18*3.47-.86;
-    const sofaShadow=Math.exp(-((x/1.65)**4+((z-1.62)/.65)**2));
-    const tableShadow=Math.exp(-(((x+.2)/.88)**2+((z-.25)/.76)**2));
+    const layoutX=x/studioPropsScale,layoutZ=z/studioPropsScale;
+    const sofaShadow=Math.exp(-((layoutX/1.65)**4+((layoutZ-1.62)/.65)**2));
+    const tableShadow=Math.exp(-(((layoutX+.2)/.88)**2+((layoutZ-.25)/.76)**2));
     return rugColour.map(channel=>channel*(1-.3*sofaShadow-.24*tableShadow));
   },24,18));
   data.push(...studioRugBorder(-2.36,-.86,4.72,3.47,hexVector("#8F654C"),hexVector("#C1A073")));
@@ -433,18 +439,23 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
   for (const y of [.1,.8,1.5,2.2,2.75]) box(data,3.6,y,2.5,1.18,.07,.45,wood);
   for (let index=0;index<4;index+=1) box(data,3.85+index*.16,.87,2.6,.1,.4,.22,index%2 ? accent : hexVector("#D4AF37"));
   for(const lamp of shelfLamps) studioShelfLamp(data,lamp.x,lamp.y-.24,lamp.z);
-  studioWallArt(data,{width,height,depth},wood);
   data.push(...studioPlant(-3.65,1.8,2.4),...studioPlant(2.8,2.3,1.9));
   data.push(...studioAccentChair(-3.4,.05));
   box(data,-2.65,0,1.55,.35,.06,.35,metal);
   box(data,-2.51,.06,1.69,.035,1.85,.035,metal);
   box(data,-2.62,1.83,1.58,.25,.17,.25,hexVector("#E6BA75"));
+  const furnitureEnd=data.length;
+  scaleGeometryPositions(data,furnitureStart,furnitureEnd,studioPropsScale);
+  studioWallArt(data,{width,height,depth},wood);
   }
+  const rigStart=data.length;
   for (const y of [3.7,3.95]) box(data,-4,y,.4,8,.06,.06,metal);
   for (let x=-4;x<=4;x+=.5) box(data,x,3.7,.4,.04,.3,.06,metal);
+  const rigScale=Math.min(1,(width/2-.04)/4.02,(height-.05)/4.01,(depth/2-.04)/.46);
+  scaleGeometryPositions(data,rigStart,data.length,rigScale);
   const lights=virtualFixtureVisuals(visibility.lighting===false ? [] : fixtures,budget.fixtures);
   const surfaceLights=visibility.props!==false && visibility.lighting!==false
-    ? [...lights,...shelfLamps.map(lamp=>({...lamp,colour:[.85,.46,.16],range:.85}))]
+    ? [...lights,...shelfLamps.map(lamp=>({...lamp,x:lamp.x*studioPropsScale,y:lamp.y*studioPropsScale,z:lamp.z*studioPropsScale,colour:[.85,.46,.16],range:.85*studioPropsScale}))]
     : lights;
   // Approximate the soft bounce from each fixture's floor footprint.
   const rearWallLights=lights.map(light=>({
