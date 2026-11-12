@@ -269,6 +269,28 @@ export function studioRugBorder(x,z,width,depth,outerColour,innerColour,y=.04) {
   ring(.135,.018,innerColour);
   return data;
 }
+export function studioRugPattern(x,z,width,depth,colour,columns=3,rows=5,y=.042) {
+  if(![x,z,width,depth,y].every(Number.isFinite) || width<=0 || depth<=0 ||
+      !Number.isInteger(columns) || columns<1 || columns>12 ||
+      !Number.isInteger(rows) || rows<1 || rows>16) {
+    throw new Error("Invalid studio rug pattern geometry.");
+  }
+  const data=[],cellWidth=width/columns,cellDepth=depth/rows;
+  const diamond=(centerX,centerZ,halfWidth,halfDepth)=>{
+    const points=[[centerX,centerZ-halfDepth],[centerX+halfWidth,centerZ],[centerX,centerZ+halfDepth],[centerX-halfWidth,centerZ]];
+    for(let index=0;index<points.length;index++){
+      const [ax,az]=points[index],[bx,bz]=points[(index+1)%points.length];
+      const length=Math.hypot(bx-ax,bz-az),px=(bz-az)/length*.006,pz=-(bx-ax)/length*.006;
+      quad(data,[ax-px,y,az-pz],[bx-px,y,bz-pz],[bx+px,y,bz+pz],[ax+px,y,az+pz],colour);
+    }
+  };
+  for(let row=0;row<rows;row++) for(let column=0;column<columns;column++) {
+    const centerX=x+(column+.5)*cellWidth,centerZ=z+(row+.5)*cellDepth;
+    diamond(centerX,centerZ,cellWidth*.28,cellDepth*.3);
+    diamond(centerX,centerZ,cellWidth*.18,cellDepth*.19);
+  }
+  return data;
+}
 function studioShelfLamp(data,x,y,z){
   box(data,x-.10,y,z-.10,.20,.035,.20,hexVector("#70513C"));
   box(data,x-.018,y+.035,z-.018,.036,.14,.036,hexVector("#9A7250"));
@@ -342,6 +364,7 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
     return rugColour.map(channel=>channel*(1-.3*sofaShadow-.24*tableShadow));
   },24,18));
   data.push(...studioRugBorder(-2.36,-.86,4.72,3.47,hexVector("#8F654C"),hexVector("#C1A073")));
+  data.push(...studioRugPattern(-2.21,-.71,4.42,3.17,hexVector("#B8A17C")));
   box(data,-1.7,.25,1.4,3.4,.8,.75,couch);
   const backCushionColour=couch.map(value=>Math.min(1,value*1.2));
   for(let index=0;index<3;index++)data.push(...studioBackCushion(-1.45+index*.97,1.05,1.55,.93,.55,.35,backCushionColour));
