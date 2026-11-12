@@ -46,6 +46,32 @@ export function studioSeatCushion(x,y,z,width,depth,height,colour,columns=10,row
 }
 
 
+export function studioBackCushion(x,y,z,width,height,depth,colour,columns=10,rows=8) {
+  if (![x,y,z,width,height,depth].every(Number.isFinite) || width<=0 || height<=0 || depth<=0 ||
+      !Number.isInteger(columns) || columns<2 || columns>32 || !Number.isInteger(rows) || rows<2 || rows>32) {
+    throw new Error("Invalid studio back cushion geometry.");
+  }
+  const data=[],sideColour=colour.map(value=>value*.78),backColour=colour.map(value=>value*.66);
+  const front=(u,v)=>[x+u*width,y+v*height,z-.022*Math.sin(Math.PI*u)*Math.sin(Math.PI*v)];
+  const back=(u,v)=>[x+u*width,y+v*height,z+depth];
+  for(let row=0;row<rows;row++)for(let column=0;column<columns;column++){
+    const u=column/columns,U=(column+1)/columns,v=row/rows,V=(row+1)/rows;
+    quad(data,front(u,v),front(U,v),front(U,V),front(u,V),colour);
+  }
+  for(let column=0;column<columns;column++){
+    const u=column/columns,U=(column+1)/columns;
+    quad(data,front(u,0),front(U,0),back(U,0),back(u,0),sideColour);
+    quad(data,back(U,1),back(u,1),front(u,1),front(U,1),sideColour);
+  }
+  for(let row=0;row<rows;row++){
+    const v=row/rows,V=(row+1)/rows;
+    quad(data,back(0,V),back(0,v),front(0,v),front(0,V),sideColour);
+    quad(data,front(1,v),front(1,V),back(1,V),back(1,v),sideColour);
+  }
+  quad(data,back(0,0),back(1,0),back(1,1),back(0,1),backColour);
+  return data;
+}
+
 const channel = (value) => Math.max(0, Math.min(255, Number(value) || 0)) / 255;
 export function virtualFixtureVisuals(fixtures = [],limit=12) {
   return fixtures.slice(0,limit).map((fixture,index)=>{
@@ -278,7 +304,8 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
     return rugColour.map(channel=>channel*(1-.3*sofaShadow-.24*tableShadow));
   },24,18));
   box(data,-1.7,.25,1.4,3.4,.8,.75,couch);
-  box(data,-1.45,1.05,1.55,2.9,.55,.35,couch.map((value)=>Math.min(1,value*1.2)));
+  const backCushionColour=couch.map(value=>Math.min(1,value*1.2));
+  for(let index=0;index<3;index++)data.push(...studioBackCushion(-1.45+index*.97,1.05,1.55,.93,.55,.35,backCushionColour));
   box(data,-1.9,.25,1.3,.3,1,.95,couch);
   box(data,1.6,.25,1.3,.3,1,.95,couch);
   data.push(...roundTableTop(-.2,.65,.25,.85,.055,metal));

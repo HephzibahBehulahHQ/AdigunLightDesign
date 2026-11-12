@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { studioPlant, studioSeatCushion } from "../src/light-lab/renderer.js";
+import { studioBackCushion, studioPlant, studioSeatCushion } from "../src/light-lab/renderer.js";
 test("studio plants have deterministic finite leaves and pots at the requested position",()=>{
   const data=studioPlant(2,1,2.4);
   assert.equal(data.length%18,0);
@@ -21,6 +21,16 @@ test("studio seat cushions have a soft crowned top and closed finite geometry",(
   assert.ok(positions.some(([x,y,z])=>x===-1.55 && z===1.32 && Math.abs(y-1.09)<1e-7));
   assert.deepEqual(studioSeatCushion(-1.55,.97,1.32,.95,.72,.12,[.6,.3,.2]),cushion);
   assert.throws(()=>studioSeatCushion(0,0,0,0,1,1,[1,1,1]),/Invalid studio cushion geometry/);
+});
+test("studio sofa back cushions bulge toward the room and retain closed finite geometry",()=>{
+  const cushion=studioBackCushion(-1.45,1.05,1.55,.93,.55,.35,[.7,.35,.32]);
+  const positions=Array.from({length:cushion.length/6},(_,index)=>cushion.slice(index*6,index*6+3));
+  assert.equal(cushion.length%18,0);
+  assert.ok(cushion.every(Number.isFinite));
+  assert.ok(positions.some(([x,y,z])=>Math.abs(x+0.985)<1e-7 && Math.abs(y-1.325)<1e-7 && z<1.53));
+  assert.ok(positions.some(([x,y,z])=>x===-1.45 && y===1.05 && z===1.55));
+  assert.deepEqual(studioBackCushion(-1.45,1.05,1.55,.93,.55,.35,[.7,.35,.32]),cushion);
+  assert.throws(()=>studioBackCushion(0,0,0,1,1,0,[1,1,1]),/Invalid studio back cushion geometry/);
 });
 test("selected fixture adds viewport outline geometry without changing scene input",()=>{
   const fixture={transform:{x:0,y:3,z:0},properties:{dimmer:0}};
