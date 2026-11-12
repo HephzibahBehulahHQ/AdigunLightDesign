@@ -1,6 +1,6 @@
 # Delivery evidence and remaining gates
 
-Audit date: 3 November 2026. Scope remains the entire supplied master
+Audit date: 12 November 2026. Scope remains the entire supplied master
 specification, the latest 1672 × 941 interface reference, floating Bot,
 compact account/language menu and canonical domain requirements.
 
@@ -32,15 +32,19 @@ not silently substituted with local simulation.
 
 ## Evidence boundaries
 
-- Last full local suite: 238 passed, zero failures/skips. Incremental strict
-  checking, compile-only domain contract regressions, project check and production
-  build passed. The one-point M8 estimate increase reflects the implemented
-  connected domain typing and enforced compiler gate, not additional test count.
-- CI executes dependency installation, tests, project check and production build.
-  It now executes an incremental strict TypeScript gate for migrated `.ts` source, beginning with the playback clock. It does not establish full application typing and does not execute browser acceptance, lint or deployment.
-- Draft PR #1 contains the application on `codex/adigunlightdesign-m0-foundation`.
-  The inspected main branch remains `943e9df1d1cae22a1d267ef1c01f752409c6680c`;
-  branch publication is not a production editor deployment.
+- Latest recorded full local suite: 238 passed, zero failures/skips. For the
+  Help-link increment, the focused top-menu suite passed 3/3, and local lint,
+  typecheck, project check and production build passed. PR #16 also passed the
+  full GitHub Actions validation workflow.
+- Current CI (`.github/workflows/ci.yml`) runs dependency installation, lint,
+  strict TypeScript checking for migrated `.ts` source and type contracts, tests,
+  project check and production build. It does not establish browser acceptance
+  or full application typing.
+- PR #16 (`f6e7d45`) corrected the Help link to the current `main` guide and was
+  merged to `main`. GitHub Pages release run `43223150644` passed build and
+  deploy, including the custom-domain asset checksum verification. This
+  confirms the deployed assets match the release; it does not close the open
+  editor/browser acceptance gates below.
 - The build reports Auth unconfigured. Shared Supabase schema/role checks do not
   prove browser login, cloud save/reload, real JWT isolation or redirect setup.
 - Independent PDF parsing/rendering used supplied synthetic pixels; it does not
