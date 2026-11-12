@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { extractImagePalette } from "../src/domain/image-palette.js";
+import { extractImagePalette } from "../src/domain/image-palette.ts";
 
 test("extracts dominant colors deterministically and ignores transparent pixels",()=>{
   const pixels=new Uint8ClampedArray([255,0,0,255,255,0,0,255,0,0,255,255,0,255,0,0]);
