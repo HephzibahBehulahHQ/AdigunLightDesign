@@ -147,10 +147,17 @@ On 12 November 2026, two M8 typing increments were merged and deployed:
   [43293979917](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/43293979917)
   passed deployment and custom-domain verification; the live custom domain
   returned HTTP 200 for commit `9d3df03`.
+- [PR #73](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/pull/73)
+  removed the internal project-status cards from the design workspace and kept
+  the default desktop Lux panel above the status footer. The full CI validation
+  passed; focused Lux geometry tests passed 8/8 locally. Pages run
+  [43299206613](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/43299206613)
+  passed deployment and custom-domain verification; the live domain returned
+  HTTP 200 for commit `086411c`.
 
-These increments improve strict typing and the artistic scene preview. They do
-not complete M3 or M8, and do not recalculate the overall engineering estimate
-above.
+These increments improve strict typing, the artistic scene preview and editor
+workspace. They do not complete M3 or M8, and do not recalculate the overall
+engineering estimate above.
 
 M9 remains part of the documented advanced roadmap: physical DMX bridge,
 extended catalog, collaboration, Figma plugin, community publishing and advanced
@@ -159,8 +166,8 @@ not silently substituted with local simulation.
 
 ## Evidence boundaries
 
-- Latest recorded full local suite: 270 passed, zero failures/skips on
-  12 November 2026 (PR #71 release). For the earlier Help-link increment, the
+- Latest recorded full suite: CI passed on 12 November 2026 (PR #73 release);
+  the full suite had 271 tests, zero failures/skips. For the earlier Help-link increment, the
   focused top-menu suite passed 3/3, and local lint,
   typecheck, project check and production build passed. PR #16 also passed the
   full GitHub Actions validation workflow.
