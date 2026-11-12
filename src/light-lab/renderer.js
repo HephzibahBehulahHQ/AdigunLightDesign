@@ -328,7 +328,7 @@ function studioShelfLamp(data,x,y,z){
   quad(data,...rim,hexVector("#FFE0A6"));
 }
 
-function studioWallArt(data, room, frameColour) {
+export function studioWallArt(data, room, frameColour) {
   const width=Math.min(1.6,room.width*.6);
   const height=width*.6;
   const bottom=Math.min(room.height*.5,room.height-height-.1);
@@ -347,6 +347,16 @@ function studioWallArt(data, room, frameColour) {
       const left=(i-1)/(peaks.length-1),right=i/(peaks.length-1);
       quad(data,picture(left,0,z),picture(right,0,z),picture(right,peaks[i],z),picture(left,peaks[i-1],z),rgb);
     }
+  }
+  const snow=hexVector("#F2E6D4"),snowShadow=hexVector("#D8D5E1"),triangle=(a,b,c,colour)=>data.push(...a,...colour,...b,...colour,...c,...colour);
+  const peaks=ridges[0].peaks;
+  for(let index=1;index<peaks.length-1;index++) if(peaks[index]>=.45){
+    const u=index/(peaks.length-1),peak=peaks[index],base=peak-.14,shoulder=peak-.045;
+    const leftBase=picture(u-.085,base,.126),leftShoulder=picture(u-.035,shoulder,.126),summit=picture(u,peak-.008,.126);
+    const rightShoulder=picture(u+.035,shoulder,.126),rightBase=picture(u+.085,base,.126);
+    triangle(leftBase,leftShoulder,summit,snow);
+    triangle(leftBase,summit,rightBase,snowShadow);
+    triangle(summit,rightShoulder,rightBase,snow);
   }
 }
 

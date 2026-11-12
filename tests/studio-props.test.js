@@ -1,6 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {roundTableTop,acousticSlats,sceneData,studioAccentChair} from "../src/light-lab/renderer.js";
+import {roundTableTop,acousticSlats,sceneData,studioAccentChair,studioWallArt} from "../src/light-lab/renderer.js";
+test("studio wall art includes bounded snowy caps on the distant mountain ridge",()=>{
+  const data=[],room={width:8,height:3,depth:6},snow=[242/255,230/255,212/255];
+  studioWallArt(data,room,[.4,.3,.2]);
+  assert.ok(data.length>0 && data.every(Number.isFinite));
+  const snowVertices=Array.from({length:data.length/6},(_,index)=>data.slice(index*6,index*6+6)).filter(vertex=>vertex.slice(3).every((channel,index)=>Math.abs(channel-snow[index])<1e-9));
+  assert.ok(snowVertices.length>=6);
+  assert.ok(snowVertices.every(([,y,z])=>y>=.4&&y<=2.7&&Math.abs(z-2.874)<1e-9));
+});
 test("studio accent chair has finite padded geometry within its designed bounds",()=>{
   const colour=[.2,.35,.55],chair=studioAccentChair(-3.4,.05,colour),vertices=Array.from({length:chair.length/6},(_,index)=>chair.slice(index*6,index*6+6));
   assert.ok(chair.length>0 && chair.every(Number.isFinite));
