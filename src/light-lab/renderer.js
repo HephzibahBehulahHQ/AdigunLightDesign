@@ -1,6 +1,6 @@
-import { studioCameraMatrix,cameraAxisView,cameraPitchLimit,normalizeCameraState, hexVector, multiply, viewportProjection, viewportPointOnPlane } from "./math.js";
+import { studioCameraMatrix,cameraAxisView,cameraPitchLimit,normalizeCameraState, hexVector, multiply, viewportProjection, viewportRay, viewportPointOnPlane } from "./math.js";
 import { viewportPng } from "../export/viewport.js";
-import { pickScenePoint,filterOccludedPoints } from "./picking.js";
+import { pickScenePoint,rayHitDistance,filterOccludedPoints } from "./picking.js";
 import { roomDimensions } from "../domain/room.js";
 import { getFixtureProfile } from "../dmx/engine.js";
 import { previewQuality } from "./quality.js";
@@ -522,8 +522,18 @@ export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = 
     if(!viewProjection || visibility.lighting===false)return null;
     const candidates=virtualFixtureVisuals(virtualFixtures,previewQuality(quality).fixtures).map((point,index)=>({...point,id:virtualFixtures[index].id}));
     const occluders=pickOccluders ?? (pickOccluders=sceneData([0,0,0],[],visibility,room,false,materials,quality,stage));
+    const x=event.clientX-bounds.left,y=event.clientY-bounds.top,ray=viewportRay(viewProjection,x,y,bounds.width,bounds.height);
+    if(ray){
+      let selected=null,nearest=Infinity;
+      for(const point of candidates){
+        const distance=rayHitDistance(fixtureHousing(point),ray);
+        if(distance===null||distance>=nearest||rayHitDistance(occluders,ray,distance-.12)!==null)continue;
+        selected=point.id;nearest=distance;
+      }
+      if(selected!==null)return virtualFixtures.find(fixture=>fixture.id===selected) ?? null;
+    }
     const visible=filterOccludedPoints(candidates,viewProjection,bounds.width,bounds.height,occluders);
-    const id=pickScenePoint(visible,viewProjection,bounds.width,bounds.height,event.clientX-bounds.left,event.clientY-bounds.top);
+    const id=pickScenePoint(visible,viewProjection,bounds.width,bounds.height,x,y);
     return virtualFixtures.find(fixture=>fixture.id===id) ?? null;
   };
   const down=(event)=>{
