@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 6157)
-Total output lines: 357
-
 import { studioCameraMatrix,cameraAxisView,cameraPitchLimit,normalizeCameraState, hexVector, multiply, viewportProjection } from "./math.js";
 import { viewportPng } from "../export/viewport.js";
 import { pickScenePoint } from "./picking.js";
@@ -186,7 +183,17 @@ function studioWallArt(data, room, frameColour) {
   for(const {colour,z,peaks} of ridges){
     const rgb=hexVector(colour);
     for(let i=1;i<peaks.length;i++){
-     …157 tokens truncated…umn,row)=>{
+      const left=(i-1)/(peaks.length-1),right=i/(peaks.length-1);
+      quad(data,picture(left,0,z),picture(right,0,z),picture(right,peaks[i],z),picture(left,peaks[i-1],z),rgb);
+    }
+  }
+}
+
+export function sceneData(accent, fixtures, visibility={}, room,includeBeams=true,materials={},quality="balanced",stage) {
+  const data=[],floor=hexVector(materials.floor ?? "#4A3431"),wall=hexVector(materials.wall ?? "#27324A"),couch=hexVector("#9C4F48"),wood=hexVector("#67442F"),metal=hexVector("#151D2D");
+  const {width,height,depth}=roomDimensions(room);
+  const budget=previewQuality(quality);
+  const floorBoardColour=(column,row)=>{
     const board=Math.floor((row+(column%3))/4);
     const shade=.82+((column*7+board*3)%9)*.025;
     return floor.map(channel=>channel*shade);
@@ -347,4 +354,3 @@ export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = 
   canvas.addEventListener("lostpointercapture",up);
   return { supported:true, cameraState(){return {yaw,pitch,distance};}, capturePng(){return viewportPng(canvas,draw);}, setAccent(value){selectedAccent=value;geometry=null;draw();}, setFixtures(value){const selectedId=virtualFixtures.find(fixture=>fixture.selected)?.id;virtualFixtures=value.some(fixture=>Object.hasOwn(fixture,"selected")) ? value : value.map(fixture=>({...fixture,selected:fixture.id===selectedId}));geometry=null;draw();}, setView(axis){const view=cameraAxisView(axis);yaw=view.yaw;pitch=view.pitch;draw();}, reset(){({yaw,pitch,distance}=normalizeCameraState({}));draw();}, destroy(){resize.disconnect();canvas.removeEventListener("wheel",wheel);canvas.removeEventListener("keydown",keydown);canvas.removeEventListener("pointercancel",up);canvas.removeEventListener("lostpointercapture",up);canvas.removeEventListener("pointerdown",down);canvas.removeEventListener("pointermove",move);canvas.removeEventListener("pointerup",up);geometry=null;gl.deleteBuffer(buffer);gl.deleteProgram(program);} };
 }
-
