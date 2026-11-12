@@ -17,7 +17,7 @@ these estimates when stronger evidence becomes available.
 | M0 audit/architecture | 5 | 5 | `M0_AUDIT.md`, `ARCHITECTURE.md`, product baseline and test foundation. Initial packaging assumptions were superseded by Vite. |
 | M1 shell/design | 15 | 8 | Four dictionaries, tokens, header/navigation, themes, floating Bot and compact menu exist. Exact reference fidelity, mobile nonoverlap, keyboard/focus and translation review are unverified. |
 | M2 palette | 15 | 12 | Color/harmony/contrast, image extraction, locks, temperature, opacity, versions and local adapters have tests. Real browser workflows, image encoding and downloads remain unverified. |
-| M3 3D editor | 20 | 5 | Actual artistic WebGL geometry, room/material edits, fixture transforms, cameras, picking and palette mapping; face-aware spill, procedural prop contact shading, segmented studio foliage, sofa cushion piping, crowned seat cushions, padded backrest panels, a padded studio accent chair, snow-capped mountain wall art, procedural floor grain and a woven rug with border and nested diamond motifs now improve the preview. Photoreal reference appearance, calibrated lighting, richer materials and hardware performance are not established. |
+| M3 3D editor | 20 | 5 | Actual artistic WebGL geometry, room/material edits, fixture transforms, cameras, picking and palette mapping; face-aware spill, procedural prop contact shading, segmented studio foliage, sofa cushion piping, crowned seat cushions, padded backrest panels, a padded studio accent chair, gradient-sky mountain wall art, procedural floor grain and a woven rug with border and nested diamond motifs now improve the preview. Photoreal reference appearance, calibrated lighting, richer materials and hardware performance are not established. |
 | M4 fixtures/virtual DMX | 10 | 5 | Validated generic profiles, allocation, groups and virtual channel state. Only three generic profiles; extended licensed catalog, GDTF interchange and physical output are not complete. |
 | M5 timeline | 10 | 6 | Track scheduling, keyframes, fades/effects, clock/playback and pointer/keyboard seeking have automated coverage. Browser editing/playback and reference appearance remain unverified. |
 | M6 Lux | 10 | 3 | Context/tool boundaries, preview/confirm, receipts/undo, optional HTTP adapter and local live suggestions have tests. Live provider, real authenticated action flow, voice/image workflows and production service operation remain open. |
@@ -84,6 +84,10 @@ On 12 November 2026, two M8 typing increments were merged and deployed:
   added snow caps to the studio's distant mountain artwork. CI passed, and
   [Pages release run 43267678361](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/43267678361)
   passed, including custom-domain verification, for commit `32b5e91`.
+- [PR #50](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/pull/50)
+  added a warm-to-cool gradient sky to the mountain artwork. CI passed, and
+  [Pages release run 43269375051](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/43269375051)
+  passed, including custom-domain verification, for commit `7fdd2a4`.
 
 These increments improve strict typing and the artistic scene preview. They do
 not complete M3 or M8, and do not recalculate the overall engineering estimate
