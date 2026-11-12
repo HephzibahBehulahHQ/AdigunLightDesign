@@ -25,6 +25,23 @@ these estimates when stronger evidence becomes available.
 | M8 hardening/release | 10 | 2 | Documentation, automated CI and strict contracts across migrated domain engines exist. Full TypeScript coverage/lint, accessibility, performance, localization/security acceptance, cloud integration and production editor release remain open. |
 | Total | 100 | 48 | Estimated remaining work: 52%. |
 
+## Recent verified increments
+
+On 12 November 2026, two M8 typing increments were merged and deployed:
+
+- [PR #25](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/pull/25)
+  moved fixture duplication/deletion operations to TypeScript. CI passed, and
+  [Pages release run 43234332719](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/43234332719)
+  passed for commit `440c955`.
+- [PR #26](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/pull/26)
+  moved project creation and validation to TypeScript while retaining the `.js`
+  import path. CI passed the full suite and build, and
+  [Pages release run 43236017998](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/43236017998)
+  passed for commit `622248c`.
+
+These changes improve strict typing coverage. They do not complete M8 or
+recalculate the overall engineering estimate above.
+
 M9 remains part of the documented advanced roadmap: physical DMX bridge,
 extended catalog, collaboration, Figma plugin, community publishing and advanced
 photometry. No credit or completion is claimed for those capabilities. They are
@@ -69,3 +86,4 @@ not silently substituted with local simulation.
 
 This ledger is not a completion declaration. A milestone closes only when its
 full required behavior and corresponding acceptance evidence are established.
+
