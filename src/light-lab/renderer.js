@@ -260,10 +260,11 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
   for (const x of [-.75,.3]) for (const z of [-.15,.65]) box(data,x,.04,z,.035,.61,.035,metal);
   for (const x of [.5,.95]) for (const z of [-.35,.05]) box(data,x,.04,z,.03,.46,.03,metal);
   const cushionHighlight=couch.map(value=>Math.min(1,value*1.12));
+  const cushionThread=couch.map(value=>value*.78);
   for(let index=0;index<3;index++) {
     const cushionX=-1.55+index*1.03;
     box(data,cushionX,.97,1.32,.95,.12,.72,cushionHighlight);
-    sofaCushionPiping(data,cushionX,1.091,1.32,.95,.72,cushionHighlight);
+    sofaCushionPiping(data,cushionX,1.091,1.32,.95,.72,cushionThread);
   }
   box(data,-1.45,1.15,1.33,.45,.42,.18,hexVector("#E5AE66"));
   box(data,1,1.15,1.33,.45,.42,.18,accent);
