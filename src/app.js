@@ -4,7 +4,7 @@ import { moveSwatch, removeSwatch, reorderSwatch } from "./domain/palette-store.
 import { readImagePalette } from "./domain/image-file.js";
 import { customHueHarmony,perceptualScale } from "./domain/color-engine.js";
 import { compositeSwatch,swatchCssColor } from "./domain/swatch-opacity.js";
-import { snapshotPalette, restorePalette, comparePalettes } from "./domain/palette-versions.js";
+import { snapshotPalette, restorePalette, comparePalettes } from "./domain/palette-versions.ts";
 import { paletteRaster } from "./export/raster.js";
 import { hslToRgb } from "./domain/color-engine.js";
 import { suggestContrast } from "./domain/color-engine.js";
