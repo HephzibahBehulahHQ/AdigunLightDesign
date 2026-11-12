@@ -132,6 +132,7 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
 @media (max-width:1250px) { .topbar .division,.topbar .brand-divider { display:none; }.topbar .corporate-mark { width:220px; } }
 @media (max-width:1100px) { .header-save-status { display:none; } }
 @media (max-width:940px) { .topbar { grid-template-columns:minmax(0,1fr) auto; } }
+@media (min-width:671px) and (max-width:940px) { .workspace-tabs { flex-wrap:wrap; }.workspace-tabs>span { display:none; }.workspace-tabs>.tab,.workspace-tabs>.view-menu { flex:0 0 auto; } }
 @media (max-width:670px) {
   .topbar { grid-template-columns:minmax(0,1fr); gap:10px; }
   .topbar .brand-lockup { grid-row:1; }
