@@ -84,4 +84,3 @@ test("camera movement reuses geometry; changes invalidate it and destroy removes
     if(previousObserver)Object.defineProperty(globalThis,"ResizeObserver",previousObserver);else delete globalThis.ResizeObserver;
   }
 });
-
