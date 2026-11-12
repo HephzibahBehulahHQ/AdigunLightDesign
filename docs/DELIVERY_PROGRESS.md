@@ -112,6 +112,12 @@ On 12 November 2026, two M8 typing increments were merged and deployed:
   typecheck, project check and build passed. Pages release run
   [43279482575](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/43279482575)
   passed including custom-domain verification, for commit `0836944`.
+- [PR #60](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/pull/60)
+  made fixture picking reject centers hidden behind opaque room, furniture or
+  stage geometry while retaining approximate center hit testing. All 267 tests,
+  lint, typecheck, project check and build passed. Pages release run
+  [43283009596](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/43283009596)
+  passed including custom-domain verification, for commit `ec66430`.
 
 These increments improve strict typing and the artistic scene preview. They do
 not complete M3 or M8, and do not recalculate the overall engineering estimate
