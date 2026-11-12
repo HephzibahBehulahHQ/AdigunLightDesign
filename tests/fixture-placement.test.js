@@ -6,7 +6,10 @@ import { fixturePlacementMarkup } from "../src/light-lab/fixture-placement.js";
 test("fixture inspector exposes editable metric position and rotation fields", () => {
   const fixture=createFixture(2,"generic-moving-head-rgbw");
   const markup=fixturePlacementMarkup(fixture.transform,"Position / rotation","Shift-drag at an angled view");
-  for (const axis of ["x","y","z","rotation"]) assert.match(markup,new RegExp(`id="fixture-${axis}"`));
+  for (const axis of ["x","y","z","rotation"]) {
+    const fields=markup.match(new RegExp(`id="fixture-${axis}"`, "g")) ?? [];
+    assert.equal(fields.length,1,`expected one ${axis} field`);
+  }
   assert.match(markup,/X \(m\)[\s\S]*value="0"/);
   assert.match(markup,/Y \(m\)[\s\S]*value="3\.65"/);
   assert.match(markup,/Z \(m\)[\s\S]*value="0\.45"/);
