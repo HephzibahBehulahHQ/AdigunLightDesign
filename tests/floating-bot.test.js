@@ -2,14 +2,15 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {createFloatingBot} from "../src/ui/floating-bot.js";
 import {translate} from "../src/i18n.js";
-function harness(data=new Map(),width=1440){
+function harness(data=new Map(),width=1440,workspaceBounds=null){
   const classes=()=>{const values=new Set();return {add:value=>values.add(value),toggle:(value,on)=>on?values.add(value):values.delete(value),has:value=>values.has(value)};};
   let documentRef;
   const element=()=>({dataset:{},style:{},children:[],classList:classes(),attrs:{},setAttribute(key,value){this.attrs[key]=value;},append(child){this.children.push(child);},insertBefore(child){this.children.push(child);},focus(){documentRef.activeElement=this;},setPointerCapture(){this.captured=true;},hasPointerCapture(){return this.captured;},releasePointerCapture(){this.captured=false;}});
   const ai=element(),status=element(),header=element(),close=element(),input=element(),host=element(),listeners=new Map();
   host.querySelector=selector=>selector===".lux-heading"?header:selector==="#toggle-lux"?close:selector.includes("textarea")?input:header.children.find(child=>Object.hasOwn(child.dataset,selector.includes("maximize")?"botMaximize":"botMinimize"));
   host.contains=value=>[header,close,input,...header.children,...host.children].includes(value);
-  documentRef={body:{classList:classes(),style:{setProperty(key,value){this[key]=value;}}},activeElement:null,createElement:element,querySelector:selector=>selector==="#status"?status:ai};
+  const workspace=workspaceBounds?{getBoundingClientRect:()=>({bottom:workspaceBounds.bottom})}:null,tabs=workspaceBounds?{getBoundingClientRect:()=>({bottom:workspaceBounds.tabsBottom})}:null;
+  documentRef={body:{classList:classes(),style:{setProperty(key,value){this[key]=value;}}},activeElement:null,createElement:element,querySelector:selector=>selector==="#status"?status:selector===".editor-layout"?workspace:selector===".workspace-tabs"?tabs:ai};
   const windowRef={innerWidth:width,innerHeight:900,addEventListener:(name,handler)=>listeners.set(name,handler),removeEventListener:name=>listeners.delete(name)};
   const bot=createFloatingBot({getProjectId:()=>"project",getLocale:()=>"en",translate,documentRef,windowRef,storage:()=>({getItem:key=>data.get(key),setItem:(key,value)=>data.set(key,value)})});bot.mount(host);
   const pointer=(target,type,x,y)=>target[`on${type}`]({type,button:0,pointerId:1,clientX:x,clientY:y,target:{closest:()=>null},preventDefault(){}});
@@ -40,6 +41,11 @@ test("workspace reservation follows edge resizing and releases when moved away o
   h.pointer(h.header,"pointerdown",0,0);h.pointer(h.header,"pointerup",-100,0);assert.equal(reserved(),false);
   h.pointer(h.header,"pointerdown",0,0);h.pointer(h.header,"pointerup",100,0);assert.equal(reserved(),true);
   h.pointer(h.resize,"pointerdown",0,0);h.pointer(h.resize,"pointerup",300,0);assert.equal(reserved(),false);
+  h.bot.dispose();
+});
+test("default desktop assistant stays within the editor workspace",()=>{
+  const h=harness(new Map(),1440,{tabsBottom:182,bottom:669});
+  assert.equal(h.host.style.top,"186px");assert.equal(h.host.style.height,"467px");
   h.bot.dispose();
 });
 test("closed suggestions badge without opening or focusing; keyboard close and reopen restore focus",()=>{
