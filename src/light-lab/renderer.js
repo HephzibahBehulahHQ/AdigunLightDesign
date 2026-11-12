@@ -177,7 +177,7 @@ export function surfaceGrid(origin, horizontal, vertical, colour, columns=20, ro
   return data;
 }
 const studioContactShadows=[
-  {x:-2.9,z:.5,rx:.8,rz:.55,opacity:.18},
+  {x:-3.4,z:.5,rx:.58,rz:.55,opacity:.18},
   {x:-2.51,z:1.69,rx:.36,rz:.34,opacity:.16},
   {x:-3.65,z:1.8,rx:.48,rz:.4,opacity:.23},
   {x:2.8,z:2.3,rx:.46,rz:.4,opacity:.2},
@@ -213,6 +213,25 @@ export function studioPlant(x,z,height=2.1) {
       quad(data,ribA,ribB,ribC,ribD,vein);
     }
   }
+  return data;
+}
+export function studioAccentChair(x,z,colour=hexVector("#23405C")) {
+  if(![x,z].every(Number.isFinite) || !Array.isArray(colour) || colour.length!==3 || !colour.every(Number.isFinite)) {
+    throw new Error("Invalid studio accent chair geometry.");
+  }
+  const data=[],frame=colour.map(value=>value*.72),thread=colour.map(value=>value*.62),metal=hexVector("#172031");
+  box(data,x-.43,.45,z+.08,.86,.15,.74,frame);
+  for(const legX of [x-.39,x+.33]) for(const legZ of [z+.13,z+.72]) box(data,legX,.04,legZ,.06,.42,.06,metal);
+  box(data,x-.56,.66,z+.10,.16,.20,.66,frame);
+  box(data,x+.40,.66,z+.10,.16,.20,.66,frame);
+  data.push(...studioSeatCushion(x-.38,.59,z+.13,.76,.60,.11,colour));
+  sofaCushionPiping(data,x-.38,.714,z+.13,.76,.60,thread);
+  box(data,x-.43,.69,z+.68,.86,.68,.15,frame);
+  data.push(...studioBackCushion(x-.39,.77,z+.65,.78,.59,.12,colour));
+  const left=x-.36,right=x+.36,bottom=.80,top=1.33,line=.012;
+  quad(data,[left,bottom,z+.642],[right,bottom,z+.642],[right,bottom+line,z+.642],[left,bottom+line,z+.642],thread);
+  quad(data,[left,top-line,z+.642],[right,top-line,z+.642],[right,top,z+.642],[left,top,z+.642],thread);
+  for(const sideX of [left,right]) quad(data,[sideX,bottom,z+.642],[sideX+line,bottom,z+.642],[sideX+line,top,z+.642],[sideX,top,z+.642],thread);
   return data;
 }
 export function roundTableTop(x,y,z,radius,thickness,colour,segments=32){
@@ -396,11 +415,7 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
   for(const lamp of shelfLamps) studioShelfLamp(data,lamp.x,lamp.y-.24,lamp.z);
   studioWallArt(data,{width,height,depth},wood);
   data.push(...studioPlant(-3.65,1.8,2.4),...studioPlant(2.8,2.3,1.9));
-  const chair=hexVector("#23405C");
-  box(data,-3.4,.45,.1,1,.16,.85,chair);
-  box(data,-3.4,.6,.8,1,.8,.14,chair);
-  for (const x of [-3.4,-2.48]) for (const z of [.12,.87]) box(data,x,.03,z,.06,.44,.06,metal);
-  for (const x of [-3.48,-2.42]) box(data,x,.7,.12,.08,.08,.85,metal);
+  data.push(...studioAccentChair(-3.4,.05));
   box(data,-2.65,0,1.55,.35,.06,.35,metal);
   box(data,-2.51,.06,1.69,.035,1.85,.035,metal);
   box(data,-2.62,1.83,1.58,.25,.17,.25,hexVector("#E6BA75"));

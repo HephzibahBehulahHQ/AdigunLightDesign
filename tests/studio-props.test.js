@@ -1,6 +1,16 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {roundTableTop,acousticSlats,sceneData} from "../src/light-lab/renderer.js";
+import {roundTableTop,acousticSlats,sceneData,studioAccentChair} from "../src/light-lab/renderer.js";
+test("studio accent chair has finite padded geometry within its designed bounds",()=>{
+  const colour=[.2,.35,.55],chair=studioAccentChair(-3.4,.05,colour),vertices=Array.from({length:chair.length/6},(_,index)=>chair.slice(index*6,index*6+6));
+  assert.ok(chair.length>0 && chair.every(Number.isFinite));
+  assert.deepEqual(studioAccentChair(-3.4,.05,colour),chair);
+  assert.ok(vertices.every(([x,y,z])=>x>=-3.96&&x<=-2.84&&y>=.04&&y<=1.37&&z>=.13&&z<=.880001));
+  assert.throws(()=>studioAccentChair(NaN,.05,colour),/Invalid studio accent chair geometry/);
+  const withChair=sceneData([.2,.3,.4],[]),withoutProps=sceneData([.2,.3,.4],[],{props:false});
+  assert.ok(withChair.length>withoutProps.length);
+  assert.deepEqual(sceneData([.2,.3,.4],[],{props:false}),withoutProps);
+});
 test("round table is closed finite geometry within its requested circular bounds",()=>{
   const data=roundTableTop(2,.6,-1,.8,.05,[.1,.2,.3]);let top=false,bottom=false;
   for(let i=0;i<data.length;i+=6){const [x,y,z]=data.slice(i,i+3);assert.ok([x,y,z].every(Number.isFinite));assert.ok(Math.hypot(x-2,z+1)<=.800001);assert.ok(y>=.6 && y<=.65);top ||= y===.65;bottom ||= y===.6;}
