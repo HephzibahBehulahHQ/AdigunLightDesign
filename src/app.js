@@ -54,7 +54,7 @@ import {previewUnpatchedFixture,confirmAuthenticatedAction} from "./ai/authentic
 import { canFullscreen,toggleViewportFullscreen } from "./ui/fullscreen.js";
 import { groupFixtures,saveFixtureGroup } from "./domain/fixture-groups.ts";
 import { cueCsv, designTokenJson, paletteCss, paletteJson, paletteSvg, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
-import { readProjectFile } from "./domain/import-project.js";
+import { readProjectFile } from "./domain/import-project.ts";
 import { editorShortcut, isEditableTarget,toolShortcut,toolKeys } from "./accessibility/shortcuts.js";
 import { commitTransaction, redoTransaction, undoTransaction } from "./domain/history.js";
 

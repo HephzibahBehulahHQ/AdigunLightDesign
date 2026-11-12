@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { parseProjectJson, readProjectFile } from "../src/domain/import-project.js";
+import { parseProjectJson, readProjectFile } from "../src/domain/import-project.ts";
 
 test("rejects wrong metadata types without throwing", () => {
   for (const name of [42,{},[],null]) {
@@ -14,6 +14,19 @@ test("reports file read failures as import errors", async () => {
   assert.equal(result.valid,false);
   assert.equal(result.project,null);
   assert.match(result.errors[0],/could not be read/);
+});
+test("rejects oversized and unsupported files before reading their contents",async()=>{
+  let reads=0;
+  const read=async(file)=>readProjectFile({...file,text:async()=>{reads++;return "{}";}});
+  const oversized=await read({size:5_000_001,type:"application/json"});
+  const unsupported=await read({size:10,type:"application/octet-stream"});
+  assert.equal(oversized.valid,false);assert.equal(unsupported.valid,false);assert.equal(reads,0);
+  assert.match(oversized.errors[0],/exceeds 5 MB/);assert.match(unsupported.errors[0],/must be JSON/);
+});
+test("reads an in-limit JSON project file and returns a validated copy",async()=>{
+  const source=createProject({id:"file-project",name:"File project"});
+  const result=await readProjectFile({size:100,type:"application/json",text:async()=>JSON.stringify(source)});
+  assert.equal(result.valid,true);assert.notEqual(result.project,source);assert.equal(result.project.name,source.name);
 });
 import { createProject } from "../src/domain/project.js";
 import { projectJson } from "../src/export/formats.js";
