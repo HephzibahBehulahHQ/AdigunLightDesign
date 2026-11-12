@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { saveFixtureGroup,groupFixtures } from "../src/domain/fixture-groups.js";
+import { saveFixtureGroup,groupFixtures } from "../src/domain/fixture-groups.ts";
 import { createStudioMoodProject } from "../src/domain/studio-mood.js";
 import { validateProject } from "../src/domain/project.js";
 import { createCue,evaluateCue } from "../src/timeline/engine.js";
@@ -41,3 +41,4 @@ test("editing group membership preserves captured cues and is undoable",()=>{
   assert.deepEqual(state.project.cues,project.cues);
   assert.deepEqual(undoTransaction(state).project.fixtureGroups,project.fixtureGroups);
 });
+
