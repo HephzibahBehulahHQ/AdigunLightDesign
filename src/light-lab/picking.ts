@@ -41,6 +41,7 @@ export function filterOccludedPoints(points:readonly PickPoint[],matrix:ArrayLik
   return points.filter(point=>{
     const projected=projectScenePoint(point,matrix,width,height);if(!projected)return false;
     const ray=viewportRay(matrix,projected.x,projected.y,width,height);
-    return Boolean(ray) && !rayOccluded([point.x,point.y,point.z],ray,vertices);
+    if(!ray)return false;
+    return !rayOccluded([point.x,point.y,point.z],ray,vertices);
   });
 }
