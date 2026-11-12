@@ -494,7 +494,7 @@ export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = 
   gl.deleteShader(vertexShader);gl.deleteShader(fragmentShader);
   if(!gl.getProgramParameter(program,gl.LINK_STATUS)) { const message=gl.getProgramInfoLog(program);gl.deleteProgram(program);throw new Error(message); }
   const buffer=gl.createBuffer(),position=gl.getAttribLocation(program,"p"),colour=gl.getAttribLocation(program,"c"),matrix=gl.getUniformLocation(program,"m"),opacity=gl.getUniformLocation(program,"opacity");let selectedAccent=accent,virtualFixtures=fixtures,drag;let {yaw,pitch,distance}=normalizeCameraState(camera);
-  let geometry=null,viewProjection=null,pickOccluders=null;
+  let geometry=null,viewProjection=null,pickOccluders=null,pickCacheFixtures=null,pickTargets=[];
   function draw() {
     const ratio=Math.min(window.devicePixelRatio||1,previewQuality(quality).pixelRatio),width=Math.max(1,canvas.clientWidth),height=Math.max(1,canvas.clientHeight);
     gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
@@ -520,13 +520,17 @@ export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = 
   const resize=new ResizeObserver(draw);
   const fixtureAt=(event,bounds)=>{
     if(!viewProjection || visibility.lighting===false)return null;
-    const candidates=virtualFixtureVisuals(virtualFixtures,previewQuality(quality).fixtures).map((point,index)=>({...point,id:virtualFixtures[index].id}));
+    if(pickCacheFixtures!==virtualFixtures){
+      pickCacheFixtures=virtualFixtures;
+      pickTargets=virtualFixtureVisuals(virtualFixtures,previewQuality(quality).fixtures).map((point,index)=>({...point,id:virtualFixtures[index].id,housing:fixtureHousing(point)}));
+    }
+    const candidates=pickTargets;
     const occluders=pickOccluders ?? (pickOccluders=sceneData([0,0,0],[],visibility,room,false,materials,quality,stage));
     const x=event.clientX-bounds.left,y=event.clientY-bounds.top,ray=viewportRay(viewProjection,x,y,bounds.width,bounds.height);
     if(ray){
       let selected=null,nearest=Infinity;
       for(const point of candidates){
-        const distance=rayHitDistance(fixtureHousing(point),ray);
+        const distance=rayHitDistance(point.housing,ray);
         if(distance===null||distance>=nearest||rayHitDistance(occluders,ray,distance-.12)!==null)continue;
         selected=point.id;nearest=distance;
       }
