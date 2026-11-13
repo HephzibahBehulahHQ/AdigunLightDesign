@@ -101,6 +101,15 @@ try {
   await page.setViewportSize({ width: 1754, height: 878 });
   assert.equal(await page.locator(".left-rail-heading").isVisible(), true, "left rail has the compact project/layers/tools header from the reference");
   assert.equal(await page.locator('.command-ribbon [data-command-group="view"]').count(), 0, "module navigation does not repeat a duplicate view group in the command ribbon");
+  assert.equal(await page.locator('[data-command-group="scene"] [data-open-scene-editor="room"]').isVisible(), true, "Scene ribbon opens room dimensions");
+  assert.equal(await page.locator('[data-command-group="scene"] [data-open-scene-editor="stage"]').isVisible(), true, "Scene ribbon opens stage settings");
+  assert.equal(await page.locator('[data-command-group="scene"] [data-camera-axis]').count(), 3, "X/Y/Z camera views are docked in the Scene ribbon");
+  assert.equal(await page.locator(".scene-preview .viewport-axis-controls").count(), 0, "camera controls do not cover the 3D canvas");
+  for (const axis of ["x", "y", "z"]) {
+    const control = page.locator(`[data-command-group="scene"] [data-camera-axis="${axis}"]`);
+    assert.equal(await control.isEnabled(), true, `${axis.toUpperCase()} camera view is enabled with the active WebGL renderer`);
+    await control.click();
+  }
   const coreTools = ["select", "paletteBrush", "fixture", "material", "shapes", "text", "measure", "orbit"];
   for (const key of coreTools) {
     assert.equal(await page.locator(`[data-tool="${key}"]`).isEnabled(), true, `${key} tool is enabled`);
@@ -120,6 +129,10 @@ try {
   assert.equal(await page.locator("#palette-inspector-panel").isVisible(), true, "Palette Engine module selects the palette inspector");
   await page.locator('[data-module="light"]').click();
   assert.equal(await page.locator("#fixture-inspector-panel").isVisible(), true, "Light Lab module selects the fixture inspector");
+  await page.locator('[data-open-scene-editor="room"]').click();
+  assert.equal(await page.locator('[data-scene-editor="room"]').evaluate((element) => element.open), true, "Room ribbon command opens the existing editable dimensions");
+  await page.locator('[data-open-scene-editor="stage"]').click();
+  assert.equal(await page.locator('[data-scene-editor="stage"]').evaluate((element) => element.open), true, "Stage ribbon command opens the existing editable platform settings");
   for (const group of ["fixture", "light", "dmx", "effects"]) {
     assert.equal(await page.locator(`#fixture-inspector-panel .inspector-group-${group}`).isVisible(), true, `${group} controls are visible in the unified inspector`);
   }
