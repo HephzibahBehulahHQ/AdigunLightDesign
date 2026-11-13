@@ -27,7 +27,7 @@ import { roomDimensions } from "./domain/room.js";
 import { duplicateFixture,deleteFixture } from "./domain/fixture-operations.ts";
 import { readBrowserStorage,writeBrowserStorage } from "./domain/browser-storage.js";
 import { applySceneMaterial } from "./domain/scene-materials.js";
-import { studioDefaults,viewCommandSource } from "./ui/studio-preferences.js";
+import { studioActiveModule,studioDefaults,viewCommandSource } from "./ui/studio-preferences.js";
 import { escapeHtml as esc,fixtureOptions,swatchButton } from "./ui/html.js";
 import { virtualDmxPreview } from "./dmx/preview.js";
 import { addCanvasObject,updateCanvasObject,duplicateCanvasObject,moveCanvasObject } from "./domain/canvas.js";
@@ -287,7 +287,7 @@ function render() {
   const commandGroups={project:t("project"),history:`${t("undo")} / ${t("redo")}`,view:`${t("palette")} / ${t("light")}`,scene:t("scenePreview"),palette:t("palette"),fixtures:t("fixture"),export:t("export")};
   const nav = [
     ["canvas", "⌂", true], ["palette", "◉", true], ["light", "☼", true], ["copilot", "◌", true], ["library", "▱", true], ["export", "↗", true], ["community", "♧", false]
-  ].map(([key, icon, enabled]) => `<button class="module ${preferences.module === key ? "is-active" : ""}" data-module="${key}" ${enabled ? "" : disabled(`${t(key)} ${t("availableLater")}`)}><span>${icon}</span>${t(key)}</button>`).join("");
+  ].map(([key, icon, enabled]) => `<button class="module ${studioActiveModule(preferences) === key ? "is-active" : ""}" data-module="${key}" ${enabled ? "" : disabled(`${t(key)} ${t("availableLater")}`)}><span>${icon}</span>${t(key)}</button>`).join("");
   const tools = [["select","↖",true],["paletteBrush","◉",true],["fixture","☀",true],["material","◆",true],["shapes","□",false],["text","T",false],["measure","⌗",false],["orbit","◎",true],["aiPin","✦",false]].map(([key, icon, enabled]) => `<button class="tool ${preferences.tool === key ? "is-active" : ""}" data-tool="${key}" ${enabled ? "" : disabled(`${t(key)} ${t("availableLater")}`)}><span>${icon}</span>${t(key)}</button>`).join("");
   const swatches = palette().colors.map((swatch)=>swatchButton(swatch,active.id)).join("");
   const patchedFixtures = project.fixtures.filter((fixture) => fixture.patchAssignment);
@@ -935,7 +935,7 @@ function bind() {
     status=t("statusModule") + button.textContent.trim();
     render();
   });
-  document.querySelectorAll("[data-view]").forEach((button) => button.onclick = () => { preferences.view = button.dataset.view; preferences.inspectorMode=preferences.view==="light" ? "fixture" : "palette"; savePreferences(); render(); });
+  document.querySelectorAll("[data-view]").forEach((button) => button.onclick = () => { preferences.view = button.dataset.view; preferences.module=preferences.view==="light" ? "light" : "palette"; preferences.inspectorMode=preferences.view==="light" ? "fixture" : "palette"; savePreferences(); render(); });
   document.querySelectorAll("[data-tool]").forEach((button) => button.onclick = () => {
     preferences.tool=button.dataset.tool;
     if (["shapes","text"].includes(preferences.tool)) {
