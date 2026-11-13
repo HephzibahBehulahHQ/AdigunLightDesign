@@ -224,7 +224,7 @@ function saveProject() {
   projectPersisted=writeBrowserStorage(storageKey,JSON.stringify(project)).ok;
   status=t(projectPersisted ? "statusSaved" : "storageUnavailable");
   const indicator=document.querySelector(".save-state");
-  const headerSave=document.querySelector(".header-save-status");if(headerSave)headerSave.textContent=t(projectPersisted ? "savedLocally" : "sessionOnly");
+  const headerSave=document.querySelector(".header-save-status");if(headerSave){headerSave.textContent=t(projectPersisted ? "savedLocally" : "sessionOnly");headerSave.classList.toggle("is-saved",projectPersisted);}
   if (indicator) {indicator.classList.toggle("is-unsaved",!projectPersisted);indicator.textContent=`● ${t(projectPersisted ? "saved" : "sessionOnly")}`;indicator.title=status;}
 }
 function commitProjectChange(label, mutate) { stopPlayback(); const next=commitTransaction({project,undoStack,redoStack},label,mutate); const validation=validateProject(next.project); if (!validation.valid) throw new Error(validation.errors.join(" ")); project=next.project;undoStack=next.undoStack;redoStack=next.redoStack;saveProject(); }
