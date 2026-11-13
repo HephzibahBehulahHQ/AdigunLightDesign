@@ -134,6 +134,7 @@ try {
   assert.equal(await page.locator('[data-layer-fixture]').nth(1).getAttribute("aria-pressed"), "true", "fixture selection follows the selected project fixture");
   await page.locator('[data-module="palette"]').click();
   assert.equal(await page.locator(".palette-panel").isVisible(), true, "2D palette view opens");
+  assert.match(await page.locator('[data-module="light"]').innerText(), /3D Light Lab/, "module navigation matches the approved studio label");
   assert.equal(await page.locator("#palette-inspector-panel").isVisible(), true, "Palette Engine module selects the palette inspector");
   await page.locator('[data-module="light"]').click();
   assert.equal(await page.locator("#fixture-inspector-panel").isVisible(), true, "Light Lab module selects the fixture inspector");

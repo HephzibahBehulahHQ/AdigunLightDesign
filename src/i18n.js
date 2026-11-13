@@ -288,6 +288,11 @@ Object.assign(messages.de,{fixtureList:"Leuchtenliste",fixtureName:"Leuchtenname
 Object.assign(messages.yo,{fixtureList:"Àtòjọ àwọn fìtílà",fixtureName:"Orúkọ fìtílà",fixtureActions:"Àwọn iṣẹ́ fìtílà",summarySwatches:"àwọ̀",summaryLocked:"tí a ti ti"});
 Object.assign(messages.pcm,{fixtureList:"Fixture list",fixtureName:"Fixture name",fixtureActions:"Fixture actions",summarySwatches:"colors",summaryLocked:"locked"});
 
+Object.assign(messages.en,{moduleCanvas:"Canvas",moduleLight:"3D Light Lab",moduleCopilot:"AI Co-Pilot Lux"});
+Object.assign(messages.de,{moduleCanvas:"Leinwand",moduleLight:"3D-Lichtlabor",moduleCopilot:"KI-Copilot Lux"});
+Object.assign(messages.yo,{moduleCanvas:"Kánfásì",moduleLight:"Yàrá Ìmọ́lẹ̀ 3D",moduleCopilot:"AI Co-Pilot Lux"});
+Object.assign(messages.pcm,{moduleCanvas:"Canvas",moduleLight:"3D Light Lab",moduleCopilot:"AI Co-Pilot Lux"});
+
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }
 
 
