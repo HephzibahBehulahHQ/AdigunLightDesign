@@ -390,3 +390,11 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
 @media (min-width:1100px) {
   .header-save-status.is-saved { display:inline-flex; align-items:center; min-height:30px; padding:0 10px; border:1px solid #17643f; border-radius:6px; background:#073820; color:#86efac; font-weight:700; }
 }
+
+@media (min-width:1100px) {
+  footer { grid-template-columns:minmax(0,1.1fr) minmax(0,1.6fr) auto; height:38px; padding:0 16px; gap:12px; font-size:10px; }
+  footer .footer-ready { min-width:0; overflow:hidden; color:#9caec6; text-overflow:ellipsis; white-space:nowrap; }
+  footer .footer-ready i { margin-right:5px; color:#7bedbd; font-style:normal; }
+  footer #status { min-width:0; overflow:hidden; color:var(--cyan); font-size:10px; font-weight:700; text-align:center; text-overflow:ellipsis; white-space:nowrap; }
+  footer .footer-shortcuts { justify-self:end; color:#dce8fc; font-weight:700; white-space:nowrap; }
+}
