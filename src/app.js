@@ -485,6 +485,20 @@ function render() {
     const apply=fixturePanel.querySelector("#apply-fixture"),actions=fixturePanel.querySelector(".dmx-actions");
     fixturePanel.querySelector(":scope > h3")?.remove();
     for (const node of [...fixturePanel.children]) if(node!==apply && node!==actions)bodies.fixture.append(node);
+    const placement=bodies.fixture.querySelector(".fixture-placement");
+    if(placement){
+      const detail=document.createElement("details");detail.className="fixture-position-details";
+      const summary=document.createElement("summary");summary.textContent=t("fixturePlacement");detail.append(summary);
+      const readout=document.createElement("p");readout.className="fixture-position-summary";
+      const refreshPosition=()=>{const value=(key)=>fixturePanel.querySelector(`#fixture-${key}`)?.value ?? "0";readout.textContent=`X ${value("x")} m · Y ${value("y")} m · Z ${value("z")} m · Pan ${selectedFixture().properties.pan ?? 0} · Tilt ${selectedFixture().properties.tilt ?? 0} · R ${value("rotation")}°`;};
+      refreshPosition();
+      for(const input of placement.querySelectorAll("input"))input.addEventListener("input",refreshPosition);
+      placement.replaceWith(detail);detail.append(placement);bodies.fixture.insertBefore(readout,detail);
+    }
+    const advancedLight=document.createElement("details");advancedLight.className="light-advanced-controls";
+    const advancedTitle=document.createElement("summary");advancedTitle.textContent="More light controls";advancedLight.append(advancedTitle);
+    for(const id of ["fixture-beam","fixture-white","fixture-pan","fixture-tilt"]){const input=bodies.light.querySelector(`#${id}`);if(input)advancedLight.append(input.closest("label"));}
+    bodies.light.append(advancedLight);
     const effectControls=document.querySelector("#effect-type").closest(".dmx-actions");
     const effectScope=document.createElement("p");effectScope.textContent=t("allVirtualFixtures");bodies.effects.append(effectScope,effectControls);
     bodies.fixture.append(apply,actions);
