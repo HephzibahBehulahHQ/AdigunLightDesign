@@ -166,8 +166,20 @@ try {
   const effectsBottom = await page.locator(".inspector-group-effects").evaluate((element) => element.getBoundingClientRect().bottom);
   const luxTop = await page.locator(".lux-panel.is-docked").evaluate((element) => element.getBoundingClientRect().top);
   assert.ok(effectsBottom <= luxTop, `Effects remain visible above docked Lux (effects bottom ${effectsBottom}, Lux top ${luxTop})`);
-  for (let index = 0; index < 6; index += 1) await page.locator("#add-fixture").click();
+  for (let index = 0; index < 4; index += 1) await page.locator("#add-fixture").click();
+  await page.locator('[data-module="library"]').click();
+  assert.equal(await page.locator('.fixture-library [data-profile="generic-led-strip-rgb"]').count(), 1, "the library exposes the tested virtual LED strip profile");
+  for (let index = 0; index < 2; index += 1) await page.locator('.fixture-library [data-profile="generic-led-strip-rgb"]').click();
+  await page.locator('[data-module="light"]').click();
   assert.equal(await page.locator("[data-layer-fixture]").count(), 9, "the fixture list contains the nine real virtual fixtures in the target composition");
+  assert.match(await page.locator(".scene-title small").innerText(), /9\/9 fixtures rendered/, "the target composition renders all nine actual virtual fixtures");
+  assert.equal(await page.locator(".inspector > .section-title h2").innerText(), "Selected: LED Strip RGB 9", "the reference fixture is selected from the real nine-fixture composition");
+  await page.locator("#fixture-colour").fill("#2196F3");
+  await page.locator("#apply-fixture").click();
+  assert.equal(await page.locator("#fixture-colour-hex").innerText(), "#2196F3", "the selected LED strip receives the reference swatch through Apply");
+  await page.locator("#fixture-blue-channel").fill("199");
+  assert.equal(await page.locator("#fixture-blue-channel-value").innerText(), "78%", "the screenshot shows the staged reference channel value");
+  assert.equal(await page.locator("#fixture-colour-hex").innerText(), "#2196F3", "staging the blue value leaves the applied fixture colour unchanged");
   await page.screenshot({ path: resolve("outputs", "studio-scroll-acceptance-1754x878.png") });
   const fixtureList = page.locator(".fixture-layer-list");
   const fixtureListScroll = await fixtureList.evaluate((element) => {
