@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdir } from "node:fs/promises";
+import { mkdir, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { chromium } from "playwright";
 import { createServer } from "vite";
@@ -130,11 +130,27 @@ try {
   await page.locator("#play-tracks").click();
   assert.equal(await page.locator("#stop-cue").isEnabled(), true, "timeline playback starts");
   await page.locator("#stop-cue").click();
+  await page.locator("#project-name").fill("Studio Acceptance");
+  await page.locator("#project-name").press("Tab");
+  await page.locator("#save").click();
+  const exportPromise = page.waitForEvent("download");
+  await page.locator('[data-export="project"]').click();
+  const projectExport = await exportPromise;
+  const exportPath = await projectExport.path();
+  assert.ok(exportPath, "Project JSON export produces a file");
+  const exportedProject = JSON.parse(await readFile(exportPath, "utf8"));
+  assert.equal(exportedProject.name, "Studio Acceptance", "Project JSON contains the saved project name");
+  await page.reload();
+  assert.equal(await page.locator("#project-name").inputValue(), "Studio Acceptance", "Project name persists across reload");
+  await page.locator("#import-project").click();
+  await page.locator("#project-file").setInputFiles(exportPath);
+  await page.waitForFunction(() => globalThis.document.querySelector("#project-name")?.value === "Studio Acceptance");
+  assert.equal(await page.locator("#project-name").inputValue(), "Studio Acceptance", "Exported project imports through the existing file picker handler");
   const canvasAfter = await page.locator(".scene-preview").boundingBox();
   assert.deepEqual(canvasAfter, canvasBefore, "ordinary tools and view changes preserve the canvas bounds");
   assert.deepEqual(runtimeErrors, [], "browser reports no runtime errors");
 
-  console.log(JSON.stringify({ viewports: reports, tools: coreTools, shapeAndTextCreation: true, measurement: true, fixtureSelection: true, paletteSwitch: true, timelinePlayback: true, canvasStayedFixed: true, runtimeErrors }, null, 2));
+  console.log(JSON.stringify({ viewports: reports, tools: coreTools, shapeAndTextCreation: true, measurement: true, fixtureSelection: true, paletteSwitch: true, timelinePlayback: true, projectSaveReload: true, projectJsonImportExport: true, canvasStayedFixed: true, runtimeErrors }, null, 2));
   await context.close();
 } finally {
   await browser?.close();
