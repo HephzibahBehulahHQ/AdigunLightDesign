@@ -278,6 +278,7 @@ function render() {
   const contrastBackground=normalizeHex(preferences.contrastBackground) ?? "#0B1220";
   const contrast = contrastResult(compositeSwatch(active,contrastBackground), contrastBackground);
   const colourSpaces = colourSpaceMarkup(active.hex);
+  const commandGroups={project:t("project"),history:`${t("undo")} / ${t("redo")}`,view:`${t("palette")} / ${t("light")}`,scene:t("scenePreview"),palette:t("palette"),fixtures:t("fixture"),export:t("export")};
   const nav = [
     ["canvas", "⌂", true], ["palette", "◉", true], ["light", "☼", true], ["copilot", "◌", true], ["library", "▱", true], ["export", "↗", true], ["community", "♧", false]
   ].map(([key, icon, enabled]) => `<button class="module ${preferences.module === key ? "is-active" : ""}" data-module="${key}" ${enabled ? "" : disabled(`${t(key)} ${t("availableLater")}`)}><span>${icon}</span>${t(key)}</button>`).join("");
@@ -298,7 +299,7 @@ function render() {
       ${topMenuMarkup({t,locale:preferences.locale,saved:projectPersisted,user:account.user})}<button id="theme" type="button" hidden aria-label="${t("appearance")}"></button>
     </header>
     <nav class="module-nav" aria-label="${t("appModules")}">${nav}</nav>
-    <nav class="command-ribbon" aria-label="Studio commands"><div class="command-group"><span>Project</span><button type="button" data-ribbon-action="save">${t("save")}</button><button id="import-project">${t("importProject")}</button><input id="project-file" type="file" accept="application/json,.json" hidden /></div><div class="command-group"><span>History</span></div><div class="command-group"><span>View</span></div><div class="command-group"><span>Scene</span></div><div class="command-group"><span>Palette</span></div><div class="command-group"><span>Fixtures</span></div><div class="command-group"><span>Export</span><button data-export="project">Project JSON</button><button data-export="palette">Palette JSON</button><button data-export="css">CSS variables</button><button data-export="ase" title="${t("aseExportLimit")}">${t("aseExport")}</button><button data-export="patch">Patch CSV</button><button data-export="cues">Cue CSV</button></div></nav>
+    <nav class="command-ribbon" aria-label="${t("tools")}"><div class="command-group" data-command-group="project"><span>${commandGroups.project}</span><button type="button" data-ribbon-action="save">${t("save")}</button><button id="import-project">${t("importProject")}</button><input id="project-file" type="file" accept="application/json,.json" hidden /></div><div class="command-group" data-command-group="history"><span>${commandGroups.history}</span></div><div class="command-group" data-command-group="view"><span>${commandGroups.view}</span></div><div class="command-group" data-command-group="scene"><span>${commandGroups.scene}</span></div><div class="command-group" data-command-group="palette"><span>${commandGroups.palette}</span></div><div class="command-group" data-command-group="fixtures"><span>${commandGroups.fixtures}</span></div><div class="command-group" data-command-group="export"><span>${commandGroups.export}</span><button data-export="project">Project JSON</button><button data-export="palette">Palette JSON</button><button data-export="css">CSS variables</button><button data-export="ase" title="${t("aseExportLimit")}">${t("aseExport")}</button><button data-export="patch">Patch CSV</button><button data-export="cues">Cue CSV</button></div></nav>
     <main id="workspace" class="editor-layout">
       <aside class="left-rail panel">
         <section class="project-heading"><div><small>${t("project")}</small><input id="project-name" value="${esc(project.name)}" aria-label="${t("project")} name" /></div><span class="save-state ${projectPersisted ? "" : "is-unsaved"}" title="${projectPersisted ? t("statusSaved") : t("unsavedChanges")}">● ${t(projectPersisted ? "saved" : "sessionOnly")}</span></section>
@@ -316,8 +317,8 @@ function render() {
     </main>
     <footer><span>${t("footer")}</span><span id="status" role="status" aria-live="polite">${status}</span><div><button id="save">${t("save")}</button><button id="undo" ${undoStack.length ? "" : "disabled"}>↶ ${t("undo")}</button><button id="redo" ${redoStack.length ? "" : "disabled"}>↷ ${t("redo")}</button></div></footer>`;
   const ribbon=document.querySelector(".command-ribbon");
-  for(const [group,ids] of [["History",["undo","redo"]],["View",["ribbon-view-palette","ribbon-view-light"]],["Fixtures",["add-fixture","apply-fixture-colour"]]]){
-    const host=[...ribbon.querySelectorAll(".command-group")].find(node=>node.querySelector("span")?.textContent===group);
+  for(const [group,ids] of [["history",["undo","redo"]],["view",["ribbon-view-palette","ribbon-view-light"]],["fixtures",["add-fixture","apply-fixture-colour"]]]){
+    const host=ribbon.querySelector(`[data-command-group="${group}"]`);
     for(const id of ids){let control=document.getElementById(id);if(id.startsWith("ribbon-view-")){const view=id.endsWith("palette")?"palette":"light";control=document.querySelector(`[data-view="${view}"]`);control.id=id;control.dataset.ribbonView=view;}if(control){host.append(control);control.classList.add("ribbon-command");}}
   }
   document.querySelector(".command-group:first-child [data-ribbon-action=save]").replaceWith(document.getElementById("save"));
@@ -462,11 +463,11 @@ function render() {
   const palettePanel=document.createElement("div");palettePanel.id="palette-inspector-panel";
   for (const node of [...inspector.children]) if (!node.classList.contains("section-title") && !node.classList.contains("inspector-tabs") && node!==fixturePanel) palettePanel.append(node);
   inspector.append(palettePanel);
-  const commandGroup=(name)=>[...document.querySelectorAll(".command-group")].find(group=>group.querySelector("span")?.textContent===name);
+  const commandGroup=(name)=>document.querySelector(`.command-group[data-command-group="${name}"]`);
   const dock=(selector,groupName,wrap=false)=>{const control=document.querySelector(selector);if(control){const group=commandGroup(groupName);group.append(wrap ? control.closest("label") : control);}};
-  dock("#reset-camera","Scene");dock("#apply-scene","Scene");dock("#material-target","Scene",true);dock("#preview-quality","Scene",true);dock(".workspace-tabs .view-menu","Scene");dock("#viewport-fullscreen","Scene");
-  dock("#seed","Palette");dock("#harmony","Palette");dock("#reroll","Palette");dock("#add-colour","Palette");dock("#custom-spacing","Palette",true);dock("#custom-hues","Palette");dock("#perceptual-scale","Palette");dock("#temperature-strength","Palette",true);dock('[data-temperature="warm"]',"Palette");dock('[data-temperature="cool"]',"Palette");
-  dock("#export-viewport","Export");dock("#export-canvas","Export");
+  dock("#reset-camera","scene");dock("#apply-scene","scene");dock("#material-target","scene",true);dock("#preview-quality","scene",true);dock(".workspace-tabs .view-menu","scene");dock("#viewport-fullscreen","scene");
+  dock("#seed","palette");dock("#harmony","palette");dock("#reroll","palette");dock("#add-colour","palette");dock("#custom-spacing","palette",true);dock("#custom-hues","palette");dock("#perceptual-scale","palette");dock("#temperature-strength","palette",true);dock('[data-temperature="warm"]',"palette");dock('[data-temperature="cool"]',"palette");
+  dock("#export-viewport","export");dock("#export-canvas","export");
   const canvasObject=scene().canvasObjects?.find((object)=>object.id===preferences.objectId);
   if (canvasObject && preferences.view==="palette") palettePanel.insertAdjacentHTML("beforeend", `<fieldset class="canvas-object-editor"><legend>${t("canvasObject")}</legend>${["x","y",...(canvasObject.type!=="text" ? ["width","height"] : ["fontSize"])].map((key)=>`<label>${["x","y"].includes(key) ? key.toUpperCase() : t(key)}<input data-object-value="${key}" type="number" step="any" required value="${canvasObject[key]}"></label>`).join("")}${canvasObject.type==="text" ? `<label>${t("text")}<input id="canvas-text" maxlength="2048" value="${esc(canvasObject.text)}"></label>` : ""}<button id="apply-object">${t("apply")}</button><button id="paint-object">${t("applySwatch")}</button><button id="delete-object">${t("deleteObject")}</button><button id="copy-object">${t("duplicateObject")}</button><button data-object-stack="-1">${t("sendBackward")}</button><button data-object-stack="1">${t("bringForward")}</button></fieldset>`);
   for (const key of ["shapes","text","measure"]) {const button=document.querySelector(`[data-tool="${key}"]`);button.disabled=false;button.removeAttribute("title");}
@@ -906,7 +907,7 @@ function bind() {
   document.querySelectorAll("[data-module]").forEach((button) => button.onclick = () => {
     const key=button.dataset.module;
     if(key==="copilot"){floatingBot.open();return;}
-    if(key==="export"){preferences.module=key;savePreferences();document.querySelectorAll("[data-module]").forEach(item=>item.classList.toggle("is-active",item===button));document.querySelector('.command-group:has([data-export="project"])')?.scrollIntoView({block:"nearest",inline:"end",behavior:"smooth"});status=t("statusModule")+button.textContent.trim();document.querySelector("#status").textContent=status;return;}
+    if(key==="export"){preferences.module=key;savePreferences();document.querySelectorAll("[data-module]").forEach(item=>item.classList.toggle("is-active",item===button));document.querySelector('.command-group[data-command-group="export"]')?.scrollIntoView({block:"nearest",inline:"end",behavior:"smooth"});status=t("statusModule")+button.textContent.trim();document.querySelector("#status").textContent=status;return;}
     stopPlayback();
     preferences.module=key;
     if (key === "light") preferences.view="light";
