@@ -288,7 +288,7 @@ function render() {
   const commandGroups={project:t("project"),history:`${t("undo")} / ${t("redo")}`,view:`${t("palette")} / ${t("light")}`,scene:t("scenePreview"),palette:t("palette"),fixtures:t("fixture"),export:t("export")};
   const nav = [
     ["canvas", "⌂", true], ["palette", "◉", true], ["light", "☼", true], ["copilot", "◌", true], ["library", "▱", true], ["export", "↗", true], ["community", "♧", false]
-  ].map(([key, icon, enabled]) => `<button class="module ${studioActiveModule(preferences) === key ? "is-active" : ""}" data-module="${key}" ${enabled ? "" : disabled(`${t(key)} ${t("availableLater")}`)}><span>${icon}</span>${t(key)}</button>`).join("");
+  ].map(([key, icon, enabled]) => {const labelKey={canvas:"moduleCanvas",light:"moduleLight",copilot:"moduleCopilot"}[key] ?? key;return `<button class="module ${studioActiveModule(preferences) === key ? "is-active" : ""}" data-module="${key}" ${enabled ? "" : disabled(`${t(key)} ${t("availableLater")}`)}><span>${icon}</span>${t(labelKey)}</button>`;}).join("");
   const tools = [["select","↖",true],["paletteBrush","◉",true],["fixture","☀",true],["material","◆",true],["shapes","□",false],["text","T",false],["measure","⌗",false],["orbit","◎",true],["aiPin","✦",false]].map(([key, icon, enabled]) => `<button class="tool ${preferences.tool === key ? "is-active" : ""}" data-tool="${key}" ${enabled ? "" : disabled(`${t(key)} ${t("availableLater")}`)}><span>${icon}</span>${t(key)}</button>`).join("");
   const swatches = palette().colors.map((swatch)=>swatchButton(swatch,active.id)).join("");
   const patchedFixtures = project.fixtures.filter((fixture) => fixture.patchAssignment);
