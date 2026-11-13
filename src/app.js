@@ -929,8 +929,8 @@ function bind() {
     if(key==="export"){preferences.module=key;savePreferences();document.querySelectorAll("[data-module]").forEach(item=>item.classList.toggle("is-active",item===button));document.querySelector('.command-group[data-command-group="export"]')?.scrollIntoView({block:"nearest",inline:"end",behavior:"smooth"});status=t("statusModule")+button.textContent.trim();document.querySelector("#status").textContent=status;return;}
     stopPlayback();
     preferences.module=key;
-    if (key === "light") preferences.view="light";
-    if (key === "palette") preferences.view="palette";
+    if (key === "light") { preferences.view="light"; preferences.inspectorMode="fixture"; }
+    if (key === "palette") { preferences.view="palette"; preferences.inspectorMode="palette"; }
     savePreferences();
     status=t("statusModule") + button.textContent.trim();
     render();
