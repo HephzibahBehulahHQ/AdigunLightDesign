@@ -529,9 +529,11 @@ function render() {
     inspector.querySelector(".section-title h2").textContent=`${t("selectedFixtureTitle")}: ${selectedFixture().name}`;
     inspector.querySelector(".inspector-tabs").hidden=true;
   }
+  const sceneEditorHost=fixturePanel ?? palettePanel;
+  for(const editor of document.querySelectorAll("[data-scene-editor]"))sceneEditorHost.append(editor);
   document.querySelector(".scene-preview").insertAdjacentHTML("beforeend", `<button id="viewport-exit-fullscreen" class="viewport-exit-fullscreen">${t("exitFullscreen")}</button>`);
   bind();
-  document.querySelectorAll("[data-open-scene-editor]").forEach((button)=>button.onclick=()=>{const editor=document.querySelector(`[data-scene-editor="${button.dataset.openSceneEditor}"]`);if(editor){editor.open=true;editor.scrollIntoView({block:"nearest"});editor.querySelector("summary")?.focus({preventScroll:true});}});
+  document.querySelectorAll("[data-open-scene-editor]").forEach((button)=>button.onclick=()=>{if(fixturePanel && (preferences.view!=="light" || preferences.inspectorMode!=="fixture")){preferences.view="light";preferences.module="light";preferences.inspectorMode="fixture";savePreferences();render();}const editor=document.querySelector(`[data-scene-editor="${button.dataset.openSceneEditor}"]`);if(editor){editor.open=true;editor.scrollIntoView({block:"nearest"});editor.querySelector("summary")?.focus({preventScroll:true});}});
   bindFixtureSliders(document.querySelector(".inspector"),{channelLabel:t("virtualChannelValue")});
   if(preferences.view==="light"){
     const axes=document.createElement("div");axes.className="viewport-axis-controls";axes.setAttribute("role","group");axes.setAttribute("aria-label",t("cameraAxisViews"));
