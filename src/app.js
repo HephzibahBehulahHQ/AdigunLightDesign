@@ -495,10 +495,10 @@ function render() {
     for (const node of [...fixturePanel.children]) if(node!==apply && node!==actions)bodies.fixture.append(node);
     const nameLabel=bodies.fixture.querySelector("#fixture-name")?.closest("label");
     let nameDetails=null;
-    if(nameLabel){nameDetails=document.createElement("details");nameDetails.className="fixture-name-details";const nameSummary=document.createElement("summary");nameSummary.textContent=t("fixtureName");nameDetails.append(nameSummary);nameLabel.replaceWith(nameDetails);nameDetails.append(nameLabel);}
+    if(nameLabel){nameDetails=document.createElement("details");nameDetails.className="fixture-name-details";nameDetails.open=true;const nameSummary=document.createElement("summary");nameSummary.textContent=t("fixtureName");nameDetails.append(nameSummary);nameLabel.replaceWith(nameDetails);nameDetails.append(nameLabel);}
     const placement=bodies.fixture.querySelector(".fixture-placement");let placementDetails=null;
     if(placement){
-      placementDetails=document.createElement("details");placementDetails.className="fixture-position-details";
+      placementDetails=document.createElement("details");placementDetails.className="fixture-position-details";placementDetails.open=true;
       const summary=document.createElement("summary");summary.textContent=t("fixturePlacement");placementDetails.append(summary);
       const readout=document.createElement("p");readout.className="fixture-position-summary";
       const refreshPosition=()=>{const value=(key)=>fixturePanel.querySelector(`#fixture-${key}`)?.value ?? "0";readout.textContent=`X ${value("x")} m · Y ${value("y")} m · Z ${value("z")} m · Pan ${selectedFixture().properties.pan ?? 0} · Tilt ${selectedFixture().properties.tilt ?? 0} · R ${value("rotation")}°`;};
@@ -506,14 +506,14 @@ function render() {
       for(const input of placement.querySelectorAll("input"))input.addEventListener("input",refreshPosition);
       placement.replaceWith(placementDetails);placementDetails.append(placement);bodies.fixture.insertBefore(readout,placementDetails);
     }
-    const advancedLight=document.createElement("details");advancedLight.className="light-advanced-controls";
+    const advancedLight=document.createElement("details");advancedLight.className="light-advanced-controls";advancedLight.open=true;
     const advancedTitle=document.createElement("summary");advancedTitle.textContent="More light controls";advancedLight.append(advancedTitle);
     for(const id of ["fixture-beam","fixture-white","fixture-pan","fixture-tilt"]){const input=bodies.light.querySelector(`#${id}`);if(input)advancedLight.append(input.closest("label"));}
     bodies.light.append(advancedLight);
     const effectControls=document.querySelector("#effect-type").closest(".dmx-actions");
     const effectScope=document.createElement("p");effectScope.textContent=t("allVirtualFixtures");bodies.effects.append(effectScope,effectControls);
     bodies.fixture.append(apply);
-    if(actions){const actionDetails=document.createElement("details");actionDetails.className="fixture-actions-details";const actionSummary=document.createElement("summary");actionSummary.textContent=t("fixtureActions");actionDetails.append(actionSummary);if(nameDetails)actionDetails.append(nameDetails);if(placementDetails)actionDetails.append(placementDetails);actionDetails.append(actions);bodies.fixture.append(actionDetails);}
+    if(actions){const actionDetails=document.createElement("details");actionDetails.className="fixture-actions-details";const actionSummary=document.createElement("summary");actionSummary.textContent=t("fixtureActions");actionDetails.append(actionSummary,actions);bodies.fixture.append(actionDetails);}
     fixturePanel.append(...Object.values(bodies));
     inspector.querySelector(".section-title h2").textContent=`${t("selectedFixtureTitle")}: ${selectedFixture().name}`;
     inspector.querySelector(".inspector-tabs").hidden=true;
