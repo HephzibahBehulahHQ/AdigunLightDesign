@@ -122,6 +122,10 @@ try {
     assert.equal(await page.locator(`#fixture-inspector-panel .inspector-group-${group}`).isVisible(), true, `${group} controls are visible in the unified inspector`);
   }
   assert.equal(await page.locator(".inspector-tabs").isHidden(), true, "fixture inspector has no nested tab menu");
+  for (const selector of [".fixture-name-details", ".fixture-position-details", ".light-advanced-controls"]) {
+    assert.equal(await page.locator(`#fixture-inspector-panel ${selector}`).evaluate((element) => element.open), true, `${selector} opens with its real controls visible`);
+  }
+  assert.equal(await page.locator("#fixture-inspector-panel #fixture-pan").isVisible(), true, "fixture aiming controls are exposed in the inspector");
   await page.locator("#play-tracks").click();
   assert.equal(await page.locator("#stop-cue").isEnabled(), true, "timeline playback starts");
   await page.locator("#stop-cue").click();
