@@ -369,7 +369,7 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
 }
 @media (min-width:1100px) {
   .workspace-tabs { display:flex; align-items:center; gap:6px; }
-  .workspace-tabs .studio-panel-title { min-width:0; overflow:hidden; font-size:11px; font-weight:800; text-overflow:ellipsis; white-space:nowrap; }
+  .workspace-tabs .studio-panel-title { min-width:0; overflow:hidden; font-size:11px; font-weight:800; letter-spacing:.02em; text-overflow:ellipsis; text-transform:uppercase; white-space:nowrap; }
   .workspace-tabs .studio-panel-title-meta { min-width:0; overflow:hidden; color:var(--muted); font-size:9px; text-overflow:ellipsis; white-space:nowrap; }
 }
 
