@@ -113,9 +113,15 @@ try {
   assert.match(await page.locator("#status").innerText(), /canvas units/i, "Measure reports a live canvas distance");
   await page.locator('[data-layer-fixture]').nth(1).click();
   assert.equal(await page.locator('[data-layer-fixture]').nth(1).getAttribute("aria-pressed"), "true", "fixture selection follows the selected project fixture");
-  await page.locator('[data-view="palette"]').click();
+  await page.locator('[data-module="palette"]').click();
   assert.equal(await page.locator(".palette-panel").isVisible(), true, "2D palette view opens");
-  await page.locator('[data-view="light"]').click();
+  assert.equal(await page.locator("#palette-inspector-panel").isVisible(), true, "Palette Engine module selects the palette inspector");
+  await page.locator('[data-module="light"]').click();
+  assert.equal(await page.locator("#fixture-inspector-panel").isVisible(), true, "Light Lab module selects the fixture inspector");
+  for (const group of ["fixture", "light", "dmx", "effects"]) {
+    assert.equal(await page.locator(`#fixture-inspector-panel .inspector-group-${group}`).isVisible(), true, `${group} controls are visible in the unified inspector`);
+  }
+  assert.equal(await page.locator(".inspector-tabs").isHidden(), true, "fixture inspector has no nested tab menu");
   await page.locator("#play-tracks").click();
   assert.equal(await page.locator("#stop-cue").isEnabled(), true, "timeline playback starts");
   await page.locator("#stop-cue").click();
