@@ -115,6 +115,14 @@ try {
     assert.equal(await page.locator(`[data-tool="${key}"]`).isEnabled(), true, `${key} tool is enabled`);
   }
   const canvasBefore = await page.locator(".scene-preview").boundingBox();
+  const ribbonScroll = await page.locator(".command-ribbon").evaluate((element) => {
+    const maxScroll = element.scrollWidth - element.clientWidth;
+    element.scrollLeft = maxScroll;
+    return { maxScroll, scrollLeft: element.scrollLeft };
+  });
+  assert.ok(ribbonScroll.maxScroll > 0, "long command ribbon scrolls horizontally inside its lane");
+  assert.ok(ribbonScroll.scrollLeft > 0, "horizontal ribbon scrolling reaches additional commands");
+  assert.deepEqual(await page.locator(".scene-preview").boundingBox(), canvasBefore, "scrolling the command ribbon leaves the central canvas in place");
   await page.locator('[data-tool="shapes"]').click();
   assert.equal(await page.locator(".design-canvas [data-canvas-object]").count(), 1, "Shapes adds an editable canvas object");
   await page.locator('[data-tool="text"]').click();
@@ -175,7 +183,7 @@ try {
   assert.deepEqual(canvasAfter, canvasBefore, "ordinary tools and view changes preserve the canvas bounds");
   assert.deepEqual(runtimeErrors, [], "browser reports no runtime errors");
 
-  console.log(JSON.stringify({ viewports: reports, tools: coreTools, shapeAndTextCreation: true, measurement: true, fixtureSelection: true, paletteSwitch: true, timelinePlayback: true, projectSaveReload: true, projectJsonImportExport: true, canvasStayedFixed: true, runtimeErrors }, null, 2));
+  console.log(JSON.stringify({ viewports: reports, tools: coreTools, shapeAndTextCreation: true, measurement: true, fixtureSelection: true, paletteSwitch: true, timelinePlayback: true, projectSaveReload: true, projectJsonImportExport: true, commandRibbonScroll: true, canvasStayedFixed: true, runtimeErrors }, null, 2));
   await context.close();
 } finally {
   await browser?.close();
