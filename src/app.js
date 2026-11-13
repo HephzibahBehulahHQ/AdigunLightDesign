@@ -93,7 +93,9 @@ function t(key) { return translate(preferences.locale, key); }
 function phrase(key, values = {}) { return t(key).replace(/\{(\w+)\}/g, (_, name) => values[name] ?? ""); }
 function palette() { return project.palettes[0]; }
 function selected() { return palette().colors.find((swatch) => swatch.id === preferences.selected) ?? palette().colors[0]; }
-function scene() { if (!project.scenes[0]) project.scenes.push({ id:"studio-room", name:"Studio room", materialColor:"#C21888" }); return project.scenes[0]; }
+function scene() { if (!project.scenes[0]) project.scenes.push({ id:"studio-room", name:"Studio room", materialColor:"#C21888" }); const active=project.scenes.find((item)=>item.id===preferences.sceneId) ?? project.scenes[0]; preferences.sceneId=active.id; return active; }
+function editScene(draft,update) { const index=Math.max(0,draft.scenes.findIndex((item)=>item.id===preferences.sceneId)); update(draft.scenes[index],index,draft.scenes); }
+function sceneSelectMarkup() { const activeId=scene().id; return `<select id="scene-select" aria-label="${t("sceneHeader")}">${project.scenes.map((item,index)=>`<option value="${esc(item.id)}" ${item.id===activeId ? "selected" : ""}>${esc(`${t("sceneHeader")} ${String(index+1).padStart(2,"0")} / ${item.name}`)}</option>`).join("")}</select>`; }
 function addVirtualFixture(profileId) { const fixture=createFixture(project.fixtures.length+1,profileId); commitProjectChange("fixture-add",(draft)=>{draft.fixtures=patchFixture([...draft.fixtures,fixture],fixture.id);}); preferences.fixtureId=fixture.id;savePreferences(); const patch=project.fixtures.find((item)=>item.id===fixture.id)?.patchAssignment; status=phrase("fixturePatched",{name:fixture.name,universe:1,address:patch?.startAddress ?? 1}); }
 function activateBlackout() { commitProjectChange("dmx-blackout",(draft)=>{draft.fixtures=blackout(draft.fixtures);}); status="Virtual blackout applied. Physical output remains disabled."; }
 function applyPaletteToVirtualFixtures() { const rgb=hexToRgb(selected().hex); commitProjectChange("palette-to-fixtures",(draft)=>{draft.fixtures=draft.fixtures.map((fixture)=>({ ...fixture, properties:{ ...fixture.properties, red:rgb.r, green:rgb.g, blue:rgb.b } }));}); updateRendererFromFixtures(); status=`${selected().hex} applied to ${project.fixtures.length} virtual fixture(s).`; }
@@ -311,7 +313,7 @@ function render() {
     <main id="workspace" class="editor-layout">
       <aside class="left-rail panel">
         <div class="left-rail-heading"><h2>${t("project")} • ${t("layers")} • ${t("tools")}</h2></div>
-        <section class="project-heading"><div><small>${t("project")}</small><input id="project-name" value="${esc(project.name)}" aria-label="${t("project")} name" /></div><span class="save-state ${projectPersisted ? "" : "is-unsaved"}" title="${projectPersisted ? t("statusSaved") : t("unsavedChanges")}">● ${t(projectPersisted ? "saved" : "sessionOnly")}</span></section>
+        <section class="project-heading"><div><input id="project-name" value="${esc(project.name)}" aria-label="${t("project")} name" />${sceneSelectMarkup()}</div></section>
         <section class="layer-section"><h2>▰ ${t("layers")}</h2><ul class="layer-list"><li>⌄ ▣ ${t("layersLighting")} <span>◉</span></li><li>⌄ ▣ ${t("layersPalette")} <span>◉</span></li><li>⌄ ▣ ${t("layersScene")} <span>◉</span></li></ul></section>
         <section class="tool-section"><h2>☼ ${t("tools")}</h2><div class="tool-list">${tools}</div></section>
       </aside>
@@ -580,7 +582,7 @@ function bind() {
     try {
       const settings={enabled:document.querySelector("#stage-enabled").checked,color:document.querySelector("#stage-color").value};
       for(const key of ["x","y","z","width","height","depth"]) {const input=document.querySelector(`#stage-${key}`);if(!input.value.trim() || !input.checkValidity())return input.reportValidity();settings[key]=Number(input.value);}
-      commitProjectChange("scene-stage-edit",(draft)=>{draft.scenes[0]=updateStage(draft.scenes[0],settings);});render();
+      commitProjectChange("scene-stage-edit",(draft)=>{editScene(draft,(active,index)=>{draft.scenes[index]=updateStage(active,settings);});});render();
     }catch(error){setStatus(error.message);}
   };
   document.querySelectorAll("[data-temperature]").forEach((button)=>button.onclick=()=>{
@@ -606,20 +608,20 @@ function bind() {
   const shapeKind=document.querySelector("#shape-kind");if(shapeKind)shapeKind.onchange=()=>{preferences.shapeKind=shapeKind.value;savePreferences();};
   const addShape=document.querySelector("#add-canvas-shape");if(addShape)addShape.onclick=()=>document.querySelector('[data-tool="shapes"]').click();
   const copyObject=document.querySelector("#copy-object");if(copyObject)copyObject.onclick=()=>{
-    try {const id=crypto.randomUUID();commitProjectChange("canvas-object-duplicate",(draft)=>{draft.scenes[0]=duplicateCanvasObject(draft.scenes[0],preferences.objectId,id);});preferences.objectId=id;savePreferences();render();}catch(error){setStatus(error.message);}
+    try {const id=crypto.randomUUID();commitProjectChange("canvas-object-duplicate",(draft)=>{editScene(draft,(active,index)=>{draft.scenes[index]=duplicateCanvasObject(active,preferences.objectId,id);});});preferences.objectId=id;savePreferences();render();}catch(error){setStatus(error.message);}
   };
-  document.querySelectorAll("[data-object-stack]").forEach((button)=>button.onclick=()=>{commitProjectChange("canvas-object-stack",(draft)=>{draft.scenes[0]=moveCanvasObject(draft.scenes[0],preferences.objectId,Number(button.dataset.objectStack));});render();});
+  document.querySelectorAll("[data-object-stack]").forEach((button)=>button.onclick=()=>{commitProjectChange("canvas-object-stack",(draft)=>{editScene(draft,(active,index)=>{draft.scenes[index]=moveCanvasObject(active,preferences.objectId,Number(button.dataset.objectStack));});});render();});
   const selectCanvasObject=(id)=>{preferences.objectId=id;preferences.inspectorMode="palette";savePreferences();render();};
   const designCanvas=document.querySelector(".design-canvas");
   if(designCanvas && preferences.tool==="measure")bindCanvasMeasure(designCanvas,{units:t("canvasUnits"),onMeasure:measurement=>{status=`${measurement.distance.toFixed(2)} ${t("canvasUnits")} · ${t("measureHelp")}`;document.querySelector("#status").textContent=status;}});
   if (designCanvas && preferences.tool!=="measure") bindCanvasDrag(designCanvas,scene().canvasObjects ?? [],{
     onSelect:selectCanvasObject,
     onResize(id,size){
-      try {commitProjectChange("canvas-object-resize",(draft)=>{draft.scenes[0]=updateCanvasObject(draft.scenes[0],id,size);});selectCanvasObject(id);}
+      try {commitProjectChange("canvas-object-resize",(draft)=>{editScene(draft,(active,index)=>{draft.scenes[index]=updateCanvasObject(active,id,size);});});selectCanvasObject(id);}
       catch(error){setStatus(error.message);}
     },
     onMove(id,position){
-      try {commitProjectChange("canvas-object-move",(draft)=>{draft.scenes[0]=updateCanvasObject(draft.scenes[0],id,position);});selectCanvasObject(id);}
+      try {commitProjectChange("canvas-object-move",(draft)=>{editScene(draft,(active,index)=>{draft.scenes[index]=updateCanvasObject(active,id,position);});});selectCanvasObject(id);}
       catch(error){setStatus(error.message);}
     }
   });
@@ -636,11 +638,11 @@ function bind() {
       const changes={};
       for (const input of document.querySelectorAll("[data-object-value]")) {if (!input.value.trim() || !input.checkValidity()) return input.reportValidity();changes[input.dataset.objectValue]=Number(input.value);}
       const text=document.querySelector("#canvas-text");if(text)changes.text=text.value;
-      commitProjectChange("canvas-object-edit",(draft)=>{draft.scenes[0]=updateCanvasObject(draft.scenes[0],preferences.objectId,changes);});render();
+      commitProjectChange("canvas-object-edit",(draft)=>{editScene(draft,(active,index)=>{draft.scenes[index]=updateCanvasObject(active,preferences.objectId,changes);});});render();
     } catch(error) {setStatus(error.message);}
   };
-  const paintObject=document.querySelector("#paint-object");if(paintObject)paintObject.onclick=()=>{commitProjectChange("canvas-object-paint",(draft)=>{draft.scenes[0]=updateCanvasObject(draft.scenes[0],preferences.objectId,{fill:selected().hex});});render();};
-  const deleteObject=document.querySelector("#delete-object");if(deleteObject)deleteObject.onclick=()=>{commitProjectChange("canvas-object-delete",(draft)=>{draft.scenes[0].canvasObjects=draft.scenes[0].canvasObjects.filter((object)=>object.id!==preferences.objectId);});preferences.objectId=null;render();};
+  const paintObject=document.querySelector("#paint-object");if(paintObject)paintObject.onclick=()=>{commitProjectChange("canvas-object-paint",(draft)=>{editScene(draft,(active,index)=>{draft.scenes[index]=updateCanvasObject(active,preferences.objectId,{fill:selected().hex});});});render();};
+  const deleteObject=document.querySelector("#delete-object");if(deleteObject)deleteObject.onclick=()=>{commitProjectChange("canvas-object-delete",(draft)=>{editScene(draft,(active)=>{active.canvasObjects=active.canvasObjects.filter((object)=>object.id!==preferences.objectId);});});preferences.objectId=null;render();};
   const duplicateFixtureButton=document.querySelector("#duplicate-fixture"),deleteFixtureButton=document.querySelector("#delete-fixture");
   if (duplicateFixtureButton) duplicateFixtureButton.onclick=()=>{
     try {
@@ -663,7 +665,7 @@ function bind() {
         values[key]=Number(input.value);
       }
       const room=roomDimensions(values);
-      commitProjectChange("scene-room-resize",(draft)=>{draft.scenes[0].room=room;});render();
+      commitProjectChange("scene-room-resize",(draft)=>{editScene(draft,(active)=>{active.room=room;});});render();
     } catch(error) {setStatus(error.message);}
   };
   document.querySelector("#export-viewport").onclick=async()=>{
@@ -678,7 +680,7 @@ function bind() {
   document.querySelector(".view-menu").onclick=()=>{preferences.projection=preferences.projection==="orthographic" ? "perspective" : "orthographic";savePreferences();render();};
   document.querySelectorAll("[data-layer-visibility]").forEach((button)=>button.onclick=()=>{
     const key=button.dataset.layerVisibility;
-    commitProjectChange("scene-layer-visibility",(draft)=>{const target=draft.scenes[0];target.visibility={...target.visibility,[key]:target.visibility?.[key]===false};});render();
+    commitProjectChange("scene-layer-visibility",(draft)=>{editScene(draft,(target)=>{target.visibility={...target.visibility,[key]:target.visibility?.[key]===false};});});render();
   });
   const keyframeButton=document.querySelector("#save-keyframe");
   if (keyframeButton) keyframeButton.onclick=()=>{
@@ -950,7 +952,7 @@ function bind() {
     preferences.tool=button.dataset.tool;
     if (["shapes","text"].includes(preferences.tool)) {
       const id=crypto.randomUUID();
-      commitProjectChange("canvas-object-add",(draft)=>{draft.scenes[0]=addCanvasObject(draft.scenes[0],preferences.tool==="shapes" ? (preferences.shapeKind==="ellipse" ? "ellipse" : "rect") : "text",selected().hex,{id,text:t("text")});});
+      commitProjectChange("canvas-object-add",(draft)=>{editScene(draft,(active,index)=>{draft.scenes[index]=addCanvasObject(active,preferences.tool==="shapes" ? (preferences.shapeKind==="ellipse" ? "ellipse" : "rect") : "text",selected().hex,{id,text:t("text")});});});
       preferences.objectId=id;preferences.view="palette";preferences.inspectorMode="palette";
     }
     if (preferences.tool === "fixture") { preferences.module="library"; preferences.view="light"; }
@@ -966,6 +968,7 @@ function bind() {
   });
   document.querySelectorAll("[data-swatch]").forEach((button) => button.onclick = () => { preferences.selected = button.dataset.swatch; preferences.inspectorMode="palette"; savePreferences(); render(); });
   document.querySelector("#project-name").onchange = (event) => { const name=event.target.value.trim(); if(name&&name!==project.name) commitProjectChange("project-rename",(draft)=>{draft.name=name;}); render(); };
+  const sceneSelect=document.querySelector("#scene-select");if(sceneSelect)sceneSelect.onchange=(event)=>{if(!project.scenes.some((item)=>item.id===event.target.value))return;preferences.sceneId=event.target.value;preferences.objectId=null;savePreferences();render();};
   document.querySelector("#seed").onchange = (event) => { const hex = normalizeHex(event.target.value); if (hex) preferences.seed = hex; event.target.value = preferences.seed; savePreferences(); };
   document.querySelector("#harmony").onchange = (event) => { preferences.harmony = event.target.value; savePreferences(); };
   document.querySelector("#reroll").onclick = () => mutateColours((colours) => rerollUnlocked(colours, preferences.seed, preferences.harmony));
@@ -976,7 +979,7 @@ function bind() {
   document.querySelector("#undo").onclick = undo; document.querySelector("#redo").onclick = redo;
   document.querySelector("#toggle-lux").onclick = () => { preferences.luxOpen = !preferences.luxOpen; savePreferences(); render(); };
   const materialTarget=document.querySelector("#material-target");if(materialTarget) materialTarget.onchange=()=>{preferences.materialTarget=materialTarget.value;savePreferences();};
-  const applyScene = document.querySelector("#apply-scene"); if (applyScene) applyScene.onclick = () => { const target=materialTarget.value;commitProjectChange("scene-material",(draft)=>{draft.scenes[0]=applySceneMaterial(draft.scenes[0],target,selected().hex);});status = `${t("apply")} ${selected().hex}`;render(); };
+  const applyScene = document.querySelector("#apply-scene"); if (applyScene) applyScene.onclick = () => { const target=materialTarget.value;commitProjectChange("scene-material",(draft)=>{editScene(draft,(active,index)=>{draft.scenes[index]=applySceneMaterial(active,target,selected().hex);});});status = `${t("apply")} ${selected().hex}`;render(); };
   const resetCamera = document.querySelector("#reset-camera"); if (resetCamera) resetCamera.onclick = () => renderer.reset();
   document.querySelector("#add-fixture").onclick = () => { addVirtualFixture(); render(); };
   const blackoutButton = document.querySelector("#blackout"); if (blackoutButton) blackoutButton.onclick = () => { activateBlackout(); render(); };
