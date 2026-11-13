@@ -18,3 +18,13 @@ jobs:
       - run: npm test
       - run: npm run check
       - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run verify:studio
+      - name: Upload studio reference screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: studio-acceptance-${{ github.sha }}
+          path: outputs/studio-acceptance-*.png
+          if-no-files-found: warn
+
