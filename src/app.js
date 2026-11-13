@@ -476,33 +476,21 @@ function render() {
   if (fixturePanel) {fixturePanel.id="fixture-inspector-panel";fixturePanel.hidden=mode!=="fixture";}
   inspector.querySelector(".inspector-tabs").innerHTML=`<button data-inspector="fixture" aria-pressed="${mode==="fixture"}" class="${mode==="fixture" ? "is-active" : ""}" ${fixturePanel ? "" : "disabled"}>${t("fixtureLabel")}</button><button data-inspector="palette" aria-pressed="${mode==="palette"}" class="${mode==="palette" ? "is-active" : ""}">${t("palette")}</button>`;
   if (fixturePanel && mode==="fixture") {
-    const keys=["fixture","light","dmx","effects"],activeTab=keys.includes(preferences.fixtureTab) ? preferences.fixtureTab : "fixture";
-    const bodies=Object.fromEntries(keys.map((key)=>{const body=document.createElement("div");body.hidden=key!==activeTab;body.className="fixture-tab-body";return [key,body];}));
+    const keys=["fixture","light","dmx","effects"];
+    const bodies=Object.fromEntries(keys.map((key)=>{const body=document.createElement("section");body.className=`fixture-tab-body inspector-group inspector-group-${key}`;body.setAttribute("aria-label",t({fixture:"fixtureLabel",light:"lightTab",dmx:"dmxTab",effects:"effectsTab"}[key]));body.insertAdjacentHTML("afterbegin",`<h3>${t({fixture:"fixtureLabel",light:"lightTab",dmx:"dmxTab",effects:"effectsTab"}[key])}</h3>`);return [key,body];}));
     for (const id of ["fixture-dimmer","fixture-beam","fixture-colour","fixture-white","fixture-pan","fixture-tilt"]) {
       const input=fixturePanel.querySelector(`#${id}`);if(input)bodies.light.append(input.closest("label"));
     }
     for (const id of ["fixture-universe","fixture-address"]) bodies.dmx.append(fixturePanel.querySelector(`#${id}`).closest("label"));
     const apply=fixturePanel.querySelector("#apply-fixture"),actions=fixturePanel.querySelector(".dmx-actions");
+    fixturePanel.querySelector(":scope > h3")?.remove();
     for (const node of [...fixturePanel.children]) if(node!==apply && node!==actions)bodies.fixture.append(node);
-    if (activeTab==="fixture") {
-      const patchFields=document.createElement("div");
-      patchFields.className="fixture-patch-fields";
-      patchFields.append(...bodies.dmx.children);
-      const quickControls=document.createElement("div");
-      quickControls.append(patchFields);
-      for (const id of ["fixture-colour","fixture-dimmer","fixture-beam"]) {
-        const input=bodies.light.querySelector(`#${id}`);
-        if(input)quickControls.append(input.closest("label"));
-      }
-      bodies.fixture.prepend(quickControls);
-    }
     const effectControls=document.querySelector("#effect-type").closest(".dmx-actions");
     const effectScope=document.createElement("p");effectScope.textContent=t("allVirtualFixtures");bodies.effects.append(effectScope,effectControls);
-    fixturePanel.append(...Object.values(bodies),apply,actions);
-    if (activeTab==="fixture") bodies.fixture.firstElementChild.prepend(apply);
-    apply.hidden=activeTab==="effects";actions.hidden=activeTab!=="fixture";
+    bodies.fixture.append(apply,actions);
+    fixturePanel.append(...Object.values(bodies));
     inspector.querySelector(".section-title h2").textContent=`${t("selectedFixtureTitle")}: ${selectedFixture().name}`;
-    inspector.querySelector(".inspector-tabs").innerHTML=keys.map((key)=>`<button data-fixture-tab="${key}" aria-pressed="${key===activeTab}" class="${key===activeTab ? "is-active" : ""}">${t({fixture:"fixtureLabel",light:"lightTab",dmx:"dmxTab",effects:"effectsTab"}[key])}</button>`).join("");
+    inspector.querySelector(".inspector-tabs").hidden=true;
   }
   document.querySelector(".scene-preview").insertAdjacentHTML("beforeend", `<button id="viewport-exit-fullscreen" class="viewport-exit-fullscreen">${t("exitFullscreen")}</button>`);
   bind();
@@ -512,7 +500,10 @@ function render() {
     axes.innerHTML=["x","y","z"].map(axis=>`<button type="button" class="axis-view-${axis}" data-camera-axis="${axis}" title="${t(`cameraView_${axis}`)}" aria-label="${t(`cameraView_${axis}`)}" disabled>${axis.toUpperCase()}</button>`).join("");
     document.querySelector(".scene-preview").append(axes);axes.querySelectorAll("[data-camera-axis]").forEach(button=>button.onclick=()=>{renderer?.setView?.(button.dataset.cameraAxis);document.querySelector("#light-canvas")?.focus();});
   }
-  floatingBot.mount(document.querySelector(".lux-panel"));
+  const luxPanel=document.querySelector(".lux-panel");
+  luxPanel.dataset.docked="true";
+  inspector.append(luxPanel);
+  floatingBot.mount(luxPanel);
   const composer=document.querySelector(".floating-bot [data-lux-request]");
   if (composer && !composer.classList.contains("bot-composer")) {
     composer.classList.add("bot-composer");
