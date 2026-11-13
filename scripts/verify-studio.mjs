@@ -144,12 +144,24 @@ try {
   for (const group of ["fixture", "light", "dmx", "effects"]) {
     assert.equal(await page.locator(`#fixture-inspector-panel .inspector-group-${group}`).isVisible(), true, `${group} controls are visible in the unified inspector`);
   }
+  const fixtureColor = page.locator("#fixture-colour");
+  const originalFixtureColor = await fixtureColor.inputValue();
+  assert.equal(await page.locator("#fixture-blue-channel").isVisible(), true, "supported RGB fixtures expose the blue DMX channel in the visible Light group");
+  await page.locator("#fixture-blue-channel").fill("199");
+  assert.equal(await page.locator("#fixture-blue-channel-value").innerText(), "78%", "blue channel shows its normalized value");
+  assert.equal(await fixtureColor.inputValue(), originalFixtureColor, "blue channel edits remain staged before Apply");
+  await page.locator("#apply-fixture").click();
+  assert.equal(Number.parseInt((await fixtureColor.inputValue()).slice(-2), 16), 199, "Apply commits the selected fixture's exact blue channel");
+  await page.locator("#undo").click();
+  assert.equal(await fixtureColor.inputValue(), originalFixtureColor, "Undo restores the blue channel transaction");
   assert.equal(await page.locator(".inspector-tabs").isHidden(), true, "fixture inspector has no nested tab menu");
   for (const selector of [".fixture-configuration-details", ".light-advanced-controls"]) {
     assert.equal(await page.locator(`#fixture-inspector-panel ${selector}`).evaluate((element) => element.open), false, `${selector} keeps secondary controls compact by default`);
   }
   assert.match(await page.locator("#fixture-inspector-panel").innerText(), /Type\s+[\s\S]*?Mode\s+/, "fixture type and channel mode are identified from its real profile");
-  assert.equal(await page.locator(".inspector-group-effects").evaluate((element) => element.getBoundingClientRect().bottom <= globalThis.document.querySelector(".lux-panel.is-docked").getBoundingClientRect().top), true, "Effects remain visible above the docked Lux panel at the reference viewport");
+  const effectsBottom = await page.locator(".inspector-group-effects").evaluate((element) => element.getBoundingClientRect().bottom);
+  const luxTop = await page.locator(".lux-panel.is-docked").evaluate((element) => element.getBoundingClientRect().top);
+  assert.ok(effectsBottom <= luxTop, `Effects remain visible above docked Lux (effects bottom ${effectsBottom}, Lux top ${luxTop})`);
   for (let index = 0; index < 6; index += 1) await page.locator("#add-fixture").click();
   assert.equal(await page.locator("[data-layer-fixture]").count(), 9, "the fixture list contains the nine real virtual fixtures in the target composition");
   await page.screenshot({ path: resolve("outputs", "studio-scroll-acceptance-1754x878.png") });
