@@ -365,6 +365,9 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
   .inspector-group-dmx { grid-template-columns:repeat(2,minmax(0,1fr)); }
   #fixture-inspector-panel .inspector-group-dmx > label { display:grid; grid-template-columns:minmax(0,1fr) 68px; align-items:center; gap:3px; white-space:nowrap; }
   #fixture-inspector-panel .inspector-group-dmx > label input { width:68px; min-width:0; height:25px; min-height:25px; }
+  #fixture-inspector-panel .inspector-group-light > label:has(input[type="range"]) { grid-template-rows:12px 12px; align-content:start; gap:0 !important; line-height:12px; }
+  #fixture-inspector-panel .inspector-group-light > label input[type="range"] { min-height:12px; max-height:12px; height:12px; padding:0; }
+  #fixture-inspector-panel .inspector-group-light > label input[type="color"] { height:24px; min-height:24px; }
   .lux-panel.is-docked:not(.is-dock-expanded) .bot-window-body { display:block; max-height:30px; overflow:hidden; }
   .lux-panel.is-docked:not(.is-dock-expanded) > .bot-composer { display:grid; grid-template-columns:minmax(0,1fr) 32px; grid-template-rows:31px 15px; gap:1px 4px; max-height:48px; height:48px; margin:2px 5px 3px; padding:0; overflow:hidden; }
   .lux-panel.is-docked:not(.is-dock-expanded) > .bot-composer > label:first-child { display:flex; min-width:0; min-height:0; grid-column:1; grid-row:1; align-items:center; margin:0; padding:0; overflow:hidden; font-size:0; }
