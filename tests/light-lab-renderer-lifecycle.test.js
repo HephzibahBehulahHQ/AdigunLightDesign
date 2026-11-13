@@ -16,4 +16,8 @@ test("ordinary selection and fixture updates keep the scene renderer reusable",(
 
 test("scene and renderer configuration changes require a fresh WebGL renderer",()=>{
   const config=lightLabRendererConfig(scene,"balanced","perspective");
-  assert.equal(shouldReuseLightLabRenderer({renderer:{}
+  assert.equal(shouldReuseLightLabRenderer({renderer:{},canvas:{},view:"palette",previousConfig:config,nextConfig:config}),false);
+  assert.equal(shouldReuseLightLabRenderer({renderer:{},canvas:null,view:"light",previousConfig:config,nextConfig:config}),false);
+  assert.notEqual(lightLabRendererConfig(scene,"quality","perspective"),config);
+  assert.notEqual(lightLabRendererConfig({...scene,room:{...scene.room,width:6}},"balanced","perspective"),config);
+});

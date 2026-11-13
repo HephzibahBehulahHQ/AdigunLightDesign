@@ -645,4 +645,345 @@ function bind() {
   };
   document.querySelector("#apply-room").onclick=()=>{
     try {
-      const val
+      const values={};
+      for (const key of ["width","height","depth"]) {
+        const input=document.querySelector(`#room-${key}`);
+        if (!input.value.trim() || !input.checkValidity()) return input.reportValidity();
+        values[key]=Number(input.value);
+      }
+      const room=roomDimensions(values);
+      commitProjectChange("scene-room-resize",(draft)=>{draft.scenes[0].room=room;});render();
+    } catch(error) {setStatus(error.message);}
+  };
+  document.querySelector("#export-viewport").onclick=async()=>{
+    if (!renderer?.supported) return;
+    try {
+      const blob=await renderer.capturePng(),url=URL.createObjectURL(blob);
+      try {const link=document.createElement("a");link.href=url;link.download=`${safeFileStem(project.name)}-viewport.png`;link.click();}
+      finally {URL.revokeObjectURL(url);}
+      setStatus(t("viewportExported"));
+    } catch(error) {setStatus(error.message);}
+  };
+  document.querySelector(".view-menu").onclick=()=>{preferences.projection=preferences.projection==="orthographic" ? "perspective" : "orthographic";savePreferences();render();};
+  document.querySelectorAll("[data-layer-visibility]").forEach((button)=>button.onclick=()=>{
+    const key=button.dataset.layerVisibility;
+    commitProjectChange("scene-layer-visibility",(draft)=>{const target=draft.scenes[0];target.visibility={...target.visibility,[key]:target.visibility?.[key]===false};});render();
+  });
+  const keyframeButton=document.querySelector("#save-keyframe");
+  if (keyframeButton) keyframeButton.onclick=()=>{
+    try {
+      const time=document.querySelector("#keyframe-time"),value=document.querySelector("#keyframe-value");
+      for (const input of [time,value]) if (!input.value.trim() || !input.checkValidity()) return input.reportValidity();
+      const channel=JSON.parse(document.querySelector("#keyframe-channel").value),cue=project.cues.find((item)=>item.id===preferences.cueId) ?? project.cues.at(-1);
+      commitProjectChange("cue-keyframe-save",(draft)=>{draft.cues=draft.cues.map((item)=>item.id===cue.id ? setChannelKeyframe(item,{...channel,time:Number(time.value),value:Number(value.value)}) : item);});render();
+    } catch(error) {setStatus(error.message);}
+  };
+  document.querySelectorAll("[data-remove-keyframe]").forEach((button)=>button.onclick=()=>{
+    const cue=project.cues.find((item)=>item.id===preferences.cueId) ?? project.cues.at(-1);
+    commitProjectChange("cue-keyframe-delete",(draft)=>{const target=draft.cues.find((item)=>item.id===cue.id);target.channelKeyframes.splice(Number(button.dataset.removeKeyframe),1);});render();
+  });
+  document.querySelectorAll("[data-inspector]").forEach((button)=>button.onclick=()=>{preferences.inspectorMode=button.dataset.inspector;savePreferences();render();});
+  const applyGenerated=(generator)=>{
+    try {
+      const generated=generator();
+      mutateColours((colors)=>colors.map((color,index)=>color.locked ? color : {...color,hex:generated[index%generated.length]}));
+    } catch(error) { document.querySelector("#status").textContent=status=error.message; }
+  };
+  document.querySelector("#custom-hues").onclick=()=>applyGenerated(()=>{
+    const input=document.querySelector("#custom-spacing");
+    if (!input.value.trim() || !input.checkValidity()) throw new Error("Enter valid hue spacing.");
+    return customHueHarmony(preferences.seed,Number(input.value),Math.min(32,palette().colors.length));
+  });
+  document.querySelector("#perceptual-scale").onclick=()=>applyGenerated(()=>perceptualScale(preferences.seed,Math.max(2,Math.min(32,palette().colors.length))));
+  document.querySelector("#apply-opacity").onclick=()=>{
+    const input=document.querySelector("#swatch-opacity");
+    if (!input.value.trim() || !input.checkValidity()) return input.reportValidity();
+    mutateColours((colors)=>updateSwatch(colors,selected().id,{opacity:Number(input.value)/100}));
+  };
+  const comparison=document.querySelector("#version-comparison");
+  if (comparison) {
+    const updateComparison=()=>{
+      const saved=project.palettes.find((item)=>item.id===document.querySelector("#palette-version").value);
+      if (!saved) return;
+      const cell=(color)=>color ? `<span style="background:${swatchCssColor(color)};display:inline-block;width:12px;height:12px"></span> ${esc(color.name)} ${swatchCssColor(color)}` : "—";
+      comparison.innerHTML=`<table><thead><tr><th>${t("currentVersion")}</th><th>${t("savedVersions")}</th></tr></thead><tbody>${comparePalettes(palette(),saved).map((row)=>`<tr class="${row.changed ? "is-changed" : ""}"><td>${cell(row.current)}</td><td>${cell(row.saved)}</td></tr>`).join("")}</tbody></table>`;
+    };
+    document.querySelector("#palette-version").onchange=updateComparison;
+    updateComparison();
+  }
+  document.querySelector("#save-version").onclick=()=>{
+    commitProjectChange("palette-version-save",(draft)=>{draft.palettes.push(snapshotPalette(draft.palettes[0],`${draft.palettes[0].name} · ${draft.palettes.length}`));});
+    render();
+  };
+  document.querySelector("#restore-version").onclick=()=>{
+    const id=document.querySelector("#palette-version").value;
+    const snapshot=project.palettes.find((item,index)=>index>0 && item.id===id);
+    if (!snapshot) return;
+    commitProjectChange("palette-version-restore",(draft)=>{draft.palettes[0]=restorePalette(draft.palettes[0],snapshot);});
+    render();
+  };
+  document.querySelector("#apply-oklch").onclick=()=>{
+    try {
+      const values=Object.fromEntries(["l","c","h"].map((key)=>{
+        const input=document.querySelector(`#oklch-${key}`);
+        if (!input.value.trim() || !input.checkValidity()) throw new Error("Enter valid OKLCH values.");
+        return [key,Number(input.value)];
+      }));
+      const result=mapOklchToSrgb(values);
+      mutateColours((colors)=>updateSwatch(colors,selected().id,{hex:result.hex}));
+      if (result.mapped) document.querySelector("#status").textContent=status=`${t("chromaMapped")} ${result.chroma.toFixed(4)}`;
+    } catch(error) { document.querySelector("#status").textContent=status=error.message; }
+  };
+  const contrastButton=document.querySelector("#apply-contrast");
+  if (contrastButton) contrastButton.onclick=()=>{
+    const background=normalizeHex(preferences.contrastBackground) ?? "#0B1220";
+    const hex=suggestContrast(selected().hex,background);
+    if (hex) mutateColours((colors)=>updateSwatch(colors,selected().id,{hex}));
+  };
+  document.querySelector("#contrast-background").onchange=(event)=>{preferences.contrastBackground=event.target.value;savePreferences();render();};
+  document.querySelectorAll("[data-raster]").forEach((button)=>button.onclick=async()=>{
+    button.disabled=true;
+    try {
+      const blob=await paletteRaster(structuredClone(palette()),button.dataset.raster);
+      const url=URL.createObjectURL(blob),link=document.createElement("a");
+      link.href=url;link.download=`${safeFileStem(project.name)}-palette.${button.dataset.raster==="image/png" ? "png" : "jpg"}`;
+      link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+    } catch(error) { document.querySelector("#status").textContent=status=error.message; }
+    finally { button.disabled=false; }
+  });
+  document.querySelector("#apply-hsl").onclick=()=>{
+    try {
+      const values=["hue","saturation","lightness"].map((key)=>{
+        const input=document.querySelector(`#color-${key}`);
+        if (!input.value.trim() || !input.checkValidity()) throw new Error(`${t(key)}: enter a valid value.`);
+        return Number(input.value);
+      });
+      const hex=rgbToHex(hslToRgb({h:values[0],s:values[1]/100,l:values[2]/100}));
+      mutateColours((colors)=>updateSwatch(colors,selected().id,{hex}));
+    } catch(error) { document.querySelector("#status").textContent=status=error.message; }
+  };
+  document.querySelector("#copy-hex").onclick=async()=>{
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error("Clipboard is unavailable in this browser.");
+      await navigator.clipboard.writeText(swatchCssColor(selected()));
+      document.querySelector("#status").textContent=status=t("copied");
+    } catch(error) { document.querySelector("#status").textContent=status=error.message; }
+  };
+  document.querySelectorAll("[data-swatch]").forEach((button)=>{
+    button.draggable=true;
+    button.ondragstart=(event)=>{event.dataTransfer.setData("application/x-adigun-swatch",button.dataset.swatch);event.dataTransfer.effectAllowed="move";};
+    button.ondragover=(event)=>{if([...event.dataTransfer.types].includes("application/x-adigun-swatch")){event.preventDefault();event.dataTransfer.dropEffect="move";}};
+    button.ondrop=(event)=>{
+      const sourceId=event.dataTransfer.getData("application/x-adigun-swatch"),targetId=button.dataset.swatch;
+      if (!sourceId || sourceId===targetId || !palette().colors.some((color)=>color.id===sourceId)) return;
+      event.preventDefault();
+      mutateColours((colors)=>reorderSwatch(colors,sourceId,targetId));
+    };
+  });
+  document.querySelector("#remove-swatch").onclick=()=>mutateColours((colors)=>removeSwatch(colors,selected().id));
+  document.querySelectorAll("[data-move-swatch]").forEach((button)=>button.onclick=()=>mutateColours((colors)=>moveSwatch(colors,selected().id,Number(button.dataset.moveSwatch))));
+  document.querySelector("#extract-image").onclick=()=>document.querySelector("#palette-image").click();
+  document.querySelector("#palette-image").onchange=async(event)=>{
+    const [file]=event.target.files;
+    if (!file) return;
+    const projectId=project.id;
+    try {
+      const colors=await readImagePalette(file,{onDecoded:(asset)=>imageAssets.add(asset)});
+      if (project.id!==projectId) return;
+      mutateColours((existing)=>[...existing,...colors.map((color)=>({id:crypto.randomUUID(),name:color.hex,hex:color.hex,locked:false}))]);
+    } catch(error) { document.querySelector("#status").textContent=status=error.message; }
+  };
+  const tokenButton=document.querySelector("#export-tokens");
+  if (tokenButton) tokenButton.onclick=()=>{
+    try { downloadText(designTokenJson(palette()),`${safeFileStem(project.name)}-tokens.json`,"application/json"); }
+    catch(error) { document.querySelector("#status").textContent=status=error.message; }
+  };
+  const svgButton=document.querySelector("#export-svg");
+  const cuePdfButton=document.querySelector("#export-cue-pdf");
+  if(cuePdfButton)cuePdfButton.onclick=async()=>{
+    const snapshot=structuredClone(project.cues);
+    const filename=`${safeFileStem(project.name)}-cues.pdf`;
+    cuePdfButton.disabled=true;
+    try {
+      const {cuePdf}=await import("./export/pdf.js");
+      downloadText(await cuePdf(snapshot),filename,"application/pdf");
+    }catch(error){setStatus(error.message);}
+    finally{cuePdfButton.disabled=false;}
+  };
+  const pdfButton=document.querySelector("#export-pdf");
+  if(pdfButton)pdfButton.onclick=async()=>{
+    const snapshot=structuredClone(palette()),filename=`${safeFileStem(project.name)}-palette.pdf`;pdfButton.disabled=true;
+    try {const {palettePdf}=await import("./export/pdf.js");downloadText(await palettePdf(snapshot),filename,"application/pdf");}
+    catch(error){setStatus(error.message);}finally{pdfButton.disabled=false;}
+  };
+  if (svgButton) svgButton.onclick=()=>{
+    try { downloadText(paletteSvg(palette()),`${safeFileStem(project.name)}-palette.svg`,"image/svg+xml"); }
+    catch(error) { document.querySelector("#status").textContent=status=error.message; }
+  };
+  document.querySelectorAll("[data-layer-fixture]").forEach((button)=>button.onclick=()=>{
+    stopPlayback();
+    preferences.fixtureId=button.dataset.layerFixture;
+    preferences.inspectorMode="fixture";
+    preferences.view="light";
+    preferences.module="canvas";
+    savePreferences();
+    render();
+    document.querySelector("#fixture-select")?.focus();
+  });
+  document.querySelectorAll("[data-move-cue]").forEach((button)=>button.onclick=()=>{
+    const cue=project.cues.find((item)=>item.id===preferences.cueId) ?? project.cues.at(-1);
+    commitProjectChange("cue-reorder",(draft)=>{draft.cues=moveCue(draft.cues,cue.id,Number(button.dataset.moveCue));});
+    render();
+  });
+  document.querySelector("#play-sequence").onclick=playSequence;
+  document.querySelector("#pause-playback").onclick=togglePlaybackPause;
+  document.querySelector("#sequence-loop").onchange=(event)=>{preferences.loopSequence=event.target.checked;savePreferences();};
+  document.querySelector("#sequence-seek").onchange=(event)=>playSequence({seek:Number(event.target.value),paused:true});
+  document.querySelector("#play-effect").onclick=playEffect;
+  document.querySelector("#play-tracks").onclick=playArrangement;
+  document.querySelector("#arrangement-seek").onchange=(event)=>playArrangement({seek:Number(event.target.value),paused:true});
+  bindTimelineSeek(document.querySelector(".arrangement-timeline .timeline-ruler"),{
+    span:Math.max(30,arrangementDuration(project.cues)),duration:arrangementDuration(project.cues),value:playbackClock && arrangementDuration(project.cues)>0 ? playbackPosition(playbackClock.elapsed(performance.now()),arrangementDuration(project.cues),Boolean(preferences.loopSequence)).time : 0,label:t("seekTracks"),
+    onPreview(time){document.querySelector("#arrangement-playhead").style.left=`${time/Math.max(30,arrangementDuration(project.cues))*100}%`;},
+    onSeek(time,{keyboard}){playArrangement({seek:time,paused:true});if(keyboard)document.querySelector(".arrangement-timeline .timeline-ruler")?.focus();}
+  });
+  const scheduleButton=document.querySelector("#schedule-cue");
+  if (scheduleButton) scheduleButton.onclick=()=>{
+    try {
+      const input=document.querySelector("#cue-start-time");
+      if (!input.value.trim() || !input.checkValidity()) return input.reportValidity();
+      const cue=project.cues.find((item)=>item.id===preferences.cueId) ?? project.cues.at(-1);
+      const track=document.querySelector("#cue-track-name").value;
+      commitProjectChange("cue-schedule",(draft)=>{draft.cues=scheduleCue(draft.cues,cue.id,track,Number(input.value));});render();
+    } catch(error) {setStatus(error.message);}
+  };
+  document.querySelector("#save-group").onclick=()=>{
+    try {
+      const name=document.querySelector("#group-name").value,fixtureIds=[...document.querySelectorAll("[data-group-member]:checked")].map((input)=>input.value);
+      const id=document.querySelector("#save-group").dataset.groupId || crypto.randomUUID();
+      commitProjectChange("fixture-group-save",(draft)=>{draft.fixtureGroups=saveFixtureGroup(draft.fixtureGroups ?? [],draft.fixtures,{id,name,fixtureIds});});render();
+    } catch(error) { setStatus(error.message); }
+  };
+  const clearGroupEditor=()=>{
+    document.querySelector("#save-group").dataset.groupId="";
+    document.querySelector("#group-name").value="";
+    document.querySelectorAll("[data-group-member]").forEach((input)=>{input.checked=false;});
+    document.querySelector("#group-name").focus();
+  };
+  document.querySelector("#save-group").insertAdjacentHTML("afterend", `<button id="new-group">${t("newGroup")}</button>`);
+  document.querySelector("#new-group").onclick=clearGroupEditor;
+  document.querySelectorAll("[data-delete-group]").forEach((button)=>{
+    const edit=document.createElement("button");edit.textContent=t("editGroup");
+    edit.onclick=()=>{
+      const group=project.fixtureGroups.find((item)=>item.id===button.dataset.deleteGroup);
+      document.querySelector("#save-group").dataset.groupId=group.id;
+      document.querySelector("#group-name").value=group.name;
+      document.querySelectorAll("[data-group-member]").forEach((input)=>{input.checked=group.fixtureIds.includes(input.value);});
+      document.querySelector("#group-name").focus();
+    };
+    button.insertAdjacentElement("beforebegin",edit);
+  });
+  document.querySelectorAll("[data-delete-group]").forEach((button)=>button.onclick=()=>{
+    commitProjectChange("fixture-group-delete",(draft)=>{draft.fixtureGroups=(draft.fixtureGroups ?? []).filter((group)=>group.id!==button.dataset.deleteGroup);});render();
+  });
+  const duplicateButton=document.querySelector("#duplicate-cue"),deleteButton=document.querySelector("#delete-cue");
+  if (duplicateButton) duplicateButton.onclick=()=>{
+    const cue=project.cues.find((item)=>item.id===preferences.cueId) ?? project.cues.at(-1);
+    const id=crypto.randomUUID();
+    commitProjectChange("cue-duplicate",(draft)=>{draft.cues=duplicateCue(draft.cues,cue.id,{id,name:`${cue.name} · ${t("copyLabel")}`});});
+    preferences.cueId=id;savePreferences();render();
+  };
+  if (deleteButton) deleteButton.onclick=()=>{
+    const cue=project.cues.find((item)=>item.id===preferences.cueId) ?? project.cues.at(-1);
+    const index=project.cues.indexOf(cue);
+    commitProjectChange("cue-delete",(draft)=>{draft.cues=removeCue(draft.cues,cue.id);});
+    preferences.cueId=project.cues[Math.min(index,project.cues.length-1)]?.id ?? null;
+    savePreferences();render();
+  };
+  const editButton=document.querySelector("#edit-cue");
+  if (editButton) editButton.onclick=()=>{
+    try {
+      const changes={name:document.querySelector("#edit-cue-name").value};
+      for (const key of ["duration","fade","delay","fadeOut"]) {
+        const input=document.querySelector(`#edit-cue-${key}`);
+        if (!input.value.trim() || !input.checkValidity()) throw new Error(`${t(key)}: enter a valid value.`);
+        changes[key]=Number(input.value);
+      }
+      const cue=project.cues.find((item)=>item.id===preferences.cueId) ?? project.cues.at(-1);
+      commitProjectChange("cue-edit",(draft)=>{draft.cues=draft.cues.map((item)=>item.id===cue.id ? editCue(item,changes) : item);});
+      render();
+    } catch(error) { document.querySelector("#status").textContent=status=error.message; }
+  };
+  document.querySelectorAll("[data-cue]").forEach((button)=>button.onclick=()=>{
+    stopPlayback();
+    preferences.cueId=button.dataset.cue;
+    savePreferences();
+    render();
+  });
+  document.querySelector("#locale").onchange = (event) => { preferences.locale = event.target.value; savePreferences(); status = t("statusLocale"); render(); };
+  document.querySelector("#theme").onclick = () => { preferences.theme = preferences.theme === "dark" ? "light" : "dark"; savePreferences(); status = t("statusTheme"); render(); };
+  document.querySelectorAll("[data-module]").forEach((button) => button.onclick = () => {
+    const key=button.dataset.module;
+    if(key==="copilot"){floatingBot.open();return;}
+    if(key==="export"){preferences.module=key;savePreferences();document.querySelectorAll("[data-module]").forEach(item=>item.classList.toggle("is-active",item===button));document.querySelector('.command-group[data-command-group="export"]')?.scrollIntoView({block:"nearest",inline:"end",behavior:"smooth"});status=t("statusModule")+button.textContent.trim();document.querySelector("#status").textContent=status;return;}
+    stopPlayback();
+    preferences.module=key;
+    if (key === "light") preferences.view="light";
+    if (key === "palette") preferences.view="palette";
+    savePreferences();
+    status=t("statusModule") + button.textContent.trim();
+    render();
+  });
+  document.querySelectorAll("[data-view]").forEach((button) => button.onclick = () => { preferences.view = button.dataset.view; preferences.inspectorMode=preferences.view==="light" ? "fixture" : "palette"; savePreferences(); render(); });
+  document.querySelectorAll("[data-tool]").forEach((button) => button.onclick = () => {
+    preferences.tool=button.dataset.tool;
+    if (["shapes","text"].includes(preferences.tool)) {
+      const id=crypto.randomUUID();
+      commitProjectChange("canvas-object-add",(draft)=>{draft.scenes[0]=addCanvasObject(draft.scenes[0],preferences.tool==="shapes" ? (preferences.shapeKind==="ellipse" ? "ellipse" : "rect") : "text",selected().hex,{id,text:t("text")});});
+      preferences.objectId=id;preferences.view="palette";preferences.inspectorMode="palette";
+    }
+    if (preferences.tool === "fixture") { preferences.module="library"; preferences.view="light"; }
+    if (preferences.tool === "orbit" || preferences.tool === "material") preferences.view="light";
+    if (["paletteBrush","measure"].includes(preferences.tool)) preferences.view="palette";
+    savePreferences();
+    status=t("statusTool") + button.textContent.trim();
+    render();
+    if(preferences.tool==="measure"){document.querySelector(".design-canvas")?.focus();status=t("measureHelp");document.querySelector("#status").textContent=status;}
+    if (preferences.tool === "orbit") document.querySelector("#light-canvas")?.focus();
+    if (preferences.tool === "material") document.querySelector("#apply-scene")?.focus();
+    if (preferences.tool === "paletteBrush") document.querySelector("#swatch-hex")?.focus();
+  });
+  document.querySelectorAll("[data-swatch]").forEach((button) => button.onclick = () => { preferences.selected = button.dataset.swatch; preferences.inspectorMode="palette"; savePreferences(); render(); });
+  document.querySelector("#project-name").onchange = (event) => { const name=event.target.value.trim(); if(name&&name!==project.name) commitProjectChange("project-rename",(draft)=>{draft.name=name;}); render(); };
+  document.querySelector("#seed").onchange = (event) => { const hex = normalizeHex(event.target.value); if (hex) preferences.seed = hex; event.target.value = preferences.seed; savePreferences(); };
+  document.querySelector("#harmony").onchange = (event) => { preferences.harmony = event.target.value; savePreferences(); };
+  document.querySelector("#reroll").onclick = () => mutateColours((colours) => rerollUnlocked(colours, preferences.seed, preferences.harmony));
+  document.querySelector("#add-colour").onclick = () => mutateColours((colours) => { const id = `swatch-${Date.now()}`; preferences.selected = id; return [...colours, { id, name:`Swatch ${colours.length + 1}`, hex:preferences.seed, locked:false }]; });
+  document.querySelector("#apply-colour").onclick = () => { const name = document.querySelector("#swatch-name").value.trim(), hex = normalizeHex(document.querySelector("#swatch-hex").value); if (!hex) return setStatus("Enter a valid 3- or 6-digit HEX value."); mutateColours((colours) => updateSwatch(colours, selected().id, { name:name || selected().name, hex })); };
+  document.querySelector("#lock-swatch").onclick = () => mutateColours((colours) => updateSwatch(colours, selected().id, { locked:!selected().locked }));
+  document.querySelector("#save").onclick = () => { saveProject(); render(); };
+  document.querySelector("#undo").onclick = undo; document.querySelector("#redo").onclick = redo;
+  document.querySelector("#toggle-lux").onclick = () => { preferences.luxOpen = !preferences.luxOpen; savePreferences(); render(); };
+  const materialTarget=document.querySelector("#material-target");if(materialTarget) materialTarget.onchange=()=>{preferences.materialTarget=materialTarget.value;savePreferences();};
+  const applyScene = document.querySelector("#apply-scene"); if (applyScene) applyScene.onclick = () => { const target=materialTarget.value;commitProjectChange("scene-material",(draft)=>{draft.scenes[0]=applySceneMaterial(draft.scenes[0],target,selected().hex);});status = `${t("apply")} ${selected().hex}`;render(); };
+  const resetCamera = document.querySelector("#reset-camera"); if (resetCamera) resetCamera.onclick = () => renderer.reset();
+  document.querySelector("#add-fixture").onclick = () => { addVirtualFixture(); render(); };
+  const blackoutButton = document.querySelector("#blackout"); if (blackoutButton) blackoutButton.onclick = () => { activateBlackout(); render(); };
+  document.querySelector("#apply-fixture-colour").onclick = () => { applyPaletteToVirtualFixtures(); render(); };
+  document.querySelector("#create-cue").onclick = createCueSnapshot;
+  document.querySelector("#play-cue").onclick = playLatestCue;
+  document.querySelector("#stop-cue").onclick = () => { stopPlayback(); render(); };
+  document.querySelectorAll("[data-export]").forEach((button) => button.onclick = () => exportFile(button.dataset.export));
+  const closeExports = document.querySelector("#close-exports"); if (closeExports) closeExports.onclick = () => { preferences.module="canvas"; render(); };
+  const importButton=document.querySelector("#import-project"), projectFile=document.querySelector("#project-file"); if(importButton&&projectFile){importButton.onclick=()=>projectFile.click();projectFile.onchange=()=>{const [file]=projectFile.files;if(file) importNativeProject(file);};}
+  document.querySelectorAll("[data-profile]").forEach((button)=>button.onclick=()=>{addVirtualFixture(button.dataset.profile);render();});
+  const closeLibrary=document.querySelector("#close-library"); if(closeLibrary) closeLibrary.onclick=()=>{preferences.module="canvas";render();};
+  const fixtureSelect=document.querySelector("#fixture-select"); if(fixtureSelect) fixtureSelect.onchange=()=>{preferences.fixtureId=fixtureSelect.value;savePreferences();render();};
+  const applyFixture=document.querySelector("#apply-fixture"); if(applyFixture) applyFixture.onclick=applyFixtureInspector;
+  const form = document.querySelector("#lux-form"); if (form) {const liveHost=document.createElement("section");liveHost.className="live-copilot-panel";form.before(liveHost);liveCopilotPanel.mount(liveHost);const host=document.createElement("section");host.dataset.luxService="";host.className="lux-service";form.replaceWith(host);luxService.mount(host);}
+}
+window.addEventListener("keydown", (event) => { if (isEditableTarget(event.target) || event.defaultPrevented || event.isComposing) return; const tool=toolShortcut(event);if(tool){const button=document.querySelector(`[data-tool="${tool}"]`);if(button && !button.disabled){event.preventDefault();button.click();}return;} const shortcut=editorShortcut(event); if (!shortcut) return; event.preventDefault(); if (shortcut === "save") { saveProject(); render(); } else if (shortcut === "undo") undo(); else redo(); });
+account.subscribe(()=>render());
+render();
+
+

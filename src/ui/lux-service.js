@@ -22,4 +22,26 @@ export function createLuxServicePanel({getProject,getLocale,translate,onPreview,
     const requestForm=container.querySelector("[data-lux-request]");
     requestForm.onsubmit=async(event)=>{
       event.preventDefault();const form=event.currentTarget;
-      question=form.elements.question.value;const consent=form.elements.conse
+      question=form.elements.question.value;const consent=form.elements.consent.checked,requestEpoch=epoch;
+      try {
+        const pending=session.request({project:getProject(),question,locale:getLocale(),consent});
+        reply=null;error="";mount(container);
+        const result=await pending;if(requestEpoch!==epoch)return;reply=result;question="";onNotify();
+      } catch(e){if(requestEpoch!==epoch)return;error=e.message;}
+      // The editor may have re-rendered or closed while the request was pending.
+      const current=findContainer();if(current)mount(current);
+    };
+    if (floatingPanel) {
+      requestForm.classList.add("bot-composer");
+      floatingPanel.append(requestForm);
+    }
+    container.querySelectorAll("[data-lux-review]").forEach(button=>button.onclick=()=>{
+      try {
+        const review=session.review(getProject(),reply,Number(button.dataset.luxReview),{imageAssets});
+        if(review.kind==="mutation")onPreview(review.proposal);
+        else container.querySelector("[data-lux-result]").textContent=JSON.stringify(review.result,null,2);
+      } catch(e){onError(e.message);}
+    });
+  }
+  return {mount};
+}

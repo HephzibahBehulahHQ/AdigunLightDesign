@@ -6,4 +6,6 @@ export function lightLabFixtureState(fixtures) {
   return JSON.stringify(fixtures);
 }
 
-export function shouldReuseLightLabRenderer({renderer,canvas,view,previousConf
+export function shouldReuseLightLabRenderer({renderer,canvas,view,previousConfig,nextConfig}) {
+  return Boolean(renderer && canvas && view==="light" && previousConfig && previousConfig===nextConfig);
+}
