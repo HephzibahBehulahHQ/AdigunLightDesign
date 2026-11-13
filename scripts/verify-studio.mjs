@@ -150,6 +150,29 @@ try {
   }
   assert.match(await page.locator("#fixture-inspector-panel").innerText(), /Type\s+[\s\S]*?Mode\s+/, "fixture type and channel mode are identified from its real profile");
   assert.equal(await page.locator(".inspector-group-effects").evaluate((element) => element.getBoundingClientRect().bottom <= globalThis.document.querySelector(".lux-panel.is-docked").getBoundingClientRect().top), true, "Effects remain visible above the docked Lux panel at the reference viewport");
+  for (let index = 0; index < 6; index += 1) await page.locator("#add-fixture").click();
+  assert.equal(await page.locator("[data-layer-fixture]").count(), 9, "the fixture list contains the nine real virtual fixtures in the target composition");
+  await page.screenshot({ path: resolve("outputs", "studio-scroll-acceptance-1754x878.png") });
+  const fixtureList = page.locator(".fixture-layer-list");
+  const fixtureListScroll = await fixtureList.evaluate((element) => {
+    const maxScroll = element.scrollHeight - element.clientHeight;
+    element.scrollTop = maxScroll;
+    return { maxScroll, scrollTop: element.scrollTop };
+  });
+  assert.ok(fixtureListScroll.maxScroll > 0, "fixture list scrolls independently when the project has enough fixtures");
+  assert.ok(fixtureListScroll.scrollTop > 0, "fixture list reaches fixtures outside its visible area");
+  assert.deepEqual(await page.locator(".scene-preview").boundingBox(), canvasBefore, "scrolling the fixture list leaves the central canvas in place");
+  await fixtureList.evaluate((element) => { element.scrollTop = 0; });
+  await page.locator("#fixture-inspector-panel details").evaluateAll((elements) => elements.forEach((element) => { element.open = true; }));
+  const inspectorScroll = await page.locator("#fixture-inspector-panel").evaluate((element) => {
+    const maxScroll = element.scrollHeight - element.clientHeight;
+    element.scrollTop = maxScroll;
+    return { maxScroll, scrollTop: element.scrollTop };
+  });
+  assert.ok(inspectorScroll.maxScroll > 0, "expanded inspector settings scroll inside the inspector panel");
+  assert.ok(inspectorScroll.scrollTop > 0, "inspector reaches settings outside its visible area");
+  assert.deepEqual(await page.locator(".scene-preview").boundingBox(), canvasBefore, "scrolling the inspector leaves the central canvas in place");
+  await page.locator("#fixture-inspector-panel").evaluate((element) => { element.scrollTop = 0; });
   for (const selector of ["#create-cue", "#play-tracks", "#pause-playback", "#stop-cue", "#sequence-loop"]) {
     assert.equal(await page.locator(`.timeline-transport ${selector}`).count(), 1, `${selector} is docked in the timeline transport`);
   }
@@ -183,7 +206,7 @@ try {
   assert.deepEqual(canvasAfter, canvasBefore, "ordinary tools and view changes preserve the canvas bounds");
   assert.deepEqual(runtimeErrors, [], "browser reports no runtime errors");
 
-  console.log(JSON.stringify({ viewports: reports, tools: coreTools, shapeAndTextCreation: true, measurement: true, fixtureSelection: true, paletteSwitch: true, timelinePlayback: true, projectSaveReload: true, projectJsonImportExport: true, commandRibbonScroll: true, canvasStayedFixed: true, runtimeErrors }, null, 2));
+  console.log(JSON.stringify({ viewports: reports, tools: coreTools, shapeAndTextCreation: true, measurement: true, fixtureSelection: true, paletteSwitch: true, timelinePlayback: true, projectSaveReload: true, projectJsonImportExport: true, commandRibbonScroll: true, fixtureListScroll: true, inspectorScroll: true, canvasStayedFixed: true, runtimeErrors }, null, 2));
   await context.close();
 } finally {
   await browser?.close();
