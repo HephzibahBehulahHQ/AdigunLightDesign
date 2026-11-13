@@ -252,9 +252,10 @@ function applyFixtureInspector() {
       transform:Object.fromEntries(["x","y","z","rotation"].map((axis)=>[axis,value(`#fixture-${axis}`)])),
       properties:{dimmer:value("#fixture-dimmer"),...(document.querySelector("#fixture-beam") ? {beam:value("#fixture-beam")} : {}),...(()=>{
         const rgb=hexToRgb(document.querySelector("#fixture-colour").value);
+        const blueChannel=document.querySelector("#fixture-blue-channel");
         const white=document.querySelector("#fixture-white");
         const aiming=Object.fromEntries(["pan","tilt"].filter((key)=>document.querySelector(`#fixture-${key}`)).map((key)=>[key,value(`#fixture-${key}`)]));
-        return {red:rgb.r,green:rgb.g,blue:rgb.b,...aiming,...(white ? {white:value("#fixture-white")} : {})};
+        return {red:rgb.r,green:rgb.g,blue:blueChannel ? value("#fixture-blue-channel") : rgb.b,...aiming,...(white ? {white:value("#fixture-white")} : {})};
       })()},
       universe:value("#fixture-universe"),startAddress:value("#fixture-address")
     };
@@ -364,8 +365,16 @@ function render() {
     const fixture=selectedFixture(),profile=getFixtureProfile(fixture.profileId);
     const mode=profile.modes.find((item)=>item.id===fixture.modeId);
     if (!mode?.channels.includes("beam")) document.querySelector("#fixture-beam").closest("label").remove();
+    if (mode?.channels.includes("blue")) document.querySelector("#apply-fixture").insertAdjacentHTML("beforebegin", `<label>${t("blueChannel")} <output id="fixture-blue-channel-value">${Math.round((properties.blue ?? 0) / 255 * 100)}%</output><input id="fixture-blue-channel" type="range" min="0" max="255" step="1" value="${properties.blue ?? 0}" aria-label="${t("blueChannel")}" /></label>`);
     for (const key of ["pan","tilt"]) if (mode?.channels.includes(key)) document.querySelector("#apply-fixture").insertAdjacentHTML("beforebegin", `<label>${t(key)} (0–255)<input id="fixture-${key}" type="number" required min="0" max="255" step="1" value="${properties[key] ?? 127}" /></label>`);
     if (mode?.channels.includes("white")) document.querySelector("#apply-fixture").insertAdjacentHTML("beforebegin", `<label>${t("whiteChannel")}<input id="fixture-white" type="number" required min="0" max="255" step="1" value="${properties.white ?? 0}" /></label>`);
+    const blueChannel=document.querySelector("#fixture-blue-channel"),blueValue=document.querySelector("#fixture-blue-channel-value"),colourInput=document.querySelector("#fixture-colour");
+    if (blueChannel && blueValue && colourInput) {
+      const updateBlue=()=>{const channel=Number(blueChannel.value);blueValue.textContent=`${Math.round(channel / 255 * 100)}%`;blueChannel.setAttribute("aria-valuetext",`${blueValue.textContent} · ${channel}/255`);};
+      blueChannel.oninput=updateBlue;
+      colourInput.oninput=()=>{blueChannel.value=String(hexToRgb(colourInput.value).b);updateBlue();};
+      updateBlue();
+    }
   }
   for (const id of ["fixture-dimmer","fixture-beam"]) {
     const input=document.querySelector(`#${id}`);
@@ -485,7 +494,7 @@ function render() {
   if (fixturePanel && mode==="fixture") {
     const keys=["fixture","light","dmx","effects"];
     const bodies=Object.fromEntries(keys.map((key)=>{const body=document.createElement("section");body.className=`fixture-tab-body inspector-group inspector-group-${key}`;body.setAttribute("aria-label",t({fixture:"fixtureLabel",light:"lightTab",dmx:"dmxTab",effects:"effectsTab"}[key]));body.insertAdjacentHTML("afterbegin",`<h3>${t({fixture:"fixtureLabel",light:"lightTab",dmx:"dmxTab",effects:"effectsTab"}[key])}</h3>`);return [key,body];}));
-    for (const id of ["fixture-dimmer","fixture-beam","fixture-colour","fixture-white","fixture-pan","fixture-tilt"]) {
+    for (const id of ["fixture-dimmer","fixture-beam","fixture-colour","fixture-blue-channel","fixture-white","fixture-pan","fixture-tilt"]) {
       const input=fixturePanel.querySelector(`#${id}`);if(input)bodies.light.append(input.closest("label"));
     }
     for (const id of ["fixture-universe","fixture-address"]) bodies.dmx.append(fixturePanel.querySelector(`#${id}`).closest("label"));
