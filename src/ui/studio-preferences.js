@@ -14,3 +14,7 @@ export const studioDefaults = Object.freeze({
 export function viewCommandSource({palette,light}) {
   return `<div class="view-command-source" hidden><button class="tab" data-view="palette">2D ${palette}</button><button class="tab" data-view="light">3D ${light}</button></div>`;
 }
+
+export function studioActiveModule({module,view}) {
+  return module === "palette" || module === "light" ? (view === "light" ? "light" : "palette") : module;
+}
