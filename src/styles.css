@@ -281,7 +281,7 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
   .has-open-floating-bot .editor-layout { margin-right:var(--bot-workspace-reserve,350px) !important; }
 }
 @media (min-width:1100px) and (max-height:699px) {
-  .editor-layout { grid-template-rows:30px minmax(0,1fr) minmax(104px,18dvh); gap:5px; padding:5px 7px; }
+  .editor-layout { grid-template-rows:30px minmax(0,1fr) minmax(104px,18dvh); gap:5px; padding:0 7px 4px; }
   .workspace-tabs { min-height:30px; }
 }
 
