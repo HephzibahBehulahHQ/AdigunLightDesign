@@ -6,6 +6,7 @@
   "scripts": {
     "test": "node --test",
     "check": "node scripts/check-project.mjs",
+    "verify:studio": "node scripts/verify-studio.mjs",
     "build": "node scripts/build.mjs",
     "serve:lux": "node server/start-lux.js",
     "typecheck": "tsc --noEmit -p tsconfig.json",
@@ -16,6 +17,7 @@
   },
   "devDependencies": {
     "oxlint": "1.90.0",
+    "playwright": "1.65.0",
     "typescript": "7.0.2",
     "vite": "8.3.5"
   },
@@ -24,3 +26,4 @@
     "pdf-lib": "1.17.1"
   }
 }
+
