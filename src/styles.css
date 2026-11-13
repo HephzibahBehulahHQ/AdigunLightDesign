@@ -318,6 +318,10 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
 .inspector .inspector-group > label .fixture-slider-value { display:none; }
 .inspector .inspector-group > label output:not(.fixture-slider-value) { grid-column:2; grid-row:1; justify-self:end; font-size:9px; }
 .inspector-tabs[hidden] { display:none !important; }
+.fixture-profile-summary { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:4px; margin:3px 0; color:var(--muted); font-size:9px; }
+.fixture-profile-summary span { min-width:0; overflow:hidden; }
+.fixture-profile-summary small { display:block; font-size:8px; }
+.fixture-profile-summary b { display:block; overflow:hidden; color:var(--text); font-size:9px; text-overflow:ellipsis; white-space:nowrap; }
 .lux-panel.is-docked { position:relative !important; inset:auto !important; z-index:auto !important; width:auto !important; height:auto !important; min-height:68px; max-height:none; flex:0 0 68px !important; margin:5px 8px 8px; overflow:hidden; box-shadow:none; border-color:#236b60; }
 .lux-panel.is-docked .lux-heading { min-height:32px; flex-basis:32px; padding:3px 7px; cursor:default; }
 .lux-panel.is-docked .lux-heading h2 { font-size:12px; }
@@ -342,8 +346,8 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
 }
 
 @media (min-width:1100px) {
-  #fixture-inspector-panel .inspector-group { margin:2px 4px; padding:3px 6px; }
-  #fixture-inspector-panel .inspector-group h3 { margin:0 -6px 3px; padding:0 6px 2px; }
+  #fixture-inspector-panel .inspector-group { margin:1px 4px; padding:2px 5px; }
+  #fixture-inspector-panel .inspector-group h3 { margin:0 -5px 2px; padding:0 5px 2px; }
   #fixture-inspector-panel .inspector-group > label { padding:0 0 2px !important; gap:1px !important; font-size:10px; }
   #fixture-inspector-panel .inspector-group-fixture > label:first-of-type { display:grid; grid-template-columns:1fr; }
   .inspector-group-fixture > small { font-size:9px; line-height:1.2; }
