@@ -372,3 +372,15 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
   .workspace-tabs .studio-panel-title { min-width:0; overflow:hidden; font-size:11px; font-weight:800; text-overflow:ellipsis; white-space:nowrap; }
   .workspace-tabs .studio-panel-title-meta { min-width:0; overflow:hidden; color:var(--muted); font-size:9px; text-overflow:ellipsis; white-space:nowrap; }
 }
+
+/* Align the desktop brand lockup with the approved compact studio header. */
+@media (min-width:1100px) {
+  .topbar { grid-template-columns:230px minmax(0,1fr) auto; }
+  .topbar .brand-lockup { position:relative; display:block; width:230px; height:42px; padding-bottom:12px; }
+  .topbar .corporate-mark { width:220px; max-height:28px; object-position:left center; }
+  .topbar .brand-divider { display:none; }
+  .topbar .division { display:block; position:absolute; left:0; bottom:0; font-size:9px; line-height:10px; }
+  .topbar .product-lockup { display:flex; align-items:center; justify-self:start; gap:10px; min-width:0; text-align:left; line-height:1.1; }
+  .topbar .product-lockup strong { font-size:22px; }
+  .topbar .product-lockup small { margin:0; font-size:10px; }
+}
