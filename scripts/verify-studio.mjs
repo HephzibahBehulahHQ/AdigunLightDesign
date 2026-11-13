@@ -125,7 +125,7 @@ try {
   for (const selector of [".fixture-configuration-details", ".light-advanced-controls"]) {
     assert.equal(await page.locator(`#fixture-inspector-panel ${selector}`).evaluate((element) => element.open), false, `${selector} keeps secondary controls compact by default`);
   }
-  assert.match(await page.locator("#fixture-inspector-panel").innerText(), /Type\\s+[\\s\\S]*?Mode\\s+/, "fixture type and channel mode are identified from its real profile");
+  assert.match(await page.locator("#fixture-inspector-panel").innerText(), /Type\s+[\s\S]*?Mode\s+/, "fixture type and channel mode are identified from its real profile");
   assert.equal(await page.locator(".inspector-group-effects").evaluate((element) => element.getBoundingClientRect().bottom <= globalThis.document.querySelector(".lux-panel.is-docked").getBoundingClientRect().top), true, "Effects remain visible above the docked Lux panel at the reference viewport");
   await page.locator("#play-tracks").click();
   assert.equal(await page.locator("#stop-cue").isEnabled(), true, "timeline playback starts");
