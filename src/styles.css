@@ -265,7 +265,7 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
   .tool-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:4px; padding:0 7px 7px; }
   .tool-list .tool { display:flex; align-items:center; min-width:0; min-height:30px; height:30px; overflow:hidden; gap:3px; padding:4px 5px; font-size:10px; white-space:nowrap; text-overflow:ellipsis; }
   .tool-list .tool span { display:inline-flex; align-items:center; width:17px; flex:0 0 17px; font-size:13px; }
-  .tool-list [data-tool="ai-pin"] { display:none; }
+  .tool-list [data-tool="aiPin"] { display:none; }
   .workspace-tabs { grid-column:2; grid-row:1; min-height:42px; min-width:0; }
   .workspace-tabs .tab,.workspace-tabs .view-menu { height:30px; padding:5px 12px; }
   .scene-preview,.scene-preview.light-canvas { grid-column:2; grid-row:2; min-height:0; min-width:0; }
