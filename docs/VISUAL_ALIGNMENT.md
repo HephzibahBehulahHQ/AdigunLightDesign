@@ -98,6 +98,4 @@ no document overflow, no collision between the workspace and Lux, and working
 2D/3D view switching. These checks do not prove exact-reference match or
 additional mobile geometry.
 
-Generic preview fixtures now have aimed cylindrical housings, lens rims, colored lens faces and support brackets instead of a single colored box. Geometry follows the same artistic target as the beam; this is a generic visual model, not manufacturer geometry or calibrated mechanical movement. Automated geometry/renderer tests cover finite triangles, aim response, lens color and nonmutation. Exact rendered resemblance remains unverified.
-
-The selected-fixture frame now derives its bounds from every actual housing vertex, with 4cm visual padding. It follows pan/tilt aiming rather than retaining the former small box around the old fixture marker. Tests verify enclosure for multiple aiming directions and renderer buffer lifecycle. This is a selection aid, not physical clearance or collision validation.
+Generic preview fixtures now have aimed cylindrical housings, lens rims, colored lens faces and support brackets instead of a single colored box. Geometry follows the same artistic target as the beam; this is
