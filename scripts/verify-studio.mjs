@@ -142,8 +142,18 @@ try {
   }
   assert.match(await page.locator("#fixture-inspector-panel").innerText(), /Type\s+[\s\S]*?Mode\s+/, "fixture type and channel mode are identified from its real profile");
   assert.equal(await page.locator(".inspector-group-effects").evaluate((element) => element.getBoundingClientRect().bottom <= globalThis.document.querySelector(".lux-panel.is-docked").getBoundingClientRect().top), true, "Effects remain visible above the docked Lux panel at the reference viewport");
+  for (const selector of ["#create-cue", "#play-tracks", "#pause-playback", "#stop-cue", "#sequence-loop"]) {
+    assert.equal(await page.locator(`.timeline-transport ${selector}`).count(), 1, `${selector} is docked in the timeline transport`);
+  }
+  await page.locator("#sequence-loop").check();
+  await page.locator("#create-cue").click();
   await page.locator("#play-tracks").click();
   assert.equal(await page.locator("#stop-cue").isEnabled(), true, "timeline playback starts");
+  assert.equal(await page.locator("#pause-playback").isEnabled(), true, "timeline pause is enabled during playback");
+  await page.locator("#pause-playback").click();
+  assert.equal((await page.locator("#pause-playback").innerText()).trim(), "Resume", "timeline pause toggles to resume");
+  await page.locator("#pause-playback").click();
+  assert.equal((await page.locator("#pause-playback").innerText()).trim(), "Pause", "timeline playback resumes");
   await page.locator("#stop-cue").click();
   await page.locator("#project-name").fill("Studio Acceptance");
   await page.locator("#project-name").press("Tab");
