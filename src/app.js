@@ -361,20 +361,20 @@ function render() {
   if (document.querySelector(".fixture-inspector")) {
     const properties=selectedFixture().properties;
     const color=rgbToHex({r:properties.red ?? 0,g:properties.green ?? 0,b:properties.blue ?? 0});
-    document.querySelector("#apply-fixture").insertAdjacentHTML("beforebegin", `<label>${t("selectedColour")}<input id="fixture-colour" type="color" value="${color}" /></label>`);
+    document.querySelector("#apply-fixture").insertAdjacentHTML("beforebegin", `<label class="fixture-colour-label">${t("selectedColour")}<span class="fixture-colour-control"><input id="fixture-colour" type="color" value="${color}" /><output id="fixture-colour-hex" aria-label="${t("selectedColour")} hex">${color.toUpperCase()}</output></span></label>`);
     const fixture=selectedFixture(),profile=getFixtureProfile(fixture.profileId);
     const mode=profile.modes.find((item)=>item.id===fixture.modeId);
     if (!mode?.channels.includes("beam")) document.querySelector("#fixture-beam").closest("label").remove();
     if (mode?.channels.includes("blue")) document.querySelector("#apply-fixture").insertAdjacentHTML("beforebegin", `<label>${t("blueChannel")} <output id="fixture-blue-channel-value">${Math.round((properties.blue ?? 0) / 255 * 100)}%</output><input id="fixture-blue-channel" type="range" min="0" max="255" step="1" value="${properties.blue ?? 0}" aria-label="${t("blueChannel")}" /></label>`);
     for (const key of ["pan","tilt"]) if (mode?.channels.includes(key)) document.querySelector("#apply-fixture").insertAdjacentHTML("beforebegin", `<label>${t(key)} (0–255)<input id="fixture-${key}" type="number" required min="0" max="255" step="1" value="${properties[key] ?? 127}" /></label>`);
     if (mode?.channels.includes("white")) document.querySelector("#apply-fixture").insertAdjacentHTML("beforebegin", `<label>${t("whiteChannel")}<input id="fixture-white" type="number" required min="0" max="255" step="1" value="${properties.white ?? 0}" /></label>`);
-    const blueChannel=document.querySelector("#fixture-blue-channel"),blueValue=document.querySelector("#fixture-blue-channel-value"),colourInput=document.querySelector("#fixture-colour");
+    const blueChannel=document.querySelector("#fixture-blue-channel"),blueValue=document.querySelector("#fixture-blue-channel-value"),colourInput=document.querySelector("#fixture-colour"),colourHex=document.querySelector("#fixture-colour-hex");
     if (blueChannel && blueValue && colourInput) {
       const updateBlue=()=>{const channel=Number(blueChannel.value);blueValue.textContent=`${Math.round(channel / 255 * 100)}%`;blueChannel.setAttribute("aria-valuetext",`${blueValue.textContent} · ${channel}/255`);};
       blueChannel.oninput=updateBlue;
-      colourInput.oninput=()=>{blueChannel.value=String(hexToRgb(colourInput.value).b);updateBlue();};
       updateBlue();
     }
+    if (colourInput && colourHex) colourInput.oninput=()=>{colourHex.textContent=colourInput.value.toUpperCase();if(blueChannel){blueChannel.value=String(hexToRgb(colourInput.value).b);blueValue.textContent=`${Math.round(Number(blueChannel.value)/255*100)}%`;blueChannel.setAttribute("aria-valuetext",`${blueValue.textContent} · ${blueChannel.value}/255`);}};
   }
   for (const id of ["fixture-dimmer","fixture-beam"]) {
     const input=document.querySelector(`#${id}`);
