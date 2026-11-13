@@ -144,6 +144,18 @@ try {
   await page.locator("#scene-select").selectOption("acceptance-secondary-scene");
   assert.equal(await page.locator(".design-canvas [data-canvas-object]").count(), 1, "secondary scene edits persist independently");
   await page.locator("#scene-select").selectOption(firstSceneId);
+  await page.locator('[data-open-scene-editor="room"]').click();
+  const firstRoomWidth=await page.locator("#room-width").inputValue();
+  await page.locator("#scene-select").selectOption("acceptance-secondary-scene");
+  await page.locator('[data-open-scene-editor="room"]').click();
+  await page.locator("#room-width").fill("6.5");
+  await page.locator("#apply-room").click();
+  await page.locator("#scene-select").selectOption(firstSceneId);
+  assert.equal(await page.locator("#room-width").inputValue(), String(firstRoomWidth), "Room edits do not leak into another scene");
+  await page.locator("#scene-select").selectOption("acceptance-secondary-scene");
+  assert.equal(await page.locator("#room-width").inputValue(), "6.5", "Room edits apply to the selected scene");
+  await page.locator("#scene-select").selectOption(firstSceneId);
+  await page.locator("#scene-select").selectOption(firstSceneId);
   await page.locator('[data-tool="measure"]').click();
   await page.locator(".design-canvas").press("ArrowRight");
   assert.match(await page.locator("#status").innerText(), /canvas units/i, "Measure reports a live canvas distance");
@@ -153,6 +165,11 @@ try {
   assert.equal(await page.locator(".palette-panel").isVisible(), true, "2D palette view opens");
   assert.match(await page.locator('[data-module="light"]').innerText(), /3D Light Lab/, "module navigation matches the approved studio label");
   assert.equal(await page.locator("#palette-inspector-panel").isVisible(), true, "Palette Engine module selects the palette inspector");
+  const canvasBeforeSceneSettings=await page.locator(".scene-preview").boundingBox();
+  await page.locator('[data-open-scene-editor="room"]').click();
+  assert.equal(await page.locator(".scene-preview.light-canvas").isVisible(), true, "Room command opens its real settings in the 3D studio");
+  assert.deepEqual(await page.locator(".scene-preview").boundingBox(), canvasBeforeSceneSettings, "opening Room settings leaves the canvas in place");
+  assert.equal(await page.locator('[data-scene-editor="room"]').evaluate((element) => element.open), true, "Room ribbon command opens the existing editable dimensions");
   await page.locator('[data-module="light"]').click();
   assert.equal(await page.locator("#fixture-inspector-panel").isVisible(), true, "Light Lab module selects the fixture inspector");
   await page.locator('[data-open-scene-editor="room"]').click();
@@ -189,6 +206,8 @@ try {
   for (let index = 0; index < 2; index += 1) await page.locator('.fixture-library [data-profile="generic-led-strip-rgb"]').click();
   await page.locator('[data-module="light"]').click();
   assert.equal(await page.locator("[data-layer-fixture]").count(), 9, "the fixture list contains the nine real virtual fixtures in the target composition");
+  const visibleFixtureCount=await page.locator(".fixture-layer-list").evaluate((list)=>[...list.querySelectorAll("[data-layer-fixture]")].filter((button)=>{const row=button.getBoundingClientRect(),area=list.getBoundingClientRect();return row.top>=area.top&&row.bottom<=area.bottom;}).length);
+  assert.equal(visibleFixtureCount, 9, "all nine reference fixtures fit in the visible left list at 1754×878");
   assert.match(await page.locator(".scene-title small").innerText(), /9\/9 fixtures rendered/, "the target composition renders all nine actual virtual fixtures");
   assert.equal(await page.locator(".inspector > .section-title h2").innerText(), "Selected: LED Strip RGB 9", "the reference fixture is selected from the real nine-fixture composition");
   await page.locator("#fixture-colour").fill("#2196F3");
@@ -197,7 +216,9 @@ try {
   await page.locator("#fixture-blue-channel").fill("199");
   assert.equal(await page.locator("#fixture-blue-channel-value").innerText(), "78%", "the screenshot shows the staged reference channel value");
   assert.equal(await page.locator("#fixture-colour-hex").innerText(), "#2196F3", "staging the blue value leaves the applied fixture colour unchanged");
+  await page.locator("#reset-camera").click();
   await page.screenshot({ path: resolve("outputs", "studio-scroll-acceptance-1754x878.png") });
+  for (let index = 0; index < 2; index += 1) await page.locator("#add-fixture").click();
   const fixtureList = page.locator(".fixture-layer-list");
   const fixtureListScroll = await fixtureList.evaluate((element) => {
     const maxScroll = element.scrollHeight - element.clientHeight;
