@@ -247,7 +247,7 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
   .command-group>span { align-self:flex-start; position:sticky; left:0; padding:1px 4px; color:var(--cyan); font-size:9px; text-transform:uppercase; font-weight:800; }
   .command-ribbon button { height:29px; min-width:36px; padding:4px 9px; border-radius:5px; background:#182237; font-size:11px; }
   .command-ribbon button:disabled { opacity:.46; }
-  .editor-layout { grid-template-columns:clamp(210px,15vw,242px) minmax(0,1fr) clamp(248px,18vw,286px); grid-template-rows:32px minmax(0,1fr) minmax(112px,19dvh); width:auto; height:auto; min-width:0; min-height:0; max-height:100%; gap:6px; padding:6px 8px; overflow:hidden; align-items:stretch; }
+  .editor-layout { grid-template-columns:clamp(210px,15vw,242px) minmax(0,1fr) clamp(248px,18vw,286px); grid-template-rows:32px minmax(0,1fr) minmax(112px,19dvh); width:auto; height:calc(100dvh - 150px); min-width:0; min-height:0; max-height:calc(100dvh - 150px); gap:6px; padding:6px 8px; overflow:hidden; align-items:stretch; }
   .left-rail,.inspector { min-width:0; min-height:0; }
   .work-area { display:contents; }
   .left-rail { grid-column:1; grid-row:1 / 4; overflow:auto; }
