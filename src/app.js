@@ -298,6 +298,7 @@ function render() {
       ${topMenuMarkup({t,locale:preferences.locale,saved:projectPersisted,user:account.user})}<button id="theme" type="button" hidden aria-label="${t("appearance")}"></button>
     </header>
     <nav class="module-nav" aria-label="${t("appModules")}">${nav}</nav>
+    <nav class="command-ribbon" aria-label="Studio commands"><div class="command-group"><span>Project</span><button type="button" data-ribbon-action="save">${t("save")}</button></div><div class="command-group"><span>History</span></div><div class="command-group"><span>View</span></div><div class="command-group"><span>Fixtures</span></div></nav>
     <main id="workspace" class="editor-layout">
       <aside class="left-rail panel">
         <section class="project-heading"><div><small>${t("project")}</small><input id="project-name" value="${esc(project.name)}" aria-label="${t("project")} name" /></div><span class="save-state ${projectPersisted ? "" : "is-unsaved"}" title="${projectPersisted ? t("statusSaved") : t("unsavedChanges")}">● ${t(projectPersisted ? "saved" : "sessionOnly")}</span></section>
@@ -315,6 +316,12 @@ function render() {
     </main>
     ${preferences.module === "export" ? `<section class="export-drawer panel" aria-label="${t("export")}"><div class="section-title"><h2>↗ ${t("export")}</h2><button id="close-exports" class="subtle">×</button></div><p>${t("exportFormatsNotice")}</p><div class="export-grid"><button data-export="project">Project JSON</button><button data-export="palette">Palette JSON</button><button data-export="css">CSS variables</button><button data-export="ase" title="${t("aseExportLimit")}">${t("aseExport")}</button><button data-export="patch">Patch CSV</button><button data-export="cues">Cue CSV</button><button id="import-project">Import project JSON</button><input id="project-file" type="file" accept="application/json,.json" hidden /></div></section>` : ""}
     <footer><span>${t("footer")}</span><span id="status" role="status" aria-live="polite">${status}</span><div><button id="save">${t("save")}</button><button id="undo" ${undoStack.length ? "" : "disabled"}>↶ ${t("undo")}</button><button id="redo" ${redoStack.length ? "" : "disabled"}>↷ ${t("redo")}</button></div></footer>`;
+  const ribbon=document.querySelector(".command-ribbon");
+  for(const [group,ids] of [["History",["undo","redo"]],["View",["ribbon-view-palette","ribbon-view-light"]],["Fixtures",["add-fixture","apply-fixture-colour"]]]){
+    const host=[...ribbon.querySelectorAll(".command-group")].find(node=>node.querySelector("span")?.textContent===group);
+    for(const id of ids){let control=document.getElementById(id);if(id.startsWith("ribbon-view-")){const view=id.endsWith("palette")?"palette":"light";control=document.querySelector(`[data-view="${view}"]`);control.id=id;control.dataset.ribbonView=view;}if(control){host.append(control);control.classList.add("ribbon-command");}}
+  }
+  document.querySelector(".command-group:first-child [data-ribbon-action=save]").replaceWith(document.getElementById("save"));
   document.querySelector(".contrast-card").insertAdjacentHTML("beforebegin", colourSpaces);
   if (project.fixtures.length) document.querySelector(".selected-preview").insertAdjacentHTML("afterend", fixtureInspectorMarkup());
   if (preferences.module === "library") { const drawer=document.createElement("section"); drawer.className="library-drawer panel"; drawer.setAttribute("aria-label",t("library")); drawer.innerHTML=`<div class="section-title"><h2>▱ ${t("library")}</h2><button id="close-library" class="subtle" aria-label="${t("close")}">×</button></div><p>${t("virtualLibraryNote")}</p><div class="fixture-library">${fixtureLibraryMarkup()}</div>`; app.insertBefore(drawer,app.querySelector("footer")); }
