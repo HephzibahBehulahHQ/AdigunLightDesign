@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 25326)
+Total output lines: 963
+
 import { validateProject } from "./domain/project.js";
 import { prepareEditorProject } from "./domain/editor-project.ts";
 import { moveSwatch, removeSwatch, reorderSwatch } from "./domain/palette-store.js";
@@ -400,36 +403,7 @@ function render() {
     button.querySelector("span").style.background=swatchCssColor(swatch);
   }
   document.querySelector(".selected-preview").style.background=swatchCssColor(active);
-  document.querySelector(".palette-panel").insertAdjacentHTML("beforeend", `<div class="palette-actions"><label>${t("hueSpacing")}<input id="custom-spacing" type="number" min="-360" max="360" step="any" value="30" /></label><button id="custom-hues">${t("customHues")}</button><button id="perceptual-scale">${t("perceptualScale")}</button></div>`);
-  const arrangementEnd=arrangementDuration(project.cues);
-  document.querySelector(".palette-panel").insertAdjacentHTML("beforeend", `<div class="palette-actions"><label>${t("temperatureStrength")} (%)<input id="temperature-strength" type="number" min="0" max="100" step="1" required value="20"></label><button data-temperature="warm">${t("warmPalette")}</button><button data-temperature="cool">${t("coolPalette")}</button></div>`);
-  document.querySelectorAll("[data-module]").forEach((button)=>{button.querySelector("span").innerHTML=icon(button.dataset.module);});
-  document.querySelectorAll("[data-tool]").forEach((button)=>{button.querySelector("span").innerHTML=icon(button.dataset.tool);});
-  document.querySelector(".language > span").innerHTML=icon("globe");
-  document.querySelector(".language").insertAdjacentHTML("beforeend", `<span class="locale-code" aria-hidden="true">${supportedLocales.includes(preferences.locale) ? preferences.locale.toUpperCase() : "EN"} ⌄</span>`);
-  document.querySelector("#theme").innerHTML=icon(preferences.theme==="dark" ? "light" : "moon");
-  document.querySelector(".lux-icon").innerHTML=icon("copilot");
-  if (preferences.luxOpen) {
-    document.querySelector(".lux-message").insertAdjacentHTML("afterend", `<section class="lux-local-actions"><h3>${t("localPaletteAction")}</h3><button id="preview-lux-palette" ${project.fixtures.length ? "" : "disabled"}>${t("previewPaletteLighting")}</button>${luxProposal ? `<div class="lux-action-preview"><h4>${t("reviewChanges")}</h4><ul>${luxProposal.changes.map((change)=>`<li>${esc(change.after?.name ?? change.before?.name ?? change.id)}<details><summary>${t("reviewChanges")}: ${esc(change.collection)}</summary><pre>${esc(JSON.stringify({before:change.before,after:change.after},null,2))}</pre></details></li>`).join("") || t("noActionChanges")}</ul><small>${t(account.user ? "liveReviewBeforeApply" : "authRequired")}</small><button id="confirm-lux-action" ${luxProposal.changes.length && account.user && !luxConfirmationPending ? "" : "disabled"} title="${t(account.user ? "confirmAction" : "authRequired")}">${t("confirmAction")}</button><button id="cancel-lux-action">${t("cancelAction")}</button></div>` : ""}</section>`);
-  }
-  const projectionButton=document.querySelector(".view-menu");
-  document.querySelector(".workspace-tabs").insertAdjacentHTML("beforeend", `<button id="viewport-fullscreen" class="view-menu" aria-label="${t("fullscreenViewport")}" title="${t("fullscreenViewport")}" ${canFullscreen(document.querySelector(".scene-preview"),document) ? "" : "disabled"}>${icon("fullscreen")}</button>`);
-  projectionButton.insertAdjacentHTML("beforebegin", `<label class="preview-quality">${t("previewQuality")} <select id="preview-quality" ${preferences.view==="light" ? "" : "disabled"}>${Object.keys(previewQualities).map((key)=>`<option value="${key}" ${key===(preferences.previewQuality ?? "balanced") ? "selected" : ""}>${t(`quality_${key}`)}</option>`).join("")}</select></label>`);
-  if (preferences.view==="light") document.querySelector(".scene-title small").textContent=`${t("webglPreview")} · ${phrase("previewFixtureCount",{shown:scene().visibility?.lighting===false ? 0 : Math.min(project.fixtures.length,previewQuality(preferences.previewQuality).fixtures),total:project.fixtures.length})}`;
-  projectionButton.insertAdjacentHTML("afterend", `<button id="export-canvas" class="view-menu" ${preferences.view==="palette" ? "" : "disabled"}>↗ ${t("exportCanvas")}</button>`);
-  const materialButton=document.querySelector("#apply-scene");
-  if (materialButton) materialButton.insertAdjacentHTML("beforebegin", `<label>${t("materialTarget")} <select id="material-target">${["accent","wall","floor","ceiling"].map((target)=>`<option value="${target}" ${preferences.materialTarget===target ? "selected" : ""}>${t(`surface_${target}`)}</option>`).join("")}</select></label>`);
-  projectionButton.insertAdjacentHTML("afterend", `<button id="export-viewport" class="view-menu" ${preferences.view==="light" ? "" : "disabled"}>▣ ${t("exportViewport")}</button>`);
-  projectionButton.textContent=`${t(preferences.projection==="orthographic" ? "orthographic" : "perspective")} ⌄`;
-  projectionButton.setAttribute("aria-label",t("switchProjection"));
-  document.querySelector("#effect-type").insertAdjacentHTML("beforeend", `<option value="panTilt">${t("panTilt")}</option>`);
-  document.querySelector("#play-tracks").insertAdjacentHTML("afterend", `<label>${t("seekTracks")} <input id="arrangement-seek" type="range" min="0" max="${arrangementEnd}" step="0.1" value="0" ${arrangementEnd ? "" : "disabled"}></label><output id="arrangement-position">0 / ${arrangementEnd.toFixed(1)} s</output>`);
-  const timelineTransport=document.createElement("div");
-  timelineTransport.className="timeline-transport";
-  for (const id of ["play-tracks","stop-cue","arrangement-position"]) {
-    timelineTransport.append(document.getElementById(id));
-  }
-  document.querySelector(".timeline > .section-title").append(timelineTransport);
+  document.querySelector(".palette-panel").insertAdjacentHTML("beforeend", `<div class="palet…1326 tokens truncated…ineTransport);
   document.querySelector(".timeline > p").append(" ", document.querySelector(".timeline > .section-title .m-badge"));
   const timingDetails=document.createElement("details");
   document.querySelector("#cue-delay").parentElement.insertAdjacentHTML("afterend", `<label>${t("fadeOut")} (s)<input id="cue-fadeOut" type="number" min="0" step="0.1" required value="0"></label>`);
@@ -476,33 +450,21 @@ function render() {
   if (fixturePanel) {fixturePanel.id="fixture-inspector-panel";fixturePanel.hidden=mode!=="fixture";}
   inspector.querySelector(".inspector-tabs").innerHTML=`<button data-inspector="fixture" aria-pressed="${mode==="fixture"}" class="${mode==="fixture" ? "is-active" : ""}" ${fixturePanel ? "" : "disabled"}>${t("fixtureLabel")}</button><button data-inspector="palette" aria-pressed="${mode==="palette"}" class="${mode==="palette" ? "is-active" : ""}">${t("palette")}</button>`;
   if (fixturePanel && mode==="fixture") {
-    const keys=["fixture","light","dmx","effects"],activeTab=keys.includes(preferences.fixtureTab) ? preferences.fixtureTab : "fixture";
-    const bodies=Object.fromEntries(keys.map((key)=>{const body=document.createElement("div");body.hidden=key!==activeTab;body.className="fixture-tab-body";return [key,body];}));
+    const keys=["fixture","light","dmx","effects"];
+    const bodies=Object.fromEntries(keys.map((key)=>{const body=document.createElement("section");body.className=`fixture-tab-body inspector-group inspector-group-${key}`;body.setAttribute("aria-label",t({fixture:"fixtureLabel",light:"lightTab",dmx:"dmxTab",effects:"effectsTab"}[key]));body.insertAdjacentHTML("afterbegin",`<h3>${t({fixture:"fixtureLabel",light:"lightTab",dmx:"dmxTab",effects:"effectsTab"}[key])}</h3>`);return [key,body];}));
     for (const id of ["fixture-dimmer","fixture-beam","fixture-colour","fixture-white","fixture-pan","fixture-tilt"]) {
       const input=fixturePanel.querySelector(`#${id}`);if(input)bodies.light.append(input.closest("label"));
     }
     for (const id of ["fixture-universe","fixture-address"]) bodies.dmx.append(fixturePanel.querySelector(`#${id}`).closest("label"));
     const apply=fixturePanel.querySelector("#apply-fixture"),actions=fixturePanel.querySelector(".dmx-actions");
+    fixturePanel.querySelector(":scope > h3")?.remove();
     for (const node of [...fixturePanel.children]) if(node!==apply && node!==actions)bodies.fixture.append(node);
-    if (activeTab==="fixture") {
-      const patchFields=document.createElement("div");
-      patchFields.className="fixture-patch-fields";
-      patchFields.append(...bodies.dmx.children);
-      const quickControls=document.createElement("div");
-      quickControls.append(patchFields);
-      for (const id of ["fixture-colour","fixture-dimmer","fixture-beam"]) {
-        const input=bodies.light.querySelector(`#${id}`);
-        if(input)quickControls.append(input.closest("label"));
-      }
-      bodies.fixture.prepend(quickControls);
-    }
     const effectControls=document.querySelector("#effect-type").closest(".dmx-actions");
     const effectScope=document.createElement("p");effectScope.textContent=t("allVirtualFixtures");bodies.effects.append(effectScope,effectControls);
-    fixturePanel.append(...Object.values(bodies),apply,actions);
-    if (activeTab==="fixture") bodies.fixture.firstElementChild.prepend(apply);
-    apply.hidden=activeTab==="effects";actions.hidden=activeTab!=="fixture";
+    bodies.fixture.append(apply,actions);
+    fixturePanel.append(...Object.values(bodies));
     inspector.querySelector(".section-title h2").textContent=`${t("selectedFixtureTitle")}: ${selectedFixture().name}`;
-    inspector.querySelector(".inspector-tabs").innerHTML=keys.map((key)=>`<button data-fixture-tab="${key}" aria-pressed="${key===activeTab}" class="${key===activeTab ? "is-active" : ""}">${t({fixture:"fixtureLabel",light:"lightTab",dmx:"dmxTab",effects:"effectsTab"}[key])}</button>`).join("");
+    inspector.querySelector(".inspector-tabs").hidden=true;
   }
   document.querySelector(".scene-preview").insertAdjacentHTML("beforeend", `<button id="viewport-exit-fullscreen" class="viewport-exit-fullscreen">${t("exitFullscreen")}</button>`);
   bind();
@@ -512,7 +474,10 @@ function render() {
     axes.innerHTML=["x","y","z"].map(axis=>`<button type="button" class="axis-view-${axis}" data-camera-axis="${axis}" title="${t(`cameraView_${axis}`)}" aria-label="${t(`cameraView_${axis}`)}" disabled>${axis.toUpperCase()}</button>`).join("");
     document.querySelector(".scene-preview").append(axes);axes.querySelectorAll("[data-camera-axis]").forEach(button=>button.onclick=()=>{renderer?.setView?.(button.dataset.cameraAxis);document.querySelector("#light-canvas")?.focus();});
   }
-  floatingBot.mount(document.querySelector(".lux-panel"));
+  const luxPanel=document.querySelector(".lux-panel");
+  luxPanel.dataset.docked="true";
+  inspector.append(luxPanel);
+  floatingBot.mount(luxPanel);
   const composer=document.querySelector(".floating-bot [data-lux-request]");
   if (composer && !composer.classList.contains("bot-composer")) {
     composer.classList.add("bot-composer");
@@ -967,5 +932,6 @@ function bind() {
 window.addEventListener("keydown", (event) => { if (isEditableTarget(event.target) || event.defaultPrevented || event.isComposing) return; const tool=toolShortcut(event);if(tool){const button=document.querySelector(`[data-tool="${tool}"]`);if(button && !button.disabled){event.preventDefault();button.click();}return;} const shortcut=editorShortcut(event); if (!shortcut) return; event.preventDefault(); if (shortcut === "save") { saveProject(); render(); } else if (shortcut === "undo") undo(); else redo(); });
 account.subscribe(()=>render());
 render();
+
 
 
