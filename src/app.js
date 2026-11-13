@@ -14,6 +14,7 @@ import { contrastResult, hexToRgb, isSrgbGamut, normalizeHex, rgbToHex, rgbToHsl
 import { rerollUnlocked, starterPalette, updateSwatch } from "./domain/palette-store.js";
 import { localeNames, supportedLocales, translate } from "./i18n.js";
 import { createLightLabRenderer } from "./light-lab/renderer.js";
+import { lightLabFixtureState,lightLabRendererConfig,shouldReuseLightLabRenderer } from "./light-lab/renderer-lifecycle.js";
 import { fixturePlacementMarkup } from "./light-lab/fixture-placement.js";
 import { blackout, createFixture, dmxFrame, fixtureProfiles, getFixtureProfile, patchFixture, updateFixture } from "./dmx/engine.js";
 import { createCue, duplicateCue, removeCue, editCue, evaluateCue, evaluateSequence, moveCue } from "./timeline/engine.js";
@@ -79,7 +80,7 @@ const liveCopilotPanel=createLiveCopilotPanel({feed:liveCanvasFeed,getLocale:()=
 }});
 const luxService=createLuxServicePanel({getProject:()=>project,getLocale:()=>preferences.locale,translate,imageAssets,onPreview:(proposal)=>{luxProposal=proposal;render();},onError:(message)=>setStatus(message),onNotify:()=>floatingBot.notify()});
 let project = loadProject();
-let undoStack = [], redoStack = [], status = "", renderer = null, playbackTimer = null, playbackClock = null;
+let undoStack = [], redoStack = [], status = "", renderer = null, rendererConfigSignature = null, rendererFixtureSignature = null, rendererAccent = null, playbackTimer = null, playbackClock = null;
 
 function safeParse(value) { try { return JSON.parse(value) ?? {}; } catch { return {}; } }
 function loadProject() {
@@ -110,7 +111,8 @@ function createCueSnapshot() {
     render();
   } catch(error) { document.querySelector("#status").textContent=status=error.message; }
 }
-function updateRendererFromFixtures() { renderer?.setFixtures(project.fixtures); }
+function currentRendererFixtures() { return project.fixtures.map((fixture)=>({...fixture,selected:fixture.id===selectedFixture()?.id})); }
+function updateRendererFromFixtures() { const fixtures=currentRendererFixtures();renderer?.setFixtures(fixtures);rendererFixtureSignature=lightLabFixtureState(fixtures); }
 function updateDmxFeedback(fixtures) {
   const snapshot=virtualDmxPreview(fixtures,preferences.fixtureId);
   const monitor=document.querySelector("#virtual-dmx-monitor"),summary=document.querySelector(".timeline .dmx-actions span");
@@ -265,13 +267,16 @@ function applyFixtureInspector() {
 function render() {
   preferences.luxOpen=true; // Floating-window state controls visibility; keep its content mounted.
   cleanupTopMenu?.();
+  const previousCanvas=document.querySelector("#light-canvas");
+  const nextRendererConfig=preferences.view==="light" ? lightLabRendererConfig(scene(),preferences.previewQuality,preferences.projection) : null;
+  const reuseRenderer=shouldReuseLightLabRenderer({renderer,canvas:previousCanvas,view:preferences.view,previousConfig:rendererConfigSignature,nextConfig:nextRendererConfig});
   const liveSelection=preferences.view==="palette" && scene().canvasObjects?.some(object=>object.id===preferences.objectId)
     ? {kind:"object",id:preferences.objectId,sceneId:scene().id}
     : (preferences.inspectorMode ?? (preferences.view==="light" ? "fixture" : "palette"))==="fixture" && selectedFixture()
       ? {kind:"fixture",id:selectedFixture().id}
       : {kind:"swatch",id:selected().id,paletteId:palette().id};
   liveCanvasFeed.publish(project,{selection:liveSelection,playing:playbackTimer!==null});
-  if(renderer){viewportCamera=renderer.cameraState?.() ?? viewportCamera;renderer.destroy();}renderer = null;
+  if(renderer){viewportCamera=renderer.cameraState?.() ?? viewportCamera;if(!reuseRenderer){renderer.destroy();renderer=null;rendererConfigSignature=null;rendererFixtureSignature=null;rendererAccent=null;}}
   document.documentElement.lang = preferences.locale;
   document.documentElement.dataset.theme = preferences.theme;
   const active = selected();
@@ -316,6 +321,7 @@ function render() {
       <aside class="lux-panel panel ${preferences.luxOpen ? "" : "is-collapsed"}"><div class="lux-heading"><div><span class="lux-icon">✦</span><h2>${t("luxTitle")} ✨</h2></div><button id="toggle-lux" class="subtle" aria-label="${preferences.luxOpen ? t("closePanel") : t("openLux")}">${preferences.luxOpen ? "×" : "✦"}</button></div>${preferences.luxOpen ? `<p class="lux-subtitle">${t("luxSubtitle")}</p><div class="lux-message"><b>${t("luxBrand")} · ${t("offline")}</b><p>${t("luxUnavailable")}</p><ul><li>${t("luxLocal")}</li><li>${t("luxNoUpload")}</li></ul></div><form id="lux-form" class="lux-input"><input id="lux-question" placeholder="${t("askLux")}" aria-label="${t("askLux")}" /><button aria-label="${t("sendLux")}">➤</button></form>` : ""}</aside>
     </main>
     <footer><span>${t("footer")}</span><span id="status" role="status" aria-live="polite">${status}</span><div><button id="save">${t("save")}</button><button id="undo" ${undoStack.length ? "" : "disabled"}>↶ ${t("undo")}</button><button id="redo" ${redoStack.length ? "" : "disabled"}>↷ ${t("redo")}</button></div></footer>`;
+  if(reuseRenderer)document.querySelector("#light-canvas")?.replaceWith(previousCanvas);
   const ribbon=document.querySelector(".command-ribbon");
   for(const [group,ids] of [["history",["undo","redo"]],["view",["ribbon-view-palette","ribbon-view-light"]],["fixtures",["add-fixture","apply-fixture-colour"]]]){
     const host=ribbon.querySelector(`[data-command-group="${group}"]`);
@@ -375,7 +381,8 @@ function render() {
     input.oninput=update;
     update();
   }
-  if (project.fixtures.length) document.querySelector(".layer-list").insertAdjacentHTML("afterend", `<ul class="fixture-layer-list" aria-label="${t("layersLighting")}">${project.fixtures.map((fixture)=>`<li><button data-layer-fixture="${esc(fixture.id)}" aria-pressed="${fixture.id===selectedFixture()?.id}"><span>☼</span> ${esc(fixture.name)}</button></li>`).join("")}</ul>`);
+  if (project.fixtures.length) document.querySelector(".tool-section").insertAdjacentHTML("afterend", `<section class="fixture-list-section"><h2>${t("fixtureList")} <span>${project.fixtures.length}</span></h2><ul class="fixture-layer-list" aria-label="${t("layersLighting")}">${project.fixtures.map((fixture)=>`<li><button data-layer-fixture="${esc(fixture.id)}" aria-pressed="${fixture.id===selectedFixture()?.id}"><span>☼</span> ${esc(fixture.name)}</button></li>`).join("")}</ul></section>`);
+  document.querySelector(".swatches").insertAdjacentHTML("afterend", `<p class="palette-summary">${t("seedColour")}: ${esc(preferences.seed)} · ${t("harmony")}: ${esc(preferences.harmony)} · ${palette().colors.length} ${t("summarySwatches")} · ${palette().colors.filter((colour)=>colour.locked).length} ${t("summaryLocked")}</p>`);
   document.querySelector(".export-grid")?.insertAdjacentHTML("beforeend", `<button id="export-svg">SVG</button><button id="export-pdf" aria-describedby="pdf-export-limit">${t("paletteSheetPdf")}</button><small id="pdf-export-limit">${t("pdfPaletteLimit")}</small><button id="export-cue-pdf" aria-describedby="cue-pdf-limit">${t("cueSheetPdf")}</button><small id="cue-pdf-limit">${t("cuePdfLimit")}</small><button id="export-tokens">${t("designTokens")}</button>`);
   document.querySelector(".palette-actions").insertAdjacentHTML("beforeend", `<button id="extract-image">${t("extractImage")}</button><input id="palette-image" type="file" accept="image/png,image/jpeg,image/webp" hidden />`);
   const swatchIndex=palette().colors.indexOf(active);
@@ -485,15 +492,18 @@ function render() {
     const apply=fixturePanel.querySelector("#apply-fixture"),actions=fixturePanel.querySelector(".dmx-actions");
     fixturePanel.querySelector(":scope > h3")?.remove();
     for (const node of [...fixturePanel.children]) if(node!==apply && node!==actions)bodies.fixture.append(node);
-    const placement=bodies.fixture.querySelector(".fixture-placement");
+    const nameLabel=bodies.fixture.querySelector("#fixture-name")?.closest("label");
+    let nameDetails=null;
+    if(nameLabel){nameDetails=document.createElement("details");nameDetails.className="fixture-name-details";const nameSummary=document.createElement("summary");nameSummary.textContent=t("fixtureName");nameDetails.append(nameSummary);nameLabel.replaceWith(nameDetails);nameDetails.append(nameLabel);}
+    const placement=bodies.fixture.querySelector(".fixture-placement");let placementDetails=null;
     if(placement){
-      const detail=document.createElement("details");detail.className="fixture-position-details";
-      const summary=document.createElement("summary");summary.textContent=t("fixturePlacement");detail.append(summary);
+      placementDetails=document.createElement("details");placementDetails.className="fixture-position-details";
+      const summary=document.createElement("summary");summary.textContent=t("fixturePlacement");placementDetails.append(summary);
       const readout=document.createElement("p");readout.className="fixture-position-summary";
       const refreshPosition=()=>{const value=(key)=>fixturePanel.querySelector(`#fixture-${key}`)?.value ?? "0";readout.textContent=`X ${value("x")} m · Y ${value("y")} m · Z ${value("z")} m · Pan ${selectedFixture().properties.pan ?? 0} · Tilt ${selectedFixture().properties.tilt ?? 0} · R ${value("rotation")}°`;};
       refreshPosition();
       for(const input of placement.querySelectorAll("input"))input.addEventListener("input",refreshPosition);
-      placement.replaceWith(detail);detail.append(placement);bodies.fixture.insertBefore(readout,detail);
+      placement.replaceWith(placementDetails);placementDetails.append(placement);bodies.fixture.insertBefore(readout,placementDetails);
     }
     const advancedLight=document.createElement("details");advancedLight.className="light-advanced-controls";
     const advancedTitle=document.createElement("summary");advancedTitle.textContent="More light controls";advancedLight.append(advancedTitle);
@@ -501,7 +511,8 @@ function render() {
     bodies.light.append(advancedLight);
     const effectControls=document.querySelector("#effect-type").closest(".dmx-actions");
     const effectScope=document.createElement("p");effectScope.textContent=t("allVirtualFixtures");bodies.effects.append(effectScope,effectControls);
-    bodies.fixture.append(apply,actions);
+    bodies.fixture.append(apply);
+    if(actions){const actionDetails=document.createElement("details");actionDetails.className="fixture-actions-details";const actionSummary=document.createElement("summary");actionSummary.textContent=t("fixtureActions");actionDetails.append(actionSummary);if(nameDetails)actionDetails.append(nameDetails);if(placementDetails)actionDetails.append(placementDetails);actionDetails.append(actions);bodies.fixture.append(actionDetails);}
     fixturePanel.append(...Object.values(bodies));
     inspector.querySelector(".section-title h2").textContent=`${t("selectedFixtureTitle")}: ${selectedFixture().name}`;
     inspector.querySelector(".inspector-tabs").hidden=true;
@@ -532,7 +543,9 @@ function render() {
     if(result.kind==="palette" && result.id!==palette().id){const versions=document.querySelector("#palette-version");if(versions){versions.value=result.id;versions.dispatchEvent(new Event("change"));}}
   }});
   if (preferences.view === "light") {
-    renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {camera:viewportCamera,accent:scene().materialColor,room:scene().room,materials:scene().materials,stage:scene().stage,quality:preferences.previewQuality,projection:preferences.projection==="orthographic" ? "orthographic" : "perspective",visibility:scene().visibility,fixtures:project.fixtures.map((fixture)=>({...fixture,selected:fixture.id===selectedFixture()?.id})),onSelect(id){stopPlayback();preferences.fixtureId=id;preferences.inspectorMode="fixture";savePreferences();render();},onTransform(id,transform){commitProjectChange("fixture-move",(draft)=>{draft.fixtures=updateFixture(draft.fixtures,id,{transform});});updateRendererFromFixtures();}});
+    const fixtures=currentRendererFixtures(),fixtureSignature=lightLabFixtureState(fixtures),accent=scene().materialColor;
+    if(reuseRenderer){if(fixtureSignature!==rendererFixtureSignature)renderer.setFixtures(fixtures);if(accent!==rendererAccent)renderer.setAccent(accent);rendererFixtureSignature=fixtureSignature;rendererAccent=accent;}
+    else {renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {camera:viewportCamera,accent,room:scene().room,materials:scene().materials,stage:scene().stage,quality:preferences.previewQuality,projection:preferences.projection==="orthographic" ? "orthographic" : "perspective",visibility:scene().visibility,fixtures,onSelect(id){stopPlayback();preferences.fixtureId=id;preferences.inspectorMode="fixture";savePreferences();render();},onTransform(id,transform){commitProjectChange("fixture-move",(draft)=>{draft.fixtures=updateFixture(draft.fixtures,id,{transform});});updateRendererFromFixtures();}});rendererConfigSignature=nextRendererConfig;rendererFixtureSignature=fixtureSignature;rendererAccent=accent;}
     document.querySelectorAll("[data-camera-axis]").forEach(button=>button.disabled=!renderer.supported);
     if (!renderer.supported) {
       document.querySelector(".scene-title small").textContent=phrase("previewFixtureCount",{shown:0,total:project.fixtures.length});

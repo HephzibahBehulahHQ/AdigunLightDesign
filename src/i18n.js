@@ -275,6 +275,10 @@ Object.assign(messages.en,{copilot:"AI Co-Pilot (Lux)",luxBrand:"Lux",luxTitle:"
 Object.assign(messages.de,{copilot:"KI-Copilot (Lux)",luxBrand:"Lux",luxTitle:"Lux — KI-Copilot",luxUnavailable:"Lux ist offline. Ein sicherer KI-Dienst in M6 aktiviert validierte Projektaktionen.",openLux:"Lux öffnen",askLux:"Fragen Sie Lux…",sendLux:"An Lux senden",botNewSuggestion:"Lux hat eine neue Nachricht oder einen Vorschlag. Öffnen Sie das KI-Fenster zum Lesen."});
 Object.assign(messages.yo,{copilot:"Alábàáṣiṣẹ́ AI (Lux)",luxBrand:"Lux",luxTitle:"Lux — Olùrànlọ́wọ́ AI",luxUnavailable:"Lux kò sí lórí ayélujára. Ṣètò iṣẹ́ AI tó ní ààbò ní M6 kí iṣẹ́ akanṣe tó wúlò lè ṣiṣẹ́.",openLux:"Ṣí Lux",askLux:"Béèrè lọ́wọ́ Lux…",sendLux:"Firanṣẹ́ sí Lux",botNewSuggestion:"Lux ní ìránṣẹ́ tàbí àbá tuntun. Ṣí ojú ìwòye AI láti kà á."});
 Object.assign(messages.pcm,{copilot:"AI Co-Pilot (Lux)",luxBrand:"Lux",luxTitle:"Lux — AI Co-Pilot",luxUnavailable:"Lux dey offline. Configure secure AI service for M6 before e fit run validated project actions.",openLux:"Open Lux",askLux:"Ask Lux anything…",sendLux:"Send to Lux",botNewSuggestion:"Lux get new message or suggestion. Open AI panel to read am."});
+Object.assign(messages.en,{fixtureList:"Fixture list",fixtureName:"Fixture name",fixtureActions:"Fixture actions",summarySwatches:"colors",summaryLocked:"locked"});
+Object.assign(messages.de,{fixtureList:"Leuchtenliste",fixtureName:"Leuchtenname",fixtureActions:"Leuchtenaktionen",summarySwatches:"Farben",summaryLocked:"gesperrt"});
+Object.assign(messages.yo,{fixtureList:"Àtòjọ àwọn fìtílà",fixtureName:"Orúkọ fìtílà",fixtureActions:"Àwọn iṣẹ́ fìtílà",summarySwatches:"àwọ̀",summaryLocked:"tí a ti ti"});
+Object.assign(messages.pcm,{fixtureList:"Fixture list",fixtureName:"Fixture name",fixtureActions:"Fixture actions",summarySwatches:"colors",summaryLocked:"locked"});
 
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }
 
