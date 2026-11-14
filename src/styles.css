@@ -533,3 +533,76 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
   .palette-panel .swatch small { display:none; }
   .palette-panel .swatch b { font-size:10px; }
 }
+
+/* Match inspector ordering and compact group rhythm to the approved studio. */
+@media (min-width:1100px) {
+  #fixture-inspector-panel > .fixture-select-field {
+    display:grid;
+    grid-template-columns:auto minmax(0,1fr);
+    align-items:center;
+    gap:7px;
+    margin:2px 8px;
+    padding:2px 7px;
+    border:1px solid #344965;
+    border-radius:6px;
+    background:#0c1a2d;
+    font-size:11px;
+    font-weight:700;
+  }
+  #fixture-inspector-panel > .fixture-select-field select {
+    width:100%;
+    height:24px;
+    min-height:24px;
+    padding:2px 5px;
+    font-size:11px;
+  }
+  .inspector-group-fixture,.inspector-group-light,.inspector-group-dmx,.inspector-group-effects {
+    margin-block:1px !important;
+    padding-block:2px !important;
+  }
+  .inspector-group-fixture .fixture-position-summary {
+    white-space:pre-line;
+    line-height:1.3;
+  }
+  .inspector-group-fixture .fixture-configuration-details > summary,
+  .inspector-group-light .light-advanced-controls > summary {
+    padding:0 5px;
+    line-height:11px;
+  }
+  .inspector-group-fixture #apply-fixture,
+  .inspector-group-dmx #apply-fixture-patch {
+    min-height:25px;
+    padding:3px 5px;
+  }
+  .inspector-group-light > label:has(input[type="range"]) {
+    padding-block:0 !important;
+    gap:0 !important;
+    line-height:11px;
+  }
+  .inspector-group-light > label input[type="range"] {
+    height:11px;
+    min-height:11px;
+    max-height:11px;
+  }
+  .inspector-group-light .fixture-colour-label {
+    display:grid;
+    grid-template-columns:48px minmax(0,1fr);
+    align-items:center;
+    padding-block:0 !important;
+    gap:4px !important;
+    white-space:nowrap;
+  }
+  .inspector-group-light .fixture-colour-control {
+    grid-column:2;
+    grid-template-columns:minmax(0,1fr) 52px;
+  }
+  .inspector-group-light .fixture-colour-control input {
+    height:22px;
+    min-height:22px;
+  }
+  .inspector-group-light { margin-top:4px !important; }
+  .lux-panel.is-docked:not(.is-dock-expanded) {
+    flex:0 0 112px !important;
+    height:112px !important;
+  }
+}

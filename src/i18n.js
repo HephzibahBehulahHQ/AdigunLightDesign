@@ -362,3 +362,8 @@ Object.assign(messages.en,{toolsOneClick:"Tools — One Click"});
 Object.assign(messages.de,{toolsOneClick:"Werkzeuge — Ein Klick"});
 Object.assign(messages.yo,{toolsOneClick:"Àwọn irinṣẹ́ — Tẹ̀ lẹ́ẹ̀kan"});
 Object.assign(messages.pcm,{toolsOneClick:"Tools — One Click"});
+
+Object.assign(messages.en,{colourLabel:"Color"});
+Object.assign(messages.de,{colourLabel:"Farbe"});
+Object.assign(messages.yo,{colourLabel:"Àwọ̀"});
+Object.assign(messages.pcm,{colourLabel:"Colour"});
