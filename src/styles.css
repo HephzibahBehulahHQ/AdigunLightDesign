@@ -427,12 +427,12 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
 
 
 
-/* Version actions use top-layer popovers so the compact ribbon stays uncluttered. */
-.palette-ribbon-popover[popover] { position:fixed; inset:auto; width:min(420px,calc(100vw - 24px)); max-height:min(60vh,480px); margin:0; padding:10px; overflow:auto; border:1px solid #456184; border-radius:8px; background:#111c2d; color:#dce8fc; box-shadow:0 12px 32px #000a; }
-#palette-versions-menu[popover] { width:min(320px,calc(100vw - 24px)); }
-.palette-ribbon-popover .palette-actions { display:flex; align-items:center; gap:6px; margin:0; }
-.palette-ribbon-popover .palette-actions select { min-width:0; flex:1; }
+/* Version and comparison tools stay inside the Palette menu without opening another layer. */
 .palette-empty-state { margin:0; padding:12px; color:var(--muted); font-size:12px; }
+.command-subpanel { display:grid; gap:6px; padding:7px; border:1px solid #344965; border-radius:7px; background:#101a2b; }
+.command-subpanel[hidden] { display:none; }
+.command-subpanel .palette-actions { display:flex; align-items:center; gap:6px; margin:0; }
+.command-subpanel .palette-actions select { min-width:0; flex:1; }
 
 
 
