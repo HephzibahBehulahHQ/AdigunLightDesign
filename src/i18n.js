@@ -294,6 +294,12 @@ Object.assign(messages.yo,{moduleCanvas:"Kánfásì",moduleLight:"Yàrá Ìmọ�
 Object.assign(messages.pcm,{moduleCanvas:"Canvas",moduleLight:"3D Light Lab",moduleCopilot:"AI Co-Pilot Lux"});
 
 
+
+Object.assign(messages.en,{harmonies:"Harmonies"});
+Object.assign(messages.de,{harmonies:"Harmonien"});
+Object.assign(messages.yo,{harmonies:"Àwọn ìṣọ̀kan àwọ̀"});
+Object.assign(messages.pcm,{harmonies:"Harmonies"});
+
 Object.assign(messages.en,{commandHistory:"History",commandPalette:"Palette",commandFixtures:"Fixtures",commandExport:"Export"});
 Object.assign(messages.de,{commandHistory:"Verlauf",commandPalette:"Palette",commandFixtures:"Leuchten",commandExport:"Export"});
 Object.assign(messages.yo,{commandHistory:"Ìtàn iṣẹ́",commandPalette:"Àkójọpọ̀ àwọ̀",commandFixtures:"Àwọn fìtílà",commandExport:"Ìtẹ̀jáde"});
