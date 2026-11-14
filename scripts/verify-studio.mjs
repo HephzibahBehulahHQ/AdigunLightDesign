@@ -237,15 +237,15 @@ try {
   assert.equal(await page.locator(".command-menu-panel:popover-open").count(),1,"only one command menu stays open");
   await page.locator(".footer-ready").click();
   assert.equal(await page.locator("#command-menu-panel-history").evaluate(panel=>panel.matches(":popover-open")),false,"outside click closes the menu");
-  const sceneMenuTrigger=page.locator('[data-command-menu-trigger="scene"]');
-  await sceneMenuTrigger.click();
+  const roomSceneMenuTrigger=page.locator('[data-command-menu-trigger="scene"]');
+  await roomSceneMenuTrigger.click();
   await page.keyboard.press("Escape");
   assert.equal(await page.locator("#command-menu-panel-scene").evaluate(panel=>panel.matches(":popover-open")),false,"Escape closes the menu");
-  await sceneMenuTrigger.focus();await page.keyboard.press("ArrowDown");
+  await roomSceneMenuTrigger.focus();await page.keyboard.press("ArrowDown");
   assert.equal(await page.locator("#command-menu-panel-scene").evaluate(panel=>panel.matches(":popover-open")),true,"Arrow Down opens the focused menu");
   assert.equal(await page.evaluate(()=>globalThis.document.activeElement?.closest(".command-menu-panel")!==null),true,"Arrow Down moves focus into the menu");
   await page.keyboard.press("Escape");
-  assert.equal(await sceneMenuTrigger.evaluate(trigger=>globalThis.document.activeElement===trigger),true,"Escape restores focus to the menu trigger");
+  assert.equal(await roomSceneMenuTrigger.evaluate(trigger=>globalThis.document.activeElement===trigger),true,"Escape restores focus to the menu trigger");
   const triggerBox=await projectMenuTrigger.boundingBox();
   await page.mouse.move(triggerBox.x+triggerBox.width/2,triggerBox.y+triggerBox.height/2);
   await projectMenuTrigger.click();
@@ -482,13 +482,13 @@ try {
   assert.equal(await page.locator(".design-canvas [data-canvas-object]").count(),0,"discard removes unsaved canvas work");
   const canvasAfter = await page.locator(".scene-preview").boundingBox();
   assert.deepEqual(canvasAfter, canvasBefore, "ordinary tools and view changes preserve the canvas bounds");
-  const sceneMenuTrigger=page.locator('[data-command-menu-trigger="scene"]');
-  const sceneMenuPanel=page.locator("#command-menu-panel-scene");
-  if (!(await sceneMenuPanel.evaluate(panel=>panel.matches(":popover-open")))) {
-    await sceneMenuTrigger.click();
-    if (!(await sceneMenuPanel.evaluate(panel=>panel.matches(":popover-open")))) await sceneMenuTrigger.click();
+  const roomSceneMenuTrigger=page.locator('[data-command-menu-trigger="scene"]');
+  const roomSceneMenuPanel=page.locator("#command-menu-panel-scene");
+  if (!(await roomSceneMenuPanel.evaluate(panel=>panel.matches(":popover-open")))) {
+    await roomSceneMenuTrigger.click();
+    if (!(await roomSceneMenuPanel.evaluate(panel=>panel.matches(":popover-open")))) await roomSceneMenuTrigger.click();
   }
-  assert.equal(await sceneMenuPanel.evaluate(panel=>panel.matches(":popover-open")),true,"Scene menu is open before adding a room");
+  assert.equal(await roomSceneMenuPanel.evaluate(panel=>panel.matches(":popover-open")),true,"Scene menu is open before adding a room");
   await page.locator("#room-template").hover();
   await page.locator("#room-template").selectOption("kitchen");
   await page.locator("#add-room-scene").scrollIntoViewIfNeeded();
