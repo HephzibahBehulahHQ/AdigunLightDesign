@@ -309,6 +309,9 @@ try {
   await page.locator("#undo").click();
   assert.equal(await page.locator("#fixture-address").inputValue(),originalPatchAddress,"Undo restores the previous DMX patch");
   assert.equal(await page.locator(".inspector-tabs").isHidden(), true, "fixture inspector has no nested tab menu");
+  assert.equal(await page.locator(".fixture-actions-details").count(),0,"fixture actions are not repeated in the inspector; the ribbon and timeline own them");
+  assert.equal(await page.locator(".command-group[data-command-group=\"fixtures\"] #add-fixture").count(),1,"Add RGB wash remains in the Fixtures ribbon");
+  assert.equal(await page.locator(".timeline #create-cue").count(),1,"Capture cue remains in the docked timeline");
   for (const selector of [".fixture-configuration-details", ".light-advanced-controls"]) {
     assert.equal(await page.locator(`#fixture-inspector-panel ${selector}`).evaluate((element) => element.open), false, `${selector} keeps secondary controls compact by default`);
   }
