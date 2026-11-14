@@ -304,6 +304,7 @@ try {
   assert.match(await page.locator("#scene-select option:checked").innerText(), /Secondary room/, "scene selector switches to the selected project scene");
   assert.match(await page.locator(".footer-ready").innerText(),/Scene 02/,"footer scene number updates when the active scene changes");
   assert.equal(await page.locator(".design-canvas [data-canvas-object]").count(), 0, "scene selection shows its own canvas objects");
+  await page.locator("#toggle-tools").click();
   await page.locator('[data-tool="shapes"]').click();
   assert.equal(await page.locator(".design-canvas [data-canvas-object]").count(), 1, "canvas editing writes to the selected scene");
   await page.locator("#scene-select").selectOption(firstSceneId);
