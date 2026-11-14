@@ -232,7 +232,7 @@ try {
   await page.locator("#fixture-blue-channel").fill("199");
   assert.equal(await page.locator("#fixture-blue-channel-value").innerText(), "78%", "the screenshot shows the staged reference channel value");
   assert.equal(await page.locator("#fixture-colour-hex").innerText(), "#2196F3", "staging the blue value leaves the applied fixture colour unchanged");
-  await page.evaluate(()=>document.activeElement?.blur?.());
+  await page.evaluate(()=>globalThis.document.activeElement?.blur?.());
   await page.locator("#reset-camera").click();
   await page.screenshot({ path: resolve("outputs", "studio-acceptance-reference-1754x878.png") });
   for (let index = 0; index < 2; index += 1) await page.locator("#add-fixture").click();
