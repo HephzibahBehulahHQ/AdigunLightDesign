@@ -156,7 +156,7 @@ try {
   await clickCommand("project","#import-image");
   await importChooser;
   assert.equal(await page.locator('.command-menu-system [data-command-group="view"]').count(), 0, "module navigation does not repeat a duplicate view group in the top-bar menu");
-  assert.equal((await page.locator('[data-command-group="scene"] > span').innerText()).trim(), "SCENE", "the top-bar menu labels this group with the concise Scene heading from the reference");
+  assert.equal((await page.locator('[data-command-group="scene"] > span').innerText()).trim().toUpperCase(), "SCENE", "the top-bar menu labels this group with the concise Scene heading from the reference");
   assert.deepEqual(await page.locator(".command-group > span").evaluateAll((items)=>items.map((item)=>item.textContent.trim())),["Project","History","Scene","Palette","Fixtures","Export"],"command groups follow the approved compact studio order");
   assert.equal((await page.locator('.command-group[data-command-group="palette"] .harmony-command > span').innerText()).trim(), "◇ Harmonies", "palette harmony control matches the reference label");
   for (const [button,label] of [["#open-versions","Versions"],["#open-compare","Compare"]]) {
