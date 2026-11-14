@@ -344,3 +344,9 @@ Object.assign(messages.en,{mockupRoomTitle:"3D Mockup Room",rgbwPreview:"RGBW Pr
 Object.assign(messages.de,{mockupRoomTitle:"3D-Mockup-Raum",rgbwPreview:"RGBW-Vorschau",sceneView:"Szenenansicht",rgbwPreviewSubtitle:"virtuelle RGBW-Vorschau"});
 Object.assign(messages.yo,{mockupRoomTitle:"Yàrá Àpẹẹrẹ 3D",rgbwPreview:"Ìfihàn RGBW",sceneView:"Ìwò ìṣẹ̀lẹ̀",rgbwPreviewSubtitle:"àfihàn RGBW àfojúsùn"});
 Object.assign(messages.pcm,{mockupRoomTitle:"3D Mockup Room",rgbwPreview:"RGBW Preview",sceneView:"Scene view",rgbwPreviewSubtitle:"virtual RGBW previsualization"});
+
+
+Object.assign(messages.en,{fixtureOutputNote:"Virtual output only · CH 1–512"});
+Object.assign(messages.de,{fixtureOutputNote:"Nur virtuelle Ausgabe · Kanäle 1–512"});
+Object.assign(messages.yo,{fixtureOutputNote:"Ìjáde àfojúsùn nìkan · Chánẹ́lì 1–512"});
+Object.assign(messages.pcm,{fixtureOutputNote:"Na virtual output only · CH 1–512"});
