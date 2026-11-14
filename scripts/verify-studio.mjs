@@ -126,6 +126,15 @@ try {
   await importChooser;
   assert.equal(await page.locator('.command-ribbon [data-command-group="view"]').count(), 0, "module navigation does not repeat a duplicate view group in the command ribbon");
   assert.equal((await page.locator('[data-command-group="scene"] > span').innerText()).trim(), "SCENE", "the command ribbon labels this group with the concise Scene heading from the reference");
+  assert.deepEqual(await page.locator(".command-group > span").evaluateAll((items)=>items.map((item)=>item.textContent.trim())),["PROJECT","HISTORY","SCENE","PALETTE","FIXTURES","EXPORT"],"ribbon groups follow the approved compact studio order");
+  for (const selector of ["#harmony", "#reroll", "#add-colour", "#save-version", "#palette-version", "#restore-version"]) {
+    assert.equal(await page.locator(`.command-group[data-command-group="palette"] ${selector}`).count(), 1, `${selector} is available in the Palette command group`);
+  }
+  for (const selector of ["#seed", "#custom-spacing", "#custom-hues", "#perceptual-scale", "#temperature-strength"]) {
+    assert.equal(await page.locator(`#palette-inspector-panel ${selector}`).count(), 1, `${selector} remains available in its independent palette panel`);
+    assert.equal(await page.locator(`.command-group[data-command-group="palette"] ${selector}`).count(), 0, `${selector} does not crowd the primary Palette ribbon`);
+  }
+
   assert.equal(await page.locator('[data-command-group="scene"] [data-open-scene-editor="room"]').isVisible(), true, "Scene ribbon opens room dimensions");
   assert.equal(await page.locator('[data-command-group="scene"] [data-open-scene-editor="stage"]').isVisible(), true, "Scene ribbon opens stage settings");
   assert.equal(await page.locator('[data-command-group="scene"] [data-camera-axis]').count(), 3, "X/Y/Z camera views are docked in the Scene ribbon");
