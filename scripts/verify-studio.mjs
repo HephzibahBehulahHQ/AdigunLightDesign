@@ -106,6 +106,7 @@ try {
   await page.locator("#import-image").click();
   await importChooser;
   assert.equal(await page.locator('.command-ribbon [data-command-group="view"]').count(), 0, "module navigation does not repeat a duplicate view group in the command ribbon");
+  assert.equal((await page.locator('[data-command-group="scene"] > span').innerText()).trim(), "SCENE", "the command ribbon labels this group with the concise Scene heading from the reference");
   assert.equal(await page.locator('[data-command-group="scene"] [data-open-scene-editor="room"]').isVisible(), true, "Scene ribbon opens room dimensions");
   assert.equal(await page.locator('[data-command-group="scene"] [data-open-scene-editor="stage"]').isVisible(), true, "Scene ribbon opens stage settings");
   assert.equal(await page.locator('[data-command-group="scene"] [data-camera-axis]').count(), 3, "X/Y/Z camera views are docked in the Scene ribbon");
