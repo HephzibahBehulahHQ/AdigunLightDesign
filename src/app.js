@@ -321,7 +321,7 @@ function render() {
         <img class="corporate-mark" src="https://raw.githubusercontent.com/HephzibahBehulahHQ/hb-design-system/main/assets/corporate/hephzibah-behulah-official.jpg" alt="Hephzibah Behulah" onerror="this.hidden=true;this.nextElementSibling.hidden=false" />
         <span class="brand-fallback" hidden>HB <b>Hephzibah Behulah</b></span><span class="brand-divider"></span><span class="division">⚡ HB Elektroniker</span>
       </div>
-      <div class="product-lockup"><strong>Adigun<span>Light</span>Design</strong><small>Unified Color &amp; Light Design Studio</small></div>
+      <div class="product-lockup"><strong>Adigun <span>Light</span> Design</strong><small>Unified Color &amp; Light Design Studio</small></div>
       <div class="header-project-context" aria-label="${esc(t("project"))}: ${esc(project.name)} / ${esc(scene().name)}"><span>${esc(project.name)}</span><b aria-hidden="true">•</b><span>${esc(scene().name)}</span></div>
       ${topMenuMarkup({t,locale:preferences.locale,saved:projectPersisted,user:account.user})}<button id="theme" type="button" hidden aria-label="${t("appearance")}"></button>
     </header>
