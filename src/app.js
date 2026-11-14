@@ -501,7 +501,7 @@ function render() {
   inspector.append(palettePanel);
   const commandGroup=(name)=>document.querySelector(`.command-group[data-command-group="${name}"]`);
   const dock=(selector,groupName,wrap=false)=>{const control=document.querySelector(selector);if(control){const group=commandGroup(groupName);group.append(wrap ? control.closest("label") : control);}};
-  dock("#reset-camera","scene");dock("#apply-scene","scene");dock("#material-target","scene",true);
+  dock("#reset-camera","scene");
   dock("#seed","palette");dock("#harmony","palette");dock("#reroll","palette");dock("#add-colour","palette");dock("#custom-spacing","palette",true);dock("#custom-hues","palette");dock("#perceptual-scale","palette");dock("#temperature-strength","palette",true);dock('[data-temperature="warm"]',"palette");dock('[data-temperature="cool"]',"palette");
   dock("#export-viewport","export");dock("#export-canvas","export");
   const canvasObject=scene().canvasObjects?.find((object)=>object.id===preferences.objectId);
