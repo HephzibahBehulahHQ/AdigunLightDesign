@@ -111,7 +111,7 @@ try {
   assert.equal((await page.locator("#apply-scene").innerText()).trim(), "Apply colour", "the canvas action uses the concise reference label");
   assert.equal((await page.locator("#reset-camera").innerText()).trim(), "Reset view", "the Scene ribbon exposes Reset view");
   assert.equal((await page.locator("#reset-camera-canvas").innerText()).trim(), "Reset view", "the canvas quick-action lane exposes Reset view");
-  assert.deepEqual(await page.locator('.command-group[data-command-group="scene"]').evaluate((group)=>[...group.querySelectorAll("button")].map((button)=>button.dataset.cameraAxis?.toUpperCase() ?? button.id)),["room","stage","X","Y","Z","reset-camera"],"Scene commands follow the reference order");
+  assert.deepEqual(await page.locator('.command-group[data-command-group="scene"]').evaluate((group)=>[...group.querySelectorAll("button")].map((button)=>button.dataset.cameraAxis?.toUpperCase() ?? button.dataset.openSceneEditor ?? button.id)),["room","stage","X","Y","Z","reset-camera"],"Scene commands follow the reference order");
   for (const [locale,labels] of Object.entries({de:["Bemalen:","Wände","Farbe anwenden","Ansicht zurücksetzen"],yo:["Kún:","Àwọn ògiri","Lò àwọ̀","Tún ìwò padà"],pcm:["Paint:","Walls","Apply colour","Reset view"]})) {
     await page.locator("#locale").selectOption(locale);
     assert.equal(await page.locator("#material-target").evaluate((select)=>select.closest("label").firstChild.textContent.trim()),labels[0],`${locale} paint label remains translated`);
