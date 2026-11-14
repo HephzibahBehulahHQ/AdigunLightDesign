@@ -295,7 +295,7 @@ try {
   assert.equal(await page.locator("[data-layer-fixture]").count(), 9, "the fixture list contains the nine real virtual fixtures in the target composition");
   const visibleFixtureCount=await page.locator(".fixture-layer-list").evaluate((list)=>[...list.querySelectorAll("[data-layer-fixture]")].filter((button)=>{const row=button.getBoundingClientRect(),area=list.getBoundingClientRect();return row.top>=area.top&&row.bottom<=area.bottom;}).length);
   assert.equal(visibleFixtureCount, 9, "all nine reference fixtures fit in the visible left list at 1754×878");
-  assert.match(await page.locator(".scene-title small").innerText(), /9\/9 fixtures rendered/, "the target composition renders all nine actual virtual fixtures");
+  assert.match(await page.locator(".scene-title small").getAttribute("aria-label"), /9\/9 fixtures rendered/, "the preview badge exposes its actual rendered fixture count accessibly");
   assert.equal(await page.locator(".inspector > .section-title h2").innerText(), "Selected: LED Strip RGB 9", "the reference fixture is selected from the real nine-fixture composition");
   await page.locator("#fixture-colour").fill("#2196F3");
   await page.locator("#apply-fixture").click();
