@@ -729,3 +729,9 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
 .tool-section-toggle:hover,.tool-section-toggle:focus-visible { background:#1b2940; outline-color:var(--cyan); }
 .tool-section-toggle .tools-caret { color:var(--cyan); font-size:12px; }
 .tool-list[hidden] { display:none; }
+
+.room-template-field { display:grid; gap:4px; color:#cbd8ec; font-size:11px; font-weight:700; }
+.room-template-field select { width:100%; min-width:0; height:30px; padding:4px 7px; border:1px solid #456184; border-radius:6px; background:#0b1423; color:#e3ecfb; }
+.room-type-label { margin:2px 0 6px; color:var(--muted); font-size:11px; font-weight:700; }
+[data-scene-editor="room"] input[type="color"] { width:100%; min-width:0; height:28px; padding:2px; }
+[data-scene-editor="room"] input[type="range"] { width:100%; accent-color:#23d6e8; }
