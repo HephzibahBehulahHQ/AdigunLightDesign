@@ -127,7 +127,7 @@ try {
   assert.equal((await page.locator(".header-project-context").innerText()).replace(/\s+/g," ").trim(),"Studio Mood • Scene 01","header context shows the active scene number as in the reference");
   assert.match(await page.locator(".tool-section > h2").innerText(),/Tools — One Click/,"the tool group uses the one-click reference label");
   assert.equal((await page.locator(".product-lockup strong").innerText()).replace(/\s+/g, " ").trim(), "Adigun Light Design", "the header wordmark keeps the approved three-word spacing");
-  assert.deepEqual(await page.locator(".module-nav button").evaluateAll((buttons)=>buttons.map((button)=>button.innerText.trim())),["Design","3D Studio","Fixture Library","AI Co-Pilot Lux"],"primary navigation exposes only direct workspace and assistant actions");
+  assert.deepEqual(await page.locator(".module-nav button").evaluateAll((buttons)=>buttons.map((button)=>button.innerText.trim())),["Design","3D Studio","Fixture Library","Adigun Bot"],"primary navigation exposes only direct workspace and assistant actions");
   assert.equal(await page.locator(".module-nav #show-timeline, .workspace-switcher").count(),0,"duplicate view and timeline navigation is removed");
   const switcherCanvas=await page.locator(".scene-preview").boundingBox();
   await page.locator('.module-nav [data-module="palette"]').click();
