@@ -483,6 +483,7 @@ try {
   const canvasAfter = await page.locator(".scene-preview").boundingBox();
   assert.deepEqual(canvasAfter, canvasBefore, "ordinary tools and view changes preserve the canvas bounds");
   await openCommandMenu("scene");
+  await page.locator("#room-template").hover();
   await page.locator("#room-template").selectOption("kitchen");
   await page.locator("#add-room-scene").click();
   assert.equal(await page.locator("#scene-select option").count(),2,"Add room creates a second saved scene in the project");
