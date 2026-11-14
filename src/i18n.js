@@ -333,3 +333,8 @@ Object.assign(messages.en,{viewTimeline:"Timeline"});
 Object.assign(messages.de,{viewTimeline:"Zeitleiste"});
 Object.assign(messages.yo,{viewTimeline:"Àkókò iṣẹ́"});
 Object.assign(messages.pcm,{viewTimeline:"Timeline"});
+
+Object.assign(messages.en,{projectSavedShort:"Project saved"});
+Object.assign(messages.de,{projectSavedShort:"Projekt gespeichert"});
+Object.assign(messages.yo,{projectSavedShort:"A ti fipamọ́ iṣẹ́ akanṣe"});
+Object.assign(messages.pcm,{projectSavedShort:"Project don save"});
