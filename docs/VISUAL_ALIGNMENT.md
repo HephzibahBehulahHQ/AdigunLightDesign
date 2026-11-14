@@ -1,13 +1,11 @@
 # Visual alignment evidence
 
-The user reaffirmed the delivery reference on 3 November 2026:
-`codex-clipboard-5b6caab9-9259-4364-a4d9-642494b849c2.png`.
-The original attachment is a 1672 × 941 PNG, SHA-256
-`13b35cd250ac8c587b9696fd802b57703e406c2894968003cf1a8f45dee126c4`.
-Use this composition and styling as the visual acceptance target, incorporating
-the explicitly requested floating Bot and compact top-menu updates. The
-1440 × 900 desktop check remains additional responsive coverage. This reference
-identification is not evidence that the current interface matches it.
+The active visual acceptance target is the owner-supplied
+`codex-clipboard-9cef8ab1-5bd2-4d04-9335-9c566861962d.png`, provided
+14 November 2026. The image is 1754 × 896; the application viewport is
+1754 × 878, with 18px below the footer. SHA-256:
+`e6360f05dd72a7b19e43a521a3ec7771dd8d57011bf383cf13c0d34c398691af`.
+This target supersedes the 3 November screenshot for current layout comparisons.
 
 Studio camera corrections now honor the document's positive-Z rear-wall
 convention, keeping that wall behind the sofa instead of between the viewer and
@@ -22,14 +20,13 @@ Axis changes reuse geometry buffers and remain disabled without WebGL. Y is an
 overhead exterior view; the existing ceiling remains real geometry. These are
 math/lifecycle guarantees, not screenshot evidence or exact visual acceptance.
 
-Latest camera validation: the full local suite passed 221 tests, zero failures
-or skips; project checks and the Vite build passed. Renderer checks also verify
-that axis changes reuse geometry and camera snapshots are defensive copies.
-The build remains Auth-unconfigured, and no editor deployment was performed.
+Historical camera validation, before the compact-studio releases: 221 tests
+passed with zero failures or skips; project checks and the Vite build passed.
+The build was Auth-unconfigured at that time.
 
-The 3 November desktop reference remains the visual target for the studio and
-controls. The user later explicitly rejected the five-card project-overview
-strip and dead workspace; that correction takes precedence for the editor layout.
+The 3 November screenshot is historical; current layout comparisons use the
+14 November target. The correction rejecting the five-card project overview
+and dead workspace remains binding.
 
 Keep the workspace to the top header/navigation, bottom status trailer,
 full-height left layers/tools, central scene with palette and timeline dock, and
@@ -57,7 +54,7 @@ including its actual cue start times, independent colored lanes and a time ruler
 The sequential view remains in an expandable section and opens when sequence
 playback starts. Both playheads and playback controls remain present. Markup
 tests cover track separation, scheduled proportions, selected cues, empty state
-and escaping. Browser interaction and reference matching remain unverified.
+and escaping. The current browser acceptance runner verifies timeline playback and fixed canvas bounds; the active reference layout was compared at 1754 × 878.
 
 Fixture dimmer and beam controls now use keyboard-accessible native sliders.
 Intensity displays the normalized percentage alongside the exact 0–255 channel
@@ -102,13 +99,33 @@ Generic preview fixtures now have aimed cylindrical housings, lens rims, colored
 
 The selected-fixture frame now derives its bounds from every actual housing vertex, with 4cm visual padding. It follows pan/tilt aiming rather than retaining the former small box around the old fixture marker. Tests verify enclosure for multiple aiming directions and renderer buffer lifecycle. This is a selection aid, not physical clearance or collision validation.
 
-The compact studio now places project/layers/tools/fixtures in a docked left rail, the WebGL viewport above the palette and cue timeline, and the fixture/light/DMX/effects inspector with Lux in a docked right rail. The app shell remains constrained to the viewport; the fixture list and inspector retain their own scroll areas. Browser geometry checks at 1920 × 1080, 1880 × 690, 1855 × 829, 1672 × 941, 1440 × 900, 1366 × 768 and 1754 × 878 showed no document overflow, overlapping primary columns, displaced canvas, or displaced inspector/Lux dock. At 1754 × 878, the left rail measured 233px, right inspector 296px, and center workspace 1189px. These are layout checks; they do not claim pixel-identical artwork or identical fixture counts to the supplied example project.
+The compact studio uses a docked left rail, fixed central WebGL viewport with
+palette/timeline dock, and a right fixture inspector with docked Lux. Panels
+scroll independently; the document remains viewport-constrained.
 
-Ordinary project renders now retain the existing WebGL canvas and renderer when scene configuration is unchanged, updating fixture data only when fixture state changes. A focused lifecycle test covers renderer reuse and rebuild conditions. The compact fixture list and palette summary are generated from actual project state, and Lux remains offline until configured. Local validation passed: contract check, lint, typecheck, 275 tests and production build. Browser DOM inspection confirmed the actual three-fixture starter project, fixture selection controls and docked sections; the supplied reference's nine fixtures require its project data and are not fabricated by the layout.
-With fresh preferences, the selected module now opens on 3D Light Lab with the fixture inspector. Existing saved preferences still take precedence. At 1754 × 878, browser verification measured the left rail at 233 × 686px, central WebGL canvas at 1189 × 488px, lower dock at 1189 × 140px, and right inspector at 296 × 686px; Lux remained inside the inspector at 278 × 116px. The browser reported no page overflow or runtime errors. Fixture selection, tool selection, and 2D/3D view switching worked while the canvas stayed in place. The same no-overflow and no-overlap checks passed at 1920 × 1080, 1880 × 690, 1855 × 829, 1672 × 941, 1440 × 900, and 1366 × 768. The rendered starter project has three real fixtures; the nine fixtures in the reference are project-specific and are not fabricated.
+PR #163 fixed Virtual Blackout placement: the button is created with the timeline
+controls, then moved into the Fixtures ribbon before event binding. The live
+button applies virtual blackout and reports that physical output remains
+disabled. PR #164 tightened the left gutter and shifted the center workspace to
+the 14 November reference. Both PRs merged; validation and GitHub Pages release
+checks passed.
 
-The command ribbon now gives its group labels a 4px gap above their controls. Its compact-height override reduces top and bottom workspace padding to compensate for the taller ribbon. Fresh browser previews and DOM measurements cover 1880 × 690 and the full acceptance matrix. At 1754 × 878, the 34px scene toolbar places the WebGL viewport at y=182 and the dock at y=686; the dock split is 394px palette / 787px timeline, matching the supplied frame proportions. The page stays exactly viewport-sized at every tested desktop size. The reference's room image and nine-fixture project remain project-specific content; the current three-fixture starter scene is preserved, not replaced with a fabricated visual.
-On the desktop reference layout, the unsupported AI Pin entry is kept out of the editing tool grid so it does not read as a working command or consume one of the eight target tool slots. The existing disabled-state description remains available in narrower layouts.
+Live measurement at 1754 × 878 after PR #164: left rail x=12, y=140,
+231.52 × 686px; center toolbar, scene and dock x=257.52 through x=1440;
+right inspector x=1448, 296 × 686px; footer y=840, 38px high. The browser
+acceptance runner passes at 1920 × 1080, 1880 × 690, 1855 × 829, 1672 × 941,
+1440 × 900, 1366 × 768 and 1754 × 878, with no document overflow or panel
+overlap. It also verifies tools, canvas stability, timeline playback, fixture
+selection, project save/reload and JSON import/export. The latest local suite
+passed 278 tests; contract check, lint and production build passed. The live
+Blackout click was separately verified without runtime errors.
 
-The repeatable Playwright studio acceptance runner (`npm run verify:studio`) now checks viewport overflow, panel overlap, header/navigation/ribbon/footer bounds, and clear ribbon labels at all seven desktop sizes. It also verifies the core editing tools, shape/text creation, measurement feedback, fixture selection, 2D/3D switching, timeline playback, and stable canvas bounds. CI installs Chromium, runs the checks, and uploads 1672 × 941 and 1754 × 878 screenshots for visual comparison. The local screenshot preview uses the real three-fixture starter project; it is not the supplied nine-fixture scene.
+The default Studio Mood project contains nine actual fixtures: three moving
+heads, four RGB washes and two LED strips. The reference depicts a different
+room rendering; the WebGL view remains driven by real project scene and fixture
+data. Exact scene-art parity remains open and must not be achieved by replacing
+saved project data or rendering a static placeholder.
+
+The desktop tool grid exposes the eight supported editing tools. AI Pin remains
+outside that grid because it is not an active editing command.
 
