@@ -482,9 +482,17 @@ try {
   assert.equal(await page.locator(".design-canvas [data-canvas-object]").count(),0,"discard removes unsaved canvas work");
   const canvasAfter = await page.locator(".scene-preview").boundingBox();
   assert.deepEqual(canvasAfter, canvasBefore, "ordinary tools and view changes preserve the canvas bounds");
-  await openCommandMenu("scene");
+  const sceneMenuTrigger=page.locator('[data-command-menu-trigger="scene"]');
+  const sceneMenuPanel=page.locator("#command-menu-panel-scene");
+  if (!(await sceneMenuPanel.evaluate(panel=>panel.matches(":popover-open")))) {
+    await sceneMenuTrigger.click();
+    if (!(await sceneMenuPanel.evaluate(panel=>panel.matches(":popover-open")))) await sceneMenuTrigger.click();
+  }
+  assert.equal(await sceneMenuPanel.evaluate(panel=>panel.matches(":popover-open")),true,"Scene menu is open before adding a room");
   await page.locator("#room-template").hover();
   await page.locator("#room-template").selectOption("kitchen");
+  await page.locator("#add-room-scene").scrollIntoViewIfNeeded();
+  assert.equal(await page.locator("#add-room-scene").isVisible(),true,"Add room is visible inside the Scene menu");
   await page.locator("#add-room-scene").click();
   assert.equal(await page.locator("#scene-select option").count(),2,"Add room creates a second saved scene in the project");
   const addedRoomId=await page.locator("#scene-select").inputValue();
