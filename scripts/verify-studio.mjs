@@ -276,8 +276,10 @@ try {
   assert.equal(await page.locator('[data-scene-editor="room"]').evaluate((element) => element.open), true, "Room ribbon command opens the existing editable dimensions");
   await page.locator('[data-module="light"]').click();
   assert.equal(await page.locator("#fixture-inspector-panel").isVisible(), true, "Light Lab module selects the fixture inspector");
-  assert.equal(await page.locator(".inspector-group-dmx #apply-fixture").count(),1,"the working fixture and patch action is grouped with DMX controls");
+  assert.equal(await page.locator(".inspector-group-fixture #apply-fixture").innerText(),"Apply fixture properties","fixture edits have their own explicit apply action");
+  assert.equal(await page.locator(".inspector-group-dmx #apply-fixture-patch").innerText(),"Apply patch","the validated patch action is grouped with DMX controls");
   assert.equal(await page.locator(".inspector-group-dmx .fixture-output-note").innerText(),"Virtual output only · CH 1–512","DMX panel states the real virtual-only channel range");
+  assert.equal(await page.locator("#fixture-address").evaluate((input)=>input.closest("label").firstChild.textContent),"Start","the patch form names its starting DMX address");
   await page.locator('[data-open-scene-editor="room"]').click();
   assert.equal(await page.locator('[data-scene-editor="room"]').evaluate((element) => element.open), true, "Room ribbon command opens the existing editable dimensions");
   await page.locator('[data-open-scene-editor="stage"]').click();
@@ -289,15 +291,23 @@ try {
   const originalFixtureColor = await fixtureColor.inputValue();
   assert.equal(await page.locator("#fixture-colour-hex").innerText(), originalFixtureColor.toUpperCase(), "the inspector exposes the selected fixture's actual hex colour");
   assert.equal(await page.locator("#fixture-blue-channel").isVisible(), true, "supported RGB fixtures expose the blue DMX channel in the visible Light group");
+  const originalPatchAddress=await page.locator("#fixture-address").inputValue();
+  await page.locator("#fixture-address").fill("200");
   await page.locator("#fixture-blue-channel").fill("199");
   assert.equal(await page.locator("#fixture-blue-channel-value").innerText(), "78%", "blue channel shows its normalized value");
   assert.equal(await fixtureColor.inputValue(), originalFixtureColor, "blue channel edits remain staged before Apply");
   await page.locator("#apply-fixture").click();
+  assert.equal(await page.locator("#fixture-address").inputValue(),originalPatchAddress,"fixture properties do not commit a staged DMX patch");
   assert.equal(Number.parseInt((await fixtureColor.inputValue()).slice(-2), 16), 199, "Apply commits the selected fixture's exact blue channel");
   assert.equal(await page.locator("#fixture-colour-hex").innerText(), (await fixtureColor.inputValue()).toUpperCase(), "the hex readout follows the applied fixture colour");
   await page.locator("#undo").click();
   assert.equal(await fixtureColor.inputValue(), originalFixtureColor, "Undo restores the blue channel transaction");
   assert.equal(await page.locator("#fixture-colour-hex").innerText(), originalFixtureColor.toUpperCase(), "Undo also restores the visible hex readout");
+  await page.locator("#fixture-address").fill("200");
+  await page.locator("#apply-fixture-patch").click();
+  assert.equal(await page.locator("#fixture-address").inputValue(),"200","Apply patch commits the requested valid start address");
+  await page.locator("#undo").click();
+  assert.equal(await page.locator("#fixture-address").inputValue(),originalPatchAddress,"Undo restores the previous DMX patch");
   assert.equal(await page.locator(".inspector-tabs").isHidden(), true, "fixture inspector has no nested tab menu");
   for (const selector of [".fixture-configuration-details", ".light-advanced-controls"]) {
     assert.equal(await page.locator(`#fixture-inspector-panel ${selector}`).evaluate((element) => element.open), false, `${selector} keeps secondary controls compact by default`);
