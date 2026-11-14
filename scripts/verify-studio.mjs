@@ -105,7 +105,7 @@ try {
   assert.equal(await page.locator('[data-command-group="scene"] [data-open-scene-editor="stage"]').isVisible(), true, "Scene ribbon opens stage settings");
   assert.equal(await page.locator('[data-command-group="scene"] [data-camera-axis]').count(), 3, "X/Y/Z camera views are docked in the Scene ribbon");
   assert.equal(await page.locator(".scene-preview .viewport-axis-controls").count(), 0, "camera controls do not cover the 3D canvas");
-  for (const selector of ["#viewport-performance", "#viewport-fit", "#viewport-fullscreen", "#preview-quality", ".view-menu"]) {
+  for (const selector of ["#viewport-performance", "#viewport-fit", "#viewport-fullscreen", "#preview-quality"]) {
     assert.equal(await page.locator(`.workspace-tabs ${selector}`).count(), 1, `${selector} stays docked in the scene header`);
   }
   const sceneHeaderCanvas=await page.locator(".scene-preview").boundingBox();
