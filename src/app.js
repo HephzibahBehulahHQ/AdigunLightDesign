@@ -257,6 +257,16 @@ function makeProjectDialog(title,content) {
   dialog.querySelector(".project-dialog-close").onclick=()=>{dialog.close();dialog.remove();};
   return dialog;
 }
+function showRoomSceneDialog() {
+  const options=roomPresetOptions(preferences.locale);
+  const dialog=makeProjectDialog(t("addRoomScene"),'<label class="project-dialog-field">'+esc(t("chooseRoomTemplate"))+'<select id="room-template" required>'+options.map(item=>'<option value="'+esc(item.id)+'">'+esc(item.label)+'</option>').join("")+'</select></label><div class="project-dialog-actions"><button type="button" data-cancel>'+esc(t("cancel"))+'</button><button type="submit" id="create-room-scene">＋ '+esc(t("addRoomScene"))+'</button></div>');
+  const form=dialog.querySelector("form");
+  dialog.querySelector("[data-cancel]").onclick=()=>{dialog.close();dialog.remove();};
+  form.onsubmit=(event)=>{event.preventDefault();const presetId=dialog.querySelector("#room-template").value;const roomScene=createRoomScene(presetId,{name:roomPresetName(presetId,preferences.locale)});commitProjectChange("scene-create",(draft)=>{draft.scenes.push(roomScene);});preferences.sceneId=roomScene.id;preferences.objectId=null;preferences.view="light";savePreferences();status=t("roomSceneAdded");dialog.close();dialog.remove();render();};
+  dialog.addEventListener("cancel",()=>dialog.remove(),{once:true});
+  dialog.showModal();
+  dialog.querySelector("#room-template").focus();
+}
 function showSaveDialog(onSave) {
   const dialog=makeProjectDialog(t("saveProjectTitle"),'<label class="project-dialog-field">'+esc(t("projectName"))+'<input id="saved-project-name" maxlength="120" required value="'+esc(project.name)+'" /></label><div class="project-dialog-actions"><button type="button" data-cancel>'+esc(t("cancel"))+'</button><button type="submit">'+esc(t("save"))+'</button></div>');
   const form=dialog.querySelector("form"),input=dialog.querySelector("#saved-project-name");
@@ -426,7 +436,7 @@ function render() {
   const commandMenuContent={
     project:`<button type="button" id="new-project">＋ ${t("newProject")}</button><button type="button" id="open-project">${t("openProject")}</button><button type="button" id="save">${t("save")}</button><button type="button" id="import-project">${t("importProject")}</button><button type="button" id="import-image" title="${t("importImage")}" aria-label="${t("importImage")}">${t("importAction")}</button><input id="project-file" type="file" accept="application/json,.json" hidden />`,
     history:`<button type="button" id="undo" ${undoStack.length ? "" : "disabled"}>↶ ${t("undo")}</button><button type="button" id="redo" ${redoStack.length ? "" : "disabled"}>↷ ${t("redo")}</button>`,
-    scene:`<label class="room-template-field">${t("chooseRoomTemplate")}<select id="room-template" aria-label="${t("chooseRoomTemplate")}">${roomPresetOptions(preferences.locale).map(item=>`<option value="${item.id}">${esc(item.label)}</option>`).join("")}</select></label><button type="button" id="add-room-scene">＋ ${t("addRoomScene")}</button><button type="button" data-open-scene-editor="room">${t("roomCommand")}</button><button type="button" data-open-scene-editor="stage">${t("stageCommand")}</button><label class="preview-quality">${t("previewQuality")} <select id="preview-quality" ${preferences.view==="light" ? "" : disabled(t("select3d"))}>${Object.keys(previewQualities).map((key)=>`<option value="${key}" ${key===(preferences.previewQuality ?? "balanced") ? "selected" : ""}>${t(`quality_${key}`)}</option>`).join("")}</select></label><button type="button" id="reset-camera">${t("resetCamera")}</button>`,
+    scene:`<button type="button" id="add-room-scene">＋ ${t("addRoomScene")}</button><button type="button" data-open-scene-editor="room">${t("roomCommand")}</button><button type="button" data-open-scene-editor="stage">${t("stageCommand")}</button><label class="preview-quality">${t("previewQuality")} <select id="preview-quality" ${preferences.view==="light" ? "" : disabled(t("select3d"))}>${Object.keys(previewQualities).map((key)=>`<option value="${key}" ${key===(preferences.previewQuality ?? "balanced") ? "selected" : ""}>${t(`quality_${key}`)}</option>`).join("")}</select></label><button type="button" id="reset-camera">${t("resetCamera")}</button>`,
     palette:`<button type="button" data-menu-keep-open id="open-versions" aria-expanded="false">${t("versions")}</button><button type="button" data-menu-keep-open id="open-compare" aria-expanded="false">${t("compare")}</button>`,
     fixtures:"",
     export:`<button data-export="project">Project JSON</button><button data-export="palette">Palette JSON</button><button data-export="css">CSS variables</button><button data-export="ase" title="${t("aseExportLimit")}">${t("aseExport")}</button><button data-export="patch">Patch CSV</button><button data-export="cues">Cue CSV</button>`
@@ -1145,7 +1155,7 @@ function bind() {
   document.querySelectorAll("[data-swatch]").forEach((button) => button.onclick = () => { preferences.selected = button.dataset.swatch; preferences.inspectorMode="palette"; savePreferences(); render(); });
   document.querySelector("#project-name").onchange = (event) => { const name=event.target.value.trim(); if(name&&name!==project.name) commitProjectChange("project-rename",(draft)=>{draft.name=name;}); render(); };
   const sceneSelect=document.querySelector("#scene-select");if(sceneSelect)sceneSelect.onchange=(event)=>{if(!project.scenes.some((item)=>item.id===event.target.value))return;preferences.sceneId=event.target.value;preferences.objectId=null;savePreferences();render();};
-  const addRoomButton=document.querySelector("#add-room-scene");if(addRoomButton)addRoomButton.onclick=()=>{try{const presetId=document.querySelector("#room-template").value;const roomScene=createRoomScene(presetId,{name:roomPresetName(presetId,preferences.locale)});commitProjectChange("scene-create",(draft)=>{draft.scenes.push(roomScene);});preferences.sceneId=roomScene.id;preferences.objectId=null;preferences.view="light";savePreferences();status=t("roomSceneAdded");render();}catch(error){setStatus(error.message);}};
+  const addRoomButton=document.querySelector("#add-room-scene");if(addRoomButton)addRoomButton.onclick=showRoomSceneDialog;
   document.querySelector("#seed").onchange = (event) => { const hex = normalizeHex(event.target.value); if (hex) preferences.seed = hex; event.target.value = preferences.seed; savePreferences(); };
   document.querySelector("#harmony").onchange = (event) => { preferences.harmony = event.target.value; savePreferences(); };
   document.querySelector("#reroll").onclick = () => mutateColours((colours) => rerollUnlocked(colours, preferences.seed, preferences.harmony));

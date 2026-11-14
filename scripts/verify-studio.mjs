@@ -482,18 +482,11 @@ try {
   assert.equal(await page.locator(".design-canvas [data-canvas-object]").count(),0,"discard removes unsaved canvas work");
   const canvasAfter = await page.locator(".scene-preview").boundingBox();
   assert.deepEqual(canvasAfter, canvasBefore, "ordinary tools and view changes preserve the canvas bounds");
-  const roomCreateTrigger=page.locator('[data-command-menu-trigger="scene"]');
-  const roomCreatePanel=page.locator("#command-menu-panel-scene");
-  if (!(await roomCreatePanel.evaluate(panel=>panel.matches(":popover-open")))) {
-    await roomCreateTrigger.click();
-    if (!(await roomCreatePanel.evaluate(panel=>panel.matches(":popover-open")))) await roomCreateTrigger.click();
-  }
-  assert.equal(await roomCreatePanel.evaluate(panel=>panel.matches(":popover-open")),true,"Scene menu is open before adding a room");
-  await page.locator("#room-template").hover();
+  await clickCommand("scene","#add-room-scene");
+  assert.equal(await page.locator(".project-dialog").evaluate(dialog=>dialog.open),true,"Add room opens a floating template dialog");
   await page.locator("#room-template").selectOption("kitchen");
-  await page.locator("#add-room-scene").scrollIntoViewIfNeeded();
-  assert.equal(await page.locator("#add-room-scene").isVisible(),true,"Add room is visible inside the Scene menu");
-  await page.locator("#add-room-scene").click();
+  await page.locator("#create-room-scene").click();
+  assert.equal(await page.locator(".project-dialog").count(),0,"creating a room closes the modal");
   assert.equal(await page.locator("#scene-select option").count(),2,"Add room creates a second saved scene in the project");
   const addedRoomId=await page.locator("#scene-select").inputValue();
   assert.match(await page.locator("#scene-select option:checked").innerText(),/Kitchen/,"the selected scene is labeled with its room template");
