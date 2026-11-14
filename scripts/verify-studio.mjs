@@ -124,6 +124,8 @@ try {
 
   await page.setViewportSize({ width: 1754, height: 878 });
   assert.equal(await page.locator(".left-rail-heading").isVisible(), true, "left rail has the compact project/layers/tools header from the reference");
+  assert.equal(await page.locator(".header-project-context").innerText(),"Studio Mood • Scene 01","header context shows the active scene number as in the reference");
+  assert.match(await page.locator(".tool-section > h2").innerText(),/Tools — One Click/,"the tool group uses the one-click reference label");
   assert.equal((await page.locator(".product-lockup strong").innerText()).replace(/\s+/g, " ").trim(), "Adigun Light Design", "the header wordmark keeps the approved three-word spacing");
   assert.deepEqual(await page.locator(".workspace-switcher button").evaluateAll((buttons)=>buttons.map((button)=>button.innerText.trim())),["2D Palette","3D Studio","Timeline"],"workspace shortcuts match the approved header");
   const switcherCanvas=await page.locator(".scene-preview").boundingBox();
