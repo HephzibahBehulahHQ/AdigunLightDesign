@@ -169,6 +169,8 @@ try {
     return { maxScroll, scrollLeft: element.scrollLeft };
   });
   assert.ok(ribbonScroll.maxScroll > 0, "long command ribbon scrolls horizontally inside its lane");
+  assert.equal(await page.locator(".command-ribbon .ribbon-scroll-hint").count(), 1, "the ribbon scroll affordance is present without duplicating commands");
+  assert.equal(await page.locator(".command-ribbon .ribbon-scroll-hint").isVisible(), true, "the ribbon scroll affordance stays visible");
   assert.ok(ribbonScroll.scrollLeft > 0, "horizontal ribbon scrolling reaches additional commands");
   assert.deepEqual(await page.locator(".scene-preview").boundingBox(), canvasBefore, "scrolling the command ribbon leaves the central canvas in place");
   await page.locator('[data-tool="shapes"]').click();
