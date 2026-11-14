@@ -433,7 +433,7 @@ function render() {
     document.querySelector(".lux-message").insertAdjacentHTML("afterend", `<section class="lux-local-actions"><h3>${t("localPaletteAction")}</h3><button id="preview-lux-palette" ${project.fixtures.length ? "" : "disabled"}>${t("previewPaletteLighting")}</button>${luxProposal ? `<div class="lux-action-preview"><h4>${t("reviewChanges")}</h4><ul>${luxProposal.changes.map((change)=>`<li>${esc(change.after?.name ?? change.before?.name ?? change.id)}<details><summary>${t("reviewChanges")}: ${esc(change.collection)}</summary><pre>${esc(JSON.stringify({before:change.before,after:change.after},null,2))}</pre></details></li>`).join("") || t("noActionChanges")}</ul><small>${t(account.user ? "liveReviewBeforeApply" : "authRequired")}</small><button id="confirm-lux-action" ${luxProposal.changes.length && account.user && !luxConfirmationPending ? "" : "disabled"} title="${t(account.user ? "confirmAction" : "authRequired")}">${t("confirmAction")}</button><button id="cancel-lux-action">${t("cancelAction")}</button></div>` : ""}</section>`);
   }
   const projectionButton=document.querySelector(".view-menu");
-  document.querySelector(".workspace-tabs").insertAdjacentHTML("beforeend", `<button id="viewport-fullscreen" class="view-menu" aria-label="${t("fullscreenViewport")}" title="${t("fullscreenViewport")}" ${canFullscreen(document.querySelector(".scene-preview"),document) ? "" : "disabled"}>${icon("fullscreen")}</button>`);
+  document.querySelector(".workspace-tabs").insertAdjacentHTML("beforeend", `<button id="viewport-performance" class="view-menu" aria-pressed="${preferences.previewQuality==="performance"}" ${preferences.view==="light" ? "" : "disabled"}>${t("quality_performance")}</button><button id="viewport-fit" class="view-menu" aria-label="${t("fitViewport")}" title="${t("fitViewport")}" ${preferences.view==="light" ? "" : "disabled"}>Fit</button><button id="viewport-fullscreen" class="view-menu" aria-label="${t("fullscreenViewport")}" title="${t("fullscreenViewport")}" ${canFullscreen(document.querySelector(".scene-preview"),document) ? "" : "disabled"}>${icon("fullscreen")}</button>`);
   projectionButton.insertAdjacentHTML("beforebegin", `<label class="preview-quality">${t("previewQuality")} <select id="preview-quality" ${preferences.view==="light" ? "" : "disabled"}>${Object.keys(previewQualities).map((key)=>`<option value="${key}" ${key===(preferences.previewQuality ?? "balanced") ? "selected" : ""}>${t(`quality_${key}`)}</option>`).join("")}</select></label>`);
   if (preferences.view==="light") document.querySelector(".scene-title small").textContent=`${t("webglPreview")} · ${phrase("previewFixtureCount",{shown:scene().visibility?.lighting===false ? 0 : Math.min(project.fixtures.length,previewQuality(preferences.previewQuality).fixtures),total:project.fixtures.length})}`;
   projectionButton.insertAdjacentHTML("afterend", `<button id="export-canvas" class="view-menu" ${preferences.view==="palette" ? "" : "disabled"}>↗ ${t("exportCanvas")}</button>`);
@@ -483,7 +483,7 @@ function render() {
   inspector.append(palettePanel);
   const commandGroup=(name)=>document.querySelector(`.command-group[data-command-group="${name}"]`);
   const dock=(selector,groupName,wrap=false)=>{const control=document.querySelector(selector);if(control){const group=commandGroup(groupName);group.append(wrap ? control.closest("label") : control);}};
-  dock("#reset-camera","scene");dock("#apply-scene","scene");dock("#material-target","scene",true);dock("#preview-quality","scene",true);dock(".workspace-tabs .view-menu","scene");dock("#viewport-fullscreen","scene");
+  dock("#reset-camera","scene");dock("#apply-scene","scene");dock("#material-target","scene",true);
   dock("#seed","palette");dock("#harmony","palette");dock("#reroll","palette");dock("#add-colour","palette");dock("#custom-spacing","palette",true);dock("#custom-hues","palette");dock("#perceptual-scale","palette");dock("#temperature-strength","palette",true);dock('[data-temperature="warm"]',"palette");dock('[data-temperature="cool"]',"palette");
   dock("#export-viewport","export");dock("#export-canvas","export");
   const canvasObject=scene().canvasObjects?.find((object)=>object.id===preferences.objectId);
@@ -680,6 +680,8 @@ function bind() {
     } catch(error) {setStatus(error.message);}
   };
   document.querySelector(".view-menu").onclick=()=>{preferences.projection=preferences.projection==="orthographic" ? "perspective" : "orthographic";savePreferences();render();};
+  document.querySelector("#viewport-performance").onclick=()=>{preferences.previewQuality=preferences.previewQuality==="performance" ? "balanced" : "performance";savePreferences();render();};
+  document.querySelector("#viewport-fit").onclick=()=>{renderer?.reset();document.querySelector("#light-canvas")?.focus();};
   document.querySelectorAll("[data-layer-visibility]").forEach((button)=>button.onclick=()=>{
     const key=button.dataset.layerVisibility;
     commitProjectChange("scene-layer-visibility",(draft)=>{editScene(draft,(target)=>{target.visibility={...target.visibility,[key]:target.visibility?.[key]===false};});});render();
