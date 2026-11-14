@@ -37,7 +37,7 @@ try {
   page.on("pageerror", (error) => runtimeErrors.push(error.message));
   await page.goto(`http://127.0.0.1:${address.port}/`, { waitUntil: "networkidle" });
   assert.equal(await page.locator(".header-save-status").innerText(), "Saved locally", "the seeded reference project is saved in browser storage on first open");
-  assert.match(await page.locator(".footer-ready").innerText(),/^READY · Studio Mood \/ Scene 01 · 3D \/ Virtual DMX · Project saved$/,"footer status matches the approved project, scene, mode, and save summary");
+  assert.match(await page.locator(".footer-ready").innerText(),/^● READY · Studio Mood \/ Scene 01 · 3D \/ Virtual DMX · Project saved$/,"footer status matches the approved project, scene, mode, and save summary");
 
   const reports = [];
   for (const [width, height] of viewports) {
