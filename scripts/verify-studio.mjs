@@ -106,7 +106,7 @@ try {
       const scrollTop=await page.locator("#fixture-inspector-panel").evaluate(panel=>{panel.scrollTop=panel.scrollHeight;return panel.scrollTop;});
       assert.ok(scrollTop>0,"short viewport provides independent fixture-inspector scrolling");
       assert.deepEqual(await page.locator(".scene-preview").boundingBox(),canvasBefore,"inspector scrolling leaves the central canvas stationary");
-      assert.deepEqual(await page.evaluate(()=>[document.documentElement.scrollWidth,document.documentElement.scrollHeight]),dimensionsBefore,"inspector scrolling does not scroll the document");
+      assert.deepEqual(await page.evaluate(()=>[globalThis.document.documentElement.scrollWidth,globalThis.document.documentElement.scrollHeight]),dimensionsBefore,"inspector scrolling does not scroll the document");
       await page.locator("#fixture-inspector-panel").evaluate(panel=>panel.scrollTop=0);
     }
     assert.ok(Math.abs(report.scene.x - report.dock.x) <= 1, `canvas and dock share the same left edge at ${width}×${height}`);
