@@ -210,11 +210,12 @@ try {
   const effectsBottom = await page.locator(".inspector-group-effects").evaluate((element) => element.getBoundingClientRect().bottom);
   const luxTop = await page.locator(".lux-panel.is-docked").evaluate((element) => element.getBoundingClientRect().top);
   assert.ok(effectsBottom <= luxTop, `Effects remain visible above docked Lux (effects bottom ${effectsBottom}, Lux top ${luxTop})`);
-  for (let index = 0; index < 4; index += 1) await page.locator("#add-fixture").click();
   await page.locator('[data-module="library"]').click();
   assert.equal(await page.locator('.fixture-library [data-profile="generic-led-strip-rgb"]').count(), 1, "the library exposes the tested virtual LED strip profile");
-  for (let index = 0; index < 2; index += 1) await page.locator('.fixture-library [data-profile="generic-led-strip-rgb"]').click();
   await page.locator('[data-module="light"]').click();
+  assert.equal(await page.locator("[data-layer-fixture]").count(), 9, "the Studio Mood starter project opens with the nine real virtual fixtures in the approved composition");
+  await page.locator("[data-layer-fixture]").last().click();
+  assert.match(await page.locator(".inspector > .section-title h2").innerText(), /LED Strip RGB 9/, "the reference LED strip is selected on first open");
   assert.equal(await page.locator("[data-layer-fixture]").count(), 9, "the fixture list contains the nine real virtual fixtures in the target composition");
   const visibleFixtureCount=await page.locator(".fixture-layer-list").evaluate((list)=>[...list.querySelectorAll("[data-layer-fixture]")].filter((button)=>{const row=button.getBoundingClientRect(),area=list.getBoundingClientRect();return row.top>=area.top&&row.bottom<=area.bottom;}).length);
   assert.equal(visibleFixtureCount, 9, "all nine reference fixtures fit in the visible left list at 1754×878");
@@ -227,7 +228,7 @@ try {
   assert.equal(await page.locator("#fixture-blue-channel-value").innerText(), "78%", "the screenshot shows the staged reference channel value");
   assert.equal(await page.locator("#fixture-colour-hex").innerText(), "#2196F3", "staging the blue value leaves the applied fixture colour unchanged");
   await page.locator("#reset-camera").click();
-  await page.screenshot({ path: resolve("outputs", "studio-scroll-acceptance-1754x878.png") });
+  await page.screenshot({ path: resolve("outputs", "studio-acceptance-reference-1754x878.png") });
   for (let index = 0; index < 2; index += 1) await page.locator("#add-fixture").click();
   const fixtureList = page.locator(".fixture-layer-list");
   const fixtureListScroll = await fixtureList.evaluate((element) => {
