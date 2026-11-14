@@ -313,9 +313,13 @@ try {
     assert.equal(await page.locator(`#fixture-inspector-panel ${selector}`).evaluate((element) => element.open), false, `${selector} keeps secondary controls compact by default`);
   }
   assert.match(await page.locator("#fixture-inspector-panel").innerText(), /Type\s+[\s\S]*?Mode\s+/, "fixture type and channel mode are identified from its real profile");
-  const effectsBottom = await page.locator(".inspector-group-effects").evaluate((element) => element.getBoundingClientRect().bottom);
   const luxTop = await page.locator(".lux-panel.is-docked").evaluate((element) => element.getBoundingClientRect().top);
-  assert.ok(effectsBottom <= luxTop, `Effects remain visible above docked Lux (effects bottom ${effectsBottom}, Lux top ${luxTop})`);
+  const canvasBeforeInspectorScroll=await page.locator(".scene-preview").boundingBox();
+  await page.locator("#play-effect").scrollIntoViewIfNeeded();
+  const effectActionBottom=await page.locator("#play-effect").evaluate((element)=>element.getBoundingClientRect().bottom);
+  assert.ok(effectActionBottom<=luxTop,`scrolling reveals the Effects action above docked Lux (action bottom ${effectActionBottom}, Lux top ${luxTop})`);
+  assert.deepEqual(await page.locator(".scene-preview").boundingBox(),canvasBeforeInspectorScroll,"opening the scrolled effect action leaves the canvas stationary");
+  await page.locator("#fixture-inspector-panel").evaluate((panel)=>panel.scrollTop=0);
   await page.locator('[data-module="library"]').click();
   assert.equal(await page.locator('.fixture-library [data-profile="generic-led-strip-rgb"]').count(), 1, "the library exposes the tested virtual LED strip profile");
   await page.locator('[data-module="light"]').click();
