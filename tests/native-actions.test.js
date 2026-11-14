@@ -10,7 +10,7 @@ test("native fixture actions require confirmation and share project undo with re
   const initial=state(),request=call("add_fixture",{profileId:"generic-rgb-wash"});
   assert.throws(()=>commitNativeToolAction(initial,request),/confirmation/);
   const result=commitNativeToolAction(initial,request,{confirmed:true});
-  assert.equal(result.project.fixtures.length,4);assert.equal(initial.project.fixtures.length,3);
+  assert.equal(result.project.fixtures.length,10);assert.equal(initial.project.fixtures.length,9);
   assert.equal(result.receipt.physicalOutput,false);assert.ok(result.receipt.historyId);
   assert.deepEqual(undoTransaction(result).project,initial.project);
 });
