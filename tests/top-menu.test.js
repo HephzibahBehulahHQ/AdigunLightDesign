@@ -16,7 +16,7 @@ test("top menu preserves requested order and treats anonymous or absent sessions
 test("Help opens the current project guide from main",()=>{
   const controls=new Map(["account-menu","settings-menu","search-menu","help-menu"].map(id=>[`#${id}`,{
     setAttribute(){},addEventListener(){},getBoundingClientRect(){return {left:10,right:90,top:0,bottom:30};}
-  ]));let dialog;
+  } ]));let dialog;
   const documentRef={
     body:{append(node){dialog=node;}},
     createElement:()=>({
