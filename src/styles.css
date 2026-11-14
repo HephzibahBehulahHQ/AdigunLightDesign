@@ -254,7 +254,7 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
   .command-group>span { position:absolute; top:0; left:0; align-self:flex-start; padding:0 4px; color:var(--cyan); font-size:10px; text-transform:uppercase; font-weight:800; }
   .command-ribbon button { height:29px; min-width:36px; padding:4px 9px; border-radius:5px; background:#182237; font-size:11px; }
   .command-ribbon button:disabled { opacity:.46; }
-  .editor-layout { grid-template-columns:clamp(210px,13.3vw,248px) minmax(0,1fr) clamp(248px,19vw,296px); grid-template-rows:34px minmax(0,1fr) minmax(128px,16dvh); width:auto; height:calc(100dvh - 176px); min-width:0; min-height:0; max-height:calc(100dvh - 176px); gap:8px; padding:2px 10px 14px; overflow:hidden; align-items:stretch; }
+  .editor-layout { grid-template-columns:clamp(210px,13.2vw,248px) minmax(0,1fr) clamp(248px,19vw,296px); grid-template-rows:34px minmax(0,1fr) minmax(128px,16dvh); width:auto; height:calc(100dvh - 176px); min-width:0; min-height:0; max-height:calc(100dvh - 176px); gap:8px; padding:2px 10px 14px 12px; overflow:hidden; align-items:stretch; }
   .left-rail,.inspector { min-width:0; min-height:0; }
   .work-area { display:contents; }
   .left-rail { display:grid; grid-template-rows:32px min-content min-content min-content minmax(0,1fr) min-content min-content; grid-column:1; grid-row:1 / 4; overflow-x:hidden; overflow-y:auto; overscroll-behavior:contain; }
@@ -273,11 +273,11 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
   .tool-list .tool { display:flex; align-items:center; min-width:0; min-height:30px; height:30px; overflow:hidden; gap:3px; padding:4px 5px; font-size:11px; white-space:nowrap; text-overflow:ellipsis; }
   .tool-list .tool span { display:inline-flex; align-items:center; width:17px; flex:0 0 17px; font-size:13px; }
   .tool-list [data-tool="aiPin"] { display:none; }
-  .workspace-tabs { grid-column:2; grid-row:1; min-height:34px; min-width:0; }
+  .workspace-tabs { grid-column:2; grid-row:1; min-height:34px; min-width:0; margin-left:6px; }
   .workspace-tabs .tab,.workspace-tabs .view-menu { height:30px; padding:5px 12px; }
-  .scene-preview,.scene-preview.light-canvas { grid-column:2; grid-row:2; min-height:0; min-width:0; }
+  .scene-preview,.scene-preview.light-canvas { grid-column:2; grid-row:2; min-height:0; min-width:0; margin-left:6px; }
   .inspector { grid-column:3; grid-row:1 / 4; max-height:none; overflow:hidden; }
-  .lower-workspace { grid-column:2; grid-row:3; min-width:0; min-height:0; grid-template-columns:minmax(0,.5fr) minmax(0,1fr); }
+  .lower-workspace { grid-column:2; grid-row:3; min-width:0; min-height:0; margin-left:6px; grid-template-columns:minmax(0,.507fr) minmax(0,1fr); }
   .palette-panel > .section-title { min-height:32px; padding:5px 9px; }
   .palette-panel > .swatches { gap:5px; padding:7px 8px 5px; }
   .palette-panel .swatch > span { height:30px; }
