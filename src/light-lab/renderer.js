@@ -143,8 +143,9 @@ function lightGeometry(data, light,includeBeams=true,beamSegments=16) {
   }
   if (includeBeams && light.colour.some((value)=>value>0)) data.push(...beamVolume(light,beamSegments));
 }
-export function surfaceLighting(position, baseColour, lights, normal) {
-  const result=baseColour.map((value)=>value*.7);
+export function surfaceLighting(position, baseColour, lights, normal, ambience) {
+  const tint=hexVector(ambience?.color ?? "#FFFFFF"),fill=Math.max(0,Math.min(.35,(ambience?.intensity ?? 0)*.35));
+  const result=baseColour.map((value,index)=>value*(.7-fill)+tint[index]*fill);
   const normalLength=normal ? Math.hypot(...normal) : 0;
   for (const light of lights) {
     const distance=Math.hypot(position[0]-light.x,position[1]-light.y,position[2]-light.z);
@@ -378,7 +379,55 @@ export function studioWallArt(data, room, frameColour) {
   }
 }
 
-export function sceneData(accent, fixtures, visibility={}, room,includeBeams=true,materials={},quality="balanced",stage) {
+function roomPresetFurniture(data,type,accent){
+  const timber=hexVector("#65452F"),darkWood=hexVector("#3E2D27"),metal=hexVector("#26313B"),soft=hexVector("#75899B");
+  const bookColours=["#B85C50","#D4AF37","#356A80","#8B6CAA"].map(hexVector);
+  if(type==="library"){
+    for(const x of [-4.25,-1.8,.65,3.1]){box(data,x,0,3.1,1.1,2.8,.42,darkWood);for(let y=.55;y<2.8;y+=.58)box(data,x+.04,y,3.04,1.02,.06,.5,timber);for(let j=0;j<5;j++)box(data,x+.12+j*.18,.62,3.08,.12,.34,.22,bookColours[j%4]);}
+    box(data,-1.25,.72,-.5,2.5,.12,1.1,timber);for(const x of [-1.1,1])box(data,x,.05,-.4,.1,.68,.1,metal);
+    box(data,1.25,.05,-.4,.55,.72,.55,soft);box(data,1.25,.72,-.65,.55,.55,.1,soft);
+  } else if(type==="kitchen"){
+    for(const x of [-4,-2.7,-1.4,.0,1.4,2.8]){box(data,x,0,3,1.25,.9,.62,soft);box(data,x,.92,3,1.25,.08,.7,timber);box(data,x,1.65,3,1.25,.7,.42,soft);}
+    box(data,-1.4,.95,-1.65,3.2,.12,1.25,timber);for(const x of [-1.1,1.6])for(const z of [-1.4,-.75])box(data,x,.05,z,.1,.88,.1,metal);
+    box(data,-3.8,1.02,2.85,.72,.06,.45,metal);box(data,.6,1.03,2.8,.82,.08,.5,hexVector("#A8D8DC"));
+  } else if(type==="bathroom"){
+    box(data,-4,0,2.95,2.5,2.25,.16,hexVector("#A8DCE5"));box(data,-4,0,2.82,.08,2.3,.12,metal);box(data,-1.5,0,2.95,.08,2.3,.12,metal);
+    box(data,1.1,0,2.35,3.2,.55,1.25,hexVector("#E5E8E7"));box(data,1.25,.56,2.5,2.9,.08,.95,hexVector("#BCE3E9"));
+    box(data,-3.8,0,-1.8,2.1,.9,.7,timber);box(data,-3.65,.9,-1.72,1.8,.12,.58,hexVector("#E6F0F0"));box(data,-2.9,1.03,-1.45,.28,.06,.3,metal);
+  } else if(type==="toilet"){
+    box(data,-1.1,.05,1.45,1.05,.48,1.15,hexVector("#E2E8E8"));box(data,-1.06,.08,1.38,.97,.43,1.13,hexVector("#F5F7F6"));box(data,-1.02,.5,2.3,.9,1.15,.25,hexVector("#D9E0E0"));box(data,-1.02,1.32,2.32,.9,.12,.22,metal);
+    box(data,1.7,.88,2.25,1.7,.12,.72,hexVector("#E8ECEA"));box(data,2.18,.98,2.48,.46,.08,.34,hexVector("#B6D8DC"));box(data,1.95,0,-1.4,1.15,.8,.55,soft);
+    box(data,-3.8,0,2.7,.08,2.5,.12,metal);box(data,-.2,0,2.7,.08,2.5,.12,metal);
+  } else if(type==="garage"){
+    for(const x of [-4.1,3]){for(const y of [.65,1.35,2.05])box(data,x,y,2.8,1.1,.08,.65,timber);for(let j=0;j<4;j++)box(data,x+.12+j*.22,.75,2.86,.14,.48,.24,bookColours[j%4]);}
+    box(data,-4,.8,-2.5,2.1,.12,.8,timber);for(const x of [-3.8,-2.2])box(data,x,.05,-2.35,.1,.75,.1,metal);
+    box(data,-1.6,.35,-.65,3.3,.58,2.4,hexVector("#566D7C"));box(data,-1.05,.93,-.4,2.2,.62,1.85,soft);
+    for(const x of [-1.05,1.05])for(const z of [-.35,1.15])box(data,x,.12,z,.35,.55,.18,metal);
+    box(data,-.4,1.2,-.2,.9,.09,.28,hexVector("#9AB4BF"));
+  } else if(type==="hallway"){
+    box(data,-4.2,0,2.7,1.5,2.5,.12,darkWood);box(data,-4,0,2.56,1.15,2.25,.06,timber);
+    box(data,.6,.8,2.45,3,.12,.62,timber);for(const x of [.8,3])box(data,x,.05,2.5,.08,.75,.08,metal);
+    box(data,-3.2,1.25,2.35,1.1,1.5,.07,hexVector("#8EABB3"));
+    box(data,1.3,.35,-1.1,2.2,.35,.7,soft);for(const x of [1.45,3.2])box(data,x,.04,-1,.1,.3,.1,metal);
+  } else if(type==="swimming-pool"){
+    box(data,-4.3,.05,-2.35,8.6,.42,4.7,hexVector("#56818E"));
+    data.push(...surfaceGrid([-4,.24,-2.05],[8,0,0],[0,0,4.1],()=>[.08,.48,.68],16,12));
+    for(const x of [-4.45,4.05])for(const z of [-1.8,1.5])box(data,x,.2,z,.07,1.6,.07,metal);
+    for(let y=.4;y<1.6;y+=.32)box(data,-4.46,y,1.5,.1,.07,.8,metal);
+    for(const x of [-4,2.5]){box(data,x,.06,-3.4,1.5,.1,.8,soft);box(data,x+.12,.16,-3.3,1.25,.18,.65,hexVector("#DCE6E8"));}
+  } else if(type==="disco-party"){
+    box(data,-4.4,.12,2.3,8.8,.26,1.2,darkWood);box(data,-1.4,.4,2.0,2.8,1.05,.55,timber);
+    for(const x of [-4.5,3.35])box(data,x,.05,2.35,1.1,2.6,.55,metal);
+    for(const x of [-3,-1,1,3])box(data,x,.45,-.25,.92,.03,.92,x%2?accent:hexVector("#29D4E6"));
+    for(const x of [-4.1,3.5])box(data,x,1.15,-.1,.55,2.1,.5,metal);
+    for(const x of [-3.8,3.7])box(data,x,1.8,-.08,.22,.32,.08,accent);
+  } else if(type==="clubhouse"){
+    box(data,-4.1,.95,2.8,8.2,.16,.8,timber);box(data,-4.1,0,2.82,8.2,.95,.35,darkWood);
+    for(const x of [-3,0,3]){data.push(...roundTableTop(x,.76,-1.1,.72,.07,timber));for(const dx of [-.5,.4])for(const z of [-1.55,-.65])box(data,x+dx,.05,z,.09,.7,.09,metal);}
+    for(const x of [-3.65,3.15])for(const y of [.6,1.4,2.2])box(data,x,y,2.65,.45,.12,.1,hexVector("#C77A46"));
+  }
+}
+export function sceneData(accent, fixtures, visibility={}, room,includeBeams=true,materials={},quality="balanced",stage,ambience,roomType="living-room") {
   const data=[],floor=hexVector(materials.floor ?? "#4A3431"),wall=hexVector(materials.wall ?? "#27324A"),couch=hexVector("#9C4F48"),wood=hexVector("#67442F"),metal=hexVector("#151D2D");
   const {width,height,depth}=roomDimensions(room);
   const budget=previewQuality(quality);
@@ -403,55 +452,58 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
   const platform=stageSettings(stage);
   if(platform.enabled)box(data,platform.x,platform.y,platform.z,platform.width,platform.height,platform.depth,hexVector(platform.color));
   const furnitureStart=data.length;
-  box(data,-2.45,.01,-.95,4.9,.02,3.65,hexVector("#342647"));
-  const rugColour=hexVector("#665477");
-  data.push(...surfaceGrid([-2.36,.037,-.86],[4.72,0,0],[0,0,3.47],(column,row)=>{
-    const x=(column+.5)/24*4.72-2.36;
-    const z=(row+.5)/18*3.47-.86;
-    const layoutX=x/studioPropsScale,layoutZ=z/studioPropsScale;
-    const sofaShadow=Math.exp(-((layoutX/1.65)**4+((layoutZ-1.62)/.65)**2));
-    const tableShadow=Math.exp(-(((layoutX+.2)/.88)**2+((layoutZ-.25)/.76)**2));
-    return rugColour.map(channel=>channel*(1-.3*sofaShadow-.24*tableShadow));
-  },24,18));
-  data.push(...studioRugBorder(-2.36,-.86,4.72,3.47,hexVector("#8F654C"),hexVector("#C1A073")));
-  data.push(...studioRugPattern(-2.21,-.71,4.42,3.17,hexVector("#B8A17C")));
-  box(data,-1.7,.25,1.4,3.4,.8,.75,couch);
-  const backCushionColour=couch.map(value=>Math.min(1,value*1.2));
-  for(let index=0;index<3;index++)data.push(...studioBackCushion(-1.45+index*.97,1.05,1.55,.93,.55,.35,backCushionColour));
-  box(data,-1.9,.25,1.3,.3,1,.95,couch);
-  box(data,1.6,.25,1.3,.3,1,.95,couch);
-  data.push(...roundTableTop(-.2,.65,.25,.85,.055,metal));
-  data.push(...roundTableTop(.75,.5,-.15,.45,.045,metal));
-  for (const x of [-.75,.3]) for (const z of [-.15,.65]) box(data,x,.04,z,.035,.61,.035,metal);
-  for (const x of [.5,.95]) for (const z of [-.35,.05]) box(data,x,.04,z,.03,.46,.03,metal);
-  const cushionHighlight=couch.map(value=>Math.min(1,value*1.12));
-  const cushionThread=couch.map(value=>value*.78);
-  for(let index=0;index<3;index++) {
-    const cushionX=-1.55+index*1.03;
-    data.push(...studioSeatCushion(cushionX,.97,1.32,.95,.72,.12,cushionHighlight));
-    sofaCushionPiping(data,cushionX,1.091,1.32,.95,.72,cushionThread);
-  }
-  box(data,-1.45,1.15,1.33,.45,.42,.18,hexVector("#E5AE66"));
-  box(data,1,1.15,1.33,.45,.42,.18,accent);
-  const upholsteryShadow=couch.map(channel=>channel*.64);
-  box(data,-1.64,.35,1.38,3.28,.055,.04,upholsteryShadow);
-  for (const x of [-1.55,1.46]) {
-    for (const z of [1.45,2.03]) box(data,x,.04,z,.09,.22,.09,metal);
-  }
-  box(data,-.85,1.08,1.39,.48,.31,.15,hexVector("#B87761"));
-  box(data,.48,1.08,1.39,.45,.31,.15,hexVector("#5E536B"));
-  for (const x of [3.6,4.7]) box(data,x,0,2.5,.08,2.8,.45,wood);
-  for (const y of [.1,.8,1.5,2.2,2.75]) box(data,3.6,y,2.5,1.18,.07,.45,wood);
-  for (let index=0;index<4;index+=1) box(data,3.85+index*.16,.87,2.6,.1,.4,.22,index%2 ? accent : hexVector("#D4AF37"));
-  for(const lamp of shelfLamps) studioShelfLamp(data,lamp.x,lamp.y-.24,lamp.z);
-  data.push(...studioPlant(-3.65,1.8,2.4),...studioPlant(2.8,2.3,1.9));
-  data.push(...studioAccentChair(-3.4,.05));
-  box(data,-2.65,0,1.55,.35,.06,.35,metal);
-  box(data,-2.51,.06,1.69,.035,1.85,.035,metal);
-  box(data,-2.62,1.83,1.58,.25,.17,.25,hexVector("#E6BA75"));
+  if ((roomType ?? "living-room")==="living-room") {
+    box(data,-2.45,.01,-.95,4.9,.02,3.65,hexVector("#342647"));
+    const rugColour=hexVector("#665477");
+    data.push(...surfaceGrid([-2.36,.037,-.86],[4.72,0,0],[0,0,3.47],(column,row)=>{
+      const x=(column+.5)/24*4.72-2.36;
+      const z=(row+.5)/18*3.47-.86;
+      const layoutX=x/studioPropsScale,layoutZ=z/studioPropsScale;
+      const sofaShadow=Math.exp(-((layoutX/1.65)**4+((layoutZ-1.62)/.65)**2));
+      const tableShadow=Math.exp(-(((layoutX+.2)/.88)**2+((layoutZ-.25)/.76)**2));
+      return rugColour.map(channel=>channel*(1-.3*sofaShadow-.24*tableShadow));
+    },24,18));
+    data.push(...studioRugBorder(-2.36,-.86,4.72,3.47,hexVector("#8F654C"),hexVector("#C1A073")));
+    data.push(...studioRugPattern(-2.21,-.71,4.42,3.17,hexVector("#B8A17C")));
+    box(data,-1.7,.25,1.4,3.4,.8,.75,couch);
+    const backCushionColour=couch.map(value=>Math.min(1,value*1.2));
+    for(let index=0;index<3;index++)data.push(...studioBackCushion(-1.45+index*.97,1.05,1.55,.93,.55,.35,backCushionColour));
+    box(data,-1.9,.25,1.3,.3,1,.95,couch);
+    box(data,1.6,.25,1.3,.3,1,.95,couch);
+    data.push(...roundTableTop(-.2,.65,.25,.85,.055,metal));
+    data.push(...roundTableTop(.75,.5,-.15,.45,.045,metal));
+    for (const x of [-.75,.3]) for (const z of [-.15,.65]) box(data,x,.04,z,.035,.61,.035,metal);
+    for (const x of [.5,.95]) for (const z of [-.35,.05]) box(data,x,.04,z,.03,.46,.03,metal);
+    const cushionHighlight=couch.map(value=>Math.min(1,value*1.12));
+    const cushionThread=couch.map(value=>value*.78);
+    for(let index=0;index<3;index++) {
+      const cushionX=-1.55+index*1.03;
+      data.push(...studioSeatCushion(cushionX,.97,1.32,.95,.72,.12,cushionHighlight));
+      sofaCushionPiping(data,cushionX,1.091,1.32,.95,.72,cushionThread);
+    }
+    box(data,-1.45,1.15,1.33,.45,.42,.18,hexVector("#E5AE66"));
+    box(data,1,1.15,1.33,.45,.42,.18,accent);
+    const upholsteryShadow=couch.map(channel=>channel*.64);
+    box(data,-1.64,.35,1.38,3.28,.055,.04,upholsteryShadow);
+    for (const x of [-1.55,1.46]) {
+      for (const z of [1.45,2.03]) box(data,x,.04,z,.09,.22,.09,metal);
+    }
+    box(data,-.85,1.08,1.39,.48,.31,.15,hexVector("#B87761"));
+    box(data,.48,1.08,1.39,.45,.31,.15,hexVector("#5E536B"));
+    for (const x of [3.6,4.7]) box(data,x,0,2.5,.08,2.8,.45,wood);
+    for (const y of [.1,.8,1.5,2.2,2.75]) box(data,3.6,y,2.5,1.18,.07,.45,wood);
+    for (let index=0;index<4;index+=1) box(data,3.85+index*.16,.87,2.6,.1,.4,.22,index%2 ? accent : hexVector("#D4AF37"));
+    for(const lamp of shelfLamps) studioShelfLamp(data,lamp.x,lamp.y-.24,lamp.z);
+    data.push(...studioPlant(-3.65,1.8,2.4),...studioPlant(2.8,2.3,1.9));
+    data.push(...studioAccentChair(-3.4,.05));
+    box(data,-2.65,0,1.55,.35,.06,.35,metal);
+    box(data,-2.51,.06,1.69,.035,1.85,.035,metal);
+    box(data,-2.62,1.83,1.58,.25,.17,.25,hexVector("#E6BA75"));
+  
+  } else roomPresetFurniture(data,roomType,accent);
   const furnitureEnd=data.length;
   scaleGeometryPositions(data,furnitureStart,furnitureEnd,studioPropsScale);
-  studioWallArt(data,{width,height,depth},wood);
+  if ((roomType ?? "living-room")==="living-room") studioWallArt(data,{width,height,depth},wood);
   }
   const rigStart=data.length;
   for (const y of [3.7,3.95]) box(data,-4,y,.4,8,.06,.06,metal);
@@ -474,7 +526,7 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
     const normal=[ab[1]*ac[2]-ab[2]*ac[1],ab[2]*ac[0]-ab[0]*ac[2],ab[0]*ac[1]-ab[1]*ac[0]];
     const lights=triangle>=rearWallStart && triangle<rearWallEnd ? rearSurfaceLights : surfaceLights;
     for (const offset of [triangle,triangle+6,triangle+12]) {
-      const colour=surfaceLighting(data.slice(offset,offset+3),data.slice(offset+3,offset+6),lights,normal);
+      const colour=surfaceLighting(data.slice(offset,offset+3),data.slice(offset+3,offset+6),lights,normal,ambience);
       for (let channel=0;channel<3;channel+=1) data[offset+3+channel]=colour[channel];
     }
   }
@@ -482,8 +534,8 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
   return new Float32Array(data);
 }
 
-export function sceneBuffers(accent,fixtures,visibility={},room,materials={},quality="balanced",stage) {
-  const opaque=sceneData(accent,fixtures,visibility,room,false,materials,quality,stage);
+export function sceneBuffers(accent,fixtures,visibility={},room,materials={},quality="balanced",stage,ambience,roomType="living-room") {
+  const opaque=sceneData(accent,fixtures,visibility,room,false,materials,quality,stage,ambience,roomType);
   const budget=previewQuality(quality);
   const beams=virtualFixtureVisuals(visibility.lighting===false ? [] : fixtures,budget.fixtures).filter((light)=>light.colour.some((value)=>value>0)).flatMap((light)=>beamVolume(light,budget.beamSegments));
   const data=new Float32Array(opaque.length+beams.length);
@@ -491,7 +543,7 @@ export function sceneBuffers(accent,fixtures,visibility={},room,materials={},qua
   return {data,opaqueVertices:opaque.length/6};
 }
 
-export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = [], visibility = {}, room, materials={}, stage, quality="balanced", projection = "perspective", camera={}, onSelect=()=>{},onTransform=()=>{} } = {}) {
+export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = [], visibility = {}, room, roomType="living-room", ambience, materials={}, stage, quality="balanced", projection = "perspective", camera={}, onSelect=()=>{},onTransform=()=>{} } = {}) {
   const gl = canvas.getContext("webgl", { antialias:true, alpha:false });
   if (!gl) return { supported:false, destroy(){}, reset(){}, setAccent(){}, setFixtures(){} };
   const program=gl.createProgram(),vertexShader=compile(gl,gl.VERTEX_SHADER,vertexSource),fragmentShader=compile(gl,gl.FRAGMENT_SHADER,fragmentSource);
@@ -505,7 +557,7 @@ export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = 
     const ratio=Math.min(window.devicePixelRatio||1,previewQuality(quality).pixelRatio),width=Math.max(1,canvas.clientWidth),height=Math.max(1,canvas.clientHeight);
     gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
     if (!geometry) {
-      geometry=sceneBuffers(hexVector(selectedAccent),virtualFixtures,visibility,room,materials,quality,stage);
+      geometry=sceneBuffers(hexVector(selectedAccent),virtualFixtures,visibility,room,materials,quality,stage,ambience,roomType);
       gl.bufferData(gl.ARRAY_BUFFER,geometry.data,gl.STATIC_DRAW);
     }
     const pixelWidth=Math.max(1,Math.round(width*ratio)),pixelHeight=Math.max(1,Math.round(height*ratio));
@@ -531,7 +583,7 @@ export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = 
       pickTargets=virtualFixtureVisuals(virtualFixtures,previewQuality(quality).fixtures).map((point,index)=>({...point,id:virtualFixtures[index].id,housing:fixtureHousing(point)}));
     }
     const candidates=pickTargets;
-    const occluders=pickOccluders ?? (pickOccluders=sceneData([0,0,0],[],visibility,room,false,materials,quality,stage));
+    const occluders=pickOccluders ?? (pickOccluders=sceneData([0,0,0],[],visibility,room,false,materials,quality,stage,ambience,roomType));
     const x=event.clientX-bounds.left,y=event.clientY-bounds.top,ray=viewportRay(viewProjection,x,y,bounds.width,bounds.height);
     if(ray){
       let selected=null,nearest=Infinity;

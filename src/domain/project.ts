@@ -6,6 +6,7 @@ import {roomDimensions} from "./room.ts";
 import {validSceneMaterials} from "./scene-materials.ts";
 import {validCanvasObjects} from "./canvas.ts";
 import {stageSettings} from "./stage.ts";
+import {isRoomPresetId} from "./room-presets.js";
 import type {Cue} from "../timeline/types.ts";
 
 export const CURRENT_SCHEMA_VERSION = 1;
@@ -157,6 +158,8 @@ export function validateProject(input: unknown): ProjectValidationResult {
       const visibility = asRecord(scene.visibility);
       if (scene.visibility !== undefined && (!visibility || !Object.entries(visibility).every(([key, value]) => ["lighting", "props", "palette"].includes(key) && typeof value === "boolean"))) errors.push("Scene visibility requires boolean layer settings.");
       if (typeof scene.materialColor !== "string" || !/^#[0-9a-f]{6}$/i.test(scene.materialColor)) errors.push("Scene material color must be a six-digit HEX value.");
+      if (scene.roomType !== undefined && !isRoomPresetId(scene.roomType)) errors.push("Scene room type is unsupported.");
+      if (scene.ambience !== undefined) { const ambience=asRecord(scene.ambience); if (!ambience || typeof ambience.color !== "string" || !/^#[0-9a-f]{6}$/i.test(ambience.color) || typeof ambience.intensity !== "number" || !Number.isFinite(ambience.intensity) || ambience.intensity<0 || ambience.intensity>1) errors.push("Scene ambience requires a HEX color and intensity between zero and one."); }
     }
   }
   return {valid: errors.length === 0, errors};
