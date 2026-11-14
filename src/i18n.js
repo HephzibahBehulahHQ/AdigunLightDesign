@@ -350,3 +350,9 @@ Object.assign(messages.en,{fixtureOutputNote:"Virtual output only · CH 1–512"
 Object.assign(messages.de,{fixtureOutputNote:"Nur virtuelle Ausgabe · Kanäle 1–512"});
 Object.assign(messages.yo,{fixtureOutputNote:"Ìjáde àfojúsùn nìkan · Chánẹ́lì 1–512"});
 Object.assign(messages.pcm,{fixtureOutputNote:"Na virtual output only · CH 1–512"});
+
+
+Object.assign(messages.en,{startAddress:"Start",applyFixtureProperties:"Apply fixture properties",applyPatch:"Apply patch"});
+Object.assign(messages.de,{startAddress:"Startadresse",applyFixtureProperties:"Leuchteneigenschaften anwenden",applyPatch:"Patch anwenden"});
+Object.assign(messages.yo,{startAddress:"Ìbẹ̀rẹ̀",applyFixtureProperties:"Lo àwọn ànímọ́ ẹ̀rọ ìmọ́lẹ̀",applyPatch:"Lo patch"});
+Object.assign(messages.pcm,{startAddress:"Start",applyFixtureProperties:"Apply fixture properties",applyPatch:"Apply patch"});
