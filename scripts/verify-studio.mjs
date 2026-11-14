@@ -262,6 +262,19 @@ try {
   assert.ok(exportBounds.x>=0&&exportBounds.x+exportBounds.width<=1754&&exportBounds.y>=0&&exportBounds.y+exportBounds.height<=878,"the right-edge Export menu repositions within the viewport");
   await page.locator(".footer-ready").click();
 
+  const toolsToggle=page.locator("#toggle-tools");
+  assert.equal(await toolsToggle.getAttribute("aria-expanded"),"false","Tools is collapsed initially");
+  const fixtureListTall=await page.locator(".fixture-layer-list").boundingBox();
+  await toolsToggle.click();
+  assert.equal(await toolsToggle.getAttribute("aria-expanded"),"true","clicking Tools opens the tool grid");
+  assert.equal(await page.locator('[data-tool="shapes"]').isVisible(),true,"tools are available from the expanded menu");
+  const fixtureListShort=await page.locator(".fixture-layer-list").boundingBox();
+  assert.ok(fixtureListTall.height>fixtureListShort.height+20,"the fixture list gains sidebar height when Tools is collapsed");
+  await toolsToggle.click();
+  assert.equal(await toolsToggle.getAttribute("aria-expanded"),"false","clicking Tools again collapses the tool grid");
+  assert.equal(await page.locator('[data-tool="shapes"]').isVisible(),false,"collapsed tools do not occupy the sidebar");
+  await toolsToggle.click();
+
   await page.locator('[data-tool="shapes"]').click();
   assert.equal(await page.locator(".design-canvas [data-canvas-object]").count(), 1, "Shapes adds an editable canvas object");
   await page.locator('[data-tool="text"]').click();
@@ -291,6 +304,7 @@ try {
   assert.match(await page.locator("#scene-select option:checked").innerText(), /Secondary room/, "scene selector switches to the selected project scene");
   assert.match(await page.locator(".footer-ready").innerText(),/Scene 02/,"footer scene number updates when the active scene changes");
   assert.equal(await page.locator(".design-canvas [data-canvas-object]").count(), 0, "scene selection shows its own canvas objects");
+  await page.locator("#toggle-tools").click();
   await page.locator('[data-tool="shapes"]').click();
   assert.equal(await page.locator(".design-canvas [data-canvas-object]").count(), 1, "canvas editing writes to the selected scene");
   await page.locator("#scene-select").selectOption(firstSceneId);
@@ -393,7 +407,7 @@ try {
   await page.evaluate(()=>globalThis.globalThis.document.activeElement?.blur?.());
   await clickCommand("scene","#reset-camera");
   await page.screenshot({ path: resolve("outputs", "studio-acceptance-reference-1754x878.png") });
-  for (let index = 0; index < 2; index += 1) await clickCommand("fixtures","#add-fixture");
+  for (let index = 0; index < 12; index += 1) await clickCommand("fixtures","#add-fixture");
   const fixtureList = page.locator(".fixture-layer-list");
   const fixtureListScroll = await fixtureList.evaluate((element) => {
     const maxScroll = element.scrollHeight - element.clientHeight;
@@ -458,6 +472,7 @@ try {
   await page.waitForFunction(()=>globalThis.document.querySelector("#project-name")?.value==="Studio Mood");
   assert.equal(await page.locator("[data-layer-fixture]").count(),9,"Save then continue creates a fresh starter workspace");
   assert.equal(await page.locator(".header-save-status").innerText(),"Unsaved project","the fresh workspace is not mistaken for a saved project");
+  await page.locator("#toggle-tools").click();
   await page.locator('[data-tool="shapes"]').click();
   const beforeUnload=await page.evaluate(()=>{const event=new Event("beforeunload",{cancelable:true});globalThis.dispatchEvent(event);return event.defaultPrevented;});
   assert.equal(beforeUnload,true,"unsaved work registers the browser native leave warning");

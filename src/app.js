@@ -70,7 +70,7 @@ preferences.seed=normalizeHex(preferences.seed) ?? defaults.seed;
 if (!Object.hasOwn(previewQualities,preferences.previewQuality)) preferences.previewQuality="balanced";
 let projectPersisted=false;
 let projectDirty=false;
-let activeSavedProjectId=null;
+let activeSavedProjectId=null; let toolsExpanded=false;
 let luxProposal=null;
 let luxConfirmationPending=false;
 let viewportCamera=null;
@@ -455,7 +455,7 @@ function render() {
         <div class="left-rail-heading"><h2>${t("project")} • ${t("layers")} • ${t("tools")}</h2></div>
         <section class="project-heading"><div><input id="project-name" value="${esc(project.name)}" aria-label="${t("project")} name" />${sceneSelectMarkup()}</div></section>
         <section class="layer-section"><h2>▰ ${t("layers")}</h2><ul class="layer-list"><li>⌄ ▣ ${t("layersLighting")} <span>◉</span></li><li>⌄ ▣ ${t("layersPalette")} <span>◉</span></li><li>⌄ ▣ ${t("layersScene")} <span>◉</span></li></ul></section>
-        <section class="tool-section"><h2>☼ ${t("toolsOneClick")}</h2><div class="tool-list">${tools}</div></section>
+        <section class="tool-section"><h2><button type="button" id="toggle-tools" class="tool-section-toggle" aria-expanded="${toolsExpanded}" aria-controls="tool-list"><span>☼ ${t("toolsOneClick")}</span><span class="tools-caret" aria-hidden="true">${toolsExpanded ? "▴" : "▾"}</span></button></h2><div id="tool-list" class="tool-list" ${toolsExpanded ? "" : "hidden"}>${tools}</div></section>
       </aside>
       <section class="work-area">
         <div class="workspace-tabs panel"><strong class="studio-panel-title">${preferences.view === "light" ? `${t("sceneHeader")} ${String(displayedSceneNumber).padStart(2,"0")} / ${scene().id === "studio-room" ? t("mockupRoomTitle") : esc(scene().name)}` : `2D ${t("palette")} / ${esc(project.name)}`}</strong><small class="studio-panel-title-meta">${preferences.view === "light" ? t("viewportFixedHint") : t("palette")}</small><span></span><button id="viewport-projection" class="view-menu" ${preferences.view === "light" ? "" : disabled(t("select3d"))}>${t("perspective")}⌄</button></div>
@@ -1146,6 +1146,7 @@ function bind() {
   document.querySelector("#apply-colour").onclick = () => { const name = document.querySelector("#swatch-name").value.trim(), hex = normalizeHex(document.querySelector("#swatch-hex").value); if (!hex) return setStatus("Enter a valid 3- or 6-digit HEX value."); mutateColours((colours) => updateSwatch(colours, selected().id, { name:name || selected().name, hex })); };
   document.querySelector("#lock-swatch").onclick = () => mutateColours((colours) => updateSwatch(colours, selected().id, { locked:!selected().locked }));
   document.querySelector("#save").onclick = () => saveProject();
+  document.querySelector("#toggle-tools").onclick=()=>{toolsExpanded=!toolsExpanded;render();};
   document.querySelector("#new-project").onclick=createNewProject;
   document.querySelector("#undo").onclick = undo; document.querySelector("#redo").onclick = redo;
   document.querySelector("#toggle-lux").onclick = () => { preferences.luxOpen = !preferences.luxOpen; savePreferences(); render(); };
