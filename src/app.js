@@ -222,7 +222,21 @@ function openCloudProject(document) {
   saveProject();
   render();
 }
-async function importNativeProject(file) { const result=await readProjectFile(file); if(!result.valid) return setStatus(result.errors.join(" ")); stopPlayback(); project=prepareEditorProject(result.project); undoStack=[];redoStack=[];saveProject();status=`${project.name} imported locally.`;render(); }
+async function importNativeProject(file) { const result=await readProjectFile(file); if(!result.valid) return setStatus(result.errors.join(" ")); stopPlayback(); project=prepareEditorProject(result.project); undoStack=[];redoStack=[];saveProject();status=project.name+" opened locally.";render(); }
+function createNewProject() {
+  if (!window.confirm(t("confirmNewProject"))) return;
+  stopPlayback();
+  const locale=preferences.locale,theme=preferences.theme;
+  for (const key of Object.keys(preferences)) delete preferences[key];
+  Object.assign(preferences,defaults,{locale,theme,sceneId:"studio-room"});
+  project=createStudioMoodProject();
+  preferences.fixtureId=project.fixtures.at(-1)?.id;
+  undoStack=[];redoStack=[];
+  savePreferences();
+  saveProject();
+  status=project.name+" created locally.";
+  render();
+}
 function savePreferences() { if (!writeBrowserStorage(preferencesKey,JSON.stringify(preferences)).ok) status=t("preferencesNotSaved"); }
 function saveProject() {
   project.updatedAt = new Date().toISOString();
@@ -312,7 +326,7 @@ function render() {
       ${topMenuMarkup({t,locale:preferences.locale,saved:projectPersisted,user:account.user})}<button id="theme" type="button" hidden aria-label="${t("appearance")}"></button>
     </header>
     <nav class="module-nav" aria-label="${t("appModules")}">${nav}</nav>
-    <nav class="command-ribbon" aria-label="${t("tools")}"><div class="command-group" data-command-group="project"><span>${commandGroups.project}</span><button type="button" id="save">${t("save")}</button><button id="import-project">${t("importProject")}</button><input id="project-file" type="file" accept="application/json,.json" hidden /></div><div class="command-group" data-command-group="history"><span>${commandGroups.history}</span><button id="undo" ${undoStack.length ? "" : "disabled"}>↶ ${t("undo")}</button><button id="redo" ${redoStack.length ? "" : "disabled"}>↷ ${t("redo")}</button></div><div class="command-group" data-command-group="scene"><span>${commandGroups.scene}</span><button type="button" data-open-scene-editor="room">${t("roomCommand")}</button><button type="button" data-open-scene-editor="stage">${t("stageCommand")}</button></div><div class="command-group" data-command-group="palette"><span>${commandGroups.palette}</span></div><div class="command-group" data-command-group="fixtures"><span>${commandGroups.fixtures}</span></div><div class="command-group" data-command-group="export"><span>${commandGroups.export}</span><button data-export="project">Project JSON</button><button data-export="palette">Palette JSON</button><button data-export="css">CSS variables</button><button data-export="ase" title="${t("aseExportLimit")}">${t("aseExport")}</button><button data-export="patch">Patch CSV</button><button data-export="cues">Cue CSV</button></div></nav>
+    <nav class="command-ribbon" aria-label="${t("tools")}"><div class="command-group" data-command-group="project"><span>${commandGroups.project}</span><button type="button" id="new-project">＋ ${t("newProject")}</button><button id="open-project">${t("openProject")}</button><button type="button" id="save">${t("save")}</button><button id="import-image" title="${t("importImage")}" aria-label="${t("importImage")}">${t("importAction")}</button><input id="project-file" type="file" accept="application/json,.json" hidden /></div><div class="command-group" data-command-group="history"><span>${commandGroups.history}</span><button id="undo" ${undoStack.length ? "" : "disabled"}>↶ ${t("undo")}</button><button id="redo" ${redoStack.length ? "" : "disabled"}>↷ ${t("redo")}</button></div><div class="command-group" data-command-group="scene"><span>${commandGroups.scene}</span><button type="button" data-open-scene-editor="room">${t("roomCommand")}</button><button type="button" data-open-scene-editor="stage">${t("stageCommand")}</button></div><div class="command-group" data-command-group="palette"><span>${commandGroups.palette}</span></div><div class="command-group" data-command-group="fixtures"><span>${commandGroups.fixtures}</span></div><div class="command-group" data-command-group="export"><span>${commandGroups.export}</span><button data-export="project">Project JSON</button><button data-export="palette">Palette JSON</button><button data-export="css">CSS variables</button><button data-export="ase" title="${t("aseExportLimit")}">${t("aseExport")}</button><button data-export="patch">Patch CSV</button><button data-export="cues">Cue CSV</button></div></nav>
     <main id="workspace" class="editor-layout">
       <aside class="left-rail panel">
         <div class="left-rail-heading"><h2>${t("project")} • ${t("layers")} • ${t("tools")}</h2></div>
@@ -983,6 +997,7 @@ function bind() {
   document.querySelector("#apply-colour").onclick = () => { const name = document.querySelector("#swatch-name").value.trim(), hex = normalizeHex(document.querySelector("#swatch-hex").value); if (!hex) return setStatus("Enter a valid 3- or 6-digit HEX value."); mutateColours((colours) => updateSwatch(colours, selected().id, { name:name || selected().name, hex })); };
   document.querySelector("#lock-swatch").onclick = () => mutateColours((colours) => updateSwatch(colours, selected().id, { locked:!selected().locked }));
   document.querySelector("#save").onclick = () => { saveProject(); render(); };
+  document.querySelector("#new-project").onclick=createNewProject;
   document.querySelector("#undo").onclick = undo; document.querySelector("#redo").onclick = redo;
   document.querySelector("#toggle-lux").onclick = () => { preferences.luxOpen = !preferences.luxOpen; savePreferences(); render(); };
   const materialTarget=document.querySelector("#material-target");if(materialTarget) materialTarget.onchange=()=>{preferences.materialTarget=materialTarget.value;savePreferences();};
@@ -996,7 +1011,8 @@ function bind() {
   document.querySelector("#stop-cue").onclick = () => { stopPlayback(); render(); };
   document.querySelectorAll("[data-export]").forEach((button) => button.onclick = () => exportFile(button.dataset.export));
   const closeExports = document.querySelector("#close-exports"); if (closeExports) closeExports.onclick = () => { preferences.module="canvas"; render(); };
-  const importButton=document.querySelector("#import-project"), projectFile=document.querySelector("#project-file"); if(importButton&&projectFile){importButton.onclick=()=>projectFile.click();projectFile.onchange=()=>{const [file]=projectFile.files;if(file) importNativeProject(file);};}
+  const openButton=document.querySelector("#open-project"), projectFile=document.querySelector("#project-file"); if(openButton&&projectFile){openButton.onclick=()=>projectFile.click();projectFile.onchange=()=>{const [file]=projectFile.files;if(file) importNativeProject(file);};}
+  const imageImportButton=document.querySelector("#import-image"),paletteImage=document.querySelector("#palette-image");if(imageImportButton&&paletteImage)imageImportButton.onclick=()=>paletteImage.click();
   document.querySelectorAll("[data-profile]").forEach((button)=>button.onclick=()=>{addVirtualFixture(button.dataset.profile);render();});
   const closeLibrary=document.querySelector("#close-library"); if(closeLibrary) closeLibrary.onclick=()=>{preferences.module="canvas";render();};
   const fixtureSelect=document.querySelector("#fixture-select"); if(fixtureSelect) fixtureSelect.onchange=()=>{preferences.fixtureId=fixtureSelect.value;savePreferences();render();};
