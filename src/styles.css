@@ -459,7 +459,10 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
 
 
 .inspector-group-dmx .fixture-output-note { grid-column:1 / -1; display:block; margin:1px 0 2px; color:var(--muted); font-size:10px; }
-.inspector-group-dmx #apply-fixture { grid-column:1 / -1; width:100%; margin:2px 0 0; }
+.inspector-group-dmx #apply-fixture-patch { grid-column:1 / -1; width:100%; margin:2px 0 0; }
+.inspector-group-fixture #apply-fixture { width:100%; margin:3px 0 0; }
 
 
 .inspector .inspector-group > h3 { display:flex; align-items:center; min-height:18px; box-sizing:border-box; margin:0 -7px 4px; padding:0 7px 3px; border-radius:5px 5px 0 0; background:#23314b; }
+
+@media (min-width:1100px) { .inspector .inspector-group { margin-block:2px; padding-block:4px; } }
