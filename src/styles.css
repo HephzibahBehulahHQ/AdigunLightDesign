@@ -527,3 +527,9 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
     font-weight:800;
   }
 }
+
+/* Keep the swatch row focused on its names and preserve detail in the inspector. */
+@media (min-width:1100px) {
+  .palette-panel .swatch small { display:none; }
+  .palette-panel .swatch b { font-size:10px; }
+}
