@@ -500,7 +500,7 @@ try {
   await page.locator("#scene-select").selectOption("studio-room");
   assert.equal((await page.locator("#room-ambience-color").inputValue()).toUpperCase(),"#FFD2A0","each scene retains its own ambient color");
   await page.locator("#scene-select").selectOption(addedRoomId);
-  assert.equal(await page.locator("#room-ambience-color").inputValue(),"#52B8D8","ambient color and intensity persist with the selected scene");
+  assert.equal((await page.locator("#room-ambience-color").inputValue()).toUpperCase(),"#52B8D8","ambient color and intensity persist with the selected scene");
   assert.equal(await page.locator("#room-ambience-level").inputValue(),"44","room ambient intensity is editable and persisted");
   await clickCommand("history","#undo");
   assert.equal(await page.locator("#room-ambience-color").inputValue(),defaultAmbient,"ambient settings participate in project undo");
