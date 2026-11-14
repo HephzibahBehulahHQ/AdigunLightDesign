@@ -532,6 +532,8 @@ function render() {
   if (fixturePanel && mode==="fixture") {
     const keys=["fixture","light","dmx","effects"];
     const bodies=Object.fromEntries(keys.map((key)=>{const body=document.createElement("section");body.className=`fixture-tab-body inspector-group inspector-group-${key}`;body.setAttribute("aria-label",t({fixture:"fixtureLabel",light:"lightTab",dmx:"dmxTab",effects:"effectsTab"}[key]));body.insertAdjacentHTML("afterbegin",`<h3>${t({fixture:"fixtureLabel",light:"lightTab",dmx:"dmxTab",effects:"effectsTab"}[key])}</h3>`);return [key,body];}));
+    const profile=getFixtureProfile(selectedFixture().profileId);
+    bodies.fixture.querySelector("h3").insertAdjacentHTML("beforeend",`<small class="fixture-profile-context">${t("fixtureProfile")} · ${esc(profile.type)} / ${t("virtualShort")}</small>`);
     for (const id of ["fixture-dimmer","fixture-beam","fixture-colour","fixture-blue-channel","fixture-white","fixture-pan","fixture-tilt"]) {
       const input=fixturePanel.querySelector(`#${id}`);if(input)bodies.light.append(input.closest("label"));
     }
