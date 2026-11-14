@@ -338,7 +338,7 @@ function render() {
         <span class="brand-fallback" hidden>HB <b>Hephzibah Behulah</b></span><span class="brand-divider"></span><span class="division">⚡ HB Elektroniker</span>
       </div>
       <div class="product-lockup"><strong>Adigun <span>Light</span> Design</strong><small>Unified Color &amp; Light Design Studio</small></div>
-      <div class="header-project-context" aria-label="${esc(t("project"))}: ${esc(project.name)} / ${esc(scene().name)}"><span>${esc(project.name)}</span><b aria-hidden="true">•</b><span>${esc(scene().name)}</span></div>
+      <div class="header-project-context" aria-label="${esc(t("project"))}: ${esc(project.name)} / ${esc(t("sceneHeader"))} ${String(displayedSceneNumber).padStart(2,"0")}"><span>${esc(project.name)}</span><b aria-hidden="true">•</b><span>${t("sceneHeader")} ${String(displayedSceneNumber).padStart(2,"0")}</span></div>
       ${topMenuMarkup({t,locale:preferences.locale,saved:projectPersisted,user:account.user})}<button id="theme" type="button" hidden aria-label="${t("appearance")}"></button>
     </header>
     <nav class="module-nav" aria-label="${t("appModules")}">${nav}<div class="workspace-switcher" role="group" aria-label="${t("workspaceViews")}"><button type="button" data-view="palette" aria-pressed="${preferences.view==="palette"}">${t("viewPalette2D")}</button><button type="button" data-view="light" aria-pressed="${preferences.view==="light"}">${t("viewStudio3D")}</button><button type="button" id="show-timeline">${t("viewTimeline")}</button></div></nav>
@@ -348,7 +348,7 @@ function render() {
         <div class="left-rail-heading"><h2>${t("project")} • ${t("layers")} • ${t("tools")}</h2></div>
         <section class="project-heading"><div><input id="project-name" value="${esc(project.name)}" aria-label="${t("project")} name" />${sceneSelectMarkup()}</div></section>
         <section class="layer-section"><h2>▰ ${t("layers")}</h2><ul class="layer-list"><li>⌄ ▣ ${t("layersLighting")} <span>◉</span></li><li>⌄ ▣ ${t("layersPalette")} <span>◉</span></li><li>⌄ ▣ ${t("layersScene")} <span>◉</span></li></ul></section>
-        <section class="tool-section"><h2>☼ ${t("tools")}</h2><div class="tool-list">${tools}</div></section>
+        <section class="tool-section"><h2>☼ ${t("toolsOneClick")}</h2><div class="tool-list">${tools}</div></section>
       </aside>
       <section class="work-area">
         <div class="workspace-tabs panel">${viewCommandSource({palette:t("palette"),light:t("light")})}<strong class="studio-panel-title">${preferences.view === "light" ? `${t("sceneHeader")} ${String(displayedSceneNumber).padStart(2,"0")} / ${scene().id === "studio-room" ? t("mockupRoomTitle") : esc(scene().name)}` : `2D ${t("palette")} / ${esc(project.name)}`}</strong><small class="studio-panel-title-meta">${preferences.view === "light" ? t("viewportFixedHint") : t("palette")}</small><span></span><button id="viewport-projection" class="view-menu" ${preferences.view === "light" ? "" : disabled(t("select3d"))}>${t("perspective")}⌄</button></div>
