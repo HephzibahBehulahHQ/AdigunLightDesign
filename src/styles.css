@@ -335,6 +335,7 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
 .fixture-profile-summary span { min-width:0; overflow:hidden; }
 .fixture-profile-summary small { display:block; font-size:9px; }
 .fixture-profile-summary b { display:block; overflow:hidden; color:var(--text); font-size:10px; text-overflow:ellipsis; white-space:nowrap; }
+.fixture-profile-context { margin-left:auto; max-width:65%; overflow:hidden; color:var(--muted); font-size:9px; font-weight:400; letter-spacing:0; text-overflow:ellipsis; text-transform:none; white-space:nowrap; }
 .lux-panel.is-docked { position:relative !important; inset:auto !important; z-index:auto !important; width:auto !important; height:auto !important; min-height:68px; max-height:none; flex:0 0 68px !important; margin:5px 8px 8px; overflow:hidden; box-shadow:none; border-color:#236b60; }
 .lux-panel.is-docked .lux-heading { min-height:32px; flex-basis:32px; padding:3px 7px; cursor:default; }
 .lux-panel.is-docked .lux-heading h2 { font-size:12px; }
