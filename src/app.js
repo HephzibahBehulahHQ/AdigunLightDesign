@@ -536,7 +536,7 @@ function render() {
     input.oninput=update;
     update();
   }
-  if (project.fixtures.length) document.querySelector(".tool-section").insertAdjacentHTML("afterend", `<section class="fixture-list-section"><h2>${t("fixtureList")} <span>${project.fixtures.length}</span></h2><ul class="fixture-layer-list" aria-label="${t("layersLighting")}">${project.fixtures.map((fixture)=>`<li><button data-layer-fixture="${esc(fixture.id)}" aria-pressed="${fixture.id===selectedFixture()?.id}"><span>☼</span> ${esc(fixture.name)}</button></li>`).join("")}</ul></section>`);
+  if (project.fixtures.length) document.querySelector(".tool-section").insertAdjacentHTML("afterend", `<section class="fixture-list-section"><h2>${t("fixtureList")} <span>${project.fixtures.length}</span></h2><ul class="fixture-layer-list" aria-label="${t("layersLighting")}">${project.fixtures.map((fixture)=>`<li><button type="button" class="fixture-select" data-layer-fixture="${esc(fixture.id)}" aria-pressed="${fixture.id===selectedFixture()?.id}"><span aria-hidden="true">☼</span><span class="fixture-name">${esc(fixture.name)}</span></button><button type="button" class="fixture-delete" data-delete-fixture-row="${esc(fixture.id)}" aria-label="${esc(t("deleteFixture"))}: ${esc(fixture.name)}" title="${esc(t("deleteFixture"))}">×</button></li>`).join("")}</ul></section>`);
   document.querySelector(".swatches").insertAdjacentHTML("afterend", `<p class="palette-summary">${t("seedColour")}: ${esc(preferences.seed)} · ${t("harmony")}: ${esc(preferences.harmony)} · ${palette().colors.length} ${t("summarySwatches")} · ${palette().colors.filter((colour)=>colour.locked).length} ${t("summaryLocked")}</p>`);
   document.querySelector(".export-grid")?.insertAdjacentHTML("beforeend", `<button id="export-svg">SVG</button><button id="export-pdf" aria-describedby="pdf-export-limit">${t("paletteSheetPdf")}</button><small id="pdf-export-limit">${t("pdfPaletteLimit")}</small><button id="export-cue-pdf" aria-describedby="cue-pdf-limit">${t("cueSheetPdf")}</button><small id="cue-pdf-limit">${t("cuePdfLimit")}</small><button id="export-tokens">${t("designTokens")}</button>`);
   document.querySelector(".palette-actions").insertAdjacentHTML("beforeend", `<button id="extract-image">${t("extractImage")}</button><input id="palette-image" type="file" accept="image/png,image/jpeg,image/webp" hidden />`);
@@ -605,9 +605,10 @@ function render() {
   const stage=stageSettings(scene().stage);
   document.querySelector(".left-rail").insertAdjacentHTML("beforeend", `<details class="fixture-group-editor" data-scene-editor="stage"><summary>${t("stagePlatform")}</summary><label><input id="stage-enabled" type="checkbox" ${stage.enabled ? "checked" : ""}> ${t("showStage")}</label>${["x","y","z","width","height","depth"].map((key)=>`<label>${["x","y","z"].includes(key) ? key.toUpperCase() : t(key)} (m)<input id="stage-${key}" type="number" step="any" required value="${stage[key]}"></label>`).join("")}<label>${t("selectedColour")}<input id="stage-color" type="color" value="${stage.color}"></label><button id="apply-stage">${t("applyStageSettings")}</button></details>`);
   document.querySelector(".left-rail").insertAdjacentHTML("beforeend", `<details class="fixture-group-editor" data-scene-editor="room"><summary>${t("roomDimensions")}</summary>${["width","height","depth"].map((key)=>`<label>${t(key)} (m)<input id="room-${key}" type="number" required min="2" max="${key==="height" ? 20 : 50}" step="any" value="${room[key]}"></label>`).join("")}<button id="apply-room">${t("applyRoomDimensions")}</button></details>`);
-  for (const [index,key] of ["lighting","palette","props"].entries()) {
+  for (const [index,[key,labelKey,helpKey]] of [["lighting","layersLighting","layerLightingHelp"],["palette","layersPalette","layerPaletteHelp"],["props","layersScene","layerPropsHelp"]].entries()) {
     const item=document.querySelectorAll(".layer-list li")[index],visible=scene().visibility?.[key]!==false;
-    item.querySelector("span").outerHTML=`<button data-layer-visibility="${key}" aria-pressed="${visible}" aria-label="${t("layerVisibility")}: ${t(["layersLighting","layersPalette","layersScene"][index])}">${visible ? "◉" : "○"}</button>`;
+    const label=t(labelKey),help=esc(t(helpKey));
+    item.innerHTML=`<button type="button" class="layer-toggle" data-layer-visibility="${key}" aria-pressed="${visible}" aria-label="${help}" title="${help}"><span class="layer-toggle-label">${label}</span><span class="layer-toggle-state" aria-hidden="true">${visible ? "◉" : "○"}</span></button>`;
   }
   document.querySelector(".palette-panel").hidden=scene().visibility?.palette===false;
   document.querySelector(".scene-preview").classList.toggle("hide-lighting",scene().visibility?.lighting===false);
@@ -1005,6 +1006,13 @@ function bind() {
     savePreferences();
     render();
     document.querySelector("#fixture-select")?.focus();
+  });
+  document.querySelectorAll("[data-delete-fixture-row]").forEach((button)=>button.onclick=()=>{
+    const id=button.dataset.deleteFixtureRow;
+    if(!project.fixtures.some((fixture)=>fixture.id===id))return;
+    commitProjectChange("fixture-delete",(draft)=>Object.assign(draft,deleteFixture(draft,id)));
+    if(preferences.fixtureId===id)preferences.fixtureId=project.fixtures[0]?.id ?? null;
+    savePreferences();render();
   });
   document.querySelectorAll("[data-move-cue]").forEach((button)=>button.onclick=()=>{
     const cue=project.cues.find((item)=>item.id===preferences.cueId) ?? project.cues.at(-1);
