@@ -471,3 +471,39 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
   .lux-panel.is-docked:not(.is-dock-expanded) { flex:0 0 97px !important; height:97px !important; min-height:0; }
   .lux-panel.is-docked:not(.is-dock-expanded) .bot-window-body { display:none !important; }
 }
+
+/* Match the left studio rail to the compact reference while retaining editable project fields. */
+@media (min-width:1100px) {
+  .project-heading { padding:2px 9px 6px; }
+  .project-heading > div {
+    grid-template-columns:minmax(0,1fr) 9px;
+    grid-template-rows:20px 28px;
+    gap:4px 5px;
+    align-items:center;
+  }
+  .project-heading input { grid-column:1; grid-row:1; min-height:20px; height:20px; padding:0 7px; }
+  .project-heading > div::before {
+    content:"";
+    grid-column:2;
+    grid-row:1;
+    width:9px;
+    height:9px;
+    border-radius:50%;
+    background:#7bedbd;
+    box-shadow:0 0 8px #7bedbd99;
+  }
+  .project-heading #scene-select { grid-column:1 / -1; grid-row:2; }
+  .left-rail .layer-section > h2,
+  .left-rail .tool-section > h2,
+  .left-rail .fixture-list-section > h2 {
+    padding:5px 8px 4px;
+    font-size:11px;
+  }
+  .left-rail .layer-list li { min-height:21px; }
+  .left-rail .tool-section > h2 { padding-bottom:10px; }
+  .left-rail .tool-list { padding-bottom:22px; }
+}
+
+@media (min-width:1100px) {
+  .left-rail .fixture-layer-list { max-height:260px; }
+}
