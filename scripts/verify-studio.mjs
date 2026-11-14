@@ -482,13 +482,13 @@ try {
   assert.equal(await page.locator(".design-canvas [data-canvas-object]").count(),0,"discard removes unsaved canvas work");
   const canvasAfter = await page.locator(".scene-preview").boundingBox();
   assert.deepEqual(canvasAfter, canvasBefore, "ordinary tools and view changes preserve the canvas bounds");
-  const roomSceneMenuTrigger=page.locator('[data-command-menu-trigger="scene"]');
-  const roomSceneMenuPanel=page.locator("#command-menu-panel-scene");
-  if (!(await roomSceneMenuPanel.evaluate(panel=>panel.matches(":popover-open")))) {
-    await roomSceneMenuTrigger.click();
-    if (!(await roomSceneMenuPanel.evaluate(panel=>panel.matches(":popover-open")))) await roomSceneMenuTrigger.click();
+  const roomCreateTrigger=page.locator('[data-command-menu-trigger="scene"]');
+  const roomCreatePanel=page.locator("#command-menu-panel-scene");
+  if (!(await roomCreatePanel.evaluate(panel=>panel.matches(":popover-open")))) {
+    await roomCreateTrigger.click();
+    if (!(await roomCreatePanel.evaluate(panel=>panel.matches(":popover-open")))) await roomCreateTrigger.click();
   }
-  assert.equal(await roomSceneMenuPanel.evaluate(panel=>panel.matches(":popover-open")),true,"Scene menu is open before adding a room");
+  assert.equal(await roomCreatePanel.evaluate(panel=>panel.matches(":popover-open")),true,"Scene menu is open before adding a room");
   await page.locator("#room-template").hover();
   await page.locator("#room-template").selectOption("kitchen");
   await page.locator("#add-room-scene").scrollIntoViewIfNeeded();
