@@ -544,7 +544,7 @@ function render() {
     bodies.light.append(advancedLight);
     const effectControls=document.querySelector("#effect-type").closest(".dmx-actions");
     const effectScope=document.createElement("p");effectScope.textContent=t("allVirtualFixtures");bodies.effects.append(effectScope,effectControls);
-    bodies.fixture.append(apply);
+    const outputNote=document.createElement("small");outputNote.className="fixture-output-note";outputNote.textContent=t("fixtureOutputNote");bodies.dmx.append(outputNote,apply);
     if(actions){const actionDetails=document.createElement("details");actionDetails.className="fixture-actions-details";const actionSummary=document.createElement("summary");actionSummary.textContent=t("fixtureActions");actionDetails.append(actionSummary,actions);bodies.fixture.append(actionDetails);}
     fixturePanel.append(...Object.values(bodies));
     inspector.querySelector(".section-title h2").textContent=`${t("selectedFixtureTitle")}: ${selectedFixture().name}`;
