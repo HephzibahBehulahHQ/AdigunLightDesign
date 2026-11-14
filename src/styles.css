@@ -742,5 +742,5 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
 .tool-section-toggle:hover,.tool-section-toggle:focus-visible { background:#1b2940; outline-color:var(--cyan); }
 .tool-section-toggle .tools-caret { color:var(--cyan); font-size:12px; }
 .tool-popover { position:fixed; inset:auto; z-index:1000; box-sizing:border-box; width:min(300px,calc(100vw - 16px)); max-height:calc(100dvh - 16px); overflow:auto; margin:0; padding:8px; border:1px solid var(--line); border-radius:8px; background:#101a2b; color:var(--text); box-shadow:0 12px 32px #0009; }
-.tool-popover .tool-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:4px; padding:0; }
+.tool-popover.tool-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:4px; padding:0; }
 .tool-popover .tool { min-width:0; white-space:nowrap; }
