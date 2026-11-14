@@ -105,6 +105,16 @@ try {
   assert.equal(await page.locator('[data-command-group="scene"] [data-open-scene-editor="stage"]').isVisible(), true, "Scene ribbon opens stage settings");
   assert.equal(await page.locator('[data-command-group="scene"] [data-camera-axis]').count(), 3, "X/Y/Z camera views are docked in the Scene ribbon");
   assert.equal(await page.locator(".scene-preview .viewport-axis-controls").count(), 0, "camera controls do not cover the 3D canvas");
+  for (const selector of ["#viewport-performance", "#viewport-fit", "#viewport-fullscreen", "#preview-quality", ".view-menu"]) {
+    assert.equal(await page.locator(`.workspace-tabs ${selector}`).count(), 1, `${selector} stays docked in the scene header`);
+  }
+  const sceneHeaderCanvas=await page.locator(".scene-preview").boundingBox();
+  await page.locator("#viewport-performance").click();
+  assert.equal(await page.locator("#preview-quality").inputValue(), "performance", "Performance switches the renderer to its real performance profile");
+  await page.locator("#viewport-performance").click();
+  assert.equal(await page.locator("#preview-quality").inputValue(), "balanced", "Performance toggles back to the balanced renderer profile");
+  await page.locator("#viewport-fit").click();
+  assert.deepEqual(await page.locator(".scene-preview").boundingBox(), sceneHeaderCanvas, "Fit resets the camera without moving the canvas");
   for (const axis of ["x", "y", "z"]) {
     const control = page.locator(`[data-command-group="scene"] [data-camera-axis="${axis}"]`);
     assert.equal(await control.isEnabled(), true, `${axis.toUpperCase()} camera view is enabled with the active WebGL renderer`);
