@@ -1,1067 +1,1002 @@
-import { validateProject } from "./domain/project.js";
-import { prepareEditorProject } from "./domain/editor-project.ts";
-import { moveSwatch, removeSwatch, reorderSwatch } from "./domain/palette-store.js";
-import { readImagePalette } from "./domain/image-file.ts";
-import { customHueHarmony,perceptualScale } from "./domain/color-engine.js";
-import { compositeSwatch,swatchCssColor } from "./domain/swatch-opacity.js";
-import { snapshotPalette, restorePalette, comparePalettes } from "./domain/palette-versions.ts";
-import { paletteRaster } from "./export/raster.js";
-import { hslToRgb } from "./domain/color-engine.js";
-import { suggestContrast } from "./domain/color-engine.js";
-import { mapOklchToSrgb, oklabToOklch } from "./domain/color-engine.js";
-import { createStudioMoodProject } from "./domain/studio-mood.js";
-import { contrastResult, hexToRgb, isSrgbGamut, normalizeHex, rgbToHex, rgbToHsl, rgbToHsv, rgbToLab, rgbToOklab } from "./domain/color-engine.js";
-import { rerollUnlocked, starterPalette, updateSwatch } from "./domain/palette-store.js";
-import { localeNames, supportedLocales, translate } from "./i18n.js";
-import { createLightLabRenderer } from "./light-lab/renderer.js";
-import { lightLabFixtureState,lightLabRendererConfig,shouldReuseLightLabRenderer } from "./light-lab/renderer-lifecycle.js";
-import { fixturePlacementMarkup } from "./light-lab/fixture-placement.js";
-import { blackout, createFixture, dmxFrame, fixtureProfiles, getFixtureProfile, patchFixture, updateFixture } from "./dmx/engine.js";
-import { createCue, duplicateCue, removeCue, editCue, evaluateCue, evaluateSequence, moveCue } from "./timeline/engine.js";
-import { evaluateEffect } from "./timeline/effects.js";
-import { createPlaybackClock, playbackPosition } from "./timeline/playback-clock.js";
-import { timelineLayout } from "./timeline/layout.js";
-import { arrangeTracks,arrangementDuration,evaluateTracks,scheduleCue } from "./timeline/tracks.js";
-import { setChannelKeyframe } from "./timeline/keyframes.js";
-import { roomDimensions } from "./domain/room.js";
-import { duplicateFixture,deleteFixture } from "./domain/fixture-operations.ts";
-import { readBrowserStorage,writeBrowserStorage } from "./domain/browser-storage.js";
-import { applySceneMaterial } from "./domain/scene-materials.js";
-import { studioActiveModule,studioDefaults,viewCommandSource } from "./ui/studio-preferences.js";
-import { escapeHtml as esc,fixtureOptions,swatchButton } from "./ui/html.js";
-import { virtualDmxPreview } from "./dmx/preview.js";
-import { addCanvasObject,updateCanvasObject,duplicateCanvasObject,moveCanvasObject } from "./domain/canvas.js";
-import { canvasMarkup } from "./ui/canvas.js";
-import { canvasSvg } from "./export/canvas.js";
-import { bindCanvasDrag } from "./ui/canvas-drag.js";
-import { bindTimelineSeek } from "./ui/timeline-seek.js";
-import { previewNativeToolAction } from "./ai/action-preview.js";
-import { icon } from "./ui/icons.js";
-import { previewQuality,previewQualities } from "./light-lab/quality.js";
-import { temperaturePalette } from "./domain/temperature.js";
-import { stageSettings,updateStage } from "./domain/stage.js";
-import { createImageAssetStore } from "./domain/image-assets.ts";
-import { createLuxServicePanel } from "./ui/lux-service.js";
-import { createCanvasStateFeed } from "./ai/live-copilot.js";
-import { createLiveCopilotPanel } from "./ui/live-copilot-panel.js";
-import { arrangementTimelineMarkup } from "./ui/arrangement-timeline.js";
-import { bindFixtureSliders } from "./ui/fixture-sliders.js";
-import { bindCanvasMeasure } from "./ui/canvas-measure.js";
-import { paletteAse } from "./export/ase.js";
-import {topMenuMarkup,bindTopMenu} from "./ui/top-menu.js";
-import {createFloatingBot} from "./ui/floating-bot.js";
-import {createAccount} from "./cloud/account.js";
-import {openAccountDialog} from "./ui/account-dialog.js";
-import {previewUnpatchedFixture,confirmAuthenticatedAction} from "./ai/authenticated-actions.js";
-import { canFullscreen,toggleViewportFullscreen } from "./ui/fullscreen.js";
-import { groupFixtures,saveFixtureGroup } from "./domain/fixture-groups.ts";
-import { cueCsv, designTokenJson, paletteCss, paletteJson, paletteSvg, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
-import { readProjectFile } from "./domain/import-project.ts";
-import { editorShortcut, isEditableTarget,toolShortcut,toolKeys } from "./accessibility/shortcuts.js";
-import { commitTransaction, redoTransaction, undoTransaction } from "./domain/history.js";
+YªçŠx-®éÜj×¢ëiºÚ+Š§j[h‘éÜ¢éíß¿:í:-jZ.¶›­–)Ş³V–×÷'B²fÆ–FFU&ö¦V7BÒg&öÒ"âöFöÖ–â÷&ö¦V7Bæ§2#°Ğ¦–×÷'B²&W&TVF—F÷%&ö¦V7BÒg&öÒ"âöFöÖ–âöVF—F÷"×&ö¦V7BçG2#°Ğ¦–×÷'B²Ö÷fU7vF6‚Â&VÖ÷fU7vF6‚Â&V÷&FW%7vF6‚Òg&öÒ"âöFöÖ–â÷ÆWGFR×7F÷&Ræ§2#°Ğ¦–×÷'B²&VD–ÖvUÆWGFRÒg&öÒ"âöFöÖ–âö–ÖvRÖf–ÆRçG2#°Ğ¦–×÷'B²7W7FöÔ‡VT†&Ööç’ÇW&6WGVÅ66ÆRÒg&öÒ"âöFöÖ–âö6öÆ÷"ÖVæv–æRæ§2#°Ğ¦–×÷'B²6ö×÷6—FU7vF6‚Ç7vF6„7746öÆ÷"Òg&öÒ"âöFöÖ–â÷7vF6‚Ö÷6—G’æ§2#°Ğ¦–×÷'B²6æ6†÷EÆWGFRÂ&W7F÷&UÆWGFRÂ6ö×&UÆWGFW2Òg&öÒ"âöFöÖ–â÷ÆWGFR×fW'6–öç2çG2#°Ğ¦–×÷'B²ÆWGFU&7FW"Òg&öÒ"âöW‡÷'B÷&7FW"æ§2#°Ğ¦–×÷'B²‡6ÅFõ&v"Òg&öÒ"âöFöÖ–âö6öÆ÷"ÖVæv–æRæ§2#°Ğ¦–×÷'B²7VvvW7D6öçG&7BÒg&öÒ"âöFöÖ–âö6öÆ÷"ÖVæv–æRæ§2#°Ğ¦–×÷'B²Öö¶Æ6…Fõ7&v"Âö¶Æ%Fôö¶Æ6‚Òg&öÒ"âöFöÖ–âö6öÆ÷"ÖVæv–æRæ§2#°Ğ¦–×÷'B²7&VFU7GVF–ôÖööE&ö¦V7BÒg&öÒ"âöFöÖ–â÷7GVF–òÖÖööBæ§2#°Ğ¦–×÷'B²6öçG&7E&W7VÇBÂ†W…Fõ&v"Â—57&v$v×WBÂæ÷&ÖÆ—¦T†W‚Â&v%Fô†W‚Â&v%Fô‡6ÂÂ&v%Fô‡7bÂ&v%FôÆ"Â&v%Fôö¶Æ"Òg&öÒ"âöFöÖ–âö6öÆ÷"ÖVæv–æRæ§2#°Ğ¦–×÷'B²&W&öÆÅVæÆö6¶VBÂ7F'FW%ÆWGFRÂWFFU7vF6‚Òg&öÒ"âöFöÖ–â÷ÆWGFR×7F÷&Ræ§2#°Ğ¦–×÷'B²Æö6ÆTæÖW2Â7W÷'FVDÆö6ÆW2ÂG&ç6ÆFRÒg&öÒ"âö“†âæ§2#°Ğ¦–×÷'B²7&VFTÆ–v‡DÆ%&VæFW&W"Òg&öÒ"âöÆ–v‡BÖÆ"÷&VæFW&W"æ§2#°Ğ¦–×÷'B²Æ–v‡DÆ$f—‡GW&U7FFRÆÆ–v‡DÆ%&VæFW&W$6öæf–rÇ6†÷VÆE&WW6TÆ–v‡DÆ%&VæFW&W"Òg&öÒ"âöÆ–v‡BÖÆ"÷&VæFW&W"ÖÆ–fV7–6ÆRæ§2#°Ğ¦–×÷'B²f—‡GW&UÆ6VÖVçDÖ&·WÒg&öÒ"âöÆ–v‡BÖÆ"öf—‡GW&R×Æ6VÖVçBæ§2#°Ğ¦–×÷'B²&Æ6¶÷WBÂ7&VFTf—‡GW&RÂF×„g&ÖRÂf—‡GW&U&öf–ÆW2ÂvWDf—‡GW&U&öf–ÆRÂF6„f—‡GW&RÂWFFTf—‡GW&RÒg&öÒ"âöF×‚öVæv–æRæ§2#°Ğ¦–×÷'B²7&VFT7VRÂGWÆ–6FT7VRÂ&VÖ÷fT7VRÂVF—D7VRÂWfÇVFT7VRÂWfÇVFU6WVVæ6RÂÖ÷fT7VRÒg&öÒ"â÷F–ÖVÆ–æRöVæv–æRæ§2#°Ğ¦–×÷'B²WfÇVFTVffV7BÒg&öÒ"â÷F–ÖVÆ–æRöVffV7G2æ§2#°Ğ¦–×÷'B²7&VFUÆ–&6´6Æö6²ÂÆ–&6µ÷6—F–öâÒg&öÒ"â÷F–ÖVÆ–æR÷Æ–&6²Ö6Æö6²æ§2#°Ğ¦–×÷'B²F–ÖVÆ–æTÆ–÷WBÒg&öÒ"â÷F–ÖVÆ–æRöÆ–÷WBæ§2#°Ğ¦–×÷'B²'&ævUG&6·2Æ'&ævVÖVçDGW&F–öâÆWfÇVFUG&6·2Ç66†VGVÆT7VRÒg&öÒ"â÷F–ÖVÆ–æR÷G&6·2æ§2#°Ğ¦–×÷'B²6WD6†ææVÄ¶W–g&ÖRÒg&öÒ"â÷F–ÖVÆ–æRö¶W–g&ÖW2æ§2#°Ğ¦–×÷'B²&ööÔF–ÖVç6–öç2Òg&öÒ"âöFöÖ–â÷&ööÒæ§2#°Ğ¦–×÷'B²GWÆ–6FTf—‡GW&RÆFVÆWFTf—‡GW&RÒg&öÒ"âöFöÖ–âöf—‡GW&RÖ÷W&F–öç2çG2#°Ğ¦–×÷'B²&VD'&÷w6W%7F÷&vRÇw&—FT'&÷w6W%7F÷&vRÒg&öÒ"âöFöÖ–âö'&÷w6W"×7F÷&vRæ§2#°Ğ¦–×÷'B²Ç•66VæTÖFW&–ÂÒg&öÒ"âöFöÖ–â÷66VæRÖÖFW&–Ç2æ§2#°Ğ¦–×÷'B²7GVF–ô7F—fTÖöGVÆRÇ7GVF–ôFVfVÇG2Òg&öÒ"â÷V’÷7GVF–ò×&VfW&Væ6W2æ§2#°Ğ¦–×÷'B²W66T‡FÖÂ2W62Æf—‡GW&T÷F–öç2Ç7vF6„'WGFöâÒg&öÒ"â÷V’ö‡FÖÂæ§2#°Ğ¦–×÷'B²f—'GVÄF×…&Wf–WrÒg&öÒ"âöF×‚÷&Wf–Wræ§2#°Ğ¦–×÷'B²FD6çf4ö&¦V7BÇWFFT6çf4ö&¦V7BÆGWÆ–6FT6çf4ö&¦V7BÆÖ÷fT6çf4ö&¦V7BÒg&öÒ"âöFöÖ–âö6çf2æ§2#°Ğ¦–×÷'B²6çf4Ö&·WÒg&öÒ"â÷V’ö6çf2æ§2#°Ğ¦–×÷'B²6çf57frÒg&öÒ"âöW‡÷'Bö6çf2æ§2#°Ğ¦–×÷'B²&–æD6çf4G&rÒg&öÒ"â÷V’ö6çf2ÖG&ræ§2#°Ğ¦–×÷'B²&–æEF–ÖVÆ–æU6VV²Òg&öÒ"â÷V’÷F–ÖVÆ–æR×6VV²æ§2#°Ğ¦–×÷'B²&Wf–WtæF—fUFööÄ7F–öâÒg&öÒ"âö’ö7F–öâ×&Wf–Wræ§2#°Ğ¦–×÷'B²–6öâÒg&öÒ"â÷V’ö–6öç2æ§2#°Ğ¦–×÷'B²&Wf–WuVÆ—G’Ç&Wf–WuVÆ—F–W2Òg&öÒ"âöÆ–v‡BÖÆ"÷VÆ—G’æ§2#°Ğ¦–×÷'B²FV×W&GW&UÆWGFRÒg&öÒ"âöFöÖ–â÷FV×W&GW&Ræ§2#°Ğ¦–×÷'B²7FvU6WGF–æw2ÇWFFU7FvRÒg&öÒ"âöFöÖ–â÷7FvRæ§2#°Ğ¦–×÷'B²7&VFT–ÖvT76WE7F÷&RÒg&öÒ"âöFöÖ–âö–ÖvRÖ76WG2çG2#°Ğ¦–×÷'B²7&VFTÇW…6W'f–6UæVÂÒg&öÒ"â÷V’öÇW‚×6W'f–6Ræ§2#°Ğ¦–×÷'B²7&VFT6çf57FFTfVVBÒg&öÒ"âö’öÆ—fRÖ6÷–Æ÷Bæ§2#°Ğ¦–×÷'B²7&VFTÆ—fT6÷–Æ÷EæVÂÒg&öÒ"â÷V’öÆ—fRÖ6÷–Æ÷B×æVÂæ§2#°Ğ¦–×÷'B²'&ævVÖVçEF–ÖVÆ–æTÖ&·WÒg&öÒ"â÷V’ö'&ævVÖVçB×F–ÖVÆ–æRæ§2#°Ğ¦–×÷'B²&–æDf—‡GW&U6Æ–FW'2Òg&öÒ"â÷V’öf—‡GW&R×6Æ–FW'2æ§2#°Ğ¦–×÷'B²&–æD6çf4ÖV7W&RÒg&öÒ"â÷V’ö6çf2ÖÖV7W&Ræ§2#°Ğ¦–×÷'B²ÆWGFT6RÒg&öÒ"âöW‡÷'Bö6Ræ§2#°Ğ¦–×÷'B·F÷ÖVçTÖ&·WÆ&–æEF÷ÖVçWÒg&öÒ"â÷V’÷F÷ÖÖVçRæ§2#°Ğ¦–×÷'B¶7&VFTfÆöF–æt&÷GÒg&öÒ"â÷V’öfÆöF–ærÖ&÷Bæ§2#°Ğ¦–×÷'B¶7&VFT66÷VçGÒg&öÒ"âö6Æ÷VBö66÷VçBæ§2#°Ğ¦–×÷'B¶÷Vä66÷VçDF–ÆöwÒg&öÒ"â÷V’ö66÷VçBÖF–Æöræ§2#°Ğ¦–×÷'B·&Wf–WuVçF6†VDf—‡GW&RÆ6öæf—&ÔWF†VçF–6FVD7F–öçÒg&öÒ"âö’öWF†VçF–6FVBÖ7F–öç2æ§2#°Ğ¦–×÷'B²6ägVÆÇ67&VVâÇFövvÆUf–Ww÷'DgVÆÇ67&VVâÒg&öÒ"â÷V’ögVÆÇ67&VVâæ§2#°Ğ¦–×÷'B²w&÷Wf—‡GW&W2Ç6fTf—‡GW&Tw&÷WÒg&öÒ"âöFöÖ–âöf—‡GW&RÖw&÷W2çG2#°Ğ¦–×÷'B²7VT77bÂFW6–våFö¶Vä§6öâÂÆWGFT772ÂÆWGFT§6öâÂÆWGFU7frÂF6„77bÂ&ö¦V7D§6öâÂ6fTf–ÆU7FVÒÒg&öÒ"âöW‡÷'Böf÷&ÖG2æ§2#°Ğ¦–×÷'B²&VE&ö¦V7Df–ÆRÒg&öÒ"âöFöÖ–âö–×÷'B×&ö¦V7BçG2#°Ğ¦–×÷'B²VF—F÷%6†÷'F7WBÂ—4VF—F&ÆUF&vWBÇFööÅ6†÷'F7WBÇFööÄ¶W—2Òg&öÒ"âö66W76–&–Æ—G’÷6†÷'F7WG2æ§2#°Ğ¦–×÷'B²6öÖÖ—EG&ç67F–öâÂ&VFõG&ç67F–öâÂVæFõG&ç67F–öâÒg&öÒ"âöFöÖ–âö†—7F÷'’æ§2#°Ğ Ğ¦6öç7B7F÷&vT¶W’Ò&F–wVæÆ–v‡FFW6–vâ÷&ö¦V7B×c#°Ğ¦6öç7B&VfW&Væ6W4¶W’Ò&F–wVæÆ–v‡FFW6–vâ÷&VfW&Væ6W2×c#°Ğ¦6öç7BÒFö7VÖVçBçVW'•6VÆV7F÷"‚"6"“°Ğ¦6öç7BFVfVÇG2Ò7GVF–ôFVfVÇG3°Ğ¦6öç7B&VfW&Væ6W2Ò²ââæFVfVÇG2Âââç6fU'6R‡&VD'&÷w6W%7F÷&vR‡&VfW&Væ6W4¶W’’çfÇVR’Ó°Ğ§&VfW&Væ6W2ç6VVCÖæ÷&ÖÆ—¦T†W‚‡&VfW&Væ6W2ç6VVB’óòFVfVÇG2ç6VVC°Ğ¦–b‚ö&¦V7Bæ†4÷vâ‡&Wf–WuVÆ—F–W2Ç&VfW&Væ6W2ç&Wf–WuVÆ—G’’’&VfW&Væ6W2ç&Wf–WuVÆ—G“Ò&&Ææ6VB#°Ğ¦ÆWB&ö¦V7EW'6—7FVCÖfÇ6S°Ğ¦ÆWBÇW…&÷÷6ÃÖçVÆÃ°Ğ¦ÆWBÇW„6öæf—&ÖF–öåVæF–æsÖfÇ6S°Ğ¦ÆWBf–Ww÷'D6ÖW&ÖçVÆÃ°Ğ¦ÆWB6ÆVçWF÷ÖVçSÖçVÆÃ°Ğ¦6öç7B–ÖvT76WG3Ö7&VFT–ÖvT76WE7F÷&R‚“°Ğ¦6öç7B66÷VçCÖ7&VFT66÷VçB‡·V&Æ—6†&ÆT¶W“§G—VöbõôÄEõ5U$4UõT$Ä•4„$ÄUô´U•õóÓÓÒ'VæFVf–æVB"ò""¢õôÄEõ5U$4UõT$Ä•4„$ÄUô´U•õ÷Ò“°Ğ¦6öç7BÆ—fT6çf4fVVCÖ7&VFT6çf57FFTfVVB‚“°Ğ¦6öç7BfÆöF–æt&÷CÖ7&VFTfÆöF–æt&÷B‡¶vWE&ö¦V7D–C¢‚“Óç&ö¦V7Bæ–BÆvWEW6W$–C¢‚“Óæ66÷VçBçW6W#òæ–Bóò&wVW7B"ÆvWDÆö6ÆS¢‚“Óç&VfW&Væ6W2æÆö6ÆRÇG&ç6ÆFWÒ“°Ğ¦6öç7BÆ—fT6÷–Æ÷EæVÃÖ7&VFTÆ—fT6÷–Æ÷EæVÂ‡¶fVVC¦Æ—fT6çf4fVVBÆvWDÆö6ÆS¢‚“Óç&VfW&Væ6W2æÆö6ÆRÇG&ç6ÆFRÆöäæ÷F–g“¢‚“ÓæfÆöF–æt&÷Bææ÷F–g’‚’Æ6ä66WC¢‚“Óä&ööÆVâ†66÷VçBçW6W"’ÆöäW'&÷#¦ÖW76vSÓç6WE7FGW2‡B†ÖW76vR’’Æöä66WC¦7–æ2‡7VvvW7F–öâÆ—47W'&VçB“Óç°Ğ¢ÇW…&÷÷6ÃÖv—B&Wf–WuVçF6†VDf—‡GW&R‡¶vWE&ö¦V7C¢‚“Óç&ö¦V7BÇ7VvvW7F–öâÆ66÷VçBÆ—47W'&VçGÒ“·&VæFW"‚“¶fÆöF–æt&÷Bæ÷Vâ‚“¶Fö7VÖVçBçVW'•6VÆV7F÷"‚"66öæf—&ÒÖÇW‚Ö7F–öâ"“òæfö7W2‚“°Ğ§×Ò“°Ğ¦6öç7BÇW…6W'f–6SÖ7&VFTÇW…6W'f–6UæVÂ‡¶vWE&ö¦V7C¢‚“Óç&ö¦V7BÆvWDÆö6ÆS¢‚“Óç&VfW&Væ6W2æÆö6ÆRÇG&ç6ÆFRÆ–ÖvT76WG2Æöå&Wf–Ws¢‡&÷÷6Â“Óç¶ÇW…&÷÷6Ã×&÷÷6Ã·&VæFW"‚“·ÒÆöäW'&÷#¢†ÖW76vR“Óç6WE7FGW2†ÖW76vR’Æöäæ÷F–g“¢‚“ÓæfÆöF–æt&÷Bææ÷F–g’‚—Ò“°Ğ¦ÆWB&ö¦V7BÒÆöE&ö¦V7B‚“°§&VfW&Væ6W2æf—‡GW&T–BóóÒ&ö¦V7Bæf—‡GW&W2æB‚Ó“òæ–C°Ğ¦ÆWBVæFõ7F6²ÒµÒÂ&VFõ7F6²ÒµÒÂ7FGW2Ò""Â&VæFW&W"ÒçVÆÂÂ&VæFW&W$6öæf–u6–væGW&RÒçVÆÂÂ&VæFW&W$f—‡GW&U6–væGW&RÒçVÆÂÂ&VæFW&W$66VçBÒçVÆÂÂÆ–&6µF–ÖW"ÒçVÆÂÂÆ–&6´6Æö6²ÒçVÆÃ°Ğ Ğ¦gVæ7F–öâ6fU'6R‡fÇVR’²G'’²&WGW&â¥4ôâç'6R‡fÇVR’óò·Ó²Ò6F6‚²&WGW&â·Ó²ÒĞĞ¦gVæ7F–öâÆöE&ö¦V7B‚’°Ğ¢6öç7BÆöFVBÒ6fU'6R‡&VD'&÷w6W%7F÷&vR‡7F÷&vT¶W’’çfÇVR“°Ğ¢–b‡fÆ–FFU&ö¦V7B†ÆöFVB’çfÆ–B’·&ö¦V7EW'6—7FVC×G'VS·&WGW&â&W&TVF—F÷%&ö¦V7B†ÆöFVB“·ĞĞ¢6öç7B7F'FW#Ö7&VFU7GVF–ôÖööE&ö¦V7B‚“°¢&ö¦V7EW'6—7FVC×w&—FT'&÷w6W%7F÷&vR‡7F÷&vT¶W’Ä¥4ôâç7G&–æv–g’‡7F'FW"’’æö³°¢&WGW&â7F'FW#°Ğ§ĞĞ¦gVæ7F–öâB†¶W’’²&WGW&âG&ç6ÆFR‡&VfW&Væ6W2æÆö6ÆRÂ¶W’“²ĞĞ¦gVæ7F–öâ‡&6R†¶W’ÂfÇVW2Ò·Ò’²&WGW&âB†¶W’’ç&WÆ6R‚õÇ²…Çr²•ÇÒörÂ…òÂæÖR’ÓâfÇVW5¶æÖUÒóò""“²ĞĞ¦gVæ7F–öâÆWGFR‚’²&WGW&â&ö¦V7BçÆWGFW5³Ó²ĞĞ¦gVæ7F–öâ6VÆV7FVB‚’²&WGW&âÆWGFR‚’æ6öÆ÷'2æf–æB‚‡7vF6‚’Óâ7vF6‚æ–BÓÓÒ&VfW&Væ6W2ç6VÆV7FVB’óòÆWGFR‚’æ6öÆ÷'5³Ó²ĞĞ¦gVæ7F–öâ66VæR‚’²–b‚&ö¦V7Bç66VæW5³Ò’&ö¦V7Bç66VæW2çW6‚‡²–C¢'7GVF–ò×&ööÒ"ÂæÖS¢%7GVF–ò&ööÒ"ÂÖFW&–Ä6öÆ÷#¢"43#ƒƒ‚"Ò“²6öç7B7F—fS×&ö¦V7Bç66VæW2æf–æB‚†—FVÒ“Óæ—FVÒæ–CÓÓ×&VfW&Væ6W2ç66VæT–B’óò&ö¦V7Bç66VæW5³Ó²&VfW&Væ6W2ç66VæT–CÖ7F—fRæ–C²&WGW&â7F—fS²ĞĞ¦gVæ7F–öâVF—E66VæR†G&gBÇWFFR’²6öç7B–æFWƒÔÖF‚æÖ‚ƒÆG&gBç66VæW2æf–æD–æFW‚‚†—FVÒ“Óæ—FVÒæ–CÓÓ×&VfW&Væ6W2ç66VæT–B’“²WFFR†G&gBç66VæW5¶–æFW…ÒÆ–æFW‚ÆG&gBç66VæW2“²ĞĞ¦gVæ7F–öâ66VæU6VÆV7DÖ&·W‚’²6öç7B7F—fT–C×66VæR‚’æ–C²&WGW&âÇ6VÆV7B–CÒ'66VæR×6VÆV7B"&–ÖÆ&VÃÒ"G·B‚'66VæT†VFW""—Ò#âG·&ö¦V7Bç66VæW2æÖ‚†—FVÒÆ–æFW‚“ÓæÆ÷F–öâfÇVSÒ"G¶W62†—FVÒæ–B—Ò"G¶—FVÒæ–CÓÓÖ7F—fT–Bò'6VÆV7FVB"¢"'ÓâG¶W62†G·B‚'66VæT†VFW""—ÒGµ7G&–ær†–æFW‚³’çE7F'Bƒ"Â#"—ÒòG¶—FVÒææÖWÖ—ÓÂö÷F–öãæ’æ¦ö–â‚""—ÓÂ÷6VÆV7Cæ²ĞĞ¦gVæ7F–öâFEf—'GVÄf—‡GW&R‡&öf–ÆT–B’²6öç7Bf—‡GW&SÖ7&VFTf—‡GW&R‡&ö¦V7Bæf—‡GW&W2æÆVæwF‚³Ç&öf–ÆT–B“²6öÖÖ—E&ö¦V7D6†ævR‚&f—‡GW&RÖFB"Â†G&gB“Óç¶G&gBæf—‡GW&W3×F6„f—‡GW&R…²ââæG&gBæf—‡GW&W2Æf—‡GW&UÒÆf—‡GW&Ræ–B“·Ò“²&VfW&Væ6W2æf—‡GW&T–CÖf—‡GW&Ræ–C·6fU&VfW&Væ6W2‚“²6öç7BF6ƒ×&ö¦V7Bæf—‡GW&W2æf–æB‚†—FVÒ“Óæ—FVÒæ–CÓÓÖf—‡GW&Ræ–B“òçF6„76–væÖVçC²7FGW3×‡&6R‚&f—‡GW&UF6†VB"Ç¶æÖS¦f—‡GW&RææÖRÇVæ—fW'6S£ÆFG&W73§F6ƒòç7F'DFG&W72óòÒ“²ĞĞ¦gVæ7F–öâ7F—fFT&Æ6¶÷WB‚’²6öÖÖ—E&ö¦V7D6†ævR‚&F×‚Ö&Æ6¶÷WB"Â†G&gB“Óç¶G&gBæf—‡GW&W3Ö&Æ6¶÷WB†G&gBæf—‡GW&W2“·Ò“²7FGW3Ò%f—'GVÂ&Æ6¶÷WBÆ–VBâ‡—6–6Â÷WGWB&VÖ–ç2F—6&ÆVBâ#²ĞĞ¦gVæ7F–öâÇ•ÆWGFUFõf—'GVÄf—‡GW&W2‚’²6öç7B&v#Ö†W…Fõ&v"‡6VÆV7FVB‚’æ†W‚“²6öÖÖ—E&ö¦V7D6†ævR‚'ÆWGFR×FòÖf—‡GW&W2"Â†G&gB“Óç¶G&gBæf—‡GW&W3ÖG&gBæf—‡GW&W2æÖ‚†f—‡GW&R“Óâ‡²ââæf—‡GW&RÂ&÷W'F–W3§²ââæf—‡GW&Rç&÷W'F–W2Â&VC§&v"ç"Âw&VVã§&v"ærÂ&ÇVS§&v"æ"ÒÒ’“·Ò“²WFFU&VæFW&W$g&öÔf—‡GW&W2‚“²7FGW3ÖG·6VÆV7FVB‚’æ†W‡ÒÆ–VBFòG·&ö¦V7Bæf—‡GW&W2æÆVæwF‡Òf—'GVÂf—‡GW&R‡2’æ²ĞĞ¦gVæ7F–öâ7&VFT7VU6æ6†÷B‚’°Ğ¢G'’°Ğ¢6öç7BF–Ö–æs×·Ó°Ğ¢f÷"†6öç7B¶W’öb²&GW&F–öâ"Â&fFR"Â&FVÆ’"Â&fFT÷WB%Ò’°Ğ¢6öç7B–çWCÖFö7VÖVçBçVW'•6VÆV7F÷"†67VRÒG¶¶W—Ö“°Ğ¢–b‚–çWBçfÇVRçG&–Ò‚’ÇÂ–çWBæ6†V6µfÆ–F—G’‚’’F‡&÷ræWrW'&÷"†G·B†¶W’—Ó¢VçFW"fÆ–BfÇVRæ“°Ğ¢F–Ö–æu¶¶W•ÓÔçVÖ&W"†–çWBçfÇVR“°Ğ¢ĞĞ¢ÆWB7VS°Ğ¢6öç7Bw&÷W–CÖFö7VÖVçBçVW'•6VÆV7F÷"‚"67VRÖw&÷W"’çfÇVS°Ğ¢6öÖÖ—E&ö¦V7D6†ævR‚&7VRÖ7&VFR"Â†G&gB“Óç¶7VSÖ7&VFT7VR†w&÷Wf—‡GW&W2†G&gBæf—‡GW&W2ÆG&gBæf—‡GW&Tw&÷W2óòµÒÆw&÷W–B’Ç¶æÖS¦Æöö²G¶G&gBæ7VW2æÆVæwF‚³ÖÂââçF–Ö–æwÒ“¶G&gBæ7VW3Õ²ââæG&gBæ7VW2Æ7VUÓ·Ò“°Ğ¢7FGW3ÖG¶7VRææÖWÒ6GW&VBv—F‚G¶7VRçF&vWG2æÆVæwF‡Òf—‡GW&RF&vWB‡2’æ°Ğ¢&VæFW"‚“°Ğ¢Ò6F6‚†W'&÷"’²Fö7VÖVçBçVW'•6VÆV7F÷"‚"77FGW2"’çFW‡D6öçFVçC×7FGW3ÖW'&÷"æÖW76vS²ĞĞ§ĞĞ¦gVæ7F–öâ7W'&VçE&VæFW&W$f—‡GW&W2‚’²&WGW&â&ö¦V7Bæf—‡GW&W2æÖ‚†f—‡GW&R“Óâ‡²ââæf—‡GW&RÇ6VÆV7FVC¦f—‡GW&Ræ–CÓÓ×6VÆV7FVDf—‡GW&R‚“òæ–GÒ’“²ĞĞ¦gVæ7F–öâWFFU&VæFW&W$g&öÔf—‡GW&W2‚’²6öç7Bf—‡GW&W3Ö7W'&VçE&VæFW&W$f—‡GW&W2‚“·&VæFW&W#òç6WDf—‡GW&W2†f—‡GW&W2“·&VæFW&W$f—‡GW&U6–væGW&SÖÆ–v‡DÆ$f—‡GW&U7FFR†f—‡GW&W2“²ĞĞ¦gVæ7F–öâWFFTF×„fVVF&6²†f—‡GW&W2’°Ğ¢6öç7B6æ6†÷C×f—'GVÄF×…&Wf–Wr†f—‡GW&W2Ç&VfW&Væ6W2æf—‡GW&T–B“°Ğ¢6öç7BÖöæ—F÷#ÖFö7VÖVçBçVW'•6VÆV7F÷"‚"7f—'GVÂÖF×‚ÖÖöæ—F÷""’Ç7VÖÖ'“ÖFö7VÖVçBçVW'•6VÆV7F÷"‚"çF–ÖVÆ–æRæF×‚Ö7F–öç27â"“°Ğ¢–b†Ööæ—F÷"’Ööæ—F÷"çFW‡D6öçFVçCÖG·B‚'Væ—fW'6R"—ÒG·6æ6†÷BçVæ—fW'6WÕÆâG·6æ6†÷Bæ6†ææVÇ2æÖ‚†6†ææVÂ“ÓæGµ7G&–ær†6†ææVÂæFG&W72’çE7F'Bƒ2Â#"—Ò+rG¶6†ææVÂææÖWÓ¢G¶6†ææVÂçfÇVWÖ’æ¦ö–â‚%Æâ"—Ö°Ğ¢–b‡7VÖÖ'’’7VÖÖ'’çFW‡D6öçFVçCÖRG·6æ6†÷BçVæ—fW'6WÒ+r4‚¢G·6æ6†÷Bæg&ÖU³×Ò+rG·B‚&÷WGWDF—6&ÆVB"—Ö°Ğ§ĞĞ¦gVæ7F–öâ&Wf–Wtf—‡GW&W2†f—‡GW&W2’·&VæFW&W#òç6WDf—‡GW&W2†f—‡GW&W2“·WFFTF×„fVVF&6²†f—‡GW&W2“·ĞĞ¦gVæ7F–öâ7F÷Æ–&6²†ÖW76vSÒ$7VRÆ–&6²7F÷VBâ"’²–b‡Æ–&6µF–ÖW"—¶6ÆV$–çFW'fÂ‡Æ–&6µF–ÖW"“·Æ–&6µF–ÖW#ÖçVÆÃ·ÒÆ–&6´6Æö6³ÖçVÆÃ²7FGW3ÖÖW76vS²ĞĞ¦gVæ7F–öâFövvÆUÆ–&6µW6R‚’°Ğ¢–b‚Æ–&6´6Æö6²’&WGW&ã°Ğ¢–b‡Æ–&6´6Æö6²çW6VB’Æ–&6´6Æö6²ç&W7VÖR‡W&f÷&Öæ6Rææ÷r‚’“°Ğ¢VÇ6RÆ–&6´6Æö6²çW6R‡W&f÷&Öæ6Rææ÷r‚’“°Ğ¢6öç7B'WGFöãÖFö7VÖVçBçVW'•6VÆV7F÷"‚"7W6R×Æ–&6²"“°Ğ¢'WGFöâçFW‡D6öçFVçC×B‡Æ–&6´6Æö6²çW6VBò'&W7VÖUÆ–&6²"¢'W6UÆ–&6²"“°Ğ¢'WGFöâç6WDGG&–'WFR‚&&–×&W76VB"Å7G&–ær‡Æ–&6´6Æö6²çW6VB’“°Ğ§ĞĞ¦gVæ7F–öâÆ”VffV7B‚’°Ğ¢6öç7B–çWCÖFö7VÖVçBçVW'•6VÆV7F÷"‚"6VffV7B×W&–öB"“°Ğ¢–b‚–çWBçfÇVRçG&–Ò‚’ÇÂ–çWBæ6†V6µfÆ–F—G’‚’’&WGW&â–çWBç&W÷'EfÆ–F—G’‚“°Ğ¢6öç7B6WGF–æw3×·G—S¦Fö7VÖVçBçVW'•6VÆV7F÷"‚"6VffV7B×G—R"’çfÇVRÇW&–öC¤çVÖ&W"†–çWBçfÇVR—Ó°Ğ¢–b‡6WGF–æw2çG—SÓÓÒ'åF–ÇB"’²6WGF–æw2æÖ–æ–×VÓÓcC·6WGF–æw2æÖ†–×VÓÓ“#²ĞĞ¢6öç7B6÷W&6S×7G'V7GW&VD6ÆöæR‡&ö¦V7Bæf—‡GW&W2“°Ğ¢–b‚6÷W&6RæÆVæwF‚’&WGW&ã°Ğ¢WfÇVFTVffV7B‡6÷W&6RÇ6WGF–æw2Ã“°Ğ¢7F÷Æ–&6²‚“°Ğ¢Æ–&6´6Æö6³Ö7&VFUÆ–&6´6Æö6²‡W&f÷&Öæ6Rææ÷r‚’“°Ğ¢&VfW&Væ6W2çf–WsÒ&Æ–v‡B#°Ğ¢Æ–&6µF–ÖW#×6WD–çFW'fÂ‚‚“Óç°Ğ¢&Wf–Wtf—‡GW&W2†WfÇVFTVffV7B‡6÷W&6RÇ6WGF–æw2ÇÆ–&6´6Æö6²æVÆ6VB‡W&f÷&Öæ6Rææ÷r‚’’’“°Ğ¢Fö7VÖVçBçVW'•6VÆV7F÷"‚"77FGW2"’çFW‡D6öçFVçCÖG·B‚'f—'GVÄVffV7B"—Ò+rG·B‡6WGF–æw2çG—R—Ö°Ğ¢ÒÃ“°Ğ¢&VæFW"‚“°Ğ§ĞĞ¦gVæ7F–öâÆ•6WVVæ6R‡·6VV³ÓÇW6VCÖfÇ6WÓ×·Ò’°Ğ¢–b‚&ö¦V7Bæ7VW2æÆVæwF‚’&WGW&ã°Ğ¢7F÷Æ–&6²‚“°Ğ¢6öç7B6÷W&6S×7G'V7GW&VD6ÆöæR‡&ö¦V7Bæf—‡GW&W2’Æ7VW3×7G'V7GW&VD6ÆöæR‡&ö¦V7Bæ7VW2“°Ğ¢Æ–&6´6Æö6³Ö7&VFUÆ–&6´6Æö6²‡W&f÷&Öæ6Rææ÷r‚’“°Ğ¢Æ–&6´6Æö6²ç6VV²‡6VV²ÇW&f÷&Öæ6Rææ÷r‚’“°Ğ¢–b‡W6VB’Æ–&6´6Æö6²çW6R‡W&f÷&Öæ6Rææ÷r‚’“°Ğ¢6öç7BGW&F–öãÖ7VW2ç&VGV6R‚‡7VÒÆ7VR“Óç7VÒ¶7VRæGW&F–öâÃ“°Ğ¢&VfW&Væ6W2çf–WsÒ&Æ–v‡B#°Ğ¢Æ–&6µF–ÖW#×6WD–çFW'fÂ‚‚“Óç°Ğ¢6öç7B÷6—F–öã×Æ–&6µ÷6—F–öâ‡Æ–&6´6Æö6²æVÆ6VB‡W&f÷&Öæ6Rææ÷r‚’’ÆGW&F–öâÄ&ööÆVâ‡&VfW&Væ6W2æÆö÷6WVVæ6R’“°Ğ¢6öç7Bg&ÖSÖWfÇVFU6WVVæ6R‡6÷W&6RÆ7VW2Ç÷6—F–öâçF–ÖR“°Ğ¢&Wf–Wtf—‡GW&W2†g&ÖRæf—‡GW&W2“°Ğ¢6öç7B67'V#ÖFö7VÖVçBçVW'•6VÆV7F÷"‚"76WVVæ6R×6VV²"“°Ğ¢–b‡67'V"bbFö7VÖVçBæ7F—fTVÆVÖVçBÓ×67'V"’67'V"çfÇVSÕ7G&–ær‡÷6—F–öâçF–ÖR“°Ğ¢Fö7VÖVçBçVW'•6VÆV7F÷"‚"76WVVæ6R×÷6—F–öâ"’çFW‡D6öçFVçCÖG·÷6—F–öâçF–ÖRçFôf—†VBƒ—ÒòG¶GW&F–öâçFôf—†VBƒ—Ò6°Ğ¢Fö7VÖVçBçVW'•6VÆV7F÷"‚"7F–ÖVÆ–æR×Æ–†VB"’ç7G–ÆRæÆVgCÖG·÷6—F–öâçF–ÖR÷F–ÖVÆ–æTÆ–÷WB†7VW2’ç7â£ÒV°Ğ¢Fö7VÖVçBçVW'•6VÆV7F÷"‚"77FGW2"’çFW‡D6öçFVçCÖG·B‚'Æ•6WVVæ6R"—Ò+rG´ÖF‚æÖ–â†g&ÖRæ–æFW‚²Æ7VW2æÆVæwF‚—ÒòG¶7VW2æÆVæwF‡Ö°Ğ¢–b‡÷6—F–öâæ6ö×ÆWFRbbÆ–&6´6Æö6²çW6VB’²7F÷Æ–&6²‚“²&VæFW"‚“²ĞĞ¢ÒÃ“°Ğ¢&VæFW"‚“°Ğ¢Fö7VÖVçBçVW'•6VÆV7F÷"‚"76WVVæ6R×&Wf–WrÖFWF–Ç2"’æ÷Vã×G'VS°Ğ§ĞĞ¦gVæ7F–öâÆ”ÆFW7D7VR‚’°Ğ¢6öç7B7VS×&ö¦V7Bæ7VW2æf–æB‚†—FVÒ“Óæ—FVÒæ–CÓÓ×&VfW&Væ6W2æ7VT–B’óò&ö¦V7Bæ7VW2æB‚Ó“°Ğ¢–b‚7VR’&WGW&ã°Ğ¢7F÷Æ–&6²‚“°Ğ¢6öç7B6÷W&6S×7G'V7GW&VD6ÆöæR‡&ö¦V7Bæf—‡GW&W2“°Ğ¢Æ–&6´6Æö6³Ö7&VFUÆ–&6´6Æö6²‡W&f÷&Öæ6Rææ÷r‚’“°Ğ¢&VfW&Væ6W2çf–WsÒ&Æ–v‡B#°Ğ¢Æ–&6µF–ÖW#×6WD–çFW'fÂ‚‚“Óç°Ğ¢6öç7BVÆ6VC×Æ–&6´6Æö6²æVÆ6VB‡W&f÷&Öæ6Rææ÷r‚’“°Ğ¢&Wf–Wtf—‡GW&W2†WfÇVFT7VR‡6÷W&6RÆ7VRÆVÆ6VB’“°Ğ¢Fö7VÖVçBçVW'•6VÆV7F÷"‚"77FGW2"’çFW‡D6öçFVçCÖÆ––ærG¶7VRææÖWÒ+rG²„ÖF‚æÖ–â†VÆ6VBÆ7VRæGW&F–öâ’’çFôf—†VBƒ—×2òG¶7VRæGW&F–öç×6°Ğ¢–b†VÆ6VCãÖ7VRæGW&F–öâ’²7F÷Æ–&6²†G¶7VRææÖWÒ6ö×ÆWFVB–âf—'GVÂ6–×VÆF–öâæ“²&VæFW"‚“²ĞĞ¢ÒÃ“°Ğ¢&VæFW"‚“°Ğ§ĞĞ¦gVæ7F–öâÆ”'&ævVÖVçB‡·6VV³ÓÇW6VCÖfÇ6WÓ×·Ò’°Ğ¢–b‚&ö¦V7Bæ7VW2æÆVæwF‚’&WGW&ã°Ğ¢7F÷Æ–&6²‚“°Ğ¢6öç7B6÷W&6S×7G'V7GW&VD6ÆöæR‡&ö¦V7Bæf—‡GW&W2’Æ7VW3×7G'V7GW&VD6ÆöæR‡&ö¦V7Bæ7VW2’ÆGW&F–öãÖ'&ævVÖVçDGW&F–öâ†7VW2“°Ğ¢Æ–&6´6Æö6³Ö7&VFUÆ–&6´6Æö6²‡W&f÷&Öæ6Rææ÷r‚’“·&VfW&Væ6W2çf–WsÒ&Æ–v‡B#°Ğ¢Æ–&6´6Æö6²ç6VV²‡6VV²ÇW&f÷&Öæ6Rææ÷r‚’“°Ğ¢–b‡W6VB’Æ–&6´6Æö6²çW6R‡W&f÷&Öæ6Rææ÷r‚’“°Ğ¢Æ–&6µF–ÖW#×6WD–çFW'fÂ‚‚“Óç°Ğ¢–b†Fö7VÖVçBçVW'•6VÆV7F÷"‚"æ'&ævVÖVçB×F–ÖVÆ–æRçF–ÖVÆ–æR×'VÆW""“òæFF6WBç6VV¶–ær—&WGW&ã°Ğ¢6öç7B÷6—F–öã×Æ–&6µ÷6—F–öâ‡Æ–&6´6Æö6²æVÆ6VB‡W&f÷&Öæ6Rææ÷r‚’’ÆGW&F–öâÄ&ööÆVâ‡&VfW&Væ6W2æÆö÷6WVVæ6R’“°Ğ¢&Wf–Wtf—‡GW&W2†WfÇVFUG&6·2‡6÷W&6RÆ7VW2Ç÷6—F–öâçF–ÖR’“°Ğ¢Fö7VÖVçBçVW'•6VÆV7F÷"‚"6'&ævVÖVçB×Æ–†VB"’ç7G–ÆRæÆVgCÖG·÷6—F–öâçF–ÖRôÖF‚æÖ‚ƒ3ÆGW&F–öâ’£ÒV°Ğ¢Fö7VÖVçBçVW'•6VÆV7F÷"‚"æ'&ævVÖVçB×F–ÖVÆ–æRçF–ÖVÆ–æR×'VÆW""’ç6WDGG&–'WFR‚&&–×fÇVVæ÷r"Å7G&–ær‡÷6—F–öâçF–ÖR’“°Ğ¢6öç7B6Æ–FW#ÖFö7VÖVçBçVW'•6VÆV7F÷"‚"6'&ævVÖVçB×6VV²"“°Ğ¢–b†Fö7VÖVçBæ7F—fTVÆVÖVçBÓ×6Æ–FW"’6Æ–FW"çfÇVSÕ7G&–ær‡÷6—F–öâçF–ÖR“°Ğ¢Fö7VÖVçBçVW'•6VÆV7F÷"‚"6'&ævVÖVçB×÷6—F–öâ"’çFW‡D6öçFVçCÖG·÷6—F–öâçF–ÖRçFôf—†VBƒ—ÒòG¶GW&F–öâçFôf—†VBƒ—Ò6°Ğ¢Fö7VÖVçBçVW'•6VÆV7F÷"‚"77FGW2"’çFW‡D6öçFVçCÖG·B‚'Æ•G&6·2"—Ò+rG·÷6—F–öâçF–ÖRçFôf—†VBƒ—Ò6°Ğ¢–b‡÷6—F–öâæ6ö×ÆWFRbbÆ–&6´6Æö6²çW6VB’·7F÷Æ–&6²‚“·&VæFW"‚“·ĞĞ¢ÒÃ“°Ğ¢&VæFW"‚“°Ğ§ĞĞ¦gVæ7F–öâF÷væÆöEFW‡B†6öçFVçBÂf–ÆVæÖRÂG—R’²6öç7Bf–ÆSÖæWr&Æö"…¶6öçFVçEÒÇ·G—WÒ“²6öç7BÆ–æ³ÖFö7VÖVçBæ7&VFTVÆVÖVçB‚&"“²Æ–æ²æ‡&VcÕU$Âæ7&VFTö&¦V7EU$Â†f–ÆR“²Æ–æ²æF÷væÆöCÖf–ÆVæÖS²Æ–æ²æ6Æ–6²‚“²U$Âç&Wfö¶Tö&¦V7EU$Â†Æ–æ²æ‡&Vb“²ĞĞ¦gVæ7F–öâW‡÷'Df–ÆR†¶–æB’²–b†¶–æCÓÓÒ&6R"—·G'—¶F÷væÆöEFW‡B‡ÆWGFT6R‡ÆWGFR‚’’ÆG·6fTf–ÆU7FVÒ‡ÆWGFR‚’ææÖR—Òæ6VÂ&Æ–6F–öâöö7FWB×7G&VÒ"“·7FGW3×B‚&6TW‡÷'DÆ–Ö—B"“·Ö6F6‚†W'&÷"—·7FGW3ÖW'&÷"æÖW76vS·ÖFö7VÖVçBçVW'•6VÆV7F÷"‚"77FGW2"’çFW‡D6öçFVçC×7FGW3·&WGW&ã·Ò6öç7B7FVÓ×6fTf–ÆU7FVÒ‡&ö¦V7BææÖR“²6öç7BW‡÷'G3×²&ö¦V7C¥·&ö¦V7D§6öâ‡&ö¦V7B’ÆG·7FV×ÒæÆBæ§6öæÂ&Æ–6F–öâö§6öâ%ÒÂÆWGFS¥·ÆWGFT§6öâ‡ÆWGFR‚’’ÆG·7FV×Ò×ÆWGFRæ§6öæÂ&Æ–6F–öâö§6öâ%ÒÂ773¥·ÆWGFT772‡ÆWGFR‚’’ÆG·7FV×Ò×ÆWGFRæ776Â'FW‡Bö772%ÒÂF6ƒ¥·F6„77b‡&ö¦V7Bæf—‡GW&W2’ÆG·7FV×Ò×F6‚æ77fÂ'FW‡Bö77b%ÒÂ7VW3¥¶7VT77b‡&ö¦V7Bæ7VW2’ÆG·7FV×ÒÖ7VW2æ77fÂ'FW‡Bö77b%ÒÓ²6öç7B¶6öçFVçBÆæÖRÇG—UÓÖW‡÷'G5¶¶–æEÓ²F÷væÆöEFW‡B†6öçFVçBÆæÖRÇG—R“²7FGW3ÖG¶æÖWÒF÷væÆöFVBæ²Fö7VÖVçBçVW'•6VÆV7F÷"‚"77FGW2"’çFW‡D6öçFVçC×7FGW3²ĞĞ¦gVæ7F–öâ÷Vä6Æ÷VE&ö¦V7B†Fö7VÖVçB’°Ğ¢6öç7BæW‡C×&W&TVF—F÷%&ö¦V7B†Fö7VÖVçB“°Ğ¢7F÷Æ–&6²‚“°Ğ¢VæFõ7F6³Õ·7G'V7GW&VD6ÆöæR‡&ö¦V7B•Ó°Ğ¢&VFõ7F6³ÕµÓ°Ğ¢&ö¦V7CÖæW‡C°Ğ¢6fU&ö¦V7B‚“°Ğ¢&VæFW"‚“°Ğ§ĞĞ¦7–æ2gVæ7F–öâ–×÷'DæF—fU&ö¦V7B†f–ÆR’²6öç7B&W7VÇCÖv—B&VE&ö¦V7Df–ÆR†f–ÆR“²–b‚&W7VÇBçfÆ–B’&WGW&â6WE7FGW2‡&W7VÇBæW'&÷'2æ¦ö–â‚""’“²7F÷Æ–&6²‚“²&ö¦V7C×&W&TVF—F÷%&ö¦V7B‡&W7VÇBç&ö¦V7B“²VæFõ7F6³ÕµÓ·&VFõ7F6³ÕµÓ·6fU&ö¦V7B‚“·7FGW3×&ö¦V7BææÖR²"÷VæVBÆö6ÆÇ’â#·&VæFW"‚“²Ğ¦gVæ7F–öâ7&VFTæWu&ö¦V7B‚’°¢–b‚v–æF÷ræ6öæf—&Ò‡B‚&6öæf—&ÔæWu&ö¦V7B"’’’&WGW&ã°¢7F÷Æ–&6²‚“°¢6öç7BÆö6ÆS×&VfW&Væ6W2æÆö6ÆRÇF†VÖS×&VfW&Væ6W2çF†VÖS°¢f÷"†6öç7B¶W’öbö&¦V7Bæ¶W—2‡&VfW&Væ6W2’’FVÆWFR&VfW&Væ6W5¶¶W•Ó°¢ö&¦V7Bæ76–vâ‡&VfW&Væ6W2ÆFVfVÇG2Ç¶Æö6ÆRÇF†VÖRÇ66VæT–C¢'7GVF–ò×&ööÒ'Ò“°¢&ö¦V7CÖ7&VFU7GVF–ôÖööE&ö¦V7B‚“°¢&VfW&Væ6W2æf—‡GW&T–C×&ö¦V7Bæf—‡GW&W2æB‚Ó“òæ–C°¢VæFõ7F6³ÕµÓ·&VFõ7F6³ÕµÓ°¢6fU&VfW&Væ6W2‚“°¢6fU&ö¦V7B‚“°¢7FGW3×&ö¦V7BææÖR²"7&VFVBÆö6ÆÇ’â#°¢&VæFW"‚“°§ĞĞ¦gVæ7F–öâ6fU&VfW&Væ6W2‚’²–b‚w&—FT'&÷w6W%7F÷&vR‡&VfW&Væ6W4¶W’Ä¥4ôâç7G&–æv–g’‡&VfW&Væ6W2’’æö²’7FGW3×B‚'&VfW&Væ6W4æ÷E6fVB"“²ĞĞ¦gVæ7F–öâ6fU&ö¦V7B‚’°Ğ¢&ö¦V7BçWFFVDBÒæWrFFR‚’çFô•4õ7G&–ær‚“°Ğ¢&ö¦V7EW'6—7FVC×w&—FT'&÷w6W%7F÷&vR‡7F÷&vT¶W’Ä¥4ôâç7G&–æv–g’‡&ö¦V7B’’æö³°Ğ¢7FGW3×B‡&ö¦V7EW'6—7FVBò'7FGW56fVB"¢'7F÷&vUVæf–Æ&ÆR"“°Ğ¢6öç7B–æF–6F÷#ÖFö7VÖVçBçVW'•6VÆV7F÷"‚"ç6fR×7FFR"“°Ğ¢6öç7B†VFW%6fSÖFö7VÖVçBçVW'•6VÆV7F÷"‚"æ†VFW"×6fR×7FGW2"“¶–b††VFW%6fR—¶†VFW%6fRçFW‡D6öçFVçC×B‡&ö¦V7EW'6—7FVBò'6fVDÆö6ÆÇ’"¢'6W76–öäöæÇ’"“¶†VFW%6fRæ6Æ74Æ—7BçFövvÆR‚&—2×6fVB"Ç&ö¦V7EW'6—7FVB“·ĞĞ¢–b†–æF–6F÷"’¶–æF–6F÷"æ6Æ74Æ—7BçFövvÆR‚&—2×Vç6fVB"Â&ö¦V7EW'6—7FVB“¶–æF–6F÷"çFW‡D6öçFVçCÖ)xòG·B‡&ö¦V7EW'6—7FVBò'6fVB"¢'6W76–öäöæÇ’"—Ö¶–æF–6F÷"çF—FÆS×7FGW3·ĞĞ§ĞĞ¦gVæ7F–öâ6öÖÖ—E&ö¦V7D6†ævR†Æ&VÂÂ×WFFR’²7F÷Æ–&6²‚“²6öç7BæW‡CÖ6öÖÖ—EG&ç67F–öâ‡·&ö¦V7BÇVæFõ7F6²Ç&VFõ7F6·ÒÆÆ&VÂÆ×WFFR“²6öç7BfÆ–FF–öã×fÆ–FFU&ö¦V7B†æW‡Bç&ö¦V7B“²–b‚fÆ–FF–öâçfÆ–B’F‡&÷ræWrW'&÷"‡fÆ–FF–öâæW'&÷'2æ¦ö–â‚""’“²&ö¦V7CÖæW‡Bç&ö¦V7C·VæFõ7F6³ÖæW‡BçVæFõ7F6³·&VFõ7F6³ÖæW‡Bç&VFõ7F6³·6fU&ö¦V7B‚“²ĞĞ¦gVæ7F–öâ×WFFT6öÆ÷W'2†fâ’²6öÖÖ—E&ö¦V7D6†ævR‚'ÆWGFR×WFFR"Â†G&gB“Óç¶G&gBçÆWGFW5³Òæ6öÆ÷'3Öfâ‡7G'V7GW&VD6ÆöæR†G&gBçÆWGFW5³Òæ6öÆ÷'2’“·Ò“²&VæFW"‚“²ĞĞ¦gVæ7F–öâVæFò‚’²–b‚VæFõ7F6²æÆVæwF‚’&WGW&â6WE7FGW2‡B‚&æõVæFò"’“²7F÷Æ–&6²‚“²6öç7BæW‡C×VæFõG&ç67F–öâ‡·&ö¦V7BÇVæFõ7F6²Ç&VFõ7F6·Ò“·&ö¦V7CÖæW‡Bç&ö¦V7C·VæFõ7F6³ÖæW‡BçVæFõ7F6³·&VFõ7F6³ÖæW‡Bç&VFõ7F6³·6fU&ö¦V7B‚“·7FGW3×B‚'7FGW5VæFò"“·&VæFW"‚“²ĞĞ¦gVæ7F–öâ&VFò‚’²–b‚&VFõ7F6²æÆVæwF‚’&WGW&â6WE7FGW2‡B‚&æõ&VFò"’“²7F÷Æ–&6²‚“²6öç7BæW‡C×&VFõG&ç67F–öâ‡·&ö¦V7BÇVæFõ7F6²Ç&VFõ7F6·Ò“·&ö¦V7CÖæW‡Bç&ö¦V7C·VæFõ7F6³ÖæW‡BçVæFõ7F6³·&VFõ7F6³ÖæW‡Bç&VFõ7F6³·6fU&ö¦V7B‚“·7FGW3×B‚'7FGW5&VFò"“·&VæFW"‚“²ĞĞ¦gVæ7F–öâ6WE7FGW2‡fÇVR’²7FGW2ÒfÇVS²&VæFW"‚“²ĞĞ¦gVæ7F–öâF—6&ÆVB‡F—FÆR’²&WGW&âF—6&ÆVBF—FÆSÒ"G¶W62‡F—FÆR—Ò&²ĞĞ¦gVæ7F–öâ6ö×7B‡fÇVRÂF–v—G2Ò’²&WGW&âçVÖ&W"‡fÇVR’çFôf—†VB†F–v—G2“²ĞĞ¦gVæ7F–öâ6öÆ÷W%76TÖ&·W††W‚’²6öç7B&v#Ö†W…Fõ&v"††W‚’Æ‡6Ã×&v%Fô‡6Â‡&v"’Æ‡7c×&v%Fô‡7b‡&v"’ÆÆ#×&v%FôÆ"‡&v"’Æö¶Æ#×&v%Fôö¶Æ"‡&v"“²&WGW&âÇ6V7F–öâ6Æ73Ò&6öÆ÷W"×76RÖ6&B"&–ÖÆ&VÃÒ"G·B‚&6öÆ÷%76W2"—Ò#ãÆƒ3âG·B‚&6öÆ÷%76W2"—ÓÂöƒ3ãÆFÃãÆF—cãÆGCç5$t#ÂöGCãÆFCâG´ÖF‚ç&÷VæB‡&v"ç"—ÒÂG´ÖF‚ç&÷VæB‡&v"ær—ÒÂG´ÖF‚ç&÷VæB‡&v"æ"—ÓÂöFCãÂöF—cãÆF—cãÆGCä…4ÃÂöGCãÆFCâG¶6ö×7B†‡6Âæ‚—Ü++rG¶6ö×7B†‡6Âç2£—ÒR+rG¶6ö×7B†‡6ÂæÂ£—ÒSÂöFCãÂöF—cãÆF—cãÆGCä…5cÂöGCãÆFCâG¶6ö×7B†‡7bæ‚—Ü++rG¶6ö×7B†‡7bç2£—ÒR+rG¶6ö×7B†‡7bçb£—ÒSÂöFCãÂöF—cãÆF—cãÆGCä4”TÄ#ÂöGCãÆFCâG¶6ö×7B†Æ"æÂ—ÒÂG¶6ö×7B†Æ"æ—ÒÂG¶6ö×7B†Æ"æ"—ÓÂöFCãÂöF—cãÆF—cãÆGCäô´Æ#ÂöGCãÆFCâG¶6ö×7B†ö¶Æ"æÂÃ2—ÒÂG¶6ö×7B†ö¶Æ"æÃ2—ÒÂG¶6ö×7B†ö¶Æ"æ"Ã2—ÓÂöFCãÂöF—cãÂöFÃãÇ6ÖÆÂ6Æ73Ò"G¶—57&v$v×WB‡&v"“ò'72#¢&f–Â'Ò#âG¶—57&v$v×WB‡&v"“÷B‚&–å7&v""“§B‚&÷WG6–FU7&v""—ÓÂ÷6ÖÆÃãÂ÷6V7F–öãæ²ĞĞ¦gVæ7F–öâf—‡GW&TÆ–'&'”Ö&·W‚’²&WGW&âf—‡GW&U&öf–ÆW2æÖ‚‡&öf–ÆR“ÓæÆ'F–6ÆSãÆ#âG¶W62‡&öf–ÆRæÖöFVÂ—ÓÂö#ãÇ6ÖÆÃâG¶W62‡&öf–ÆRçG—R—Ò+rG·&öf–ÆRæÖöFW5³Òæ6†ææVÇ2æÆVæwF‡Ò4ƒÂ÷6ÖÆÃãÇâG¶W62‡&öf–ÆRçfÆ–FF–öå7FGW2—Ò+rG¶W62‡&öf–ÆRç&÷fVææ6R—ÓÂ÷ãÆ'WGFöâFF×&öf–ÆSÒ"G·&öf–ÆRæ–GÒ#âG·B‚&FEFõf—'GVÅF6‚"—ÓÂö'WGFöããÂö'F–6ÆSæ’æ¦ö–â‚""“²ĞĞ¦gVæ7F–öâ6VÆV7FVDf—‡GW&R‚’²&WGW&â&ö¦V7Bæf—‡GW&W2æf–æB‚†f—‡GW&R“Óæf—‡GW&Ræ–CÓÓ×&VfW&Væ6W2æf—‡GW&T–B’óò&ö¦V7Bæf—‡GW&W5³Ó²ĞĞ¦gVæ7F–öâf—‡GW&T–ç7V7F÷$Ö&·W‚’²6öç7Bf—‡GW&S×6VÆV7FVDf—‡GW&R‚’Ç&öf–ÆSÖvWDf—‡GW&U&öf–ÆR†f—‡GW&Rç&öf–ÆT–B’ÆÖöFS×&öf–ÆRæÖöFW2æf–æB‚†—FVÒ“Óæ—FVÒæ–CÓÓÖf—‡GW&RæÖöFT–B’óò&öf–ÆRæÖöFW5³ÒÇF6ƒÖf—‡GW&RçF6„76–væÖVçBóò·Væ—fW'6S£Ç7F'DFG&W73£Ó²&WGW&âÇ6V7F–öâ6Æ73Ò&f—‡GW&RÖ–ç7V7F÷"#ãÆƒ3âG·B‚'f—'GVÄf—‡GW&R"—ÓÂöƒ3ãÆÆ&VÃâG·B‚&f—‡GW&TÆ&VÂ"—ÓÇ6VÆV7B–CÒ&f—‡GW&R×6VÆV7B#âG¶f—‡GW&T÷F–öç2‡&ö¦V7Bæf—‡GW&W2Æf—‡GW&Ræ–B—ÓÂ÷6VÆV7CãÂöÆ&VÃãÆF—b6Æ73Ò&f—‡GW&R×&öf–ÆR×7VÖÖ'’"F—FÆSÒ"G¶W62‡&öf–ÆRçfÆ–FF–öå7FGW2—Ò#ãÇ7ããÇ6ÖÆÃåG—SÂ÷6ÖÆÃãÆ#âG¶W62‡&öf–ÆRçG—R—ÓÂö#ãÂ÷7ããÇ7ããÇ6ÖÆÃäÖöFSÂ÷6ÖÆÃãÆ#âG¶W62†ÖöFSòææÖRóò&öf–ÆRæÖöFVÂ—ÓÂö#ãÂ÷7ããÂöF—cãÆÆ&VÃâG·B‚&6öÆ÷W$æÖR"—ÓÆ–çWB–CÒ&f—‡GW&RÖæÖR"fÇVSÒ"G¶W62†f—‡GW&RææÖR—Ò"óãÂöÆ&VÃâG¶f—‡GW&UÆ6VÖVçDÖ&·W†f—‡GW&RçG&ç6f÷&ÒÇB‚&f—‡GW&UÆ6VÖVçB"’ÇB‚&f—‡GW&TG&t†–çB"’—ÓÆF—b6Æ73Ò&f—‡GW&RÖw&–B#ãÆÆ&VÃâG·B‚'Væ—fW'6R"—ÓÆ–çWB–CÒ&f—‡GW&R×Væ—fW'6R"G—SÒ&çVÖ&W""Ö–ãÒ#"fÇVSÒ"G·F6‚çVæ—fW'6WÒ"óãÂöÆ&VÃãÆÆ&VÃâG·B‚'7F'DFG&W72"—ÓÆ–çWB–CÒ&f—‡GW&RÖFG&W72"G—SÒ&çVÖ&W""Ö–ãÒ#"ÖƒÒ#S""fÇVSÒ"G·F6‚ç7F'DFG&W77Ò"óãÂöÆ&VÃãÆÆ&VÃâG·B‚&F–ÖÖW""—ÓÆ–çWB–CÒ&f—‡GW&RÖF–ÖÖW""G—SÒ&çVÖ&W""Ö–ãÒ#"ÖƒÒ##SR"fÇVSÒ"G¶f—‡GW&Rç&÷W'F–W2æF–ÖÖW"óòÒ"óãÂöÆ&VÃãÆÆ&VÃâG·B‚&&VÒ"—ÓÆ–çWB–CÒ&f—‡GW&RÖ&VÒ"G—SÒ&çVÖ&W""Ö–ãÒ#"ÖƒÒ##SR"fÇVSÒ"G¶f—‡GW&Rç&÷W'F–W2æ&VÒóòÒ"óãÂöÆ&VÃãÂöF—cãÆ'WGFöâ–CÒ&Ç’Öf—‡GW&R"6Æ73Ò'v–FR#âG·B‚&Ç”f—‡GW&U&÷W'F–W2"—ÓÂö'WGFöããÂ÷6V7F–öãæ²ĞĞ¦gVæ7F–öâÇ”f—‡GW&T–ç7V7F÷"‚’°Ğ¢6öç7Bf—‡GW&S×6VÆV7FVDf—‡GW&R‚“°Ğ¢–b‚f—‡GW&R’&WGW&ã°Ğ¢6öç7BfÇVSÒ†–B“Óç°Ğ¢6öç7B–çWCÖFö7VÖVçBçVW'•6VÆV7F÷"†–B“°Ğ¢–b‚–çWBçfÇVRçG&–Ò‚’ÇÂ–çWBæ6†V6µfÆ–F—G’‚’’F‡&÷ræWrW'&÷"†G¶–çWBæ6Æ÷6W7B‚&Æ&VÂ"’çFW‡D6öçFVçBçG&–Ò‚—Ó¢VçFW"fÆ–BfÇVRæ“°Ğ¢&WGW&âçVÖ&W"†–çWBçfÇVR“°Ğ¢Ó°Ğ¢G'’°Ğ¢6öç7B6†ævW3×°Ğ¢æÖS¦Fö7VÖVçBçVW'•6VÆV7F÷"‚"6f—‡GW&RÖæÖR"’çfÇVRÀĞ¢G&ç6f÷&Ó¤ö&¦V7Bæg&öÔVçG&–W2…²'‚"Â'’"Â'¢"Â'&÷FF–öâ%ÒæÖ‚††—2“Óå¶†—2ÇfÇVR†6f—‡GW&RÒG¶†—7Ö•Ò’’ÀĞ¢&÷W'F–W3§¶F–ÖÖW#§fÇVR‚"6f—‡GW&RÖF–ÖÖW""’Ââââ†Fö7VÖVçBçVW'•6VÆV7F÷"‚"6f—‡GW&RÖ&VÒ"’ò¶&VÓ§fÇVR‚"6f—‡GW&RÖ&VÒ"—Ò¢·Ò’Ââââ‚‚“Óç°Ğ¢6öç7B&v#Ö†W…Fõ&v"†Fö7VÖVçBçVW'•6VÆV7F÷"‚"6f—‡GW&RÖ6öÆ÷W""’çfÇVR“°Ğ¢6öç7B&ÇVT6†ææVÃÖFö7VÖVçBçVW'•6VÆV7F÷"‚"6f—‡GW&RÖ&ÇVRÖ6†ææVÂ"“°Ğ¢6öç7Bv†—FSÖFö7VÖVçBçVW'•6VÆV7F÷"‚"6f—‡GW&R×v†—FR"“°Ğ¢6öç7B–Ö–æsÔö&¦V7Bæg&öÔVçG&–W2…²'â"Â'F–ÇB%Òæf–ÇFW"‚†¶W’“ÓæFö7VÖVçBçVW'•6VÆV7F÷"†6f—‡GW&RÒG¶¶W—Ö’’æÖ‚†¶W’“Óå¶¶W’ÇfÇVR†6f—‡GW&RÒG¶¶W—Ö•Ò’“°Ğ¢&WGW&â·&VC§&v"ç"Æw&VVã§&v"ærÆ&ÇVS¦&ÇVT6†ææVÂòfÇVR‚"6f—‡GW&RÖ&ÇVRÖ6†ææVÂ"’¢&v"æ"Âââæ–Ö–ærÂâââ‡v†—FRò·v†—FS§fÇVR‚"6f—‡GW&R×v†—FR"—Ò¢·Ò—Ó°Ğ¢Ò’‚—ÒÀĞ¢Ó°Ğ¢6öÖÖ—E&ö¦V7D6†ævR‚&f—‡GW&R×WFFR"Â†G&gB“Óç¶G&gBæf—‡GW&W3×WFFTf—‡GW&R†G&gBæf—‡GW&W2Æf—‡GW&Ræ–BÆ6†ævW2“·Ò“°Ğ¢WFFU&VæFW&W$g&öÔf—‡GW&W2‚“°Ğ¢7FGW3×‡&6R‚&f—‡GW&UWFFVB"Ç¶æÖS§6VÆV7FVDf—‡GW&R‚’ææÖWÒ“°Ğ¢&VæFW"‚“°Ğ¢Ò6F6‚†W'&÷"’²Fö7VÖVçBçVW'•6VÆV7F÷"‚"77FGW2"’çFW‡D6öçFVçC×7FGW3ÖW'&÷"æÖW76vS²ĞĞ§ĞĞ Ğ¦gVæ7F–öâÇ”f—‡GW&UF6‚‚’°Ğ¢6öç7Bf—‡GW&S×6VÆV7FVDf—‡GW&R‚“°Ğ¢–b‚f—‡GW&R’&WGW&ã°Ğ¢6öç7BfÇVSÒ†–B“Óç°Ğ¢6öç7B–çWCÖFö7VÖVçBçVW'•6VÆV7F÷"†–B“°Ğ¢–b‚–çWBçfÇVRçG&–Ò‚’ÇÂ–çWBæ6†V6µfÆ–F—G’‚’’F‡&÷ræWrW'&÷"†G¶–çWBæ6Æ÷6W7B‚&Æ&VÂ"’çFW‡D6öçFVçBçG&–Ò‚—Ó¢VçFW"fÆ–BfÇVRæ“°Ğ¢&WGW&âçVÖ&W"†–çWBçfÇVR“°Ğ¢Ó°Ğ¢G'’°Ğ¢6öç7BVæ—fW'6S×fÇVR‚"6f—‡GW&R×Væ—fW'6R"’Ç7F'DFG&W73×fÇVR‚"6f—‡GW&RÖFG&W72"“°Ğ¢6öÖÖ—E&ö¦V7D6†ævR‚&f—‡GW&R×F6‚"Â†G&gB“Óç¶G&gBæf—‡GW&W3×F6„f—‡GW&R†G&gBæf—‡GW&W2Æf—‡GW&Ræ–BÇVæ—fW'6RÇ7F'DFG&W72“·Ò“°Ğ¢WFFU&VæFW&W$g&öÔf—‡GW&W2‚“°Ğ¢7FGW3×‡&6R‚&f—‡GW&UF6†VB"Ç¶æÖS¦f—‡GW&RææÖRÇVæ—fW'6RÆFG&W73§7F'DFG&W77Ò“°Ğ¢&VæFW"‚“°Ğ¢Ò6F6‚†W'&÷"’²Fö7VÖVçBçVW'•6VÆV7F÷"‚"77FGW2"’çFW‡D6öçFVçC×7FGW3ÖW'&÷"æÖW76vS²ĞĞ§ĞĞ¦gVæ7F–öâ&VæFW"‚’°Ğ¢&VfW&Væ6W2æÇW„÷Vã×G'VS²òòfÆöF–ær×v–æF÷r7FFR6öçG&öÇ2f—6–&–Æ—G“²¶VW—G26öçFVçBÖ÷VçFVBàĞ¢6ÆVçWF÷ÖVçSòâ‚“°Ğ¢6öç7B&Wf–÷W46çf3ÖFö7VÖVçBçVW'•6VÆV7F÷"‚"6Æ–v‡BÖ6çf2"“°Ğ¢6öç7BæW‡E&VæFW&W$6öæf–s×&VfW&Væ6W2çf–WsÓÓÒ&Æ–v‡B"òÆ–v‡DÆ%&VæFW&W$6öæf–r‡66VæR‚’Ç&VfW&Væ6W2ç&Wf–WuVÆ—G’Ç&VfW&Væ6W2ç&ö¦V7F–öâ’¢çVÆÃ°Ğ¢6öç7B&WW6U&VæFW&W#×6†÷VÆE&WW6TÆ–v‡DÆ%&VæFW&W"‡·&VæFW&W"Æ6çf3§&Wf–÷W46çf2Çf–Ws§&VfW&Væ6W2çf–WrÇ&Wf–÷W46öæf–s§&VæFW&W$6öæf–u6–væGW&RÆæW‡D6öæf–s¦æW‡E&VæFW&W$6öæf–wÒ“°Ğ¢6öç7BÆ—fU6VÆV7F–öã×&VfW&Væ6W2çf–WsÓÓÒ'ÆWGFR"bb66VæR‚’æ6çf4ö&¦V7G3òç6öÖR†ö&¦V7CÓæö&¦V7Bæ–CÓÓ×&VfW&Væ6W2æö&¦V7D–BĞ¢ò¶¶–æC¢&ö&¦V7B"Æ–C§&VfW&Væ6W2æö&¦V7D–BÇ66VæT–C§66VæR‚’æ–GĞĞ¢¢‡&VfW&Væ6W2æ–ç7V7F÷$ÖöFRóò‡&VfW&Væ6W2çf–WsÓÓÒ&Æ–v‡B"ò&f—‡GW&R"¢'ÆWGFR"’“ÓÓÒ&f—‡GW&R"bb6VÆV7FVDf—‡GW&R‚Ğ¢ò¶¶–æC¢&f—‡GW&R"Æ–C§6VÆV7FVDf—‡GW&R‚’æ–GĞĞ¢¢¶¶–æC¢'7vF6‚"Æ–C§6VÆV7FVB‚’æ–BÇÆWGFT–C§ÆWGFR‚’æ–GÓ°Ğ¢Æ—fT6çf4fVVBçV&Æ—6‚‡&ö¦V7BÇ·6VÆV7F–öã¦Æ—fU6VÆV7F–öâÇÆ––æs§Æ–&6µF–ÖW"ÓÖçVÆÇÒ“°Ğ¢–b‡&VæFW&W"—·f–Ww÷'D6ÖW&×&VæFW&W"æ6ÖW&7FFSòâ‚’óòf–Ww÷'D6ÖW&¶–b‚&WW6U&VæFW&W"—·&VæFW&W"æFW7G&÷’‚“·&VæFW&W#ÖçVÆÃ·&VæFW&W$6öæf–u6–væGW&SÖçVÆÃ·&VæFW&W$f—‡GW&U6–væGW&SÖçVÆÃ·&VæFW&W$66VçCÖçVÆÃ·×ĞĞ¢Fö7VÖVçBæFö7VÖVçDVÆVÖVçBæÆærÒ&VfW&Væ6W2æÆö6ÆS°Ğ¢Fö7VÖVçBæFö7VÖVçDVÆVÖVçBæFF6WBçF†VÖRÒ&VfW&Væ6W2çF†VÖS°Ğ¢6öç7B7F—fRÒ6VÆV7FVB‚“°¢6öç7BF—7Æ–VE66VæTçVÖ&W#ÔÖF‚æÖ‚ƒÇ&ö¦V7Bç66VæW2æf–æD–æFW‚‚†—FVÒ“Óæ—FVÒæ–CÓÓ×66VæR‚’æ–B’³“°Ğ¢6öç7B6öçG&7D&6¶w&÷VæCÖæ÷&ÖÆ—¦T†W‚‡&VfW&Væ6W2æ6öçG&7D&6¶w&÷VæB’óò"3####°Ğ¢6öç7B6öçG&7BÒ6öçG&7E&W7VÇB†6ö×÷6—FU7vF6‚†7F—fRÆ6öçG&7D&6¶w&÷VæB’Â6öçG&7D&6¶w&÷VæB“°Ğ¢6öç7B6öÆ÷W%76W2Ò6öÆ÷W%76TÖ&·W†7F—fRæ†W‚“°Ğ¢6öç7B6öÖÖæDw&÷W3×·&ö¦V7C§B‚'&ö¦V7B"’Æ†—7F÷'“§B‚&6öÖÖæD†—7F÷'’"’Ç66VæS§B‚'66VæT†VFW""’ÇÆWGFS§B‚&6öÖÖæEÆWGFR"’Æf—‡GW&W3§B‚&6öÖÖæDf—‡GW&W2"’ÆW‡÷'C§B‚&6öÖÖæDW‡÷'B"—Ó°Ğ¢6öç7BæbÒ°Ğ¢²'ÆWGFR"Â.)x’"Â&ÖöGVÆTFW6–vâ%ÒÂ²&Æ–v‡B"Â.)‹Â"Â&ÖöGVÆU7GVF–ò%ÒÂ²&Æ–'&'’"Â.)k"Â&ÖöGVÆTf—‡GW&W2%ÒÂ²&6÷–Æ÷B"Â.)xÂ"Â&ÖöGVÆT6÷–Æ÷B%ĞĞ¢ÒæÖ‚…¶¶W’Â–6öâÂÆ&VÄ¶W•Ò’ÓâÆ'WGFöâG—SÒ&'WGFöâ"6Æ73Ò&ÖöGVÆRG·7GVF–ô7F—fTÖöGVÆR‡&VfW&Væ6W2’ÓÓÒ¶W’ò&—2Ö7F—fR"¢"'Ò"FFÖÖöGVÆSÒ"G¶¶W—Ò"&–×&W76VCÒ"G·7GVF–ô7F—fTÖöGVÆR‡&VfW&Væ6W2’ÓÓÒ¶W—Ò#ãÇ7ãâG¶–6öçÓÂ÷7ãâG·B†Æ&VÄ¶W’—ÓÂö'WGFöãæ’æ¦ö–â‚""“°Ğ¢6öç7B6ö×7EFööÄÆ&VÄ¶W—3×·ÆWGFT''W6ƒ¢&''W6…6†÷'B"Æf—‡GW&S¢&f—‡GW&U6†÷'B"ÆÖFW&–Ã¢&ÖFW&–Å6†÷'B"Æ÷&&—C¢&÷&&—E6†÷'B'Ó°Ğ¢6öç7BFööÇ2Òµ²'6VÆV7B"Â.(ib%ÒÅ²'ÆWGFT''W6‚"Â.)x’%ÒÅ²&f—‡GW&R"Â.)ˆ%ÒÅ²&ÖFW&–Â"Â.)xb%ÒÅ²'6†W2"Â.)j%ÒÅ²'FW‡B"Â%B%ÒÅ²&ÖV7W&R"Â.(Ér%ÒÅ²&÷&&—B"Â.)xâ%ÕÒæÖ‚…¶¶W’Â–6öåÒ’ÓâÆ'WGFöâG—SÒ&'WGFöâ"6Æ73Ò'FööÂG·&VfW&Væ6W2çFööÂÓÓÒ¶W’ò&—2Ö7F—fR"¢"'Ò"FF×FööÃÒ"G¶¶W—Ò"&–ÖÆ&VÃÒ"G¶W62‡B†¶W’’—Ò#ãÇ7â&–Ö†–FFVãÒ'G'VR#âG¶–6öçÓÂ÷7ãâG¶W62‡B†6ö×7EFööÄÆ&VÄ¶W—5¶¶W•Òóò¶W’’—ÓÂö'WGFöãæ’æ¦ö–â‚""“°Ğ¢6öç7B7vF6†W2ÒÆWGFR‚’æ6öÆ÷'2æÖ‚‡7vF6‚“Óç7vF6„'WGFöâ‡7vF6‚Æ7F—fRæ–B’’æ¦ö–â‚""“°Ğ¢6öç7BF6†VDf—‡GW&W2Ò&ö¦V7Bæf—‡GW&W2æf–ÇFW"‚†f—‡GW&R’Óâf—‡GW&RçF6„76–væÖVçB“°Ğ¢6öç7Bf—'GVÄg&ÖRÒF×„g&ÖR‡&ö¦V7Bæf—‡GW&W2“°Ğ¢6öç7B7F—fT7VS×&ö¦V7Bæ7VW2æf–æB‚†7VR“Óæ7VRæ–CÓÓ×&VfW&Væ6W2æ7VT–B’óò&ö¦V7Bæ7VW2æB‚Ó“°Ğ¢6öç7BF–ÖVÆ–æS×F–ÖVÆ–æTÆ–÷WB‡&ö¦V7Bæ7VW2“°Ğ¢6öç7B7VT&Æö6·2ÒÆF—b6Æ73Ò'F–ÖVÆ–æR×66ÆR#ãÆF—b6Æ73Ò'F–ÖVÆ–æR×'VÆW"#âG·F–ÖVÆ–æRçF–6·2æÖ‚‡F–6²“ÓæÇ7â7G–ÆSÒ&ÆVgC¢G·F–6²æÆVgGÒR#âG´çVÖ&W"‡F–6²çF–ÖRçFôf—†VBƒ’—×3Â÷7ãæ’æ¦ö–â‚""—ÓÂöF—cãÆF—b6Æ73Ò'F–ÖVÆ–æRÖÆæR#âG·&ö¦V7Bæ7VW2æÖ‚†7VRÆ–æFW‚’ÓâÆ'WGFöâG—SÒ&'WGFöâ"6Æ73Ò&7VRÖ&Æö6²"FFÖ7VSÒ"G¶W62†7VRæ–B—Ò"&–×&W76VCÒ"G¶7VRæ–CÓÓÖ7F—fT7VSòæ–GÒ"F—FÆSÒ"G¶W62†7VRææÖR—Ò+rG¶7VRæGW&F–öç×2"7G–ÆSÒ&ÆVgC¢G·F–ÖVÆ–æRç6VvÖVçG5¶–æFW…ÒæÆVgGÒS·v–GFƒ¢G·F–ÖVÆ–æRç6VvÖVçG5¶–æFW…Òçv–GF‡ÒR#âG¶W62†7VRææÖR—Ò+rG¶7VRæGW&F–öç×3Âö'WGFöãæ’æ¦ö–â‚""’ÇÂÇ6ÖÆÂ6Æ73Ò&V×G’Ö7VW2#âG·B‚&æô7VW2"—ÓÂ÷6ÖÆÃæÓÂöF—cãÆF—b–CÒ'F–ÖVÆ–æR×Æ–†VB"6Æ73Ò'F–ÖVÆ–æR×Æ–†VB"&–Ö†–FFVãÒ'G'VR#ãÂöF—cãÂöF—cæ°Ğ¢æ–ææW$…DÔÂÒ Ğ¢Æ†VFW"6Æ73Ò'F÷&"#àĞ¢ÆF—b6Æ73Ò&'&æBÖÆö6·W"&–ÖÆ&VÃÒ"G·B‚&'&æDÇB"—Ò#àĞ¢Æ–Ör6Æ73Ò&6÷'÷&FRÖÖ&²"7&3Ò&‡GG3¢ò÷&ræv—F‡V'W6W&6öçFVçBæ6öÒô†W‡¦–&„&V‡VÆ„…ö†"ÖFW6–vâ×7—7FVÒöÖ–âö76WG2ö6÷'÷&FRö†W‡¦–&‚Ö&V‡VÆ‚Ööff–6–Âæ§r"ÇCÒ$†W‡¦–&‚&V‡VÆ‚"öæW'&÷#Ò'F†—2æ†–FFVã×G'VS·F†—2ææW‡DVÆVÖVçE6–&Æ–æræ†–FFVãÖfÇ6R"óàĞ¢Ç7â6Æ73Ò&'&æBÖfÆÆ&6²"†–FFVãä„"Æ#ä†W‡¦–&‚&V‡VÆƒÂö#ãÂ÷7ããÇ7â6Æ73Ò&'&æBÖF—f–FW"#ãÂ÷7ããÇ7â6Æ73Ò&F—f—6–öâ#î)ª„"VÆV·G&öæ–¶W#Â÷7ãàĞ¢ÂöF—càĞ¢ÆF—b6Æ73Ò'&öGV7BÖÆö6·W#ãÇ7G&öæsäF–wVâÇ7ãäÆ–v‡CÂ÷7ãâFW6–vãÂ÷7G&öæsãÇ6ÖÆÃä4ôÄõ"²Ä”t…B5ETD”óÂ÷6ÖÆÃãÂöF—càĞ¢ÆF—b6Æ73Ò&†VFW"×&ö¦V7BÖ6öçFW‡B"&–ÖÆ&VÃÒ"G¶W62‡B‚'&ö¦V7B"’—Ó¢G¶W62‡&ö¦V7BææÖR—ÒòG¶W62‡B‚'66VæT†VFW""’—ÒGµ7G&–ær†F—7Æ–VE66VæTçVÖ&W"’çE7F'Bƒ"Â#"—Ò#ãÇ7ãâG¶W62‡&ö¦V7BææÖR—ÓÂ÷7ããÆ"&–Ö†–FFVãÒ'G'VR#î(
+#Âö#ãÇ7ãâG·B‚'66VæT†VFW""—ÒGµ7G&–ær†F—7Æ–VE66VæTçVÖ&W"’çE7F'Bƒ"Â#"—ÓÂ÷7ããÂöF—cà¢G·F÷ÖVçTÖ&·W‡·BÆÆö6ÆS§&VfW&Væ6W2æÆö6ÆRÇ6fVC§&ö¦V7EW'6—7FVBÇW6W#¦66÷VçBçW6W'Ò—ÓÆ'WGFöâ–CÒ'F†VÖR"G—SÒ&'WGFöâ"†–FFVâ&–ÖÆ&VÃÒ"G·B‚&V&æ6R"—Ò#ãÂö'WGFöãàĞ¢Âö†VFW#àĞ¢Ææb6Æ73Ò&ÖöGVÆRÖæb"&–ÖÆ&VÃÒ"G·B‚&ÖöGVÆW2"—Ò#âG¶ægÓÂöæcàĞ¢Ææb6Æ73Ò&6öÖÖæB×&–&&öâ"&–ÖÆ&VÃÒ"G·B‚'FööÇ2"—Ò#ãÆF—b6Æ73Ò&6öÖÖæB×&–&&öâÖ6öçFVçB#ãÆF—b6Æ73Ò&6öÖÖæBÖw&÷W"FFÖ6öÖÖæBÖw&÷WÒ'&ö¦V7B#ãÇ7ãâG¶6öÖÖæDw&÷W2ç&ö¦V7GÓÂ÷7ããÆ'WGFöâG—SÒ&'WGFöâ"–CÒ&æWr×&ö¦V7B#îûÈ²G·B‚&æWu&ö¦V7B"—ÓÂö'WGFöããÆ'WGFöâ–CÒ&÷Vâ×&ö¦V7B#âG·B‚&÷Vå&ö¦V7B"—ÓÂö'WGFöããÆ'WGFöâG—SÒ&'WGFöâ"–CÒ'6fR#âG·B‚'6fR"—ÓÂö'WGFöããÆ'WGFöâ–CÒ&–×÷'BÖ–ÖvR"F—FÆSÒ"G·B‚&–×÷'D–ÖvR"—Ò"&–ÖÆ&VÃÒ"G·B‚&–×÷'D–ÖvR"—Ò#âG·B‚&–×÷'D7F–öâ"—ÓÂö'WGFöããÆ–çWB–CÒ'&ö¦V7BÖf–ÆR"G—SÒ&f–ÆR"66WCÒ&Æ–6F–öâö§6öâÂæ§6öâ"†–FFVâóãÂöF—cãÆF—b6Æ73Ò&6öÖÖæBÖw&÷W"FFÖ6öÖÖæBÖw&÷WÒ&†—7F÷'’#ãÇ7ãâG¶6öÖÖæDw&÷W2æ†—7F÷'—ÓÂ÷7ããÆ'WGFöâ–CÒ'VæFò"G·VæFõ7F6²æÆVæwF‚ò""¢&F—6&ÆVB'Óî(kbG·B‚'VæFò"—ÓÂö'WGFöããÆ'WGFöâ–CÒ'&VFò"G·&VFõ7F6²æÆVæwF‚ò""¢&F—6&ÆVB'Óî(krG·B‚'&VFò"—ÓÂö'WGFöããÂöF—cãÆF—b6Æ73Ò&6öÖÖæBÖw&÷W"FFÖ6öÖÖæBÖw&÷WÒ'66VæR#ãÇ7ãâG¶6öÖÖæDw&÷W2ç66VæWÓÂ÷7ããÆ'WGFöâG—SÒ&'WGFöâ"FFÖ÷Vâ×66VæRÖVF—F÷#Ò'&ööÒ#âG·B‚'&ööÔ6öÖÖæB"—ÓÂö'WGFöããÆ'WGFöâG—SÒ&'WGFöâ"FFÖ÷Vâ×66VæRÖVF—F÷#Ò'7FvR#âG·B‚'7FvT6öÖÖæB"—ÓÂö'WGFöããÆÆ&VÂ6Æ73Ò'&Wf–Wr×VÆ—G’#âG·B‚'&Wf–WuVÆ—G’"—ÒÇ6VÆV7B–CÒ'&Wf–Wr×VÆ—G’"G·&VfW&Væ6W2çf–WsÓÓÒ&Æ–v‡B"ò""¢&F—6&ÆVB'ÓâG´ö&¦V7Bæ¶W—2‡&Wf–WuVÆ—F–W2’æÖ‚†¶W’“ÓæÆ÷F–öâfÇVSÒ"G¶¶W—Ò"G¶¶W“ÓÓÒ‡&VfW&Væ6W2ç&Wf–WuVÆ—G’óò&&Ææ6VB"’ò'6VÆV7FVB"¢"'ÓâG·B†VÆ—G•òG¶¶W—Ö—ÓÂö÷F–öãæ’æ¦ö–â‚""—ÓÂ÷6VÆV7CãÂöÆ&VÃãÆ'WGFöâG—SÒ&'WGFöâ"–CÒ'&W6WBÖ6ÖW&#âG·B‚'&W6WD6ÖW&"—ÓÂö'WGFöããÂöF—cãÆF—b6Æ73Ò&6öÖÖæBÖw&÷W"FFÖ6öÖÖæBÖw&÷WÒ'ÆWGFR#ãÇ7ãâG¶6öÖÖæDw&÷W2çÆWGFWÓÂ÷7ããÆ'WGFöâG—SÒ&'WGFöâ"–CÒ&÷Vâ×fW'6–öç2#âG·B‚'fW'6–öç2"—ÓÂö'WGFöããÆ'WGFöâG—SÒ&'WGFöâ"–CÒ&÷VâÖ6ö×&R#âG·B‚&6ö×&R"—ÓÂö'WGFöããÂöF—cãÆF—b6Æ73Ò&6öÖÖæBÖw&÷W"FFÖ6öÖÖæBÖw&÷WÒ&f—‡GW&W2#ãÇ7ãâG¶6öÖÖæDw&÷W2æf—‡GW&W7ÓÂ÷7ããÂöF—cãÆF—b6Æ73Ò&6öÖÖæBÖw&÷W"FFÖ6öÖÖæBÖw&÷WÒ&W‡÷'B#ãÇ7ãâG¶6öÖÖæDw&÷W2æW‡÷'GÓÂ÷7ããÆ'WGFöâFFÖW‡÷'CÒ'&ö¦V7B#å&ö¦V7B¥4ôãÂö'WGFöããÆ'WGFöâFFÖW‡÷'CÒ'ÆWGFR#åÆWGFR¥4ôãÂö'WGFöããÆ'WGFöâFFÖW‡÷'CÒ&772#ä552f&–&ÆW3Âö'WGFöããÆ'WGFöâFFÖW‡÷'CÒ&6R"F—FÆSÒ"G·B‚&6TW‡÷'DÆ–Ö—B"—Ò#âG·B‚&6TW‡÷'B"—ÓÂö'WGFöããÆ'WGFöâFFÖW‡÷'CÒ'F6‚#åF6‚55cÂö'WGFöããÆ'WGFöâFFÖW‡÷'CÒ&7VW2#ä7VR55cÂö'WGFöããÂöF—cãÂöF—cãÇ7â6Æ73Ò'&–&&öâ×67&öÆÂÖ†–çB"&–Ö†–FFVãÒ'G'VR#ãÆ#äE$r(iCÂö#ãÇ6ÖÆÃå45$ôÄÂ$”$$ôãÂ÷6ÖÆÃãÂ÷7ããÂöæcàĞ¢ÆÖ–â–CÒ'v÷&·76R"6Æ73Ò&VF—F÷"ÖÆ–÷WB#àĞ¢Æ6–FR6Æ73Ò&ÆVgB×&–ÂæVÂ#à¢ÆF—b6Æ73Ò&ÆVgB×&–ÂÖ†VF–ær#ãÆƒ#âG·B‚'&ö¦V7B"—Ò(
+"G·B‚&Æ–W'2"—Ò(
+"G·B‚'FööÇ2"—ÓÂöƒ#ãÂöF—càĞ¢Ç6V7F–öâ6Æ73Ò'&ö¦V7BÖ†VF–ær#ãÆF—cãÆ–çWB–CÒ'&ö¦V7BÖæÖR"fÇVSÒ"G¶W62‡&ö¦V7BææÖR—Ò"&–ÖÆ&VÃÒ"G·B‚'&ö¦V7B"—ÒæÖR"óâG·66VæU6VÆV7DÖ&·W‚—ÓÂöF—cãÂ÷6V7F–öãàĞ¢Ç6V7F–öâ6Æ73Ò&Æ–W"×6V7F–öâ#ãÆƒ#î)kG·B‚&Æ–W'2"—ÓÂöƒ#ãÇVÂ6Æ73Ò&Æ–W"ÖÆ—7B#ãÆÆ“î(ÈB)j2G·B‚&Æ–W'4Æ–v‡F–ær"—ÒÇ7ãî)x“Â÷7ããÂöÆ“ãÆÆ“î(ÈB)j2G·B‚&Æ–W'5ÆWGFR"—ÒÇ7ãî)x“Â÷7ããÂöÆ“ãÆÆ“î(ÈB)j2G·B‚&Æ–W'566VæR"—ÒÇ7ãî)x“Â÷7ããÂöÆ“ãÂ÷VÃãÂ÷6V7F–öãàĞ¢Ç6V7F–öâ6Æ73Ò'FööÂ×6V7F–öâ#ãÆƒ#î)‹ÂG·B‚'FööÇ4öæT6Æ–6²"—ÓÂöƒ#ãÆF—b6Æ73Ò'FööÂÖÆ—7B#âG·FööÇ7ÓÂöF—cãÂ÷6V7F–öãàĞ¢Âö6–FSàĞ¢Ç6V7F–öâ6Æ73Ò'v÷&²Ö&V#àĞ¢ÆF—b6Æ73Ò'v÷&·76R×F'2æVÂ#ãÇ7G&öær6Æ73Ò'7GVF–ò×æVÂ×F—FÆR#âG·&VfW&Væ6W2çf–WrÓÓÒ&Æ–v‡B"òG·B‚'66VæT†VFW""—ÒGµ7G&–ær†F—7Æ–VE66VæTçVÖ&W"’çE7F'Bƒ"Â#"—ÒòG·66VæR‚’æ–BÓÓÒ'7GVF–ò×&ööÒ"òB‚&Öö6·W&ööÕF—FÆR"’¢W62‡66VæR‚’ææÖR—Ö¢$BG·B‚'ÆWGFR"—ÒòG¶W62‡&ö¦V7BææÖR—ÖÓÂ÷7G&öæsãÇ6ÖÆÂ6Æ73Ò'7GVF–ò×æVÂ×F—FÆRÖÖWF#âG·&VfW&Væ6W2çf–WrÓÓÒ&Æ–v‡B"òB‚'f–Ww÷'Df—†VD†–çB"’¢B‚'ÆWGFR"—ÓÂ÷6ÖÆÃãÇ7ããÂ÷7ããÆ'WGFöâ–CÒ'f–Ww÷'B×&ö¦V7F–öâ"6Æ73Ò'f–WrÖÖVçR"G·&VfW&Væ6W2çf–WrÓÓÒ&Æ–v‡B"ò""¢F—6&ÆVB‡B‚'6VÆV7C6B"’—ÓâG·B‚'W'7V7F—fR"—Ş(ÈCÂö'WGFöããÂöF—càĞ¢G·&VfW&Væ6W2çf–WrÓÓÒ&Æ–v‡B"òÆF—b6Æ73Ò'66VæR×&Wf–WrÆ–v‡BÖ6çf2æVÂ#ãÆF—b6Æ73Ò'66VæR×F—FÆR#ãÆ#âG¶W62‡&ö¦V7BææÖR—Ò(
+"G·B‚'&v'u&Wf–Wr"—ÓÂö#ãÇ6ÖÆÃâG·B‚'66VæUf–Wr"—Ò(
+"G·B‚'&v'u&Wf–Wu7V'F—FÆR"—ÓÂ÷6ÖÆÃãÂöF—cãÆ6çf2–CÒ&Æ–v‡BÖ6çf2"F&–æFWƒÒ#"&–ÖÆ&VÃÒ"G·B‚'&Wf–WtÆ&VÂ"—Ò#ãÂö6çf3ãÆF—b6Æ73Ò&6çf2Ö7F–öç2#ãÆ'WGFöâ–CÒ&Ç’×66VæR#âG·B‚'–çE7W&f6R"—ÓÂö'WGFöããÂöF—cãÂöF—cæ¢ÆF—b6Æ73Ò'66VæR×&Wf–WræVÂ"&öÆSÒ&–Ör"&–ÖÆ&VÃÒ"G·B‚'66VæU&Wf–Wr"—Ò#ãÆF—b6Æ73Ò'66VæR×F—FÆR#ãÆ#âG·B‚'66VæU&Wf–Wr"—ÓÂö#ãÇ6ÖÆÃâG·B‚'66VæTæ÷FR"—ÓÂ÷6ÖÆÃãÂöF—cãÆF—b6Æ73Ò&&VÒ&VÒÖ&ÇVR#ãÂöF—cãÆF—b6Æ73Ò&&VÒ&VÒÖÖ&W"#ãÂöF—cãÆF—b6Æ73Ò&&VÒ&VÒÖÖvVçF#ãÂöF—cãÆF—b6Æ73Ò'7FvR×G'W72#ãÂöF—cãÆF—b6Æ73Ò'66VæR×vÆÂ#ãÆF—b6Æ73Ò&'BÖg&ÖR#ãÂöF—cãÆF—b6Æ73Ò&6÷V6‚#ãÂöF—cãÆF—b6Æ73Ò'ÆçBÆçBÖÆVgB#ãÂöF—cãÆF—b6Æ73Ò'ÆçBÆçB×&–v‡B#ãÂöF—cãÆF—b6Æ73Ò&Æ×#ãÂöF—cãÂöF—cãÆF—b6Æ73Ò&†—2#ãÆ“åƒÂö“ãÆ#å“Âö#ãÆVÓå£ÂöVÓãÂöF—cãÂöF—cæĞĞ¢ÆF—b6Æ73Ò&Æ÷vW"×v÷&·76R#ãÇ6V7F–öâ6Æ73Ò'ÆWGFR×æVÂæVÂ#ãÆF—b6Æ73Ò'6V7F–öâ×F—FÆR#ãÆƒ#î)x’G·B‚&7F—fUÆWGFR"—Ò(	BG¶W62‡ÆWGFR‚’ææÖR—ÓÂöƒ#ãÂöF—cãÆF—b6Æ73Ò'7vF6†W2#âG·7vF6†W7ÓÂöF—cãÆF—b6Æ73Ò'ÆWGFRÖ7F–öç2#ãÆ–çWB–CÒ'6VVB"fÇVSÒ"G·&VfW&Væ6W2ç6VVGÒ"&–ÖÆ&VÃÒ%6VVB6öÆ÷W""Ö†ÆVæwFƒÒ#r"óãÆÆ&VÂ6Æ73Ò&†&Ööç’Ö6öÖÖæB#ãÇ7ãî)xrG·B‚&†&Ööæ–W2"—ÓÂ÷7ããÇ6VÆV7B–CÒ&†&Ööç’"&–ÖÆ&VÃÒ"G·B‚&†&Ööç’"—Ò#âGµ²&æÆöv÷W2"Â&6ö×ÆVÖVçF'’"Â'7Æ—D6ö×ÆVÖVçF'’"Â'G&–F–2"Â'FWG&F–2"Â'7V&R"Â&Ööæö6‡&öÖF–2%ÒæÖ‚‡G—R’ÓâÆ÷F–öâfÇVSÒ"G·G—WÒ"G·G—RÓÓÒ&VfW&Væ6W2æ†&Ööç’ò'6VÆV7FVB"¢"'ÓâG·G—WÓÂö÷F–öãæ’æ¦ö–â‚""—ÓÂ÷6VÆV7CãÂöÆ&VÃãÆ'WGFöâ–CÒ'&W&öÆÂ#î)û2G·B‚'&W&öÆÂ"—ÓÂö'WGFöããÆ'WGFöâ–CÒ&FBÖ6öÆ÷W"#îûÈ²G·B‚&FB"—ÓÂö'WGFöããÂöF—cãÂ÷6V7F–öãàĞ¢Ç6V7F–öâ6Æ73Ò'F–ÖVÆ–æRæVÂ"F&–æFWƒÒ"Ó#ãÆF—b6Æ73Ò'6V7F–öâ×F—FÆR#ãÆƒ#î)xÂG·B‚'F–ÖVÆ–æR"—ÓÂöƒ#ãÇ7â6Æ73Ò&ÒÖ&FvR#äÓR+rG·B‚'6–×VÆF–öäöæÇ’"—ÓÂ÷7ããÂöF—cãÇâG·&ö¦V7Bæf—‡GW&W2æÆVæwF‚òG·B‚'Væ—fW'6R"—Ò+rG·F6†VDf—‡GW&W2æÆVæwF‡ÒòG·&ö¦V7Bæf—‡GW&W2æÆVæwF‡ÒG·B‚&f—‡GW&W5F6†VB"—Ò+r(	2G´ÖF‚æÖ‚ƒÂââçF6†VDf—‡GW&W2æÖ‚†f—‡GW&R“Óæf—‡GW&RçF6„76–væÖVçBç7F'DFG&W72¶f—‡GW&RçF6„76–væÖVçBæ6†ææVÄfö÷G&–çBÓ’—ÒG·B‚&7F—fT6†ææVÇ2"—Òæ¢B‚&æôf—‡GW&W2"—ÓÂ÷ãÆF—b6Æ73Ò&F×‚Ö7F–öç2#ãÆ'WGFöâ–CÒ&FBÖf—‡GW&R#îûÈ²G·B‚&FEv6‚"—ÓÂö'WGFöããÆ'WGFöâ–CÒ&Ç’Öf—‡GW&RÖ6öÆ÷W""G·&ö¦V7Bæf—‡GW&W2æÆVæwF‚ò""¢&F—6&ÆVB'ÓâG·B‚&Ç•7vF6…Fôf—‡GW&W2"—ÓÂö'WGFöããÆ'WGFöâ–CÒ&7&VFRÖ7VR"G·&ö¦V7Bæf—‡GW&W2æÆVæwF‚ò""¢&F—6&ÆVB'ÓîûÈ²G·B‚&6GW&T7VR"—ÓÂö'WGFöããÆ'WGFöâ–CÒ'Æ’Ö7VR"G·&ö¦V7Bæ7VW2æÆVæwF‚ò""¢&F—6&ÆVB'Óî)kbG·B‚'&Wf–Wu6VÆV7FVD7VR"—ÓÂö'WGFöããÆ'WGFöâ–CÒ'7F÷Ö7VR"G·Æ–&6µF–ÖW"ò""¢&F—6&ÆVB'Óî)jG·B‚'7F÷"—ÓÂö'WGFöããÇ7ãä4‚¢G·f—'GVÄg&ÖU³×Ò+rG·B‚&÷WGWDF—6&ÆVB"—ÓÂ÷7ããÂöF—cãÆF—b6Æ73Ò&7VR×G&6²"&–ÖÆ&VÃÒ"G·B‚'F–ÖVÆ–æR"—Ò#âG¶7VT&Æö6·7ÓÂöF—cãÂ÷6V7F–öããÂöF—càĞ¢Â÷6V7F–öãàĞ¢Æ6–FR6Æ73Ò&–ç7V7F÷"æVÂ#ãÆF—b6Æ73Ò'6V7F–öâ×F—FÆR#ãÆƒ#î)x‚G·B‚&–ç7V7F÷""—ÓÂöƒ#ãÂöF—cãÆF—b6Æ73Ò&–ç7V7F÷"×F'2#ãÂöF—cãÆF—b6Æ73Ò'6VÆV7FVB×&Wf–Wr"7G–ÆSÒ"Ò×6VÆV7FVC¢G¶7F—fRæ†W‡Ò#ãÂöF—cãÆÆ&VÃâG·B‚&6öÆ÷W$æÖR"—ÓÆ–çWB–CÒ'7vF6‚ÖæÖR"fÇVSÒ"G¶W62†7F—fRææÖR—Ò"óãÂöÆ&VÃãÆÆ&VÃâG·B‚&†W‚"—ÓÆF—b6Æ73Ò&–çWB×&÷r#ãÆ–çWB–CÒ'7vF6‚Ö†W‚"fÇVSÒ"G¶7F—fRæ†W‡Ò"7VÆÆ6†V6³Ò&fÇ6R"óãÆ'WGFöâ–CÒ&Ç’Ö6öÆ÷W"#âG·B‚&Ç•7vF6„6öÆ÷W""—ÓÂö'WGFöããÂöF—cãÂöÆ&VÃãÆ'WGFöâ–CÒ&Æö6²×7vF6‚"6Æ73Ò'v–FR#âG¶7F—fRæÆö6¶VBò.(È"²B‚'VæÆö6²"’¢.(È"²B‚&Æö6²"—ÓÂö'WGFöããÇ6V7F–öâ6Æ73Ò&6öçG&7BÖ6&B#ãÆƒ3âG·B‚&6öçG&7B"—ÓÂöƒ3ãÆ#âG¶6öçG&7Bç&F–òçFôf—†VBƒ"—Ò¢Âö#ãÇ7â6Æ73Ò"G¶6öçG&7Bæò'72"¢&f–Â'Ò#äG¶6öçG&7Bæò'72"¢'&Wf–Wr'ÓÂ÷7ããÇ6ÖÆÃäv–ç7BÖ–Fæ–v‡Bæg’3###Â÷6ÖÆÃãÂ÷6V7F–öããÂö6–FSàĞ¢Æ6–FR6Æ73Ò&ÇW‚×æVÂæVÂG·&VfW&Væ6W2æÇW„÷Vâò""¢&—2Ö6öÆÆ6VB'Ò#ãÆF—b6Æ73Ò&ÇW‚Ö†VF–ær#ãÆF—cãÇ7â6Æ73Ò&ÇW‚Ö–6öâ#î)ÊcÂ÷7ããÆƒ#âG·B‚&ÇW…F—FÆR"—Ò)ÊƒÂöƒ#ãÂöF—cãÆ'WGFöâ–CÒ'FövvÆRÖÇW‚"6Æ73Ò'7V'FÆR"&–ÖÆ&VÃÒ"G·&VfW&Væ6W2æÇW„÷VâòB‚&6Æ÷6UæVÂ"’¢B‚&÷VäÇW‚"—Ò#âG·&VfW&Væ6W2æÇW„÷Vâò,9r"¢.)Êb'ÓÂö'WGFöããÂöF—câG·&VfW&Væ6W2æÇW„÷VâòÇ6Æ73Ò&ÇW‚×7V'F—FÆR#âG·B‚&ÇW…7V'F—FÆR"—ÓÂ÷ãÆF—b6Æ73Ò&ÇW‚ÖÖW76vR#ãÆ#âG·B‚&ÇW„'&æB"—Ò+rG·B‚&öffÆ–æR"—ÓÂö#ãÇâG·B‚&ÇW…Væf–Æ&ÆR"—ÓÂ÷ãÇVÃãÆÆ“âG·B‚&ÇW„Æö6Â"—ÓÂöÆ“ãÆÆ“âG·B‚&ÇW„æõWÆöB"—ÓÂöÆ“ãÂ÷VÃãÂöF—cãÆf÷&Ò–CÒ&ÇW‚Öf÷&Ò"6Æ73Ò&ÇW‚Ö–çWB#ãÆ–çWB–CÒ&ÇW‚×VW7F–öâ"Æ6V†öÆFW#Ò"G·B‚&6´ÇW‚"—Ò"&–ÖÆ&VÃÒ"G·B‚&6´ÇW‚"—Ò"óãÆ'WGFöâ&–ÖÆ&VÃÒ"G·B‚'6VæDÇW‚"—Ò#î)êCÂö'WGFöããÂöf÷&Óæ¢"'ÓÂö6–FSà¢ÂöÖ–ãàĞ¢Æfö÷FW"6Æ73Ò'7GVF–òÖfö÷FW"#ãÇ7â6Æ73Ò&fö÷FW"×&VG’#ãÆ’&–Ö†–FFVãÒ'G'VR#î)xóÂö“âG·B‚'&VG’"’çFõWW$66R‚—Ò+rG¶W62‡&ö¦V7BææÖR—ÒòG·B‚'66VæT†VFW""—ÒGµ7G&–ær†F—7Æ–VE66VæTçVÖ&W"’çE7F'Bƒ"Â#"—Ò+r4BòG·B‚'f—'GVÄF×‚"—Ò+rG·B‡&ö¦V7EW'6—7FVBò'&ö¦V7E6fVE6†÷'B"¢'6W76–öäöæÇ’"—ÓÂ÷7ããÇ7â–CÒ'7FGW2"&öÆSÒ'7FGW2"&–ÖÆ—fSÒ'öÆ—FR#âG·7FGW2ÇÂB‚&fö÷FW$6öçG&öÇ2"—ÓÂ÷7ããÇ7â6Æ73Ò&fö÷FW"×6†÷'F7WG2#âG·B‚&¶W–&ö&E6†÷'F7WG2"—ÓÂ÷7ããÂöfö÷FW#æ°Ğ¢–b‡&WW6U&VæFW&W"–Fö7VÖVçBçVW'•6VÆV7F÷"‚"6Æ–v‡BÖ6çf2"“òç&WÆ6Uv—F‚‡&Wf–÷W46çf2“°Ğ¢6öç7B&–&&öãÖFö7VÖVçBçVW'•6VÆV7F÷"‚"æ6öÖÖæB×&–&&öâ"“°Ğ¢f÷"†6öç7B¶w&÷WÆ–G5Òöbµ²&†—7F÷'’"Å²'VæFò"Â'&VFò%ÕÒÅ²&f—‡GW&W2"Å²&FBÖf—‡GW&R"Â&Ç’Öf—‡GW&RÖ6öÆ÷W"%ÕÕÒ—°Ğ¢6öç7B†÷7C×&–&&öâçVW'•6VÆV7F÷"†¶FFÖ6öÖÖæBÖw&÷WÒ"G¶w&÷WÒ%Ö“°Ğ¢f÷"†6öç7B–Böb–G2—¶6öç7B6öçG&öÃÖFö7VÖVçBævWDVÆVÖVçD'”–B†–B“¶–b†6öçG&öÂ—¶†÷7BæVæB†6öçG&öÂ“¶6öçG&öÂæ6Æ74Æ—7BæFB‚'&–&&öâÖ6öÖÖæB"“·×ĞĞ¢ĞĞ¢Fö7VÖVçBçVW'•6VÆV7F÷"‚"æ6öçG&7BÖ6&B"’æ–ç6W'DF¦6VçD…DÔÂ‚&&Vf÷&V&Vv–â"Â6öÆ÷W%76W2“°Ğ¢–b‡&ö¦V7Bæf—‡GW&W2æÆVæwF‚’Fö7VÖVçBçVW'•6VÆV7F÷"‚"ç6VÆV7FVB×&Wf–Wr"’æ–ç6W'DF¦6VçD…DÔÂ‚&gFW&VæB"Âf—‡GW&T–ç7V7F÷$Ö&·W‚’“°Ğ¢–b‡&VfW&Væ6W2æÖöGVÆRÓÓÒ&Æ–'&'’"’²6öç7BG&vW#ÖFö7VÖVçBæ7&VFTVÆVÖVçB‚'6V7F–öâ"“²G&vW"æ6Æ74æÖSÒ&Æ–'&'’ÖG&vW"æVÂ#²G&vW"ç6WDGG&–'WFR‚&&–ÖÆ&VÂ"ÇB‚&Æ–'&'’"’“²G&vW"æ–ææW$…DÔÃÖÆF—b6Æ73Ò'6V7F–öâ×F—FÆR#ãÆƒ#î)kG·B‚&Æ–'&'’"—ÓÂöƒ#ãÆ'WGFöâ–CÒ&6Æ÷6RÖÆ–'&'’"6Æ73Ò'7V'FÆR"&–ÖÆ&VÃÒ"G·B‚&6Æ÷6R"—Ò#ì9sÂö'WGFöããÂöF—cãÇâG·B‚'f—'GVÄÆ–'&'”æ÷FR"—ÓÂ÷ãÆF—b6Æ73Ò&f—‡GW&RÖÆ–'&'’#âG¶f—‡GW&TÆ–'&'”Ö&·W‚—ÓÂöF—cæ²æ–ç6W'D&Vf÷&R†G&vW"ÆçVW'•6VÆV7F÷"‚&fö÷FW""’“²ĞĞ¢Fö7VÖVçBçVW'•6VÆV7F÷"‚"æ7VR×G&6²"’æ–ç6W'DF¦6VçD…DÔÂ‚&&Vf÷&V&Vv–â"ÂÆF—b6Æ73Ò&7VR×F–Ö–ær#âGµ²&GW&F–öâ"Â&fFR"Â&FVÆ’%ÒæÖ‚†¶W’“ÓæÆÆ&VÃâG·B†¶W’—Ò‡2“Æ–çWB–CÒ&7VRÒG¶¶W—Ò"G—SÒ&çVÖ&W""&WV—&VBÖ–ãÒ"G¶¶W’ÓÓÒ&GW&F–öâ"ò"ã"¢#'Ò"7FWÒ"ã"fÇVSÒ"G¶¶W’ÓÓÒ&GW&F–öâ"ò#R"¢¶W’ÓÓÒ&fFR"ò#"¢#'Ò"óãÂöÆ&VÃæ’æ¦ö–â‚""—ÓÂöF—cæ“°Ğ¢–b†7F—fT7VR’Fö7VÖVçBçVW'•6VÆV7F÷"‚"æ7VR×G&6²"’æ–ç6W'DF¦6VçD…DÔÂ‚&&Vf÷&V&Vv–â"ÂÆF—b6Æ73Ò&7VR×F–Ö–ær#ãÆÆ&VÃâG·B‚'F–ÖVÆ–æR"—ÓÆ–çWB–CÒ&VF—BÖ7VRÖæÖR"fÇVSÒ"G¶W62†7F—fT7VRææÖR—Ò"óãÂöÆ&VÃâGµ²&GW&F–öâ"Â&fFR"Â&FVÆ’%ÒæÖ‚†¶W’“ÓæÆÆ&VÃâG·B†¶W’—Ò‡2“Æ–çWB–CÒ&VF—BÖ7VRÒG¶¶W—Ò"G—SÒ&çVÖ&W""&WV—&VBÖ–ãÒ#"7FWÒ"ã"fÇVSÒ"G¶7F—fT7VU¶¶W•ÒóòÒ"óãÂöÆ&VÃæ’æ¦ö–â‚""—ÓÆ'WGFöâ–CÒ&VF—BÖ7VR#âG·B‚&Ç’"—ÓÂö'WGFöããÂöF—cæ“°Ğ¢Fö7VÖVçBçVW'•6VÆV7F÷"‚"æF×‚Ö7F–öç2"’æ–ç6W'DF¦6VçD…DÔÂ‚&&Vf÷&VVæB"ÂÆ'WGFöâ–CÒ&&Æ6¶÷WB"G·&ö¦V7Bæf—‡GW&W2æÆVæwF‚ò""¢&F—6&ÆVB'ÓâG·B‚&&Æ6¶÷WB"—ÓÂö'WGFöãæ“°Ğ¢Fö7VÖVçBçVW'•6VÆV7F÷"‚"æF×‚Ö7F–öç2"’æ–ç6W'DF¦6VçD…DÔÂ‚&&Vf÷&VVæB"ÂÆ'WGFöâ–CÒ'Æ’×6WVVæ6R"G·&ö¦V7Bæ7VW2æÆVæwF‚ò""¢&F—6&ÆVB'Óî)kbG·B‚'Æ”7VTÆ—7B"—ÓÂö'WGFöãæ“°Ğ¢6öç7B&Æ6¶÷WD6öÖÖæCÖFö7VÖVçBçVW'•6VÆV7F÷"‚"6&Æ6¶÷WB"’Æf—‡GW&T6öÖÖæDw&÷W×&–&&öâçVW'•6VÆV7F÷"‚u¶FFÖ6öÖÖæBÖw&÷WÒ&f—‡GW&W2%Òr“°Ğ¢–b†&Æ6¶÷WD6öÖÖæBbff—‡GW&T6öÖÖæDw&÷W—¶f—‡GW&T6öÖÖæDw&÷WæVæB†&Æ6¶÷WD6öÖÖæB“¶&Æ6¶÷WD6öÖÖæBæ6Æ74Æ—7BæFB‚'&–&&öâÖ6öÖÖæB"“·ĞĞ¢Fö7VÖVçBçVW'•6VÆV7F÷"‚"77F÷Ö7VR"’æ–ç6W'DF¦6VçD…DÔÂ‚&&Vf÷&V&Vv–â"ÂÆ'WGFöâ–CÒ'W6R×Æ–&6²"&–×&W76VCÒ"G´&ööÆVâ‡Æ–&6´6Æö6³òçW6VB—Ò"G·Æ–&6µF–ÖW"ò""¢&F—6&ÆVB'ÓâG·B‡Æ–&6´6Æö6³òçW6VBò'&W7VÖUÆ–&6²"¢'W6UÆ–&6²"—ÓÂö'WGFöãæ“°Ğ¢6öç7B6WVVæ6TGW&F–öã×&ö¦V7Bæ7VW2ç&VGV6R‚‡7VÒÆ7VR“Óç7VÒ¶7VRæGW&F–öâÃ“°Ğ¢6öç7BG&6·3Ö'&ævUG&6·2‡&ö¦V7Bæ7VW2“°Ğ¢6öç7B6WVVæ6UG&6³ÖFö7VÖVçBçVW'•6VÆV7F÷"‚"çF–ÖVÆ–æRâæ7VR×G&6²"“°Ğ¢Fö7VÖVçBçVW'•6VÆV7F÷"‚"çF–ÖVÆ–æRâç6V7F–öâ×F—FÆR"’æ–ç6W'DF¦6VçD…DÔÂ‚&gFW&VæB"Æ'&ævVÖVçEF–ÖVÆ–æTÖ&·W‡&ö¦V7Bæ7VW2Æ7F—fT7VSòæ–BÇB‚&æô7VW2"’’“°Ğ¢6öç7B6WVVæ6TFWF–Ç3ÖFö7VÖVçBæ7&VFTVÆVÖVçB‚&FWF–Ç2"“·6WVVæ6TFWF–Ç2æ6Æ74æÖSÒ&f—‡GW&RÖw&÷WÖVF—F÷"#·6WVVæ6TFWF–Ç2æ–CÒ'6WVVæ6R×&Wf–WrÖFWF–Ç2#°Ğ¢6WVVæ6TFWF–Ç2æ–ææW$…DÔÃÖÇ7VÖÖ'“âG·B‚'Æ”7VTÆ—7B"—ÓÂ÷7VÖÖ'“æ°Ğ¢6WVVæ6UG&6²ç&WÆ6Uv—F‚‡6WVVæ6TFWF–Ç2“·6WVVæ6TFWF–Ç2æVæB‡6WVVæ6UG&6²“°Ğ¢Fö7VÖVçBçVW'•6VÆV7F÷"‚"77F÷Ö7VR"’æ–ç6W'DF¦6VçD…DÔÂ‚&&Vf÷&V&Vv–â"ÆÆ'WGFöâ–CÒ'Æ’×G&6·2"G·&ö¦V7Bæ7VW2æÆVæwF‚ò""¢&F—6&ÆVB'Óî)kbG·B‚'Æ•G&6·2"—ÓÂö'WGFöãæ“°Ğ¢Fö7VÖVçBçVW'•6VÆV7F÷"‚"67&VFRÖ7VR"’æ–ç6W'DF¦6VçD…DÔÂ‚&&Vf÷&V&Vv–â"ÂÆÆ&VÃâG·B‚&6GW&Tw&÷W"—ÒÇ6VÆV7B–CÒ&7VRÖw&÷W#ãÆ÷F–öâfÇVSÒ"#âG·B‚&ÆÄf—‡GW&W2"—ÓÂö÷F–öãâG²‡&ö¦V7Bæf—‡GW&Tw&÷W2óòµÒ’æÖ‚†w&÷W“ÓæÆ÷F–öâfÇVSÒ"G¶W62†w&÷Wæ–B—Ò#âG¶W62†w&÷WææÖR—ÓÂö÷F–öãæ’æ¦ö–â‚""—ÓÂ÷6VÆV7CãÂöÆ&VÃæ“°Ğ¢Fö7VÖVçBçVW'•6VÆV7F÷"‚"çF–ÖVÆ–æR"’æ–ç6W'DF¦6VçD…DÔÂ‚&&Vf÷&VVæB"ÂÆFWF–Ç26Æ73Ò&f—‡GW&RÖw&÷WÖVF—F÷"#ãÇ7VÖÖ'“âG·B‚&f—‡GW&Tw&÷W2"—ÓÂ÷7VÖÖ'“ãÆÆ&VÃâG·B‚&w&÷WæÖR"—ÒÆ–çWB–CÒ&w&÷WÖæÖR"Ö†ÆVæwFƒÒ###ãÂöÆ&VÃãÆF—câG·&ö¦V7Bæf—‡GW&W2æÖ‚†f—‡GW&R“ÓæÆÆ&VÃãÆ–çWBG—SÒ&6†V6¶&÷‚"FFÖw&÷WÖÖVÖ&W"fÇVSÒ"G¶W62†f—‡GW&Ræ–B—Ò#âG¶W62†f—‡GW&RææÖR—ÓÂöÆ&VÃæ’æ¦ö–â‚""—ÓÂöF—cãÆ'WGFöâ–CÒ'6fRÖw&÷W#âG·B‚'6fTw&÷W"—ÓÂö'WGFöãâG²‡&ö¦V7Bæf—‡GW&Tw&÷W2óòµÒ’æÖ‚†w&÷W“ÓæÇâG¶W62†w&÷WææÖR—Ò+rG¶w&÷Wæf—‡GW&T–G2æÆVæwF‡ÒÆ'WGFöâFFÖFVÆWFRÖw&÷WÒ"G¶W62†w&÷Wæ–B—Ò#âG·B‚&FVÆWFTw&÷W"—ÓÂö'WGFöããÂ÷æ’æ¦ö–â‚""—ÓÂöFWF–Ç3æ“°Ğ¢Fö7VÖVçBçVW'•6VÆV7F÷"‚"çF–ÖVÆ–æR"’æ–ç6W'DF¦6VçD…DÔÂ‚&&Vf÷&VVæB"ÂÆF—b6Æ73Ò&F×‚Ö7F–öç2#ãÆÆ&VÃãÆ–çWB–CÒ'6WVVæ6RÖÆö÷"G—SÒ&6†V6¶&÷‚"G·&VfW&Væ6W2æÆö÷6WVVæ6Rò&6†V6¶VB"¢"'ÓâG·B‚&Æö÷6WVVæ6R"—ÓÂöÆ&VÃãÆÆ&VÃâG·B‚'6VVµ6WVVæ6R"—ÒÆ–çWB–CÒ'6WVVæ6R×6VV²"G—SÒ'&ævR"Ö–ãÒ#"ÖƒÒ"G·6WVVæ6TGW&F–öçÒ"7FWÒ#ã"fÇVSÒ#"G·6WVVæ6TGW&F–öâò""¢&F—6&ÆVB'ÓãÂöÆ&VÃãÆ÷WGWB–CÒ'6WVVæ6R×÷6—F–öâ#ãòG·6WVVæ6TGW&F–öâçFôf—†VBƒ—Ò3Âö÷WGWCãÂöF—cæ“°Ğ¢Fö7VÖVçBçVW'•6VÆV7F÷"‚"çF–ÖVÆ–æR"’æ–ç6W'DF¦6VçD…DÔÂ‚&&Vf÷&VVæB"ÂÆF—b6Æ73Ò&F×‚Ö7F–öç2#ãÆÆ&VÃâG·B‚'f—'GVÄVffV7B"—ÒÇ6VÆV7B–CÒ&VffV7B×G—R#ãÆ÷F–öâfÇVSÒ'VÇ6R#âG·B‚'VÇ6R"—ÓÂö÷F–öããÆ÷F–öâfÇVSÒ&6†6R#âG·B‚&6†6R"—ÓÂö÷F–öããÂ÷6VÆV7CãÂöÆ&VÃãÆÆ&VÃâG·B‚&VffV7EW&–öB"—ÒÆ–çWB–CÒ&VffV7B×W&–öB"G—SÒ&çVÖ&W""Ö–ãÒ#ã"ÖƒÒ##"7FWÒ#ã"fÇVSÒ#"#ãÂöÆ&VÃãÆ'WGFöâ–CÒ'Æ’ÖVffV7B"G·&ö¦V7Bæf—‡GW&W2æÆVæwF‚ò""¢&F—6&ÆVB'Óî)kbG·B‚'&Wf–WtVffV7B"—ÓÂö'WGFöããÂöF—cæ“°Ğ¢–b†7F—fT7VR’°Ğ¢6öç7B–æFWƒ×&ö¦V7Bæ7VW2æ–æFW„öb†7F—fT7VR“°Ğ¢6öç7B66†VGVÆVC×G&6·2æfÆDÖ‚‡G&6²“ÓçG&6²æVçG&–W2’æf–æB‚†VçG'üë»h‘éì¶»§q«^t[™[
+HÙš^\™T[™[šYH™š^\™KZ[œÜXİÜ‹\[™[Ùš^\™T[™[šY[[[ÙHOOH™š^\™HßCBˆ[œÜXİÜ‹œ]Y\TÙ[XİÜŠ‹š[œÜXİÜ‹]XœÈŠKš[›™\’SX]Ûˆ]KZ[œÜXİÜH™š^\™Hˆ\šXK\™\ÜÙYH‰Û[ÙOOOH™š^\™HŸHˆÛ\ÜÏH‰Û[ÙOOOH™š^\™HˆÈš\ËXXİ]™HˆˆˆŸHˆ	Ùš^\™T[™[Èˆˆˆ™\ØX›YŸO‰İ
+™š^\™SX™[Š_OØ]Û]Ûˆ]KZ[œÜXİÜHœ[]Hˆ\šXK\™\ÜÙYH‰Û[ÙOOOHœ[]HŸHˆÛ\ÜÏH‰Û[ÙOOOHœ[]HˆÈš\ËXXİ]™HˆˆˆŸH‰İ
+œ[]HŠ_OØ]Û˜ÃBˆYˆ
+š^\™T[™[	‰ˆ[ÙOOOH™š^\™HŠHÃBˆÛÛœİÙ^\ÏVÈ™š^\™H‹›YÚ‹™^‹™Y™™XİÈ—NÃBˆÛÛœİ›ÙY\ÏSØš™Xİ™œ›ÛQ[šY\ÊÙ^\Ë›X\
 
-const storageKey = "adigunlightdesign/project-v1";
-const preferencesKey = "adigunlightdesign/preferences-v1";
-const app = document.querySelector("#app");
-const defaults = studioDefaults;
-const preferences = { ...defaults, ...safeParse(readBrowserStorage(preferencesKey).value) };
-preferences.seed=normalizeHex(preferences.seed) ?? defaults.seed;
-if (!Object.hasOwn(previewQualities,preferences.previewQuality)) preferences.previewQuality="balanced";
-let projectPersisted=false;
-let luxProposal=null;
-let luxConfirmationPending=false;
-let viewportCamera=null;
-let cleanupTopMenu=null;
-const imageAssets=createImageAssetStore();
-const account=createAccount({publishableKey:typeof __ALD_SUPABASE_PUBLISHABLE_KEY__==="undefined" ? "" : __ALD_SUPABASE_PUBLISHABLE_KEY__});
-const liveCanvasFeed=createCanvasStateFeed();
-const floatingBot=createFloatingBot({getProjectId:()=>project.id,getUserId:()=>account.user?.id ?? "guest",getLocale:()=>preferences.locale,translate});
-const liveCopilotPanel=createLiveCopilotPanel({feed:liveCanvasFeed,getLocale:()=>preferences.locale,translate,onNotify:()=>floatingBot.notify(),canAccept:()=>Boolean(account.user),onError:message=>setStatus(t(message)),onAccept:async(suggestion,isCurrent)=>{
-  luxProposal=await previewUnpatchedFixture({getProject:()=>project,suggestion,account,isCurrent});render();floatingBot.open();document.querySelector("#confirm-lux-action")?.focus();
-}});
-const luxService=createLuxServicePanel({getProject:()=>project,getLocale:()=>preferences.locale,translate,imageAssets,onPreview:(proposal)=>{luxProposal=proposal;render();},onError:(message)=>setStatus(message),onNotify:()=>floatingBot.notify()});
-let project = loadProject();
-preferences.fixtureId ??= project.fixtures.at(-1)?.id;
-let undoStack = [], redoStack = [], status = "", renderer = null, rendererConfigSignature = null, rendererFixtureSignature = null, rendererAccent = null, playbackTimer = null, playbackClock = null;
+Ù^JOOØÛÛœİ›ÙOYØİ[Y[˜Ü™X]Q[[Y[
+œÙXİ[ÛˆŠNØ›ÙK˜Û\ÜÓ˜[YOXš^\™K]X‹X›ÙH[œÜXİÜ‹YÜ›İ\[œÜXİÜ‹YÜ›İ\IÚÙ^_XØ›ÙKœÙ]]šX]J˜\šXK[X™[‹
+Ùš^\™Nˆ™š^\™SX™[‹YÚˆ›YÚXˆ‹^ˆ™^Xˆ‹Y™™XİÎˆ™Y™™XİÕXˆŸVÚÙ^WJJNØ›ÙKš[œÙ\Y˜XÙ[S
+˜Y\˜™YÚ[ˆ‹Ï‰İ
+Ùš^\™Nˆ™š^\™SX™[‹YÚˆ›YÚXˆ‹^ˆ™^Xˆ‹Y™™XİÎˆ™Y™™XİÕXˆŸVÚÙ^WJ_OÚÏ˜
+NÜ™]\›ˆÚÙ^K›ÙWNßJJNÂˆÛÛœİ›Ùš[OYÙ]š^\™T›Ùš[JÙ[XİYš^\™J
+Kœ›Ùš[RY
+NÂˆ›ÙY\Ë™š^\™Kœ]Y\TÙ[XİÜŠšÈŠKš[œÙ\Y˜XÙ[S
+˜™Y›Ü™Y[™‹ÛX[Û\ÜÏH™š^\™K\›Ùš[KXÛÛ^‰İ
+™š^\™T›Ùš[HŠ_H0­È	Ù\ØÊ›Ùš[K\J_HÈ	İ
+š\X[ÚÜŠ_OÜÛX[˜
+NÃBˆ›Üˆ
+ÛÛœİYÙˆÈ™š^\™KY[[Y\ˆ‹™š^\™KX™X[H‹™š^\™KXÛÛİ\ˆ‹™š^\™KX›YKXÚ[›™[‹™š^\™K]Ú]H‹™š^\™K\[ˆ‹™š^\™K][—JHÃBˆÛÛœİ[œ]Yš^\™T[™[œ]Y\TÙ[XİÜŠÉÚYX
+NÚYŠ[œ]
+X›ÙY\Ë›YÚ˜\[™
+[œ]˜ÛÜÙ\İ
+›X™[ŠJNÃBˆCBˆ›Üˆ
+ÛÛœİYÙˆÈ™š^\™K][š]™\œÙH‹™š^\™KXY™\ÜÈ—JH›ÙY\Ë™^˜\[™
+š^\™T[™[œ]Y\TÙ[XİÜŠÉÚYX
+K˜ÛÜÙ\İ
+›X™[ŠJNÃBˆÛÛœİ\OYš^\™T[™[œ]Y\TÙ[XİÜŠˆØ\KYš^\™HŠKXİ[ÛœÏYš^\™T[™[œ]Y\TÙ[XİÜŠ‹™^XXİ[ÛœÈŠKÙ[XİYš^\™QšY[Yš^\™T[™[œ]Y\TÙ[XİÜŠˆÙš^\™K\Ù[XİŠOË˜ÛÜÙ\İ
+›X™[ŠNÂˆÙ[XİYš^\™QšY[Ë˜Û\ÜÓ\İ˜Y
+™š^\™K\Ù[XİYšY[ŠNÃBˆš^\™T[™[œ]Y\TÙ[XİÜŠœØÛÜHˆÈŠOËœ™[[İ™J
+NÃBˆ›Üˆ
+ÛÛœİ›ÙHÙˆË‹‹™š^\™T[™[˜Ú[™[—JHYŠ›ÙHOOX\H	‰ˆ›ÙHOOXXİ[ÛœÈ	‰ˆ›ÙHOO\Ù[XİYš^\™QšY[
+X›ÙY\Ë™š^\™K˜\[™
+›ÙJNÃBˆÛÛœİ˜[YSX™[X›ÙY\Ë™š^\™Kœ]Y\TÙ[XİÜŠˆÙš^\™K[˜[YHŠOË˜ÛÜÙ\İ
+›X™[ŠNÂˆÛÛœİÛÛ™šYİ\˜][ÛYØİ[Y[˜Ü™X]Q[[Y[
+™]Z[ÈŠNØÛÛ™šYİ\˜][Û‹˜Û\ÜÓ˜[YOH™š^\™KXÛÛ™šYİ\˜][Û‹Y]Z[ÈÂˆÛÛœİÛÛ™šYİ\˜][Û”İ[[X\OYØİ[Y[˜Ü™X]Q[[Y[
+œİ[[X\HŠNØÛÛ™šYİ\˜][Û”İ[[X\K^ÛÛ[H“˜[YH[™ÜÚ][ÛˆØÛÛ™šYİ\˜][Û‹˜\[™
+ÛÛ™šYİ\˜][Û”İ[[X\JNÂˆYŠ˜[YSX™[
+XÛÛ™šYİ\˜][Û‹˜\[™
+˜[YSX™[
+NÂˆÛÛœİXÙ[Y[X›ÙY\Ë™š^\™Kœ]Y\TÙ[XİÜŠ‹™š^\™K\XÙ[Y[ŠNÂˆYŠXÙ[Y[
+^ÂˆÛÛœİ™XYİ]YØİ[Y[˜Ü™X]Q[[Y[
+œŠNÜ™XYİ]˜Û\ÜÓ˜[YOH™š^\™K\ÜÚ][Û‹\İ[[X\HÂˆÛÛœİ™Yœ™\ÚÜÚ][ÛJ
+OOØÛÛœİ˜[YOJÙ^JOO™š^\™T[™[œ]Y\TÙ[XİÜŠÙš^\™KIÚÙ^_X
+OË˜[YHÏÈŒØÛÛœİÛÛÜ™[˜]OJÙ^JOO“[X™\Š˜[YJÙ^J_
+KÑš^Y
+JK›Ü\Y\Ï\Ù[XİYš^\™J
+Kœ›Ü\Y\ÎÂˆ™XYİ]^ÛÛ[XÜÚ][Ûˆ	ØÛÛÜ™[˜]JŠ_HH	ØÛÛÜ™[˜]JHŠ_Hˆ	ØÛÛÜ™[˜]JˆŠ_W”[ˆ	İ˜[YJœ[ˆŠ_›Ü\Y\Ëœ[ŸH[	İ˜[YJ[Š_›Ü\Y\Ë[H›İ][Ûˆ	İ˜[YJœ›İ][ÛˆŠ_XßNÂˆ™Yœ™\ÚÜÚ][ÛŠ
+NÂˆ›ÜŠÛÛœİ[œ]ÙˆË‹‹œXÙ[Y[œ]Y\TÙ[XİÜ[
+š[œ]ŠK‹‹–Èœ[ˆ‹[—K›X\
 
-function safeParse(value) { try { return JSON.parse(value) ?? {}; } catch { return {}; } }
-function loadProject() {
-  const loaded = safeParse(readBrowserStorage(storageKey).value);
-  if (validateProject(loaded).valid) {projectPersisted=true;return prepareEditorProject(loaded);}
-  const starter=createStudioMoodProject();
-  projectPersisted=writeBrowserStorage(storageKey,JSON.stringify(starter)).ok;
-  return starter;
-}
-function t(key) { return translate(preferences.locale, key); }
-function phrase(key, values = {}) { return t(key).replace(/\{(\w+)\}/g, (_, name) => values[name] ?? ""); }
-function palette() { return project.palettes[0]; }
-function selected() { return palette().colors.find((swatch) => swatch.id === preferences.selected) ?? palette().colors[0]; }
-function scene() { if (!project.scenes[0]) project.scenes.push({ id:"studio-room", name:"Studio room", materialColor:"#C21888" }); const active=project.scenes.find((item)=>item.id===preferences.sceneId) ?? project.scenes[0]; preferences.sceneId=active.id; return active; }
-function editScene(draft,update) { const index=Math.max(0,draft.scenes.findIndex((item)=>item.id===preferences.sceneId)); update(draft.scenes[index],index,draft.scenes); }
-function sceneSelectMarkup() { const activeId=scene().id; return `<select id="scene-select" aria-label="${t("sceneHeader")}">${project.scenes.map((item,index)=>`<option value="${esc(item.id)}" ${item.id===activeId ? "selected" : ""}>${esc(`${t("sceneHeader")} ${String(index+1).padStart(2,"0")} / ${item.name}`)}</option>`).join("")}</select>`; }
-function addVirtualFixture(profileId) { const fixture=createFixture(project.fixtures.length+1,profileId); commitProjectChange("fixture-add",(draft)=>{draft.fixtures=patchFixture([...draft.fixtures,fixture],fixture.id);}); preferences.fixtureId=fixture.id;savePreferences(); const patch=project.fixtures.find((item)=>item.id===fixture.id)?.patchAssignment; status=phrase("fixturePatched",{name:fixture.name,universe:1,address:patch?.startAddress ?? 1}); }
-function activateBlackout() { commitProjectChange("dmx-blackout",(draft)=>{draft.fixtures=blackout(draft.fixtures);}); status="Virtual blackout applied. Physical output remains disabled."; }
-function applyPaletteToVirtualFixtures() { const rgb=hexToRgb(selected().hex); commitProjectChange("palette-to-fixtures",(draft)=>{draft.fixtures=draft.fixtures.map((fixture)=>({ ...fixture, properties:{ ...fixture.properties, red:rgb.r, green:rgb.g, blue:rgb.b } }));}); updateRendererFromFixtures(); status=`${selected().hex} applied to ${project.fixtures.length} virtual fixture(s).`; }
-function createCueSnapshot() {
-  try {
-    const timing={};
-    for (const key of ["duration","fade","delay","fadeOut"]) {
-      const input=document.querySelector(`#cue-${key}`);
-      if (!input.value.trim() || !input.checkValidity()) throw new Error(`${t(key)}: enter a valid value.`);
-      timing[key]=Number(input.value);
-    }
-    let cue;
-    const groupId=document.querySelector("#cue-group").value;
-    commitProjectChange("cue-create",(draft)=>{cue=createCue(groupFixtures(draft.fixtures,draft.fixtureGroups ?? [],groupId),{name:`Look ${draft.cues.length+1}`,...timing});draft.cues=[...draft.cues,cue];});
-    status=`${cue.name} captured with ${cue.targets.length} fixture target(s).`;
-    render();
-  } catch(error) { document.querySelector("#status").textContent=status=error.message; }
-}
-function currentRendererFixtures() { return project.fixtures.map((fixture)=>({...fixture,selected:fixture.id===selectedFixture()?.id})); }
-function updateRendererFromFixtures() { const fixtures=currentRendererFixtures();renderer?.setFixtures(fixtures);rendererFixtureSignature=lightLabFixtureState(fixtures); }
-function updateDmxFeedback(fixtures) {
-  const snapshot=virtualDmxPreview(fixtures,preferences.fixtureId);
-  const monitor=document.querySelector("#virtual-dmx-monitor"),summary=document.querySelector(".timeline .dmx-actions span");
-  if (monitor) monitor.textContent=`${t("universe")} ${snapshot.universe}\n${snapshot.channels.map((channel)=>`${String(channel.address).padStart(3,"0")} Â· ${channel.name}: ${channel.value}`).join("\n")}`;
-  if (summary) summary.textContent=`U${snapshot.universe} Â· CH 1: ${snapshot.frame[0]} Â· ${t("outputDisabled")}`;
-}
-function previewFixtures(fixtures) {renderer?.setFixtures(fixtures);updateDmxFeedback(fixtures);}
-function stopPlayback(message="Cue playback stopped.") { if(playbackTimer){clearInterval(playbackTimer);playbackTimer=null;} playbackClock=null; status=message; }
-function togglePlaybackPause() {
-  if (!playbackClock) return;
-  if (playbackClock.paused) playbackClock.resume(performance.now());
-  else playbackClock.pause(performance.now());
-  const button=document.querySelector("#pause-playback");
-  button.textContent=t(playbackClock.paused ? "resumePlayback" : "pausePlayback");
-  button.setAttribute("aria-pressed",String(playbackClock.paused));
-}
-function playEffect() {
-  const input=document.querySelector("#effect-period");
-  if (!input.value.trim() || !input.checkValidity()) return input.reportValidity();
-  const settings={type:document.querySelector("#effect-type").value,period:Number(input.value)};
-  if (settings.type==="panTilt") { settings.minimum=64;settings.maximum=192; }
-  const source=structuredClone(project.fixtures);
-  if (!source.length) return;
-  evaluateEffect(source,settings,0);
-  stopPlayback();
-  playbackClock=createPlaybackClock(performance.now());
-  preferences.view="light";
-  playbackTimer=setInterval(()=>{
-    previewFixtures(evaluateEffect(source,settings,playbackClock.elapsed(performance.now())));
-    document.querySelector("#status").textContent=`${t("virtualEffect")} Â· ${t(settings.type)}`;
-  },100);
-  render();
-}
-function playSequence({seek=0,paused=false}={}) {
-  if (!project.cues.length) return;
-  stopPlayback();
-  const source=structuredClone(project.fixtures),cues=structuredClone(project.cues);
-  playbackClock=createPlaybackClock(performance.now());
-  playbackClock.seek(seek,performance.now());
-  if (paused) playbackClock.pause(performance.now());
-  const duration=cues.reduce((sum,cue)=>sum+cue.duration,0);
-  preferences.view="light";
-  playbackTimer=setInterval(()=>{
-    const position=playbackPosition(playbackClock.elapsed(performance.now()),duration,Boolean(preferences.loopSequence));
-    const frame=evaluateSequence(source,cues,position.time);
-    previewFixtures(frame.fixtures);
-    const scrub=document.querySelector("#sequence-seek");
-    if (scrub && document.activeElement!==scrub) scrub.value=String(position.time);
-    document.querySelector("#sequence-position").textContent=`${position.time.toFixed(1)} / ${duration.toFixed(1)} s`;
-    document.querySelector("#timeline-playhead").style.left=`${position.time/timelineLayout(cues).span*100}%`;
-    document.querySelector("#status").textContent=`${t("playSequence")} Â· ${Math.min(frame.index + 1,cues.length)}/${cues.length}`;
-    if (position.complete && !playbackClock.paused) { stopPlayback(); render(); }
-  },100);
-  render();
-  document.querySelector("#sequence-preview-details").open=true;
-}
-function playLatestCue() {
-  const cue=project.cues.find((item)=>item.id===preferences.cueId) ?? project.cues.at(-1);
-  if (!cue) return;
-  stopPlayback();
-  const source=structuredClone(project.fixtures);
-  playbackClock=createPlaybackClock(performance.now());
-  preferences.view="light";
-  playbackTimer=setInterval(()=>{
-    const elapsed=playbackClock.elapsed(performance.now());
-    previewFixtures(evaluateCue(source,cue,elapsed));
-    document.querySelector("#status").textContent=`Playing ${cue.name} Â· ${(Math.min(elapsed,cue.duration)).toFixed(1)}s / ${cue.duration}s`;
-    if (elapsed>=cue.duration) { stopPlayback(`${cue.name} completed in virtual simulation.`); render(); }
-  },100);
-  render();
-}
-function playArrangement({seek=0,paused=false}={}) {
-  if (!project.cues.length) return;
-  stopPlayback();
-  const source=structuredClone(project.fixtures),cues=structuredClone(project.cues),duration=arrangementDuration(cues);
-  playbackClock=createPlaybackClock(performance.now());preferences.view="light";
-  playbackClock.seek(seek,performance.now());
-  if (paused) playbackClock.pause(performance.now());
-  playbackTimer=setInterval(()=>{
-    if(document.querySelector(".arrangement-timeline .timeline-ruler")?.dataset.seeking)return;
-    const position=playbackPosition(playbackClock.elapsed(performance.now()),duration,Boolean(preferences.loopSequence));
-    previewFixtures(evaluateTracks(source,cues,position.time));
-    document.querySelector("#arrangement-playhead").style.left=`${position.time/Math.max(30,duration)*100}%`;
-    document.querySelector(".arrangement-timeline .timeline-ruler").setAttribute("aria-valuenow",String(position.time));
-    const slider=document.querySelector("#arrangement-seek");
-    if (document.activeElement!==slider) slider.value=String(position.time);
-    document.querySelector("#arrangement-position").textContent=`${position.time.toFixed(1)} / ${duration.toFixed(1)} s`;
-    document.querySelector("#status").textContent=`${t("playTracks")} Â· ${position.time.toFixed(1)} s`;
-    if (position.complete && !playbackClock.paused) {stopPlayback();render();}
-  },100);
-  render();
-}
-function downloadText(content, filename, type) { const file=new Blob([content],{type}); const link=document.createElement("a"); link.href=URL.createObjectURL(file); link.download=filename; link.click(); URL.revokeObjectURL(link.href); }
-function exportFile(kind) { if(kind==="ase"){try{downloadText(paletteAse(palette()),`${safeFileStem(palette().name)}.ase`,"application/octet-stream");status=t("aseExportLimit");}catch(error){status=error.message;}document.querySelector("#status").textContent=status;return;} const stem=safeFileStem(project.name); const exports={ project:[projectJson(project),`${stem}.ald.json`,"application/json"], palette:[paletteJson(palette()),`${stem}-palette.json`,"application/json"], css:[paletteCss(palette()),`${stem}-palette.css`,"text/css"], patch:[patchCsv(project.fixtures),`${stem}-patch.csv`,"text/csv"], cues:[cueCsv(project.cues),`${stem}-cues.csv`,"text/csv"] }; const [content,name,type]=exports[kind]; downloadText(content,name,type); status=`${name} downloaded.`; document.querySelector("#status").textContent=status; }
-function openCloudProject(document) {
-  const next=prepareEditorProject(document);
-  stopPlayback();
-  undoStack=[structuredClone(project)];
-  redoStack=[];
-  project=next;
-  saveProject();
-  render();
-}
-async function importNativeProject(file) { const result=await readProjectFile(file); if(!result.valid) return setStatus(result.errors.join(" ")); stopPlayback(); project=prepareEditorProject(result.project); undoStack=[];redoStack=[];saveProject();status=project.name+" opened locally.";render(); }
-function createNewProject() {
-  if (!window.confirm(t("confirmNewProject"))) return;
-  stopPlayback();
-  const locale=preferences.locale,theme=preferences.theme;
-  for (const key of Object.keys(preferences)) delete preferences[key];
-  Object.assign(preferences,defaults,{locale,theme,sceneId:"studio-room"});
-  project=createStudioMoodProject();
-  preferences.fixtureId=project.fixtures.at(-1)?.id;
-  undoStack=[];redoStack=[];
-  savePreferences();
-  saveProject();
-  status=project.name+" created locally.";
-  render();
-}
-function savePreferences() { if (!writeBrowserStorage(preferencesKey,JSON.stringify(preferences)).ok) status=t("preferencesNotSaved"); }
-function saveProject() {
-  project.updatedAt = new Date().toISOString();
-  projectPersisted=writeBrowserStorage(storageKey,JSON.stringify(project)).ok;
-  status=t(projectPersisted ? "statusSaved" : "storageUnavailable");
-  const indicator=document.querySelector(".save-state");
-  const headerSave=document.querySelector(".header-save-status");if(headerSave){headerSave.textContent=t(projectPersisted ? "savedLocally" : "sessionOnly");headerSave.classList.toggle("is-saved",projectPersisted);}
-  if (indicator) {indicator.classList.toggle("is-unsaved",!projectPersisted);indicator.textContent=`â— ${t(projectPersisted ? "saved" : "sessionOnly")}`;indicator.title=status;}
-}
-function commitProjectChange(label, mutate) { stopPlayback(); const next=commitTransaction({project,undoStack,redoStack},label,mutate); const validation=validateProject(next.project); if (!validation.valid) throw new Error(validation.errors.join(" ")); project=next.project;undoStack=next.undoStack;redoStack=next.redoStack;saveProject(); }
-function mutateColours(fn) { commitProjectChange("palette-update",(draft)=>{draft.palettes[0].colors=fn(structuredClone(draft.palettes[0].colors));}); render(); }
-function undo() { if (!undoStack.length) return setStatus(t("noUndo")); stopPlayback(); const next=undoTransaction({project,undoStack,redoStack});project=next.project;undoStack=next.undoStack;redoStack=next.redoStack;saveProject();status=t("statusUndo");render(); }
-function redo() { if (!redoStack.length) return setStatus(t("noRedo")); stopPlayback(); const next=redoTransaction({project,undoStack,redoStack});project=next.project;undoStack=next.undoStack;redoStack=next.redoStack;saveProject();status=t("statusRedo");render(); }
-function setStatus(value) { status = value; render(); }
-function disabled(title) { return `disabled title="${esc(title)}"`; }
-function compact(value, digits = 1) { return Number(value).toFixed(digits); }
-function colourSpaceMarkup(hex) { const rgb=hexToRgb(hex),hsl=rgbToHsl(rgb),hsv=rgbToHsv(rgb),lab=rgbToLab(rgb),oklab=rgbToOklab(rgb); return `<section class="colour-space-card" aria-label="${t("colorSpaces")}"><h3>${t("colorSpaces")}</h3><dl><div><dt>sRGB</dt><dd>${Math.round(rgb.r)}, ${Math.round(rgb.g)}, ${Math.round(rgb.b)}</dd></div><div><dt>HSL</dt><dd>${compact(hsl.h)}Â° Â· ${compact(hsl.s*100)}% Â· ${compact(hsl.l*100)}%</dd></div><div><dt>HSV</dt><dd>${compact(hsv.h)}Â° Â· ${compact(hsv.s*100)}% Â· ${compact(hsv.v*100)}%</dd></div><div><dt>CIELAB</dt><dd>${compact(lab.l)}, ${compact(lab.a)}, ${compact(lab.b)}</dd></div><div><dt>OKLab</dt><dd>${compact(oklab.l,3)}, ${compact(oklab.a,3)}, ${compact(oklab.b,3)}</dd></div></dl><small class="${isSrgbGamut(rgb)?"pass":"fail"}">${isSrgbGamut(rgb)?t("inSrgb"):t("outsideSrgb")}</small></section>`; }
-function fixtureLibraryMarkup() { return fixtureProfiles.map((profile)=>`<article><b>${esc(profile.model)}</b><small>${esc(profile.type)} Â· ${profile.modes[0].channels.length} CH</small><p>${esc(profile.validationStatus)} Â· ${esc(profile.provenance)}</p><button data-profile="${profile.id}">${t("addToVirtualPatch")}</button></article>`).join(""); }
-function selectedFixture() { return project.fixtures.find((fixture)=>fixture.id===preferences.fixtureId) ?? project.fixtures[0]; }
-function fixtureInspectorMarkup() { const fixture=selectedFixture(),profile=getFixtureProfile(fixture.profileId),mode=profile.modes.find((item)=>item.id===fixture.modeId) ?? profile.modes[0],patch=fixture.patchAssignment ?? {universe:1,startAddress:1}; return `<section class="fixture-inspector"><h3>${t("virtualFixture")}</h3><label>${t("fixtureLabel")}<select id="fixture-select">${fixtureOptions(project.fixtures,fixture.id)}</select></label><div class="fixture-profile-summary" title="${esc(profile.validationStatus)}"><span><small>Type</small><b>${esc(profile.type)}</b></span><span><small>Mode</small><b>${esc(mode?.name ?? profile.model)}</b></span></div><label>${t("colourName")}<input id="fixture-name" value="${esc(fixture.name)}" /></label>${fixturePlacementMarkup(fixture.transform,t("fixturePlacement"),t("fixtureDragHint"))}<div class="fixture-grid"><label>${t("universe")}<input id="fixture-universe" type="number" min="1" value="${patch.universe}" /></label><label>${t("startAddress")}<input id="fixture-address" type="number" min="1" max="512" value="${patch.startAddress}" /></label><label>${t("dimmer")}<input id="fixture-dimmer" type="number" min="0" max="255" value="${fixture.properties.dimmer ?? 0}" /></label><label>${t("beam")}<input id="fixture-beam" type="number" min="0" max="255" value="${fixture.properties.beam ?? 0}" /></label></div><button id="apply-fixture" class="wide">${t("applyFixtureProperties")}</button></section>`; }
-function applyFixtureInspector() {
-  const fixture=selectedFixture();
-  if (!fixture) return;
-  const value=(id)=>{
-    const input=document.querySelector(id);
-    if (!input.value.trim() || !input.checkValidity()) throw new Error(`${input.closest("label").textContent.trim()}: enter a valid value.`);
-    return Number(input.value);
-  };
-  try {
-    const changes={
-      name:document.querySelector("#fixture-name").value,
-      transform:Object.fromEntries(["x","y","z","rotation"].map((axis)=>[axis,value(`#fixture-${axis}`)])),
-      properties:{dimmer:value("#fixture-dimmer"),...(document.querySelector("#fixture-beam") ? {beam:value("#fixture-beam")} : {}),...(()=>{
-        const rgb=hexToRgb(document.querySelector("#fixture-colour").value);
-        const blueChannel=document.querySelector("#fixture-blue-channel");
-        const white=document.querySelector("#fixture-white");
-        const aiming=Object.fromEntries(["pan","tilt"].filter((key)=>document.querySelector(`#fixture-${key}`)).map((key)=>[key,value(`#fixture-${key}`)]));
-        return {red:rgb.r,green:rgb.g,blue:blueChannel ? value("#fixture-blue-channel") : rgb.b,...aiming,...(white ? {white:value("#fixture-white")} : {})};
-      })()},
-    };
-    commitProjectChange("fixture-update",(draft)=>{draft.fixtures=updateFixture(draft.fixtures,fixture.id,changes);});
-    updateRendererFromFixtures();
-    status=phrase("fixtureUpdated",{name:selectedFixture().name});
-    render();
-  } catch(error) { document.querySelector("#status").textContent=status=error.message; }
-}
+Ù^JOO™š^\™T[™[œ]Y\TÙ[XİÜŠÙš^\™KIÚÙ^_X
+JK™š[\Š›ÛÛX[ŠWJZ[œ]˜Y]™[\İ[™\Šš[œ]‹™Yœ™\ÚÜÚ][ÛŠNÂˆXÙ[Y[œ™\XÙUÚ]
+ÛÛ™šYİ\˜][ÛŠNØÛÛ™šYİ\˜][Û‹˜\[™
+XÙ[Y[
+NØ›ÙY\Ë™š^\™Kš[œÙ\™Y›Ü™J™XYİ]ÛÛ™šYİ\˜][ÛŠNÂˆH[ÙHYŠ˜[YSX™[
+HÂˆ˜[YSX™[œ™\XÙUÚ]
+ÛÛ™šYİ\˜][ÛŠNÂˆBˆÛÛœİY˜[˜ÙYYÚYØİ[Y[˜Ü™X]Q[[Y[
+™]Z[ÈŠNØY˜[˜ÙYYÚ˜Û\ÜÓ˜[YOH›YÚXY˜[˜ÙYXÛÛ›ÛÈÃBˆÛÛœİY˜[˜ÙY]OYØİ[Y[˜Ü™X]Q[[Y[
+œİ[[X\HŠNØY˜[˜ÙY]K^ÛÛ[H“[Ü™HYÚÛÛ›ÛÈØY˜[˜ÙYYÚ˜\[™
+Y˜[˜ÙY]JNÃBˆ›ÜŠÛÛœİYÙˆÈ™š^\™KX™X[H‹™š^\™K]Ú]H‹™š^\™K\[ˆ‹™š^\™K][—J^ØÛÛœİ[œ]X›ÙY\Ë›YÚœ]Y\TÙ[XİÜŠÉÚYX
+NÚYŠ[œ]
+XY˜[˜ÙYYÚ˜\[™
+[œ]˜ÛÜÙ\İ
+›X™[ŠJNßCBˆ›ÙY\Ë›YÚ˜\[™
+Y˜[˜ÙYYÚ
+NÃBˆÛÛœİY™™XİÛÛ›ÛÏYØİ[Y[œ]Y\TÙ[XİÜŠˆÙY™™Xİ]\HŠK˜ÛÜÙ\İ
+‹™^XXİ[ÛœÈŠNÃBˆÛÛœİY™™XİØÛÜOYØİ[Y[˜Ü™X]Q[[Y[
+œŠNÙY™™XİØÛÜK^ÛÛ[]
+˜[š\X[š^\™\ÈŠNØ›ÙY\Ë™Y™™XİË˜\[™
+Y™™XİØÛÜKY™™XİÛÛ›ÛÊNÃBˆÛÛœİİ]]›İOYØİ[Y[˜Ü™X]Q[[Y[
+œÛX[ŠNÛİ]]›İK˜Û\ÜÓ˜[YOH™š^\™K[İ]][›İHÛİ]]›İK^ÛÛ[]
+™š^\™Sİ]]›İHŠNØÛÛœİ\T]ÚYØİ[Y[˜Ü™X]Q[[Y[
+˜]ÛˆŠNØ\T]Ú\OH˜]ÛˆØ\T]ÚšYH˜\KYš^\™K\]ÚØ\T]Ú˜Û\ÜÓ˜[YOHÚYHØ\T]Ú^ÛÛ[]
+˜\T]ÚŠNØ›ÙY\Ë™^˜\[™
+İ]]›İK\T]Ú
+NØ›ÙY\Ë™š^\™K˜\[™
+\JNÃBˆXİ[ÛœÏËœ™[[İ™J
+NÃBˆš^\™T[™[˜\[™
+‹‹“Øš™Xİ˜[Y\Ê›ÙY\ÊJNÃBˆ[œÜXİÜ‹œ]Y\TÙ[XİÜŠ‹œÙXİ[Û‹]]HˆŠK^ÛÛ[X	İ
+œÙ[XİYš^\™U]HŠ_Nˆ	ÜÙ[XİYš^\™J
+K›˜[Y_XÃBˆ[œÜXİÜ‹œ]Y\TÙ[XİÜŠ‹š[œÜXİÜ‹]XœÈŠKšY[]YNÃBˆCBˆÛÛœİØÙ[™QY]Ü’ÜİYš^\™T[™[ÏÈ[]T[™[ÃBˆ›ÜŠÛÛœİY]ÜˆÙˆØİ[Y[œ]Y\TÙ[XİÜ[
+–Ù]K\ØÙ[™KYY]Ü—HŠJ\ØÙ[™QY]Ü’Üİ˜\[™
+Y]ÜŠNÃBˆØİ[Y[œ]Y\TÙ[XİÜŠ‹œØÙ[™K\™]šY]ÈŠKš[œÙ\Y˜XÙ[S
+˜™Y›Ü™Y[™‹]ÛˆYHšY]ÜÜY^]Y[ØÜ™Y[ˆˆÛ\ÜÏHšY]ÜÜY^]Y[ØÜ™Y[ˆ‰İ
+™^][ØÜ™Y[ˆŠ_OØ]Û˜
+NÃBˆš[™
 
-function applyFixturePatch() {
-  const fixture=selectedFixture();
-  if (!fixture) return;
-  const value=(id)=>{
-    const input=document.querySelector(id);
-    if (!input.value.trim() || !input.checkValidity()) throw new Error(`${input.closest("label").textContent.trim()}: enter a valid value.`);
-    return Number(input.value);
-  };
-  try {
-    const universe=value("#fixture-universe"),startAddress=value("#fixture-address");
-    commitProjectChange("fixture-patch",(draft)=>{draft.fixtures=patchFixture(draft.fixtures,fixture.id,universe,startAddress);});
-    updateRendererFromFixtures();
-    status=phrase("fixturePatched",{name:fixture.name,universe,address:startAddress});
-    render();
-  } catch(error) { document.querySelector("#status").textContent=status=error.message; }
-}
-function render() {
-  preferences.luxOpen=true; // Floating-window state controls visibility; keep its content mounted.
-  cleanupTopMenu?.();
-  const previousCanvas=document.querySelector("#light-canvas");
-  const nextRendererConfig=preferences.view==="light" ? lightLabRendererConfig(scene(),preferences.previewQuality,preferences.projection) : null;
-  const reuseRenderer=shouldReuseLightLabRenderer({renderer,canvas:previousCanvas,view:preferences.view,previousConfig:rendererConfigSignature,nextConfig:nextRendererConfig});
-  const liveSelection=preferences.view==="palette" && scene().canvasObjects?.some(object=>object.id===preferences.objectId)
-    ? {kind:"object",id:preferences.objectId,sceneId:scene().id}
-    : (preferences.inspectorMode ?? (preferences.view==="light" ? "fixture" : "palette"))==="fixture" && selectedFixture()
-      ? {kind:"fixture",id:selectedFixture().id}
-      : {kind:"swatch",id:selected().id,paletteId:palette().id};
-  liveCanvasFeed.publish(project,{selection:liveSelection,playing:playbackTimer!==null});
-  if(renderer){viewportCamera=renderer.cameraState?.() ?? viewportCamera;if(!reuseRenderer){renderer.destroy();renderer=null;rendererConfigSignature=null;rendererFixtureSignature=null;rendererAccent=null;}}
-  document.documentElement.lang = preferences.locale;
-  document.documentElement.dataset.theme = preferences.theme;
-  const active = selected();
-  const displayedSceneNumber=Math.max(1,project.scenes.findIndex((item)=>item.id===scene().id)+1);
-  const contrastBackground=normalizeHex(preferences.contrastBackground) ?? "#0B1220";
-  const contrast = contrastResult(compositeSwatch(active,contrastBackground), contrastBackground);
-  const colourSpaces = colourSpaceMarkup(active.hex);
-  const commandGroups={project:t("project"),history:t("commandHistory"),view:`${t("palette")} / ${t("light")}`,scene:t("sceneHeader"),palette:t("commandPalette"),fixtures:t("commandFixtures"),export:t("commandExport")};
-  const nav = [
-    ["canvas", "âŒ‚", true], ["palette", "â—‰", true], ["light", "â˜¼", true], ["copilot", "â—Œ", true], ["library", "â–±", true], ["export", "â†—", true], ["community", "â™§", false]
-  ].map(([key, icon, enabled]) => {const labelKey={canvas:"moduleCanvas",light:"moduleLight",copilot:"moduleCopilot"}[key] ?? key;return `<button class="module ${studioActiveModule(preferences) === key ? "is-active" : ""}" data-module="${key}" ${enabled ? "" : disabled(`${t(key)} ${t("availableLater")}`)}><span>${icon}</span>${t(labelKey)}</button>`;}).join("");
-  const compactToolLabelKeys={paletteBrush:"brushShort",fixture:"fixtureShort",material:"materialShort",orbit:"orbitShort"};
-  const tools = [["select","â†–",true],["paletteBrush","â—‰",true],["fixture","â˜€",true],["material","â—†",true],["shapes","â–¡",false],["text","T",false],["measure","âŒ—",false],["orbit","â—",true],["aiPin","âœ¦",false]].map(([key, icon, enabled]) => `<button class="tool ${preferences.tool === key ? "is-active" : ""}" data-tool="${key}" aria-label="${esc(t(key))}" ${enabled ? "" : disabled(`${t(key)} ${t("availableLater")}`)}><span aria-hidden="true">${icon}</span>${esc(t(compactToolLabelKeys[key] ?? key))}</button>`).join("");
-  const swatches = palette().colors.map((swatch)=>swatchButton(swatch,active.id)).join("");
-  const patchedFixtures = project.fixtures.filter((fixture) => fixture.patchAssignment);
-  const virtualFrame = dmxFrame(project.fixtures);
-  const activeCue=project.cues.find((cue)=>cue.id===preferences.cueId) ?? project.cues.at(-1);
-  const timeline=timelineLayout(project.cues);
-  const cueBlocks = `<div class="timeline-scale"><div class="timeline-ruler">${timeline.ticks.map((tick)=>`<span style="left:${tick.left}%">${Number(tick.time.toFixed(1))}s</span>`).join("")}</div><div class="timeline-lane">${project.cues.map((cue,index) => `<button type="button" class="cue-block" data-cue="${esc(cue.id)}" aria-pressed="${cue.id===activeCue?.id}" title="${esc(cue.name)} Â· ${cue.duration}s" style="left:${timeline.segments[index].left}%;width:${timeline.segments[index].width}%">${esc(cue.name)} Â· ${cue.duration}s</button>`).join("") || `<small class="empty-cues">${t("noCues")}</small>`}</div><div id="timeline-playhead" class="timeline-playhead" aria-hidden="true"></div></div>`;
-  app.innerHTML = `
-    <header class="topbar">
-      <div class="brand-lockup" aria-label="${t("brandAlt")}">
-        <img class="corporate-mark" src="https://raw.githubusercontent.com/HephzibahBehulahHQ/hb-design-system/main/assets/corporate/hephzibah-behulah-official.jpg" alt="Hephzibah Behulah" onerror="this.hidden=true;this.nextElementSibling.hidden=false" />
-        <span class="brand-fallback" hidden>HB <b>Hephzibah Behulah</b></span><span class="brand-divider"></span><span class="division">âš¡ HB Elektroniker</span>
-      </div>
-      <div class="product-lockup"><strong>Adigun <span>Light</span> Design</strong><small>COLOR + LIGHT STUDIO</small></div>
-      <div class="header-project-context" aria-label="${esc(t("project"))}: ${esc(project.name)} / ${esc(t("sceneHeader"))} ${String(displayedSceneNumber).padStart(2,"0")}"><span>${esc(project.name)}</span><b aria-hidden="true">â€¢</b><span>${t("sceneHeader")} ${String(displayedSceneNumber).padStart(2,"0")}</span></div>
-      ${topMenuMarkup({t,locale:preferences.locale,saved:projectPersisted,user:account.user})}<button id="theme" type="button" hidden aria-label="${t("appearance")}"></button>
-    </header>
-    <nav class="module-nav" aria-label="${t("appModules")}">${nav}<div class="workspace-switcher" role="group" aria-label="${t("workspaceViews")}"><button type="button" data-view="palette" aria-pressed="${preferences.view==="palette"}">${t("viewPalette2D")}</button><button type="button" data-view="light" aria-pressed="${preferences.view==="light"}">${t("viewStudio3D")}</button><button type="button" id="show-timeline">${t("viewTimeline")}</button></div></nav>
-    <nav class="command-ribbon" aria-label="${t("tools")}"><div class="command-ribbon-content"><div class="command-group" data-command-group="project"><span>${commandGroups.project}</span><button type="button" id="new-project">ï¼‹ ${t("newProject")}</button><button id="open-project">${t("openProject")}</button><button type="button" id="save">${t("save")}</button><button id="import-image" title="${t("importImage")}" aria-label="${t("importImage")}">${t("importAction")}</button><input id="project-file" type="file" accept="application/json,.json" hidden /></div><div class="command-group" data-command-group="history"><span>${commandGroups.history}</span><button id="undo" ${undoStack.length ? "" : "disabled"}>â†¶ ${t("undo")}</button><button id="redo" ${redoStack.length ? "" : "disabled"}>â†· ${t("redo")}</button></div><div class="command-group" data-command-group="scene"><span>${commandGroups.scene}</span><button type="button" data-open-scene-editor="room">${t("roomCommand")}</button><button type="button" data-open-scene-editor="stage">${t("stageCommand")}</button></div><div class="command-group" data-command-group="palette"><span>${commandGroups.palette}</span><button type="button" id="open-versions">${t("versions")}</button><button type="button" id="open-compare">${t("compare")}</button></div><div class="command-group" data-command-group="fixtures"><span>${commandGroups.fixtures}</span></div><div class="command-group" data-command-group="export"><span>${commandGroups.export}</span><button data-export="project">Project JSON</button><button data-export="palette">Palette JSON</button><button data-export="css">CSS variables</button><button data-export="ase" title="${t("aseExportLimit")}">${t("aseExport")}</button><button data-export="patch">Patch CSV</button><button data-export="cues">Cue CSV</button></div></div><span class="ribbon-scroll-hint" aria-hidden="true"><b>DRAG â†”</b><small>SCROLL RIBBON</small></span></nav>
-    <main id="workspace" class="editor-layout">
-      <aside class="left-rail panel">
-        <div class="left-rail-heading"><h2>${t("project")} â€¢ ${t("layers")} â€¢ ${t("tools")}</h2></div>
-        <section class="project-heading"><div><input id="project-name" value="${esc(project.name)}" aria-label="${t("project")} name" />${sceneSelectMarkup()}</div></section>
-        <section class="layer-section"><h2>â–° ${t("layers")}</h2><ul class="layer-list"><li>âŒ„ â–£ ${t("layersLighting")} <span>â—‰</span></li><li>âŒ„ â–£ ${t("layersPalette")} <span>â—‰</span></li><li>âŒ„ â–£ ${t("layersScene")} <span>â—‰</span></li></ul></section>
-        <section class="tool-section"><h2>â˜¼ ${t("toolsOneClick")}</h2><div class="tool-list">${tools}</div></section>
-      </aside>
-      <section class="work-area">
-        <div class="workspace-tabs panel">${viewCommandSource({palette:t("palette"),light:t("light")})}<strong class="studio-panel-title">${preferences.view === "light" ? `${t("sceneHeader")} ${String(displayedSceneNumber).padStart(2,"0")} / ${scene().id === "studio-room" ? t("mockupRoomTitle") : esc(scene().name)}` : `2D ${t("palette")} / ${esc(project.name)}`}</strong><small class="studio-panel-title-meta">${preferences.view === "light" ? t("viewportFixedHint") : t("palette")}</small><span></span><button id="viewport-projection" class="view-menu" ${preferences.view === "light" ? "" : disabled(t("select3d"))}>${t("perspective")}âŒ„</button></div>
-        ${preferences.view === "light" ? `<div class="scene-preview light-canvas panel"><div class="scene-title"><b>${esc(project.name)} â€¢ ${t("rgbwPreview")}</b><small>${t("sceneView")} â€¢ ${t("rgbwPreviewSubtitle")}</small></div><canvas id="light-canvas" tabindex="0" aria-label="${t("previewLabel")}"></canvas><div class="canvas-actions"><button id="apply-scene">${t("applyColour")}</button><button id="reset-camera">${t("resetView")}</button><button id="reset-camera-canvas">${t("resetView")}</button></div></div>` : `<div class="scene-preview panel" role="img" aria-label="${t("scenePreview")}"><div class="scene-title"><b>${t("scenePreview")}</b><small>${t("sceneNote")}</small></div><div class="beam beam-blue"></div><div class="beam beam-amber"></div><div class="beam beam-magenta"></div><div class="stage-truss"></div><div class="scene-wall"><div class="art-frame"></div><div class="couch"></div><div class="plant plant-left"></div><div class="plant plant-right"></div><div class="lamp"></div></div><div class="axis"><i>X</i><b>Y</b><em>Z</em></div></div>`}
-        <div class="lower-workspace"><section class="palette-panel panel"><div class="section-title"><h2>â—‰ ${t("activePalette")} â€” ${esc(palette().name)}</h2></div><div class="swatches">${swatches}</div><div class="palette-actions"><input id="seed" value="${preferences.seed}" aria-label="Seed colour" maxlength="7" /><label class="harmony-command"><span>â—‡ ${t("harmonies")}</span><select id="harmony" aria-label="${t("harmony")}">${["analogous","complementary","splitComplementary","triadic","tetradic","square","monochromatic"].map((type) => `<option value="${type}" ${type === preferences.harmony ? "selected" : ""}>${type}</option>`).join("")}</select></label><button id="reroll">âŸ³ ${t("reroll")}</button><button id="add-colour">ï¼‹ ${t("add")}</button></div></section>
-          <section class="timeline panel" tabindex="-1"><div class="section-title"><h2>â—Œ ${t("timeline")}</h2><span class="m-badge">M5 Â· ${t("simulationOnly")}</span></div><p>${project.fixtures.length ? `${t("universe")} 1 Â· ${patchedFixtures.length}/${project.fixtures.length} ${t("fixturesPatched")} Â· 1â€“${Math.max(0,...patchedFixtures.map((fixture)=>fixture.patchAssignment.startAddress+fixture.patchAssignment.channelFootprint-1))} ${t("activeChannels")}.` : t("noFixtures")}</p><div class="dmx-actions"><button id="add-fixture">ï¼‹ ${t("addWash")}</button><button id="apply-fixture-colour" ${project.fixtures.length ? "" : "disabled"}>${t("applySwatch")}</button><button id="create-cue" ${project.fixtures.length ? "" : "disabled"}>ï¼‹ ${t("captureCue")}</button><button id="play-cue" ${project.cues.length ? "" : "disabled"}>â–¶ ${t("play")}</button><button id="stop-cue" ${playbackTimer ? "" : "disabled"}>â–  ${t("stop")}</button><span>CH 1: ${virtualFrame[0]} Â· ${t("outputDisabled")}</span></div><div class="cue-track" aria-label="${t("timeline")}">${cueBlocks}</div></section></div>
-      </section>
-      <aside class="inspector panel"><div class="section-title"><h2>â—ˆ ${t("inspector")}</h2></div><div class="inspector-tabs"><button class="is-active">${t("palette")}</button><button disabled>Light</button><button disabled>DMX</button><button disabled>Effects</button></div><div class="selected-preview" style="--selected:${active.hex}"></div><label>${t("colourName")}<input id="swatch-name" value="${esc(active.name)}" /></label><label>${t("hex")}<div class="input-row"><input id="swatch-hex" value="${active.hex}" spellcheck="false" /><button id="apply-colour">${t("apply")}</button></div></label><button id="lock-swatch" class="wide">${active.locked ? "âŒ " + t("unlock") : "âŒ " + t("lock")}</button><section class="contrast-card"><h3>${t("contrast")}</h3><b>${contrast.ratio.toFixed(2)} : 1</b><span class="${contrast.aa ? "pass" : "fail"}">AA ${contrast.aa ? "pass" : "review"}</span><small>Against Midnight Navy #0B1220</small></section></aside>
-      <aside class="lux-panel panel ${preferences.luxOpen ? "" : "is-collapsed"}"><div class="lux-heading"><div><span class="lux-icon">âœ¦</span><h2>${t("luxTitle")} âœ¨</h2></div><button id="toggle-lux" class="subtle" aria-label="${preferences.luxOpen ? t("closePanel") : t("openLux")}">${preferences.luxOpen ? "Ã—" : "âœ¦"}</button></div>${preferences.luxOpen ? `<p class="lux-subtitle">${t("luxSubtitle")}</p><div class="lux-message"><b>${t("luxBrand")} Â· ${t("offline")}</b><p>${t("luxUnavailable")}</p><ul><li>${t("luxLocal")}</li><li>${t("luxNoUpload")}</li></ul></div><form id="lux-form" class="lux-input"><input id="lux-question" placeholder="${t("askLux")}" aria-label="${t("askLux")}" /><button aria-label="${t("sendLux")}">â¤</button></form>` : ""}</aside>
-    </main>
-    <footer class="studio-footer"><span class="footer-ready"><i aria-hidden="true">â—</i> ${t("ready").toUpperCase()} Â· ${esc(project.name)} / ${t("sceneHeader")} ${String(displayedSceneNumber).padStart(2,"0")} Â· 3D / ${t("virtualDmx")} Â· ${t(projectPersisted ? "projectSavedShort" : "sessionOnly")}</span><span id="status" role="status" aria-live="polite">${status || t("footerControls")}</span><span class="footer-shortcuts">${t("keyboardShortcuts")}</span></footer>`;
-  if(reuseRenderer)document.querySelector("#light-canvas")?.replaceWith(previousCanvas);
-  const ribbon=document.querySelector(".command-ribbon");
-  for(const [group,ids] of [["history",["undo","redo"]],["fixtures",["add-fixture","apply-fixture-colour"]]]){
-    const host=ribbon.querySelector(`[data-command-group="${group}"]`);
-    for(const id of ids){let control=document.getElementById(id);if(id.startsWith("ribbon-view-")){const view=id.endsWith("palette")?"palette":"light";control=document.querySelector(`[data-view="${view}"]`);control.id=id;control.dataset.ribbonView=view;}if(control){host.append(control);control.classList.add("ribbon-command");}}
-  }
-  document.querySelector(".contrast-card").insertAdjacentHTML("beforebegin", colourSpaces);
-  if (project.fixtures.length) document.querySelector(".selected-preview").insertAdjacentHTML("afterend", fixtureInspectorMarkup());
-  if (preferences.module === "library") { const drawer=document.createElement("section"); drawer.className="library-drawer panel"; drawer.setAttribute("aria-label",t("library")); drawer.innerHTML=`<div class="section-title"><h2>â–± ${t("library")}</h2><button id="close-library" class="subtle" aria-label="${t("close")}">Ã—</button></div><p>${t("virtualLibraryNote")}</p><div class="fixture-library">${fixtureLibraryMarkup()}</div>`; app.insertBefore(drawer,app.querySelector("footer")); }
-  document.querySelector(".cue-track").insertAdjacentHTML("beforebegin", `<div class="cue-timing">${["duration","fade","delay"].map((key)=>`<label>${t(key)} (s)<input id="cue-${key}" type="number" required min="${key === "duration" ? ".1" : "0"}" step=".1" value="${key === "duration" ? "5" : key === "fade" ? "1" : "0"}" /></label>`).join("")}</div>`);
-  if (activeCue) document.querySelector(".cue-track").insertAdjacentHTML("beforebegin", `<div class="cue-timing"><label>${t("timeline")}<input id="edit-cue-name" value="${esc(activeCue.name)}" /></label>${["duration","fade","delay"].map((key)=>`<label>${t(key)} (s)<input id="edit-cue-${key}" type="number" required min="0" step=".1" value="${activeCue[key] ?? 0}" /></label>`).join("")}<button id="edit-cue">${t("apply")}</button></div>`);
-  document.querySelector(".dmx-actions").insertAdjacentHTML("beforeend", `<button id="blackout" ${project.fixtures.length ? "" : "disabled"}>${t("blackout")}</button>`);
-  document.querySelector(".dmx-actions").insertAdjacentHTML("beforeend", `<button id="play-sequence" ${project.cues.length ? "" : "disabled"}>â–¶ ${t("playSequence")}</button>`);
-  const blackoutCommand=document.querySelector("#blackout"),fixtureCommandGroup=ribbon.querySelector('[data-command-group="fixtures"]');
-  if(blackoutCommand&&fixtureCommandGroup){fixtureCommandGroup.append(blackoutCommand);blackoutCommand.classList.add("ribbon-command");}
-  document.querySelector("#stop-cue").insertAdjacentHTML("beforebegin", `<button id="pause-playback" aria-pressed="${Boolean(playbackClock?.paused)}" ${playbackTimer ? "" : "disabled"}>${t(playbackClock?.paused ? "resumePlayback" : "pausePlayback")}</button>`);
-  const sequenceDuration=project.cues.reduce((sum,cue)=>sum+cue.duration,0);
-  const tracks=arrangeTracks(project.cues);
-  const sequenceTrack=document.querySelector(".timeline > .cue-track");
-  document.querySelector(".timeline > .section-title").insertAdjacentHTML("afterend",arrangementTimelineMarkup(project.cues,activeCue?.id,t("noCues")));
-  const sequenceDetails=document.createElement("details");sequenceDetails.className="fixture-group-editor";sequenceDetails.id="sequence-preview-details";
-  sequenceDetails.innerHTML=`<summary>${t("playSequence")}</summary>`;
-  sequenceTrack.replaceWith(sequenceDetails);sequenceDetails.append(sequenceTrack);
-  document.querySelector("#stop-cue").insertAdjacentHTML("beforebegin",`<button id="play-tracks" ${project.cues.length ? "" : "disabled"}>â–¶ ${t("play")}</button>`);
-  document.querySelector("#create-cue").insertAdjacentHTML("beforebegin", `<label>${t("captureGroup")} <select id="cue-group"><option value="">${t("allFixtures")}</option>${(project.fixtureGroups ?? []).map((group)=>`<option value="${esc(group.id)}">${esc(group.name)}</option>`).join("")}</select></label>`);
-  document.querySelector(".timeline").insertAdjacentHTML("beforeend", `<details class="fixture-group-editor"><summary>${t("fixtureGroups")}</summary><label>${t("groupName")} <input id="group-name" maxlength="120"></label><div>${project.fixtures.map((fixture)=>`<label><input type="checkbox" data-group-member value="${esc(fixture.id)}"> ${esc(fixture.name)}</label>`).join("")}</div><button id="save-group">${t("saveGroup")}</button>${(project.fixtureGroups ?? []).map((group)=>`<p>${esc(group.name)} Â· ${group.fixtureIds.length} <button data-delete-group="${esc(group.id)}">${t("deleteGroup")}</button></p>`).join("")}</details>`);
-  document.querySelector(".timeline").insertAdjacentHTML("beforeend", `<div class="dmx-actions"><label><input id="sequence-loop" type="checkbox" ${preferences.loopSequence ? "checked" : ""}> ${t("loopSequence")}</label><label>${t("seekSequence")} <input id="sequence-seek" type="range" min="0" max="${sequenceDuration}" step="0.1" value="0" ${sequenceDuration ? "" : "disabled"}></label><output id="sequence-position">0 / ${sequenceDuration.toFixed(1)} s</output></div>`);
-  document.querySelector(".timeline").insertAdjacentHTML("beforeend", `<div class="dmx-actions"><label>${t("virtualEffect")} <select id="effect-type"><option value="pulse">${t("pulse")}</option><option value="chase">${t("chase")}</option></select></label><label>${t("effectPeriod")} <input id="effect-period" type="number" min="0.1" max="120" step="0.1" value="2"></label><button id="play-effect" ${project.fixtures.length ? "" : "disabled"}>â–¶ ${t("play")}</button></div>`);
-  if (activeCue) {
-    const index=project.cues.indexOf(activeCue);
-    const scheduled=tracks.flatMap((track)=>track.entries).find((entry)=>entry.cue.id===activeCue.id);
-    document.querySelector("#edit-cue").insertAdjacentHTML("afterend", `<label>${t("trackName")}<input id="cue-track-name" maxlength="80" value="${esc(activeCue.trackId ?? "Main")}"></label><label>${t("startTime")}<input id="cue-start-time" type="number" min="0" step="0.1" required value="${scheduled.start}"></label><button id="schedule-cue">${t("scheduleCue")}</button>`);
-    document.querySelector("#edit-cue").insertAdjacentHTML("afterend", `<button id="duplicate-cue">${t("duplicateCue")}</button><button id="delete-cue">${t("deleteCue")}</button>`);
-    document.querySelector("#edit-cue").insertAdjacentHTML("afterend", `<button data-move-cue="-1" ${index === 0 ? "disabled" : ""}>â† ${t("earlier")}</button><button data-move-cue="1" ${index === project.cues.length - 1 ? "disabled" : ""}>${t("later")} â†’</button>`);
-  }
-  if (document.querySelector(".fixture-inspector")) {
-    const properties=selectedFixture().properties;
-    const color=rgbToHex({r:properties.red ?? 0,g:properties.green ?? 0,b:properties.blue ?? 0});
-    document.querySelector("#apply-fixture").insertAdjacentHTML("beforebegin", `<label class="fixture-colour-label">${t("colourLabel")}<span class="fixture-colour-control"><input id="fixture-colour" type="color" value="${color}" /><output id="fixture-colour-hex" aria-label="${t("selectedColour")} hex">${color.toUpperCase()}</output></span></label>`);
-    const fixture=selectedFixture(),profile=getFixtureProfile(fixture.profileId);
-    const mode=profile.modes.find((item)=>item.id===fixture.modeId);
-    if (!mode?.channels.includes("beam")) document.querySelector("#fixture-beam").closest("label").remove();
-    if (mode?.channels.includes("blue")) document.querySelector("#apply-fixture").insertAdjacentHTML("beforebegin", `<label>${t("blueChannel")} <output id="fixture-blue-channel-value">${Math.round((properties.blue ?? 0) / 255 * 100)}%</output><input id="fixture-blue-channel" type="range" min="0" max="255" step="1" value="${properties.blue ?? 0}" aria-label="${t("blueChannel")}" /></label>`);
-    for (const key of ["pan","tilt"]) if (mode?.channels.includes(key)) document.querySelector("#apply-fixture").insertAdjacentHTML("beforebegin", `<label>${t(key)} (0â€“255)<input id="fixture-${key}" type="number" required min="0" max="255" step="1" value="${properties[key] ?? 127}" /></label>`);
-    if (mode?.channels.includes("white")) document.querySelector("#apply-fixture").insertAdjacentHTML("beforebegin", `<label>${t("whiteChannel")}<input id="fixture-white" type="number" required min="0" max="255" step="1" value="${properties.white ?? 0}" /></label>`);
-    const blueChannel=document.querySelector("#fixture-blue-channel"),blueValue=document.querySelector("#fixture-blue-channel-value"),colourInput=document.querySelector("#fixture-colour"),colourHex=document.querySelector("#fixture-colour-hex");
-    if (blueChannel && blueValue && colourInput) {
-      const updateBlue=()=>{const channel=Number(blueChannel.value);blueValue.textContent=`${Math.round(channel / 255 * 100)}%`;blueChannel.setAttribute("aria-valuetext",`${blueValue.textContent} Â· ${channel}/255`);};
-      blueChannel.oninput=updateBlue;
-      updateBlue();
-    }
-    if (colourInput && colourHex) colourInput.oninput=()=>{colourHex.textContent=colourInput.value.toUpperCase();if(blueChannel){blueChannel.value=String(hexToRgb(colourInput.value).b);blueValue.textContent=`${Math.round(Number(blueChannel.value)/255*100)}%`;blueChannel.setAttribute("aria-valuetext",`${blueValue.textContent} Â· ${blueChannel.value}/255`);}};
-  }
-  for (const id of ["fixture-dimmer","fixture-beam"]) {
-    const input=document.querySelector(`#${id}`);
-    if (!input) continue;
-    input.type="range";
-    input.step="1";
-    const output=document.createElement("output");
-    output.htmlFor=id;
-    output.id=`${id}-value`;
-    const update=()=>{
-      output.textContent=id === "fixture-dimmer" ? `${Math.round(Number(input.value) / 255 * 100)}%` : `${input.value} / 255`;
-      input.setAttribute("aria-valuetext",output.textContent);
-    };
-    input.insertAdjacentElement("afterend",output);
-    input.oninput=update;
-    update();
-  }
-  if (project.fixtures.length) document.querySelector(".tool-section").insertAdjacentHTML("afterend", `<section class="fixture-list-section"><h2>${t("fixtureList")} <span>${project.fixtures.length}</span></h2><ul class="fixture-layer-list" aria-label="${t("layersLighting")}">${project.fixtures.map((fixture)=>`<li><button data-layer-fixture="${esc(fixture.id)}" aria-pressed="${fixture.id===selectedFixture()?.id}"><span>â˜¼</span> ${esc(fixture.name)}</button></li>`).join("")}</ul></section>`);
-  document.querySelector(".swatches").insertAdjacentHTML("afterend", `<p class="palette-summary">${t("seedColour")}: ${esc(preferences.seed)} Â· ${t("harmony")}: ${esc(preferences.harmony)} Â· ${palette().colors.length} ${t("summarySwatches")} Â· ${palette().colors.filter((colour)=>colour.locked).length} ${t("summaryLocked")}</p>`);
-  document.querySelector(".export-grid")?.insertAdjacentHTML("beforeend", `<button id="export-svg">SVG</button><button id="export-pdf" aria-describedby="pdf-export-limit">${t("paletteSheetPdf")}</button><small id="pdf-export-limit">${t("pdfPaletteLimit")}</small><button id="export-cue-pdf" aria-describedby="cue-pdf-limit">${t("cueSheetPdf")}</button><small id="cue-pdf-limit">${t("cuePdfLimit")}</small><button id="export-tokens">${t("designTokens")}</button>`);
-  document.querySelector(".palette-actions").insertAdjacentHTML("beforeend", `<button id="extract-image">${t("extractImage")}</button><input id="palette-image" type="file" accept="image/png,image/jpeg,image/webp" hidden />`);
-  const swatchIndex=palette().colors.indexOf(active);
-  document.querySelector("#lock-swatch").insertAdjacentHTML("afterend", `<div class="palette-actions"><button data-move-swatch="-1" ${swatchIndex===0 ? "disabled" : ""}>â† ${t("earlier")}</button><button data-move-swatch="1" ${swatchIndex===palette().colors.length-1 ? "disabled" : ""}>${t("later")} â†’</button><button id="remove-swatch" ${palette().colors.length<2 ? "disabled" : ""}>${t("removeColor")}</button></div>`);
-  document.querySelector("#apply-colour").insertAdjacentHTML("afterend", `<button id="copy-hex">${t("copy")}</button>`);
-  const hsl=rgbToHsl(hexToRgb(active.hex));
-  document.querySelector("#lock-swatch").insertAdjacentHTML("beforebegin", `<section class="colour-space-card">${[["hue",hsl.h,360],["saturation",hsl.s*100,100],["lightness",hsl.l*100,100]].map(([key,value,max])=>`<label>${t(key)}<input id="color-${key}" type="number" min="0" max="${max}" step="any" value="${compact(value,2)}" /></label>`).join("")}<button id="apply-hsl" class="wide">${t("apply")} HSL</button></section>`);
-  document.querySelector(".export-grid")?.insertAdjacentHTML("beforeend", `<button data-raster="image/png">PNG</button><button data-raster="image/jpeg">JPEG</button>`);
-  const contrastCard=document.querySelector(".contrast-card");
-  contrastCard.querySelector("small").textContent=contrastBackground;
-  contrastCard.insertAdjacentHTML("beforeend", `<label>${t("contrastBackground")}<input id="contrast-background" type="color" value="${contrastBackground}" /></label><dl>${[["normalText","AA",contrast.aa],["normalText","AAA",contrast.aaa],["largeText","AA",contrast.largeAa],["largeText","AAA",contrast.largeAaa]].map(([key,level,pass])=>`<div><dt>${t(key)} ${level}</dt><dd class="${pass ? "pass" : "fail"}">${t(pass ? "passes" : "fails")}</dd></div>`).join("")}</dl>`);
-  const contrastSuggestion=contrast.aa || (active.opacity ?? 1)<1 ? null : suggestContrast(active.hex,contrastBackground);
-  if (contrastSuggestion) contrastCard.insertAdjacentHTML("beforeend", `<button id="apply-contrast" class="wide">${t("improveContrast")} ${contrastSuggestion}</button>`);
-  const oklch=oklabToOklch(rgbToOklab(hexToRgb(active.hex)));
-  document.querySelector("#lock-swatch").insertAdjacentHTML("beforebegin", `<section class="colour-space-card"><h3>OKLCH</h3>${[["l",oklch.l,1,t("lightness")],["c",oklch.c,1,t("chroma")],["h",oklch.h,360,t("hue")]].map(([key,value,max,label])=>`<label>${label} (0â€“${max})<input id="oklch-${key}" type="number" required min="0" max="${max}" step="any" value="${compact(value,4)}" /></label>`).join("")}<button id="apply-oklch" class="wide">${t("apply")} OKLCH</button></section>`);
-  document.querySelector("#oklch-l").closest("label").firstChild.textContent="L (0â€“1)";
-  document.querySelector(".palette-panel").insertAdjacentHTML("beforeend", `<div id="palette-versions-menu" class="palette-ribbon-popover" popover><div class="palette-actions"><button id="save-version">${t("saveVersion")}</button><select id="palette-version" aria-label="${t("savedVersions")}">${project.palettes.slice(1).map((item)=>`<option value="${esc(item.id)}">${esc(item.name)}</option>`).join("")}</select><button id="restore-version" ${project.palettes.length<2 ? "disabled" : ""}>${t("restoreVersion")}</button></div></div><div id="palette-compare-menu" class="palette-ribbon-popover" popover><div id="version-comparison"></div></div>`);
+NÃBˆØİ[Y[œ]Y\TÙ[XİÜ[
+–Ù]K[Ü[‹\ØÙ[™KYY]Ü—HŠK™›Ü‘XXÚ
 
-  document.querySelector("#lock-swatch").insertAdjacentHTML("beforebegin", `<label>${t("opacity")} (%)<input id="swatch-opacity" type="number" required min="0" max="100" step="any" value="${(active.opacity ?? 1)*100}" /></label><button id="apply-opacity" class="wide">${t("apply")}</button>`);
-  for (const button of document.querySelectorAll("[data-swatch]")) {
-    const swatch=palette().colors.find((item)=>item.id===button.dataset.swatch);
-    button.querySelector("span").style.background=swatchCssColor(swatch);
-  }
-  document.querySelector(".selected-preview").style.background=swatchCssColor(active);
-  document.querySelector(".palette-panel").insertAdjacentHTML("beforeend", `<div class="palette-actions"><label>${t("hueSpacing")}<input id="custom-spacing" type="number" min="-360" max="360" step="any" value="30" /></label><button id="custom-hues">${t("customHues")}</button><button id="perceptual-scale">${t("perceptualScale")}</button></div>`);
-  const arrangementEnd=arrangementDuration(project.cues);
-  document.querySelector(".palette-panel").insertAdjacentHTML("beforeend", `<div class="palette-actions"><label>${t("temperatureStrength")} (%)<input id="temperature-strength" type="number" min="0" max="100" step="1" required value="20"></label><button data-temperature="warm">${t("warmPalette")}</button><button data-temperature="cool">${t("coolPalette")}</button></div>`);
-  document.querySelectorAll("[data-module]").forEach((button)=>{button.querySelector("span").innerHTML=icon(button.dataset.module);});
-  document.querySelectorAll("[data-tool]").forEach((button)=>{button.querySelector("span").innerHTML=icon(button.dataset.tool);});
-  document.querySelector(".language > span").innerHTML=icon("globe");
-  document.querySelector(".language").insertAdjacentHTML("beforeend", `<span class="locale-code" aria-hidden="true">${supportedLocales.includes(preferences.locale) ? preferences.locale.toUpperCase() : "EN"} âŒ„</span>`);
-  document.querySelector("#theme").innerHTML=icon(preferences.theme==="dark" ? "light" : "moon");
-  document.querySelector(".lux-icon").innerHTML=icon("copilot");
-  if (preferences.luxOpen) {
-    document.querySelector(".lux-message").insertAdjacentHTML("afterend", `<section class="lux-local-actions"><h3>${t("localPaletteAction")}</h3><button id="preview-lux-palette" ${project.fixtures.length ? "" : "disabled"}>${t("previewPaletteLighting")}</button>${luxProposal ? `<div class="lux-action-preview"><h4>${t("reviewChanges")}</h4><ul>${luxProposal.changes.map((change)=>`<li>${esc(change.after?.name ?? change.before?.name ?? change.id)}<details><summary>${t("reviewChanges")}: ${esc(change.collection)}</summary><pre>${esc(JSON.stringify({before:change.before,after:change.after},null,2))}</pre></details></li>`).join("") || t("noActionChanges")}</ul><small>${t(account.user ? "liveReviewBeforeApply" : "authRequired")}</small><button id="confirm-lux-action" ${luxProposal.changes.length && account.user && !luxConfirmationPending ? "" : "disabled"} title="${t(account.user ? "confirmAction" : "authRequired")}">${t("confirmAction")}</button><button id="cancel-lux-action">${t("cancelAction")}</button></div>` : ""}</section>`);
-  }
-  const projectionButton=document.querySelector(".view-menu");
-  projectionButton.insertAdjacentHTML("beforebegin", `<button id="viewport-performance" class="view-menu" aria-pressed="${preferences.previewQuality==="performance"}" ${preferences.view==="light" ? "" : "disabled"}>${t("quality_performance")}</button>`);
-  document.querySelector(".workspace-tabs").insertAdjacentHTML("beforeend", `<button id="viewport-fit" class="view-menu" aria-label="${t("fitViewport")}" title="${t("fitViewport")}" ${preferences.view==="light" ? "" : "disabled"}>Fit</button><button id="viewport-fullscreen" class="view-menu" aria-label="${t("fullscreenViewport")}" title="${t("fullscreenViewport")}" ${canFullscreen(document.querySelector(".scene-preview"),document) ? "" : "disabled"}>${icon("fullscreen")}</button>`);
-  projectionButton.insertAdjacentHTML("beforebegin", `<label class="preview-quality">${t("previewQuality")} <select id="preview-quality" ${preferences.view==="light" ? "" : "disabled"}>${Object.keys(previewQualities).map((key)=>`<option value="${key}" ${key===(preferences.previewQuality ?? "balanced") ? "selected" : ""}>${t(`quality_${key}`)}</option>`).join("")}</select></label>`);
-  if (preferences.view==="light") { const previewCountLabel=`${t("webglPreview")} Â· ${phrase("previewFixtureCount",{shown:scene().visibility?.lighting===false ? 0 : Math.min(project.fixtures.length,previewQuality(preferences.previewQuality).fixtures),total:project.fixtures.length})}`; const previewSubtitle=document.querySelector(".scene-title small"); previewSubtitle.title=previewCountLabel; previewSubtitle.setAttribute("aria-label",previewCountLabel); }
-  projectionButton.insertAdjacentHTML("afterend", `<button id="export-canvas" class="view-menu" ${preferences.view==="palette" ? "" : "disabled"}>â†— ${t("exportCanvas")}</button>`);
-  const materialButton=document.querySelector("#apply-scene");
-  if (materialButton) materialButton.insertAdjacentHTML("beforebegin", `<label>${t("paintColon")} <select id="material-target">${["wall","accent","floor","ceiling"].map((target)=>`<option value="${target}" ${preferences.materialTarget===target ? "selected" : ""}>${t(`surface_${target}`)}</option>`).join("")}</select></label>`);
-  projectionButton.insertAdjacentHTML("afterend", `<button id="export-viewport" class="view-menu" ${preferences.view==="light" ? "" : "disabled"}>â–£ ${t("exportViewport")}</button>`);
-  projectionButton.textContent=`${t(preferences.projection==="orthographic" ? "orthographic" : "perspective")} âŒ„`;
-  projectionButton.setAttribute("aria-label",t("switchProjection"));
-  document.querySelector("#effect-type").insertAdjacentHTML("beforeend", `<option value="panTilt">${t("panTilt")}</option>`);
-  document.querySelector("#play-tracks").insertAdjacentHTML("afterend", `<label>${t("seekTracks")} <input id="arrangement-seek" type="range" min="0" max="${arrangementEnd}" step="0.1" value="0" ${arrangementEnd ? "" : "disabled"}></label><output id="arrangement-position">0 / ${arrangementEnd.toFixed(1)} s</output>`);
-  const timelineTransport=document.createElement("div");
-  timelineTransport.className="timeline-transport";
-  timelineTransport.append(document.querySelector("#create-cue"),document.querySelector("#play-tracks"),document.querySelector("#pause-playback"),document.querySelector("#stop-cue"),document.querySelector("#sequence-loop").closest("label"),document.querySelector("#arrangement-position"));
-  document.querySelector(".timeline > .section-title").append(timelineTransport);
-  document.querySelector(".timeline > p").append(" ", document.querySelector(".timeline > .section-title .m-badge"));
-  const timingDetails=document.createElement("details");
-  document.querySelector("#cue-delay").parentElement.insertAdjacentHTML("afterend", `<label>${t("fadeOut")} (s)<input id="cue-fadeOut" type="number" min="0" step="0.1" required value="0"></label>`);
-  if (activeCue) document.querySelector("#edit-cue-delay").parentElement.insertAdjacentHTML("afterend", `<label>${t("fadeOut")} (s)<input id="edit-cue-fadeOut" type="number" min="0" step="0.1" required value="${activeCue.fadeOut ?? 0}"></label><small>${t("holdTime")}: ${Math.max(0,activeCue.duration-(activeCue.delay ?? 0)-activeCue.fade-(activeCue.fadeOut ?? 0)).toFixed(1)} s</small>`);
-  timingDetails.className="fixture-group-editor";
-  const timingSummary=document.createElement("summary");
-  timingSummary.textContent=t("cueSettings");timingDetails.append(timingSummary);
-  document.querySelectorAll(".cue-timing").forEach((node)=>timingDetails.append(node));
-  document.querySelector(".timeline").append(timingDetails);
-  if (preferences.view==="palette") document.querySelector(".scene-preview").innerHTML=canvasMarkup(scene().canvasObjects ?? [],preferences.objectId,t("designCanvas"))+`<div class="canvas-actions"><label>${t("shapeKind")} <select id="shape-kind"><option value="rect" ${preferences.shapeKind!=="ellipse" ? "selected" : ""}>${t("rectangle")}</option><option value="ellipse" ${preferences.shapeKind==="ellipse" ? "selected" : ""}>${t("ellipse")}</option></select></label><button id="add-canvas-shape">ï¼‹ ${t("shapes")}</button></div>`;
-  document.querySelector(".timeline").insertAdjacentHTML("beforeend", `<details class="fixture-group-editor"><summary>${t("virtualDmx")} Â· ${t("outputDisabled")}</summary><pre id="virtual-dmx-monitor"></pre></details>`);
-  updateDmxFeedback(project.fixtures);
-  const room=roomDimensions(scene().room);
-  const stage=stageSettings(scene().stage);
-  document.querySelector(".left-rail").insertAdjacentHTML("beforeend", `<details class="fixture-group-editor" data-scene-editor="stage"><summary>${t("stagePlatform")}</summary><label><input id="stage-enabled" type="checkbox" ${stage.enabled ? "checked" : ""}> ${t("showStage")}</label>${["x","y","z","width","height","depth"].map((key)=>`<label>${["x","y","z"].includes(key) ? key.toUpperCase() : t(key)} (m)<input id="stage-${key}" type="number" step="any" required value="${stage[key]}"></label>`).join("")}<label>${t("selectedColour")}<input id="stage-color" type="color" value="${stage.color}"></label><button id="apply-stage">${t("apply")}</button></details>`);
-  document.querySelector(".left-rail").insertAdjacentHTML("beforeend", `<details class="fixture-group-editor" data-scene-editor="room"><summary>${t("roomDimensions")}</summary>${["width","height","depth"].map((key)=>`<label>${t(key)} (m)<input id="room-${key}" type="number" required min="2" max="${key==="height" ? 20 : 50}" step="any" value="${room[key]}"></label>`).join("")}<button id="apply-room">${t("apply")}</button></details>`);
-  for (const [index,key] of ["lighting","palette","props"].entries()) {
-    const item=document.querySelectorAll(".layer-list li")[index],visible=scene().visibility?.[key]!==false;
-    item.querySelector("span").outerHTML=`<button data-layer-visibility="${key}" aria-pressed="${visible}" aria-label="${t("layerVisibility")}: ${t(["layersLighting","layersPalette","layersScene"][index])}">${visible ? "â—‰" : "â—‹"}</button>`;
-  }
-  document.querySelector(".palette-panel").hidden=scene().visibility?.palette===false;
-  document.querySelector(".scene-preview").classList.toggle("hide-lighting",scene().visibility?.lighting===false);
-  document.querySelector(".scene-preview").classList.toggle("hide-props",scene().visibility?.props===false);
-  if (activeCue) {
-    const channels=activeCue.targets.flatMap((target)=>Object.keys(target.properties).map((property)=>({fixtureId:target.fixtureId,property})));
-    timingDetails.insertAdjacentHTML("beforeend", `<fieldset><legend>${t("channelKeyframes")}</legend><label>${t("channel")}<select id="keyframe-channel">${channels.map((channel)=>`<option value="${esc(JSON.stringify(channel))}">${esc(project.fixtures.find((fixture)=>fixture.id===channel.fixtureId)?.name ?? channel.fixtureId)} Â· ${esc(channel.property)}</option>`).join("")}</select></label><label>${t("startTime")}<input id="keyframe-time" type="number" min="0" max="${activeCue.duration}" step="0.1" value="0" required></label><label>${t("channelValue")}<input id="keyframe-value" type="number" min="0" max="255" step="1" value="127" required></label><button id="save-keyframe" ${channels.length ? "" : "disabled"}>${t("saveKeyframe")}</button>${(activeCue.channelKeyframes ?? []).map((frame,index)=>`<p>${esc(frame.fixtureId)} Â· ${esc(frame.property)} Â· ${frame.time}s â†’ ${frame.value} <button data-remove-keyframe="${index}" aria-label="${t("removeKeyframe")}">Ã—</button></p>`).join("")}</fieldset>`);
-  }
-  const inspector=document.querySelector(".inspector"),fixturePanel=inspector.querySelector(".fixture-inspector");
-  if (fixturePanel) fixturePanel.insertAdjacentHTML("beforeend", `<div class="dmx-actions"><button id="duplicate-fixture">${t("duplicateFixture")}</button><button id="delete-fixture">${t("deleteFixture")}</button></div>`);
-  const mode=(preferences.inspectorMode ?? (preferences.view==="light" ? "fixture" : "palette"))==="fixture" && fixturePanel ? "fixture" : "palette";
-  const palettePanel=document.createElement("div");palettePanel.id="palette-inspector-panel";
-  for (const node of [...inspector.children]) if (!node.classList.contains("section-title") && !node.classList.contains("inspector-tabs") && node!==fixturePanel) palettePanel.append(node);
-  inspector.append(palettePanel);
-  const commandGroup=(name)=>document.querySelector(`.command-group[data-command-group="${name}"]`);
-  const dock=(selector,groupName,wrap=false)=>{const control=document.querySelector(selector);if(control){const group=commandGroup(groupName);group.append(wrap ? control.closest("label") : control);}};
-  dock("#reset-camera","scene");
-  dock(".harmony-command","palette",true);dock("#reroll","palette");dock("#add-colour","palette");
-  const exportGroup=commandGroup("export"),viewportExport=document.querySelector("#export-viewport"),canvasExport=document.querySelector("#export-canvas");
-  if(viewportExport){viewportExport.textContent=`â†‘ ${t("exportPngShort")}`;viewportExport.setAttribute("aria-label",t("exportViewport"));viewportExport.title=t("exportViewport");exportGroup.insertBefore(viewportExport,exportGroup.children[1] ?? null);}
-  if(canvasExport){canvasExport.textContent=`â†— ${t("exportCanvas")}`;canvasExport.setAttribute("aria-label",t("exportCanvas"));canvasExport.title=t("exportCanvas");exportGroup.insertBefore(canvasExport,viewportExport?.nextSibling ?? exportGroup.children[1] ?? null);}
-  const canvasObject=scene().canvasObjects?.find((object)=>object.id===preferences.objectId);
-  if (canvasObject && preferences.view==="palette") palettePanel.insertAdjacentHTML("beforeend", `<fieldset class="canvas-object-editor"><legend>${t("canvasObject")}</legend>${["x","y",...(canvasObject.type!=="text" ? ["width","height"] : ["fontSize"])].map((key)=>`<label>${["x","y"].includes(key) ? key.toUpperCase() : t(key)}<input data-object-value="${key}" type="number" step="any" required value="${canvasObject[key]}"></label>`).join("")}${canvasObject.type==="text" ? `<label>${t("text")}<input id="canvas-text" maxlength="2048" value="${esc(canvasObject.text)}"></label>` : ""}<button id="apply-object">${t("apply")}</button><button id="paint-object">${t("applySwatch")}</button><button id="delete-object">${t("deleteObject")}</button><button id="copy-object">${t("duplicateObject")}</button><button data-object-stack="-1">${t("sendBackward")}</button><button data-object-stack="1">${t("bringForward")}</button></fieldset>`);
-  for (const key of ["shapes","text","measure"]) {const button=document.querySelector(`[data-tool="${key}"]`);button.disabled=false;button.removeAttribute("title");}
-  for(const [key,tool] of Object.entries(toolKeys)){const button=document.querySelector(`[data-tool="${tool}"]`);if(button && !button.disabled){button.setAttribute("aria-keyshortcuts",key.toUpperCase());button.title=`${t(tool)} (${key.toUpperCase()})`;}}
-  palettePanel.hidden=mode!=="palette";
-  if (fixturePanel) {fixturePanel.id="fixture-inspector-panel";fixturePanel.hidden=mode!=="fixture";}
-  inspector.querySelector(".inspector-tabs").innerHTML=`<button data-inspector="fixture" aria-pressed="${mode==="fixture"}" class="${mode==="fixture" ? "is-active" : ""}" ${fixturePanel ? "" : "disabled"}>${t("fixtureLabel")}</button><button data-inspector="palette" aria-pressed="${mode==="palette"}" class="${mode==="palette" ? "is-active" : ""}">${t("palette")}</button>`;
-  if (fixturePanel && mode==="fixture") {
-    const keys=["fixture","light","dmx","effects"];
-    const bodies=Object.fromEntries(keys.map((key)=>{const body=document.createElement("section");body.className=`fixture-tab-body inspector-group inspector-group-${key}`;body.setAttribute("aria-label",t({fixture:"fixtureLabel",light:"lightTab",dmx:"dmxTab",effects:"effectsTab"}[key]));body.insertAdjacentHTML("afterbegin",`<h3>${t({fixture:"fixtureLabel",light:"lightTab",dmx:"dmxTab",effects:"effectsTab"}[key])}</h3>`);return [key,body];}));
-    const profile=getFixtureProfile(selectedFixture().profileId);
-    bodies.fixture.querySelector("h3").insertAdjacentHTML("beforeend",`<small class="fixture-profile-context">${t("fixtureProfile")} Â· ${esc(profile.type)} / ${t("virtualShort")}</small>`);
-    for (const id of ["fixture-dimmer","fixture-beam","fixture-colour","fixture-blue-channel","fixture-white","fixture-pan","fixture-tilt"]) {
-      const input=fixturePanel.querySelector(`#${id}`);if(input)bodies.light.append(input.closest("label"));
-    }
-    for (const id of ["fixture-universe","fixture-address"]) bodies.dmx.append(fixturePanel.querySelector(`#${id}`).closest("label"));
-    const apply=fixturePanel.querySelector("#apply-fixture"),actions=fixturePanel.querySelector(".dmx-actions"),selectedFixtureField=fixturePanel.querySelector("#fixture-select")?.closest("label");
-    selectedFixtureField?.classList.add("fixture-select-field");
-    fixturePanel.querySelector(":scope > h3")?.remove();
-    for (const node of [...fixturePanel.children]) if(node!==apply && node!==actions && node!==selectedFixtureField)bodies.fixture.append(node);
-    const nameLabel=bodies.fixture.querySelector("#fixture-name")?.closest("label");
-    const configuration=document.createElement("details");configuration.className="fixture-configuration-details";
-    const configurationSummary=document.createElement("summary");configurationSummary.textContent="Name and position";configuration.append(configurationSummary);
-    if(nameLabel)configuration.append(nameLabel);
-    const placement=bodies.fixture.querySelector(".fixture-placement");
-    if(placement){
-      const readout=document.createElement("p");readout.className="fixture-position-summary";
-      const refreshPosition=()=>{const value=(key)=>fixturePanel.querySelector(`#fixture-${key}`)?.value ?? "0";const coordinate=(key)=>Number(value(key)||0).toFixed(1),properties=selectedFixture().properties;
-        readout.textContent=`Position X ${coordinate("x")} Y ${coordinate("y")} Z ${coordinate("z")}\nPan ${value("pan")||properties.pan||0} Tilt ${value("tilt")||properties.tilt||0} Rotation ${value("rotation")}`;};
-      refreshPosition();
-      for(const input of [...placement.querySelectorAll("input"),...["pan","tilt"].map((key)=>fixturePanel.querySelector(`#fixture-${key}`)).filter(Boolean)])input.addEventListener("input",refreshPosition);
-      placement.replaceWith(configuration);configuration.append(placement);bodies.fixture.insertBefore(readout,configuration);
-    } else if(nameLabel) {
-      nameLabel.replaceWith(configuration);
-    }
-    const advancedLight=document.createElement("details");advancedLight.className="light-advanced-controls";
-    const advancedTitle=document.createElement("summary");advancedTitle.textContent="More light controls";advancedLight.append(advancedTitle);
-    for(const id of ["fixture-beam","fixture-white","fixture-pan","fixture-tilt"]){const input=bodies.light.querySelector(`#${id}`);if(input)advancedLight.append(input.closest("label"));}
-    bodies.light.append(advancedLight);
-    const effectControls=document.querySelector("#effect-type").closest(".dmx-actions");
-    const effectScope=document.createElement("p");effectScope.textContent=t("allVirtualFixtures");bodies.effects.append(effectScope,effectControls);
-    const outputNote=document.createElement("small");outputNote.className="fixture-output-note";outputNote.textContent=t("fixtureOutputNote");const applyPatch=document.createElement("button");applyPatch.type="button";applyPatch.id="apply-fixture-patch";applyPatch.className="wide";applyPatch.textContent=t("applyPatch");bodies.dmx.append(outputNote,applyPatch);bodies.fixture.append(apply);
-    actions?.remove();
-    fixturePanel.append(...Object.values(bodies));
-    inspector.querySelector(".section-title h2").textContent=`${t("selectedFixtureTitle")}: ${selectedFixture().name}`;
-    inspector.querySelector(".inspector-tabs").hidden=true;
-  }
-  const qualityControl=document.querySelector(".preview-quality"),advancedLightControls=document.querySelector(".light-advanced-controls");
-  if(qualityControl && advancedLightControls)advancedLightControls.append(qualityControl);
-  const sceneEditorHost=fixturePanel ?? palettePanel;
-  for(const editor of document.querySelectorAll("[data-scene-editor]"))sceneEditorHost.append(editor);
-  document.querySelector(".scene-preview").insertAdjacentHTML("beforeend", `<button id="viewport-exit-fullscreen" class="viewport-exit-fullscreen">${t("exitFullscreen")}</button>`);
-  bind();
-  document.querySelectorAll("[data-open-scene-editor]").forEach((button)=>button.onclick=()=>{if(fixturePanel && (preferences.view!=="light" || preferences.inspectorMode!=="fixture")){preferences.view="light";preferences.module="light";preferences.inspectorMode="fixture";savePreferences();render();}const editor=document.querySelector(`[data-scene-editor="${button.dataset.openSceneEditor}"]`);if(editor){editor.open=true;editor.scrollIntoView({block:"nearest"});editor.querySelector("summary")?.focus({preventScroll:true});}});
-  bindFixtureSliders(document.querySelector(".inspector"),{channelLabel:t("virtualChannelValue")});
-  if(preferences.view==="light"){
-    const axes=document.createElement("div");axes.className="viewport-axis-controls";axes.setAttribute("role","group");axes.setAttribute("aria-label",t("cameraAxisViews"));
-    axes.innerHTML=["x","y","z"].map(axis=>`<button type="button" class="axis-view-${axis}" data-camera-axis="${axis}" title="${t(`cameraView_${axis}`)}" aria-label="${t(`cameraView_${axis}`)}" disabled>View ${axis.toUpperCase()}</button>`).join("");
-    const sceneCommandGroup=document.querySelector('.command-group[data-command-group="scene"]');sceneCommandGroup.append(axes);const resetCameraCommand=document.querySelector("#reset-camera");if(resetCameraCommand)sceneCommandGroup.append(resetCameraCommand);axes.querySelectorAll("[data-camera-axis]").forEach(button=>button.onclick=()=>{renderer?.setView?.(button.dataset.cameraAxis);document.querySelector("#light-canvas")?.focus();});
-  }
-  const luxPanel=document.querySelector(".lux-panel");
-  luxPanel.dataset.docked="true";
-  inspector.append(luxPanel);
-  floatingBot.mount(luxPanel);
-  const composer=document.querySelector(".floating-bot [data-lux-request]");
-  if (composer && !composer.classList.contains("bot-composer")) {
-    composer.classList.add("bot-composer");
-    composer.closest(".floating-bot").append(composer);
-  }
-  cleanupTopMenu=bindTopMenu({project,t,onAccount:()=>openAccountDialog({account,t,getProject:()=>project,onOpen:openCloudProject}),onSelect(result){
-    stopPlayback();
-    if(result.kind==="fixture"){preferences.fixtureId=result.id;preferences.inspectorMode="fixture";preferences.view="light";}
-    else if(result.kind==="cue")preferences.cueId=result.id;
-    else {preferences.view="palette";preferences.inspectorMode="palette";if(result.kind==="object")preferences.objectId=result.id;if(result.kind==="swatch")preferences.selected=result.id;}
-    savePreferences();render();
-    if(result.kind==="palette" && result.id!==palette().id){const versions=document.querySelector("#palette-version");if(versions){versions.value=result.id;versions.dispatchEvent(new Event("change"));}}
-  }});
-  if (preferences.view === "light") {
-    const fixtures=currentRendererFixtures(),fixtureSignature=lightLabFixtureState(fixtures),accent=scene().materialColor;
-    if(reuseRenderer){if(fixtureSignature!==rendererFixtureSignature)renderer.setFixtures(fixtures);if(accent!==rendererAccent)renderer.setAccent(accent);rendererFixtureSignature=fixtureSignature;rendererAccent=accent;}
-    else {renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {camera:viewportCamera,accent,room:scene().room,materials:scene().materials,stage:scene().stage,quality:preferences.previewQuality,projection:preferences.projection==="orthographic" ? "orthographic" : "perspective",visibility:scene().visibility,fixtures,onSelect(id){stopPlayback();preferences.fixtureId=id;preferences.inspectorMode="fixture";savePreferences();render();},onTransform(id,transform){commitProjectChange("fixture-move",(draft)=>{draft.fixtures=updateFixture(draft.fixtures,id,{transform});});updateRendererFromFixtures();}});rendererConfigSignature=nextRendererConfig;rendererFixtureSignature=fixtureSignature;rendererAccent=accent;}
-    document.querySelectorAll("[data-camera-axis]").forEach(button=>button.disabled=!renderer.supported);
-    if (!renderer.supported) {
-      document.querySelector(".scene-title small").title=phrase("previewFixtureCount",{shown:0,total:project.fixtures.length}); document.querySelector(".scene-title small").setAttribute("aria-label",document.querySelector(".scene-title small").title);
-      const note=document.createElement("p");
-      note.className="webgl-unavailable";
-      note.setAttribute("role","status");
-      note.textContent=t("webglUnavailable");
-      document.querySelector("#light-canvas").replaceWith(note);
-      document.querySelector("#reset-camera").disabled=true;
-      document.querySelector("#export-viewport").disabled=true;
-    }
-  }
-}
+]ÛŠOO˜]Û‹›Û˜ÛXÚÏJ
+OOÚYŠš^\™T[™[	‰ˆ
+™Y™\™[˜Ù\ËšY]ÈOOH›YÚˆ™Y™\™[˜Ù\Ëš[œÜXİÜ“[ÙHOOH™š^\™HŠJ^Ü™Y™\™[˜Ù\ËšY]ÏH›YÚÜ™Y™\™[˜Ù\Ë›[Ù[OH›YÚÜ™Y™\™[˜Ù\Ëš[œÜXİÜ“[ÙOH™š^\™HÜØ]™T™Y™\™[˜Ù\Ê
+NÜ™[™\Š
+NßXÛÛœİY]ÜYØİ[Y[œ]Y\TÙ[XİÜŠÙ]K\ØÙ[™KYY]ÜH‰Ø]Û‹™]\Ù]›Ü[”ØÙ[™QY]ÜŸH—X
+NÚYŠY]ÜŠ^ÙY]Ü‹›Ü[]YNÙY]Ü‹œØÜ›Û[ÕšY]ÊØ›ØÚÎˆ›™X\™\İŸJNÙY]Ü‹œ]Y\TÙ[XİÜŠœİ[[X\HŠOË™›Øİ\ÊÜ™]™[ØÜ›ÛY_JNß_JNÃBˆš[™š^\™TÛY\œÊØİ[Y[œ]Y\TÙ[XİÜŠ‹š[œÜXİÜˆŠKØÚ[›™[X™[
+š\X[Ú[›™[˜[YHŠ_JNÃBˆYŠ™Y™\™[˜Ù\ËšY]ÏOOH›YÚŠ^ÃBˆÛÛœİ^\ÏYØİ[Y[˜Ü™X]Q[[Y[
+™]ˆŠNØ^\Ë˜Û\ÜÓ˜[YOHšY]ÜÜX^\ËXÛÛ›ÛÈØ^\ËœÙ]]šX]Jœ›ÛH‹™Ü›İ\ŠNØ^\ËœÙ]]šX]J˜\šXK[X™[‹
+˜Ø[Y\˜P^\ÕšY]ÜÈŠJNÃBˆ^\Ëš[›™\’SVÈ‹H‹ˆ—K›X\
+^\ÏO˜]Ûˆ\OH˜]ÛˆˆÛ\ÜÏH˜^\Ë]šY]ËIØ^\ßHˆ]KXØ[Y\˜KX^\ÏH‰Ø^\ßHˆ]OH‰İ
+Ø[Y\˜UšY]×ÉØ^\ßX
+_Hˆ\šXK[X™[H‰İ
+Ø[Y\˜UšY]×ÉØ^\ßX
+_Hˆ\ØX›Y•šY]È	Ø^\ËÕ\\Ø\ÙJ
+_OØ]Û˜
+Kš›Ú[ŠˆŠNÃBˆÛÛœİØÙ[™PÛÛ[X[™Ü›İ\YØİ[Y[œ]Y\TÙ[XİÜŠ	Ë˜ÛÛ[X[™YÜ›İ\Ù]KXÛÛ[X[™YÜ›İ\HœØÙ[™H—IÊNÜØÙ[™PÛÛ[X[™Ü›İ\˜\[™
+^\ÊNØÛÛœİ™\Ù]Ø[Y\˜PÛÛ[X[™YØİ[Y[œ]Y\TÙ[XİÜŠˆÜ™\Ù]XØ[Y\˜HŠNÚYŠ™\Ù]Ø[Y\˜PÛÛ[X[™
+\ØÙ[™PÛÛ[X[™Ü›İ\˜\[™
+™\Ù]Ø[Y\˜PÛÛ[X[™
+NØ^\Ëœ]Y\TÙ[XİÜ[
+–Ù]KXØ[Y\˜KX^\×HŠK™›Ü‘XXÚ
+]ÛO˜]Û‹›Û˜ÛXÚÏJ
+OOÜ™[™\™\ËœÙ]šY]ÏËŠ]Û‹™]\Ù]˜Ø[Y\˜P^\ÊNÙØİ[Y[œ]Y\TÙ[XİÜŠˆÛYÚXØ[˜\ÈŠOË™›Øİ\Ê
+NßJNÃBˆCBˆÛÛœİ^[™[YØİ[Y[œ]Y\TÙ[XİÜŠ‹›^\[™[ŠNÃBˆ^[™[™]\Ù]™ØÚÙYHYHÃBˆ[œÜXİÜ‹˜\[™
+^[™[
+NÃBˆ›Ø][™Ğ›İ›[İ[
+^[™[
+NÃBˆÛÛœİÛÛ\ÜÙ\YØİ[Y[œ]Y\TÙ[XİÜŠ‹™›Ø][™ËX›İÙ]K[^\™\]Y\İHŠNÂˆYˆ
+ÛÛ\ÜÙ\ˆ	‰ˆXÛÛ\ÜÙ\‹˜Û\ÜÓ\İ˜ÛÛZ[œÊ˜›İXÛÛ\ÜÙ\ˆŠJHÂˆÛÛ\ÜÙ\‹˜Û\ÜÓ\İ˜Y
+˜›İXÛÛ\ÜÙ\ˆŠNÂˆÛÛ\ÜÙ\‹˜ÛÜÙ\İ
+‹™›Ø][™ËX›İŠK˜\[™
+ÛÛ\ÜÙ\ŠNÂˆCBˆÛX[\ÜY[OXš[™ÜY[JÜ›Ú™XİÛXØÛİ[Š
+OO›Ü[XØÛİ[X[ÙÊØXØÛİ[Ù]›Ú™XİŠ
+OOœ›Ú™XİÛ“Ü[›Ü[ÛİY›Ú™XİJKÛ”Ù[Xİ
+™\İ[
+^ÃBˆİÜ^X˜XÚÊ
+NÃBˆYŠ™\İ[šÚ[™OOH™š^\™HŠ^Ü™Y™\™[˜Ù\Ë™š^\™RY\™\İ[šYÜ™Y™\™[˜Ù\Ëš[œÜXİÜ“[ÙOH™š^\™HÜ™Y™\™[˜Ù\ËšY]ÏH›YÚßCBˆ[ÙHYŠ™\İ[šÚ[™OOH˜İYHŠ\™Y™\™[˜Ù\Ë˜İYRY\™\İ[šYÃBˆ[ÙHÜ™Y™\™[˜Ù\ËšY]ÏHœ[]HÜ™Y™\™[˜Ù\Ëš[œÜXİÜ“[ÙOHœ[]HÚYŠ™\İ[šÚ[™OOH›Øš™XİŠ\™Y™\™[˜Ù\Ë›Øš™XİY\™\İ[šYÚYŠ™\İ[šÚ[™OOHœİØ]ÚŠ\™Y™\™[˜Ù\ËœÙ[XİY\™\İ[šYßCBˆØ]™T™Y™\™[˜Ù\Ê
+NÜ™[™\Š
+NÃBˆYŠ™\İ[šÚ[™OOHœ[]Hˆ	‰ˆ™\İ[šYOO\[]J
+KšY
+^ØÛÛœİ™\œÚ[ÛœÏYØİ[Y[œ]Y\TÙ[XİÜŠˆÜ[]K]™\œÚ[ÛˆŠNÚYŠ™\œÚ[ÛœÊ^İ™\œÚ[ÛœË˜[YO\™\İ[šYİ™\œÚ[ÛœË™\Ü]Ú]™[
+™]È]™[
+˜Ú[™ÙHŠJNß_CBˆ_JNÃBˆYˆ
+™Y™\™[˜Ù\ËšY]ÈOOH›YÚŠHÃBˆÛÛœİš^\™\ÏXİ\œ™[™[™\™\‘š^\™\Ê
+Kš^\™TÚYÛ˜]\™O[YÚX‘š^\™Tİ]Jš^\™\ÊKXØÙ[\ØÙ[™J
+K›X]\šX[ÛÛÜÃBˆYŠ™]\ÙT™[™\™\Š^ÚYŠš^\™TÚYÛ˜]\™HOO\™[™\™\‘š^\™TÚYÛ˜]\™J\™[™\™\‹œÙ]š^\™\Êš^\™\ÊNÚYŠXØÙ[OO\™[™\™\XØÙ[
+\™[™\™\‹œÙ]XØÙ[
+XØÙ[
+NÜ™[™\™\‘š^\™TÚYÛ˜]\™OYš^\™TÚYÛ˜]\™NÜ™[™\™\XØÙ[XXØÙ[ßCBˆ[ÙHÜ™[™\™\XÜ™X]SYÚX”™[™\™\ŠØİ[Y[œ]Y\TÙ[XİÜŠˆÛYÚXØ[˜\ÈŠKØØ[Y\˜NšY]ÜÜØ[Y\˜KXØÙ[›ÛÛNœØÙ[™J
+Kœ›ÛÛKX]\šX[ÎœØÙ[™J
+K›X]\šX[ËİYÙNœØÙ[™J
+KœİYÙK]X[]Nœ™Y™\™[˜Ù\Ëœ™]šY]Ô]X[]K›Ú™Xİ[Ûœ™Y™\™[˜Ù\Ëœ›Ú™Xİ[ÛOOH›ÜÙÜ˜\XÈˆÈ›ÜÙÜ˜\XÈˆˆœ\œÜXİ]™H‹š\ÚXš[]NœØÙ[™J
+Kš\ÚXš[]Kš^\™\ËÛ”Ù[Xİ
+Y
+^ÜİÜ^X˜XÚÊ
+NÜ™Y™\™[˜Ù\Ë™š^\™RYZYÜ™Y™\™[˜Ù\Ëš[œÜXİÜ“[ÙOH™š^\™HÜØ]™T™Y™\™[˜Ù\Ê
+NÜ™[™\Š
+NßKÛ•˜[œÙ›Ü›JY˜[œÙ›Ü›J^ØÛÛ[Z]›Ú™XİÚ[™ÙJ™š^\™K[[İ™H‹
+˜Y
+OOÙ˜Y™š^\™\Ï]\]Qš^\™J˜Y™š^\™\ËYİ˜[œÙ›Ü›_JNßJNİ\]T™[™\™\‘œ›ÛQš^\™\Ê
+Nß_JNÜ™[™\™\ÛÛ™šYÔÚYÛ˜]\™O[™^™[™\™\ÛÛ™šYÎÜ™[™\™\‘š^\™TÚYÛ˜]\™OYš^\™TÚYÛ˜]\™NÜ™[™\™\XØÙ[XXØÙ[ßCBˆØİ[Y[œ]Y\TÙ[XİÜ[
+–Ù]KXØ[Y\˜KX^\×HŠK™›Ü‘XXÚ
+]ÛO˜]Û‹™\ØX›YH\™[™\™\‹œİ\ÜY
+NÃBˆYˆ
+\™[™\™\‹œİ\ÜY
+HÃBˆØİ[Y[œ]Y\TÙ[XİÜŠ‹œØÙ[™K]]HÛX[ŠK]O\˜\ÙJœ™]šY]Ñš^\™PÛİ[‹ÜÚİÛŒİ[œ›Ú™Xİ™š^\™\Ë›[™İJNÈØİ[Y[œ]Y\TÙ[XİÜŠ‹œØÙ[™K]]HÛX[ŠKœÙ]]šX]J˜\šXK[X™[‹Øİ[Y[œ]Y\TÙ[XİÜŠ‹œØÙ[™K]]HÛX[ŠK]JNÃBˆÛÛœİ›İOYØİ[Y[˜Ü™X]Q[[Y[
+œŠNÃBˆ›İK˜Û\ÜÓ˜[YOHÙX™Û][˜]˜Z[X›HÃBˆ›İKœÙ]]šX]Jœ›ÛH‹œİ]\ÈŠNÃBˆ›İK^ÛÛ[]
+ÙX™Û[˜]˜Z[X›HŠNÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆÛYÚXØ[˜\ÈŠKœ™\XÙUÚ]
+›İJNÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆÜ™\Ù]XØ[Y\˜HŠK™\ØX›Y]YNÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆÙ^Ü]šY]ÜÜŠK™\ØX›Y]YNÃBˆCBˆCBŸCBƒB™[˜İ[Ûˆš[™
 
-function bind() {
-  for(const id of ["viewport-fullscreen","viewport-exit-fullscreen"])document.querySelector(`#${id}`).onclick=async()=>{
-    try {await toggleViewportFullscreen(document.querySelector(".scene-preview"),document);}
-    catch {setStatus(t("fullscreenUnavailable"));}
-  };
-  document.querySelector("#apply-stage").onclick=()=>{
-    try {
-      const settings={enabled:document.querySelector("#stage-enabled").checked,color:document.querySelector("#stage-color").value};
-      for(const key of ["x","y","z","width","height","depth"]) {const input=document.querySelector(`#stage-${key}`);if(!input.value.trim() || !input.checkValidity())return input.reportValidity();settings[key]=Number(input.value);}
-      commitProjectChange("scene-stage-edit",(draft)=>{editScene(draft,(active,index)=>{draft.scenes[index]=updateStage(active,settings);});});render();
-    }catch(error){setStatus(error.message);}
-  };
-  document.querySelectorAll("[data-temperature]").forEach((button)=>button.onclick=()=>{
-    const input=document.querySelector("#temperature-strength");
-    if(!input.value.trim() || !input.checkValidity())return input.reportValidity();
-    mutateColours((colors)=>temperaturePalette(colors,button.dataset.temperature,Number(input.value)/100));
-  });
-  document.querySelector("#preview-quality").onchange=(event)=>{preferences.previewQuality=event.target.value;savePreferences();render();};
-  document.querySelectorAll("[data-fixture-tab]").forEach((button)=>button.onclick=()=>{preferences.fixtureTab=button.dataset.fixtureTab;preferences.inspectorMode="fixture";savePreferences();render();});
-  const previewLux=document.querySelector("#preview-lux-palette");if(previewLux)previewLux.onclick=()=>{
-    try {luxProposal=previewNativeToolAction(project,{type:"adigunlightdesign.tool-call",version:1,name:"apply_palette_to_lights",payload:{paletteId:palette().id}});render();}catch(error){setStatus(error.message);}
-  };
-  const cancelLux=document.querySelector("#cancel-lux-action");if(cancelLux)cancelLux.onclick=()=>{luxProposal=null;render();};
-  const confirmLux=document.querySelector("#confirm-lux-action");if(confirmLux)confirmLux.onclick=async()=>{
-    if(luxConfirmationPending)return;const proposal=luxProposal;luxConfirmationPending=true;confirmLux.disabled=true;
-    try {
-      stopPlayback();
-      const result=await confirmAuthenticatedAction({getState:()=>({project,undoStack,redoStack}),proposal,account,confirmed:true,isCurrent:()=>luxProposal===proposal});
-      project=result.project;undoStack=result.undoStack;redoStack=result.redoStack;luxProposal=null;projectPersisted=false;status=t("botChangesUnsaved");
-    } catch(error) {if(luxProposal===proposal)luxProposal=null;status=t(error.message);}
-    finally{luxConfirmationPending=false;render();}
-  };
-  const shapeKind=document.querySelector("#shape-kind");if(shapeKind)shapeKind.onchange=()=>{preferences.shapeKind=shapeKind.value;savePreferences();};
-  const addShape=document.querySelector("#add-canvas-shape");if(addShape)addShape.onclick=()=>document.querySelector('[data-tool="shapes"]').click();
-  const copyObject=document.querySelector("#copy-object");if(copyObject)copyObject.onclick=()=>{
-    try {const id=crypto.randomUUID();commitProjectChange("canvas-object-duplicate",(draft)=>{editScene(draft,(active,index)=>{draft.scenes[index]=duplicateCanvasObject(active,preferences.objectId,id);});});preferences.objectId=id;savePreferences();render();}catch(error){setStatus(error.message);}
-  };
-  document.querySelectorAll("[data-object-stack]").forEach((button)=>button.onclick=()=>{commitProjectChange("canvas-object-stack",(draft)=>{editScene(draft,(active,index)=>{draft.scenes[index]=moveCanvasObject(active,preferences.objectId,Number(button.dataset.objectStack));});});render();});
-  const selectCanvasObject=(id)=>{preferences.objectId=id;preferences.inspectorMode="palette";savePreferences();render();};
-  const designCanvas=document.querySelector(".design-canvas");
-  if(designCanvas && preferences.tool==="measure")bindCanvasMeasure(designCanvas,{units:t("canvasUnits"),onMeasure:measurement=>{status=`${measurement.distance.toFixed(2)} ${t("canvasUnits")} Â· ${t("measureHelp")}`;document.querySelector("#status").textContent=status;}});
-  if (designCanvas && preferences.tool!=="measure") bindCanvasDrag(designCanvas,scene().canvasObjects ?? [],{
-    onSelect:selectCanvasObject,
-    onResize(id,size){
-      try {commitProjectChange("canvas-object-resize",(draft)=>{editScene(draft,(active,index)=>{draft.scenes[index]=updateCanvasObject(active,id,size);});});selectCanvasObject(id);}
-      catch(error){setStatus(error.message);}
-    },
-    onMove(id,position){
-      try {commitProjectChange("canvas-object-move",(draft)=>{editScene(draft,(active,index)=>{draft.scenes[index]=updateCanvasObject(active,id,position);});});selectCanvasObject(id);}
-      catch(error){setStatus(error.message);}
-    }
-  });
-  document.querySelector("#export-canvas").onclick=()=>{
-    downloadText(canvasSvg(scene().canvasObjects ?? [],project.name),`${safeFileStem(project.name)}-canvas.svg`,"image/svg+xml");setStatus(t("canvasExported"));
-  };
-  document.querySelectorAll("[data-canvas-object]").forEach((element)=>{
-    const select=()=>{preferences.objectId=element.dataset.canvasObject;preferences.inspectorMode="palette";savePreferences();render();};
-    element.onkeydown=(event)=>{if (["Enter"," "].includes(event.key)){event.preventDefault();select();}};
-  });
-  const applyObject=document.querySelector("#apply-object");
-  if (applyObject) applyObject.onclick=()=>{
-    try {
-      const changes={};
-      for (const input of document.querySelectorAll("[data-object-value]")) {if (!input.value.trim() || !input.checkValidity()) return input.reportValidity();changes[input.dataset.objectValue]=Number(input.value);}
-      const text=document.querySelector("#canvas-text");if(text)changes.text=text.value;
-      commitProjectChange("canvas-object-edit",(draft)=>{editScene(draft,(active,index)=>{draft.scenes[index]=updateCanvasObject(active,preferences.objectId,changes);});});render();
-    } catch(error) {setStatus(error.message);}
-  };
-  const paintObject=document.querySelector("#paint-object");if(paintObject)paintObject.onclick=()=>{commitProjectChange("canvas-object-paint",(draft)=>{editScene(draft,(active,index)=>{draft.scenes[index]=updateCanvasObject(active,preferences.objectId,{fill:selected().hex});});});render();};
-  const deleteObject=document.querySelector("#delete-object");if(deleteObject)deleteObject.onclick=()=>{commitProjectChange("canvas-object-delete",(draft)=>{editScene(draft,(active)=>{active.canvasObjects=active.canvasObjects.filter((object)=>object.id!==preferences.objectId);});});preferences.objectId=null;render();};
-  const duplicateFixtureButton=document.querySelector("#duplicate-fixture"),deleteFixtureButton=document.querySelector("#delete-fixture");
-  if (duplicateFixtureButton) duplicateFixtureButton.onclick=()=>{
-    try {
-      const fixture=selectedFixture(),id=crypto.randomUUID();
-      commitProjectChange("fixture-duplicate",(draft)=>Object.assign(draft,duplicateFixture(draft,fixture.id,{id,name:`${fixture.name} Â· ${t("copyLabel")}`})));
-      preferences.fixtureId=id;savePreferences();render();
-    } catch(error) {setStatus(error.message);}
-  };
-  if (deleteFixtureButton) deleteFixtureButton.onclick=()=>{
-    const id=selectedFixture().id;
-    commitProjectChange("fixture-delete",(draft)=>Object.assign(draft,deleteFixture(draft,id)));
-    preferences.fixtureId=project.fixtures[0]?.id ?? null;savePreferences();render();
-  };
-  document.querySelector("#apply-room").onclick=()=>{
-    try {
-      const values={};
-      for (const key of ["width","height","depth"]) {
-        const input=document.querySelector(`#room-${key}`);
-        if (!input.value.trim() || !input.checkValidity()) return input.reportValidity();
-        values[key]=Number(input.value);
-      }
-      const room=roomDimensions(values);
-      commitProjectChange("scene-room-resize",(draft)=>{editScene(draft,(active)=>{active.room=room;});});render();
-    } catch(error) {setStatus(error.message);}
-  };
-  document.querySelector("#export-viewport").onclick=async()=>{
-    if (!renderer?.supported) return;
-    try {
-      const blob=await renderer.capturePng(),url=URL.createObjectURL(blob);
-      try {const link=document.createElement("a");link.href=url;link.download=`${safeFileStem(project.name)}-viewport.png`;link.click();}
-      finally {URL.revokeObjectURL(url);}
-      setStatus(t("viewportExported"));
-    } catch(error) {setStatus(error.message);}
-  };
-  document.querySelector("#viewport-projection").onclick=()=>{preferences.projection=preferences.projection==="orthographic" ? "perspective" : "orthographic";savePreferences();render();};
-  document.querySelector("#viewport-performance").onclick=()=>{preferences.previewQuality=preferences.previewQuality==="performance" ? "balanced" : "performance";savePreferences();render();};
-  document.querySelector("#viewport-fit").onclick=()=>{renderer?.reset();document.querySelector("#light-canvas")?.focus();};
-  document.querySelectorAll("[data-layer-visibility]").forEach((button)=>button.onclick=()=>{
-    const key=button.dataset.layerVisibility;
-    commitProjectChange("scene-layer-visibility",(draft)=>{editScene(draft,(target)=>{target.visibility={...target.visibility,[key]:target.visibility?.[key]===false};});});render();
-  });
-  const keyframeButton=document.querySelector("#save-keyframe");
-  if (keyframeButton) keyframeButton.onclick=()=>{
-    try {
-      const time=document.querySelector("#keyframe-time"),value=document.querySelector("#keyframe-value");
-      for (const input of [time,value]) if (!input.value.trim() || !input.checkValidity()) return input.reportValidity();
-      const channel=JSON.parse(document.querySelector("#keyframe-channel").value),cue=project.cues.find((item)=>item.id===preferences.cueId) ?? project.cues.at(-1);
-      commitProjectChange("cue-keyframe-save",(draft)=>{draft.cues=draft.cues.map((item)=>item.id===cue.id ? setChannelKeyframe(item,{...channel,time:Number(time.value),value:Number(value.value)}) : item);});render();
-    } catch(error) {setStatus(error.message);}
-  };
-  document.querySelectorAll("[data-remove-keyframe]").forEach((button)=>button.onclick=()=>{
-    const cue=project.cues.find((item)=>item.id===preferences.cueId) ?? project.cues.at(-1);
-    commitProjectChange("cue-keyframe-delete",(draft)=>{const target=draft.cues.find((item)=>item.id===cue.id);target.channelKeyframes.splice(Number(button.dataset.removeKeyframe),1);});render();
-  });
-  document.querySelectorAll("[data-inspector]").forEach((button)=>button.onclick=()=>{preferences.inspectorMode=button.dataset.inspector;savePreferences();render();});
-  const applyGenerated=(generator)=>{
-    try {
-      const generated=generator();
-      mutateColours((colors)=>colors.map((color,index)=>color.locked ? color : {...color,hex:generated[index%generated.length]}));
-    } catch(error) { document.querySelector("#status").textContent=status=error.message; }
-  };
-  document.querySelector("#custom-hues").onclick=()=>applyGenerated(()=>{
-    const input=document.querySelector("#custom-spacing");
-    if (!input.value.trim() || !input.checkValidity()) throw new Error("Enter valid hue spacing.");
-    return customHueHarmony(preferences.seed,Number(input.value),Math.min(32,palette().colors.length));
-  });
-  document.querySelector("#perceptual-scale").onclick=()=>applyGenerated(()=>perceptualScale(preferences.seed,Math.max(2,Math.min(32,palette().colors.length))));
-  document.querySelector("#apply-opacity").onclick=()=>{
-    const input=document.querySelector("#swatch-opacity");
-    if (!input.value.trim() || !input.checkValidity()) return input.reportValidity();
-    mutateColours((colors)=>updateSwatch(colors,selected().id,{opacity:Number(input.value)/100}));
-  };
-  const comparison=document.querySelector("#version-comparison");
-  const updateComparison=()=>{
-    const saved=project.palettes.find((item)=>item.id===document.querySelector("#palette-version").value);
-    if (!saved) {comparison.innerHTML=`<p class="palette-empty-state">${t("saveVersionToCompare")}</p>`;return;}
-    const cell=(color)=>color ? `<span style="background:${swatchCssColor(color)};display:inline-block;width:12px;height:12px"></span> ${esc(color.name)} ${swatchCssColor(color)}` : "â€”";
-    comparison.innerHTML=`<table><thead><tr><th>${t("currentVersion")}</th><th>${t("savedVersions")}</th></tr></thead><tbody>${comparePalettes(palette(),saved).map((row)=>`<tr class="${row.changed ? "is-changed" : ""}"><td>${cell(row.current)}</td><td>${cell(row.saved)}</td></tr>`).join("")}</tbody></table>`;
-  };
-  document.querySelector("#palette-version").onchange=updateComparison;
-  updateComparison();
-  const openPalettePopover=(triggerSelector,popoverSelector)=>{
-    const trigger=document.querySelector(triggerSelector),popover=document.querySelector(popoverSelector);
-    trigger.onclick=()=>{
-      const rect=trigger.getBoundingClientRect(),width=popoverSelector==="#palette-versions-menu" ? 320 : 420;
-      popover.style.left=`${Math.max(8,Math.min(rect.left,window.innerWidth-width-8))}px`;
-      popover.style.top=`${Math.min(rect.bottom+4,window.innerHeight-300)}px`;
-      popover.showPopover();
-    };
-  };
-  openPalettePopover("#open-versions","#palette-versions-menu");
-  openPalettePopover("#open-compare","#palette-compare-menu");
-  document.querySelector("#save-version").onclick=()=>{
-    commitProjectChange("palette-version-save",(draft)=>{draft.palettes.push(snapshotPalette(draft.palettes[0],`${draft.palettes[0].name} Â· ${draft.palettes.length}`));});
-    render();
-  };
-  document.querySelector("#restore-version").onclick=()=>{
-    const id=document.querySelector("#palette-version").value;
-    const snapshot=project.palettes.find((item,index)=>index>0 && item.id===id);
-    if (!snapshot) return;
-    commitProjectChange("palette-version-restore",(draft)=>{draft.palettes[0]=restorePalette(draft.palettes[0],snapshot);});
-    render();
-  };
-  document.querySelector("#apply-oklch").onclick=()=>{
-    try {
-      const values=Object.fromEntries(["l","c","h"].map((key)=>{
-        const input=document.querySelector(`#oklch-${key}`);
-        if (!input.value.trim() || !input.checkValidity()) throw new Error("Enter valid OKLCH values.");
-        return [key,Number(input.value)];
-      }));
-      const result=mapOklchToSrgb(values);
-      mutateColours((colors)=>updateSwatch(colors,selected().id,{hex:result.hex}));
-      if (result.mapped) document.querySelector("#status").textContent=status=`${t("chromaMapped")} ${result.chroma.toFixed(4)}`;
-    } catch(error) { document.querySelector("#status").textContent=status=error.message; }
-  };
-  const contrastButton=document.querySelector("#apply-contrast");
-  if (contrastButton) contrastButton.onclick=()=>{
-    const background=normalizeHex(preferences.contrastBackground) ?? "#0B1220";
-    const hex=suggestContrast(selected().hex,background);
-    if (hex) mutateColours((colors)=>updateSwatch(colors,selected().id,{hex}));
-  };
-  document.querySelector("#contrast-background").onchange=(event)=>{preferences.contrastBackground=event.target.value;savePreferences();render();};
-  document.querySelectorAll("[data-raster]").forEach((button)=>button.onclick=async()=>{
-    button.disabled=true;
-    try {
-      const blob=await paletteRaster(structuredClone(palette()),button.dataset.raster);
-      const url=URL.createObjectURL(blob),link=document.createElement("a");
-      link.href=url;link.download=`${safeFileStem(project.name)}-palette.${button.dataset.raster==="image/png" ? "png" : "jpg"}`;
-      link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
-    } catch(error) { document.querySelector("#status").textContent=status=error.message; }
-    finally { button.disabled=false; }
-  });
-  document.querySelector("#apply-hsl").onclick=()=>{
-    try {
-      const values=["hue","saturation","lightness"].map((key)=>{
-        const input=document.querySelector(`#color-${key}`);
-        if (!input.value.trim() || !input.checkValidity()) throw new Error(`${t(key)}: enter a valid value.`);
-        return Number(input.value);
-      });
-      const hex=rgbToHex(hslToRgb({h:values[0],s:values[1]/100,l:values[2]/100}));
-      mutateColours((colors)=>updateSwatch(colors,selected().id,{hex}));
-    } catch(error) { document.querySelector("#status").textContent=status=error.message; }
-  };
-  document.querySelector("#copy-hex").onclick=async()=>{
-    try {
-      if (!navigator.clipboard?.writeText) throw new Error("Clipboard is unavailable in this browser.");
-      await navigator.clipboard.writeText(swatchCssColor(selected()));
-      document.querySelector("#status").textContent=status=t("copied");
-    } catch(error) { document.querySelector("#status").textContent=status=error.message; }
-  };
-  document.querySelectorAll("[data-swatch]").forEach((button)=>{
-    button.draggable=true;
-    button.ondragstart=(event)=>{event.dataTransfer.setData("application/x-adigun-swatch",button.dataset.swatch);event.dataTransfer.effectAllowed="move";};
-    button.ondragover=(event)=>{if([...event.dataTransfer.types].includes("application/x-adigun-swatch")){event.preventDefault();event.dataTransfer.dropEffect="move";}};
-    button.ondrop=(event)=>{
-      const sourceId=event.dataTransfer.getData("application/x-adigun-swatch"),targetId=button.dataset.swatch;
-      if (!sourceId || sourceId===targetId || !palette().colors.some((color)=>color.id===sourceId)) return;
-      event.preventDefault();
-      mutateColours((colors)=>reorderSwatch(colors,sourceId,targetId));
-    };
-  });
-  document.querySelector("#remove-swatch").onclick=()=>mutateColours((colors)=>removeSwatch(colors,selected().id));
-  document.querySelectorAll("[data-move-swatch]").forEach((button)=>button.onclick=()=>mutateColours((colors)=>moveSwatch(colors,selected().id,Number(button.dataset.moveSwatch))));
-  document.querySelector("#extract-image").onclick=()=>document.querySelector("#palette-image").click();
-  document.querySelector("#palette-image").onchange=async(event)=>{
-    const [file]=event.target.files;
-    if (!file) return;
-    const projectId=project.id;
-    try {
-      const colors=await readImagePalette(file,{onDecoded:(asset)=>imageAssets.add(asset)});
-      if (project.id!==projectId) return;
-      mutateColours((existing)=>[...existing,...colors.map((color)=>({id:crypto.randomUUID(),name:color.hex,hex:color.hex,locked:false}))]);
-    } catch(error) { document.querySelector("#status").textContent=status=error.message; }
-  };
-  const tokenButton=document.querySelector("#export-tokens");
-  if (tokenButton) tokenButton.onclick=()=>{
-    try { downloadText(designTokenJson(palette()),`${safeFileStem(project.name)}-tokens.json`,"application/json"); }
-    catch(error) { document.querySelector("#status").textContent=status=error.message; }
-  };
-  const svgButton=document.querySelector("#export-svg");
-  const cuePdfButton=document.querySelector("#export-cue-pdf");
-  if(cuePdfButton)cuePdfButton.onclick=async()=>{
-    const snapshot=structuredClone(project.cues);
-    const filename=`${safeFileStem(project.name)}-cues.pdf`;
-    cuePdfButton.disabled=true;
-    try {
-      const {cuePdf}=await import("./export/pdf.js");
-      downloadText(await cuePdf(snapshot),filename,"application/pdf");
-    }catch(error){setStatus(error.message);}
-    finally{cuePdfButton.disabled=false;}
-  };
-  const pdfButton=document.querySelector("#export-pdf");
-  if(pdfButton)pdfButton.onclick=async()=>{
-    const snapshot=structuredClone(palette()),filename=`${safeFileStem(project.name)}-palette.pdf`;pdfButton.disabled=true;
-    try {const {palettePdf}=await import("./export/pdf.js");downloadText(await palettePdf(snapshot),filename,"application/pdf");}
-    catch(error){setStatus(error.message);}finally{pdfButton.disabled=false;}
-  };
-  if (svgButton) svgButton.onclick=()=>{
-    try { downloadText(paletteSvg(palette()),`${safeFileStem(project.name)}-palette.svg`,"image/svg+xml"); }
-    catch(error) { document.querySelector("#status").textContent=status=error.message; }
-  };
-  document.querySelectorAll("[data-layer-fixture]").forEach((button)=>button.onclick=()=>{
-    stopPlayback();
-    preferences.fixtureId=button.dataset.layerFixture;
-    preferences.inspectorMode="fixture";
-    preferences.view="light";
-    preferences.module="canvas";
-    savePreferences();
-    render();
-    document.querySelector("#fixture-select")?.focus();
-  });
-  document.querySelectorAll("[data-move-cue]").forEach((button)=>button.onclick=()=>{
-    const cue=project.cues.find((item)=>item.id===preferences.cueId) ?? project.cues.at(-1);
-    commitProjectChange("cue-reorder",(draft)=>{draft.cues=moveCue(draft.cues,cue.id,Number(button.dataset.moveCue));});
-    render();
-  });
-  document.querySelector("#play-sequence").onclick=playSequence;
-  document.querySelector("#pause-playback").onclick=togglePlaybackPause;
-  document.querySelector("#sequence-loop").onchange=(event)=>{preferences.loopSequence=event.target.checked;savePreferences();};
-  document.querySelector("#sequence-seek").onchange=(event)=>playSequence({seek:Number(event.target.value),paused:true});
-  document.querySelector("#play-effect").onclick=playEffect;
-  document.querySelector("#play-tracks").onclick=playArrangement;
-  document.querySelector("#arrangement-seek").onchange=(event)=>playArrangement({seek:Number(event.target.value),paused:true});
-  bindTimelineSeek(document.querySelector(".arrangement-timeline .timeline-ruler"),{
-    span:Math.max(30,arrangementDuration(project.cues)),duration:arrangementDuration(project.cues),value:playbackClock && arrangementDuration(project.cues)>0 ? playbackPosition(playbackClock.elapsed(performance.now()),arrangementDuration(project.cues),Boolean(preferences.loopSequence)).time : 0,label:t("seekTracks"),
-    onPreview(time){document.querySelector("#arrangement-playhead").style.left=`${time/Math.max(30,arrangementDuration(project.cues))*100}%`;},
-    onSeek(time,{keyboard}){playArrangement({seek:time,paused:true});if(keyboard)document.querySelector(".arrangement-timeline .timeline-ruler")?.focus();}
-  });
-  const scheduleButton=document.querySelector("#schedule-cue");
-  if (scheduleButton) scheduleButton.onclick=()=>{
-    try {
-      const input=document.querySelector("#cue-start-time");
-      if (!input.value.trim() || !input.checkValidity()) return input.reportValidity();
-      const cue=project.cues.find((item)=>item.id===preferences.cueId) ?? project.cues.at(-1);
-      const track=document.querySelector("#cue-track-name").value;
-      commitProjectChange("cue-schedule",(draft)=>{draft.cues=scheduleCue(draft.cues,cue.id,track,Number(input.value));});render();
-    } catch(error) {setStatus(error.message);}
-  };
-  document.querySelector("#save-group").onclick=()=>{
-    try {
-      const name=document.querySelector("#group-name").value,fixtureIds=[...document.querySelectorAll("[data-group-member]:checked")].map((input)=>input.value);
-      const id=document.querySelector("#save-group").dataset.groupId || crypto.randomUUID();
-      commitProjectChange("fixture-group-save",(draft)=>{draft.fixtureGroups=saveFixtureGroup(draft.fixtureGroups ?? [],draft.fixtures,{id,name,fixtureIds});});render();
-    } catch(error) { setStatus(error.message); }
-  };
-  const clearGroupEditor=()=>{
-    document.querySelector("#save-group").dataset.groupId="";
-    document.querySelector("#group-name").value="";
-    document.querySelectorAll("[data-group-member]").forEach((input)=>{input.checked=false;});
-    document.querySelector("#group-name").focus();
-  };
-  document.querySelector("#save-group").insertAdjacentHTML("afterend", `<button id="new-group">${t("newGroup")}</button>`);
-  document.querySelector("#new-group").onclick=clearGroupEditor;
-  document.querySelectorAll("[data-delete-group]").forEach((button)=>{
-    const edit=document.createElement("button");edit.textContent=t("editGroup");
-    edit.onclick=()=>{
-      const group=project.fixtureGroups.find((item)=>item.id===button.dataset.deleteGroup);
-      document.querySelector("#save-group").dataset.groupId=group.id;
-      document.querySelector("#group-name").value=group.name;
-      document.querySelectorAll("[data-group-member]").forEach((input)=>{input.checked=group.fixtureIds.includes(input.value);});
-      document.querySelector("#group-name").focus();
-    };
-    button.insertAdjacentElement("beforebegin",edit);
-  });
-  document.querySelectorAll("[data-delete-group]").forEach((button)=>button.onclick=()=>{
-    commitProjectChange("fixture-group-delete",(draft)=>{draft.fixtureGroups=(draft.fixtureGroups ?? []).filter((group)=>group.id!==button.dataset.deleteGroup);});render();
-  });
-  const duplicateButton=document.querySelector("#duplicate-cue"),deleteButton=document.querySelector("#delete-cue");
-  if (duplicateButton) duplicateButton.onclick=()=>{
-    const cue=project.cues.find((item)=>item.id===preferences.cueId) ?? project.cues.at(-1);
-    const id=crypto.randomUUID();
-    commitProjectChange("cue-duplicate",(draft)=>{draft.cues=duplicateCue(draft.cues,cue.id,{id,name:`${cue.name} Â· ${t("copyLabel")}`});});
-    preferences.cueId=id;savePreferences();render();
-  };
-  if (deleteButton) deleteButton.onclick=()=>{
-    const cue=project.cues.find((item)=>item.id===preferences.cueId) ?? project.cues.at(-1);
-    const index=project.cues.indexOf(cue);
-    commitProjectChange("cue-delete",(draft)=>{draft.cues=removeCue(draft.cues,cue.id);});
-    preferences.cueId=project.cues[Math.min(index,project.cues.length-1)]?.id ?? null;
-    savePreferences();render();
-  };
-  const editButton=document.querySelector("#edit-cue");
-  if (editButton) editButton.onclick=()=>{
-    try {
-      const changes={name:document.querySelector("#edit-cue-name").value};
-      for (const key of ["duration","fade","delay","fadeOut"]) {
-        const input=document.querySelector(`#edit-cue-${key}`);
-        if (!input.value.trim() || !input.checkValidity()) throw new Error(`${t(key)}: enter a valid value.`);
-        changes[key]=Number(input.value);
-      }
-      const cue=project.cues.find((item)=>item.id===preferences.cueId) ?? project.cues.at(-1);
-      commitProjectChange("cue-edit",(draft)=>{draft.cues=draft.cues.map((item)=>item.id===cue.id ? editCue(item,changes) : item);});
-      render();
-    } catch(error) { document.querySelector("#status").textContent=status=error.message; }
-  };
-  document.querySelectorAll("[data-cue]").forEach((button)=>button.onclick=()=>{
-    stopPlayback();
-    preferences.cueId=button.dataset.cue;
-    savePreferences();
-    render();
-  });
-  document.querySelector("#locale").onchange = (event) => { preferences.locale = event.target.value; savePreferences(); status = t("statusLocale"); render(); };
-  document.querySelector("#theme").onclick = () => { preferences.theme = preferences.theme === "dark" ? "light" : "dark"; savePreferences(); status = t("statusTheme"); render(); };
-  document.querySelectorAll("[data-module]").forEach((button) => button.onclick = () => {
-    const key=button.dataset.module;
-    if(key==="copilot"){floatingBot.open();return;}
-    if(key==="export"){preferences.module=key;savePreferences();document.querySelectorAll("[data-module]").forEach(item=>item.classList.toggle("is-active",item===button));document.querySelector('.command-group[data-command-group="export"]')?.scrollIntoView({block:"nearest",inline:"end",behavior:"smooth"});status=t("statusModule")+button.textContent.trim();document.querySelector("#status").textContent=status;return;}
-    stopPlayback();
-    preferences.module=key;
-    if (key === "light") { preferences.view="light"; preferences.inspectorMode="fixture"; }
-    if (key === "palette") { preferences.view="palette"; preferences.inspectorMode="palette"; }
-    savePreferences();
-    status=t("statusModule") + button.textContent.trim();
-    render();
-  });
-  document.querySelectorAll("[data-view]").forEach((button) => button.onclick = () => { preferences.view = button.dataset.view; preferences.module=preferences.view==="light" ? "light" : "palette"; preferences.inspectorMode=preferences.view==="light" ? "fixture" : "palette"; savePreferences(); render(); });
-  document.querySelector("#show-timeline").onclick=()=>{const timeline=document.querySelector(".lower-workspace .timeline");timeline?.focus({preventScroll:true});status=t("timelineFocused");document.querySelector("#status").textContent=status;};
-  document.querySelectorAll("[data-tool]").forEach((button) => button.onclick = () => {
-    preferences.tool=button.dataset.tool;
-    if (["shapes","text"].includes(preferences.tool)) {
-      const id=crypto.randomUUID();
-      commitProjectChange("canvas-object-add",(draft)=>{editScene(draft,(active,index)=>{draft.scenes[index]=addCanvasObject(active,preferences.tool==="shapes" ? (preferences.shapeKind==="ellipse" ? "ellipse" : "rect") : "text",selected().hex,{id,text:t("text")});});});
-      preferences.objectId=id;preferences.view="palette";preferences.inspectorMode="palette";
-    }
-    if (preferences.tool === "fixture") { preferences.module="library"; preferences.view="light"; }
-    if (preferences.tool === "orbit" || preferences.tool === "material") preferences.view="light";
-    if (["paletteBrush","measure"].includes(preferences.tool)) preferences.view="palette";
-    savePreferences();
-    status=t("statusTool") + button.textContent.trim();
-    render();
-    if(preferences.tool==="measure"){document.querySelector(".design-canvas")?.focus();status=t("measureHelp");document.querySelector("#status").textContent=status;}
-    if (preferences.tool === "orbit") document.querySelector("#light-canvas")?.focus();
-    if (preferences.tool === "material") document.querySelector("#apply-scene")?.focus();
-    if (preferences.tool === "paletteBrush") document.querySelector("#swatch-hex")?.focus();
-  });
-  document.querySelectorAll("[data-swatch]").forEach((button) => button.onclick = () => { preferences.selected = button.dataset.swatch; preferences.inspectorMode="palette"; savePreferences(); render(); });
-  document.querySelector("#project-name").onchange = (event) => { const name=event.target.value.trim(); if(name&&name!==project.name) commitProjectChange("project-rename",(draft)=>{draft.name=name;}); render(); };
-  const sceneSelect=document.querySelector("#scene-select");if(sceneSelect)sceneSelect.onchange=(event)=>{if(!project.scenes.some((item)=>item.id===event.target.value))return;preferences.sceneId=event.target.value;preferences.objectId=null;savePreferences();render();};
-  document.querySelector("#seed").onchange = (event) => { const hex = normalizeHex(event.target.value); if (hex) preferences.seed = hex; event.target.value = preferences.seed; savePreferences(); };
-  document.querySelector("#harmony").onchange = (event) => { preferences.harmony = event.target.value; savePreferences(); };
-  document.querySelector("#reroll").onclick = () => mutateColours((colours) => rerollUnlocked(colours, preferences.seed, preferences.harmony));
-  document.querySelector("#add-colour").onclick = () => mutateColours((colours) => { const id = `swatch-${Date.now()}`; preferences.selected = id; return [...colours, { id, name:`Swatch ${colours.length + 1}`, hex:preferences.seed, locked:false }]; });
-  document.querySelector("#apply-colour").onclick = () => { const name = document.querySelector("#swatch-name").value.trim(), hex = normalizeHex(document.querySelector("#swatch-hex").value); if (!hex) return setStatus("Enter a valid 3- or 6-digit HEX value."); mutateColours((colours) => updateSwatch(colours, selected().id, { name:name || selected().name, hex })); };
-  document.querySelector("#lock-swatch").onclick = () => mutateColours((colours) => updateSwatch(colours, selected().id, { locked:!selected().locked }));
-  document.querySelector("#save").onclick = () => { saveProject(); render(); };
-  document.querySelector("#new-project").onclick=createNewProject;
-  document.querySelector("#undo").onclick = undo; document.querySelector("#redo").onclick = redo;
-  document.querySelector("#toggle-lux").onclick = () => { preferences.luxOpen = !preferences.luxOpen; savePreferences(); render(); };
-  const materialTarget=document.querySelector("#material-target");if(materialTarget) materialTarget.onchange=()=>{preferences.materialTarget=materialTarget.value;savePreferences();};
-  const applyScene = document.querySelector("#apply-scene"); if (applyScene) applyScene.onclick = () => { const target=materialTarget.value;commitProjectChange("scene-material",(draft)=>{editScene(draft,(active,index)=>{draft.scenes[index]=applySceneMaterial(active,target,selected().hex);});});status = `${t("apply")} ${selected().hex}`;render(); };
-  const resetCamera = () => renderer?.reset();
-  document.querySelector("#reset-camera")?.addEventListener("click",resetCamera);
-  document.querySelector("#reset-camera-canvas")?.addEventListener("click",resetCamera);
-  document.querySelector("#add-fixture").onclick = () => { addVirtualFixture(); render(); };
-  const blackoutButton = document.querySelector("#blackout"); if (blackoutButton) blackoutButton.onclick = () => { activateBlackout(); render(); };
-  document.querySelector("#apply-fixture-colour").onclick = () => { applyPaletteToVirtualFixtures(); render(); };
-  document.querySelector("#create-cue").onclick = createCueSnapshot;
-  document.querySelector("#play-cue").onclick = playLatestCue;
-  document.querySelector("#stop-cue").onclick = () => { stopPlayback(); render(); };
-  document.querySelectorAll("[data-export]").forEach((button) => button.onclick = () => exportFile(button.dataset.export));
-  const closeExports = document.querySelector("#close-exports"); if (closeExports) closeExports.onclick = () => { preferences.module="canvas"; render(); };
-  const openButton=document.querySelector("#open-project"), projectFile=document.querySelector("#project-file"); if(openButton&&projectFile){openButton.onclick=()=>projectFile.click();projectFile.onchange=()=>{const [file]=projectFile.files;if(file) importNativeProject(file);};}
-  const imageImportButton=document.querySelector("#import-image"),paletteImage=document.querySelector("#palette-image");if(imageImportButton&&paletteImage)imageImportButton.onclick=()=>paletteImage.click();
-  document.querySelectorAll("[data-profile]").forEach((button)=>button.onclick=()=>{addVirtualFixture(button.dataset.profile);render();});
-  const closeLibrary=document.querySelector("#close-library"); if(closeLibrary) closeLibrary.onclick=()=>{preferences.module="canvas";render();};
-  const fixtureSelect=document.querySelector("#fixture-select"); if(fixtureSelect) fixtureSelect.onchange=()=>{preferences.fixtureId=fixtureSelect.value;savePreferences();render();};
-  const applyFixture=document.querySelector("#apply-fixture"); if(applyFixture) applyFixture.onclick=applyFixtureInspector;
-  const applyFixturePatchButton=document.querySelector("#apply-fixture-patch"); if(applyFixturePatchButton) applyFixturePatchButton.onclick=applyFixturePatch;
-  const form = document.querySelector("#lux-form"); if (form) {const liveHost=document.createElement("section");liveHost.className="live-copilot-panel";form.before(liveHost);liveCopilotPanel.mount(liveHost);const host=document.createElement("section");host.dataset.luxService="";host.className="lux-service";form.replaceWith(host);luxService.mount(host);}
-}
-window.addEventListener("keydown", (event) => { if (isEditableTarget(event.target) || event.defaultPrevented || event.isComposing) return; const tool=toolShortcut(event);if(tool){const button=document.querySelector(`[data-tool="${tool}"]`);if(button && !button.disabled){event.preventDefault();button.click();}return;} const shortcut=editorShortcut(event); if (!shortcut) return; event.preventDefault(); if (shortcut === "save") { saveProject(); render(); } else if (shortcut === "undo") undo(); else redo(); });
-account.subscribe(()=>render());
-render();
+HÃBˆ›ÜŠÛÛœİYÙˆÈšY]ÜÜY[ØÜ™Y[ˆ‹šY]ÜÜY^]Y[ØÜ™Y[ˆ—JYØİ[Y[œ]Y\TÙ[XİÜŠÉÚYX
+K›Û˜ÛXÚÏX\Ş[˜Ê
+OOÃBˆHØ]ØZ]ÙÙÛUšY]ÜÜ[ØÜ™Y[ŠØİ[Y[œ]Y\TÙ[XİÜŠ‹œØÙ[™K\™]šY]ÈŠKØİ[Y[
+NßCBˆØ]ÚÜÙ]İ]\Ê
+™[ØÜ™Y[•[˜]˜Z[X›HŠJNßCBˆNÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆØ\K\İYÙHŠK›Û˜ÛXÚÏJ
+OOÃBˆHÃBˆÛÛœİÙ][™ÜÏ^Ù[˜X›Y™Øİ[Y[œ]Y\TÙ[XİÜŠˆÜİYÙKY[˜X›YŠK˜ÚXÚÙYÛÛÜ™Øİ[Y[œ]Y\TÙ[XİÜŠˆÜİYÙKXÛÛÜˆŠK˜[Y_NÃBˆ›ÜŠÛÛœİÙ^HÙˆÈ‹H‹ˆ‹ÚY‹šZYÚ‹™\—JHØÛÛœİ[œ]YØİ[Y[œ]Y\TÙ[XİÜŠÜİYÙKIÚÙ^_X
+NÚYŠZ[œ]˜[YKš[J
+HZ[œ]˜ÚXÚÕ˜[Y]J
+J\™]\›ˆ[œ]œ™\Ü˜[Y]J
+NÜÙ][™ÜÖÚÙ^WOS[X™\Š[œ]˜[YJNßCBˆÛÛ[Z]›Ú™XİÚ[™ÙJœØÙ[™K\İYÙKYY]‹
+˜Y
+OOÙY]ØÙ[™J˜Y
+Xİ]™K[™^
+OOÙ˜YœØÙ[™\ÖÚ[™^O]\]TİYÙJXİ]™KÙ][™ÜÊNßJNßJNÜ™[™\Š
+NÃBˆXØ]Ú
+\œ›ÜŠ^ÜÙ]İ]\Ê\œ›Ü‹›Y\ÜØYÙJNßCBˆNÃBˆØİ[Y[œ]Y\TÙ[XİÜ[
+–Ù]K][\\˜]\™WHŠK™›Ü‘XXÚ
+
+]ÛŠOO˜]Û‹›Û˜ÛXÚÏJ
+OOÃBˆÛÛœİ[œ]YØİ[Y[œ]Y\TÙ[XİÜŠˆİ[\\˜]\™K\İ™[™İŠNÃBˆYŠZ[œ]˜[YKš[J
+HZ[œ]˜ÚXÚÕ˜[Y]J
+J\™]\›ˆ[œ]œ™\Ü˜[Y]J
+NÃBˆ]]]PÛÛİ\œÊ
+ÛÛÜœÊOO[\\˜]\™T[]JÛÛÜœË]Û‹™]\Ù][\\˜]\™K[X™\Š[œ]˜[YJKÌL
+JNÃBˆJNÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆÜ™]šY]Ë\]X[]HŠK›Û˜Ú[™ÙOJ]™[
+OOÜ™Y™\™[˜Ù\Ëœ™]šY]Ô]X[]OY]™[\™Ù]˜[YNÜØ]™T™Y™\™[˜Ù\Ê
+NÜ™[™\Š
+NßNÃBˆØİ[Y[œ]Y\TÙ[XİÜ[
+–Ù]KYš^\™K]X—HŠK™›Ü‘XXÚ
+
+]ÛŠOO˜]Û‹›Û˜ÛXÚÏJ
+OOÜ™Y™\™[˜Ù\Ë™š^\™UXX]Û‹™]\Ù]™š^\™UXÜ™Y™\™[˜Ù\Ëš[œÜXİÜ“[ÙOH™š^\™HÜØ]™T™Y™\™[˜Ù\Ê
+NÜ™[™\Š
+NßJNÃBˆÛÛœİ™]šY]Ó^YØİ[Y[œ]Y\TÙ[XİÜŠˆÜ™]šY]Ë[^\[]HŠNÚYŠ™]šY]Ó^
+\™]šY]Ó^›Û˜ÛXÚÏJ
+OOÃBˆHÛ^›ÜÜØ[\™]šY]Ó˜]]™UÛÛXİ[ÛŠ›Ú™Xİİ\Nˆ˜YYİ[›YÚ\ÚYÛ‹ÛÛXØ[‹™\œÚ[ÛŒK˜[YNˆ˜\WÜ[]Wİ×ÛYÚÈ‹^[ØYÜ[]RYœ[]J
+KšY_JNÜ™[™\Š
+NßXØ]Ú
+\œ›ÜŠ^ÜÙ]İ]\Ê\œ›Ü‹›Y\ÜØYÙJNßCBˆNÃBˆÛÛœİØ[˜Ù[^YØİ[Y[œ]Y\TÙ[XİÜŠˆØØ[˜Ù[[^XXİ[ÛˆŠNÚYŠØ[˜Ù[^
+XØ[˜Ù[^›Û˜ÛXÚÏJ
+OOÛ^›ÜÜØ[[[Ü™[™\Š
+NßNÃBˆÛÛœİÛÛ™š\›S^YØİ[Y[œ]Y\TÙ[XİÜŠˆØÛÛ™š\›K[^XXİ[ÛˆŠNÚYŠÛÛ™š\›S^
+XÛÛ™š\›S^›Û˜ÛXÚÏX\Ş[˜Ê
+OOÃBˆYŠ^ÛÛ™š\›X][Û”[™[™Ê\™]\›ØÛÛœİ›ÜÜØ[[^›ÜÜØ[Û^ÛÛ™š\›X][Û”[™[™Ï]YNØÛÛ™š\›S^™\ØX›Y]YNÃBˆHÃBˆİÜ^X˜XÚÊ
+NÃBˆÛÛœİ™\İ[X]ØZ]ÛÛ™š\›P]][XØ]YXİ[ÛŠÙÙ]İ]NŠ
+OOŠÜ›Ú™Xİ[™ÔİXÚË™YÔİXÚßJK›ÜÜØ[XØÛİ[ÛÛ™š\›YYYK\Ğİ\œ™[Š
+OO›^›ÜÜØ[OO\›ÜÜØ[JNÃBˆ›Ú™Xİ\™\İ[œ›Ú™Xİİ[™ÔİXÚÏ\™\İ[[™ÔİXÚÎÜ™YÔİXÚÏ\™\İ[œ™YÔİXÚÎÛ^›ÜÜØ[[[Ü›Ú™Xİ\œÚ\İYY˜[ÙNÜİ]\Ï]
+˜›İÚ[™Ù\Õ[œØ]™YŠNÃBˆHØ]Ú
+\œ›ÜŠHÚYŠ^›ÜÜØ[OO\›ÜÜØ[
+[^›ÜÜØ[[[Üİ]\Ï]
+\œ›Ü‹›Y\ÜØYÙJNßCBˆš[˜[^Û^ÛÛ™š\›X][Û”[™[™ÏY˜[ÙNÜ™[™\Š
+NßCBˆNÃBˆÛÛœİÚ\RÚ[™YØİ[Y[œ]Y\TÙ[XİÜŠˆÜÚ\KZÚ[™ŠNÚYŠÚ\RÚ[™
+\Ú\RÚ[™›Û˜Ú[™ÙOJ
+OOÜ™Y™\™[˜Ù\ËœÚ\RÚ[™\Ú\RÚ[™˜[YNÜØ]™T™Y™\™[˜Ù\Ê
+NßNÃBˆÛÛœİYÚ\OYØİ[Y[œ]Y\TÙ[XİÜŠˆØYXØ[˜\Ë\Ú\HŠNÚYŠYÚ\JXYÚ\K›Û˜ÛXÚÏJ
+OO™Øİ[Y[œ]Y\TÙ[XİÜŠ	ÖÙ]K]ÛÛHœÚ\\È—IÊK˜ÛXÚÊ
+NÃBˆÛÛœİÛÜSØš™XİYØİ[Y[œ]Y\TÙ[XİÜŠˆØÛÜK[Øš™XİŠNÚYŠÛÜSØš™Xİ
+XÛÜSØš™Xİ›Û˜ÛXÚÏJ
+OOÃBˆHØÛÛœİYXÜ\Ëœ˜[™ÛUURQ
+
+NØÛÛ[Z]›Ú™XİÚ[™ÙJ˜Ø[˜\Ë[Øš™XİY\XØ]H‹
+˜Y
+OOÙY]ØÙ[™J˜Y
+Xİ]™K[™^
+OOÙ˜YœØÙ[™\ÖÚ[™^OY\XØ]PØ[˜\ÓØš™Xİ
+Xİ]™K™Y™\™[˜Ù\Ë›Øš™XİYY
+NßJNßJNÜ™Y™\™[˜Ù\Ë›Øš™XİYZYÜØ]™T™Y™\™[˜Ù\Ê
+NÜ™[™\Š
+NßXØ]Ú
+\œ›ÜŠ^ÜÙ]İ]\Ê\œ›Ü‹›Y\ÜØYÙJNßCBˆNÃBˆØİ[Y[œ]Y\TÙ[XİÜ[
+–Ù]K[Øš™Xİ\İXÚ×HŠK™›Ü‘XXÚ
+
+]ÛŠOO˜]Û‹›Û˜ÛXÚÏJ
+OOØÛÛ[Z]›Ú™XİÚ[™ÙJ˜Ø[˜\Ë[Øš™Xİ\İXÚÈ‹
+˜Y
+OOÙY]ØÙ[™J˜Y
+Xİ]™K[™^
+OOÙ˜YœØÙ[™\ÖÚ[™^O[[İ™PØ[˜\ÓØš™Xİ
+Xİ]™K™Y™\™[˜Ù\Ë›Øš™XİY[X™\Š]Û‹™]\Ù]›Øš™XİİXÚÊJNßJNßJNÜ™[™\Š
+NßJNÃBˆÛÛœİÙ[XİØ[˜\ÓØš™XİJY
+OOÜ™Y™\™[˜Ù\Ë›Øš™XİYZYÜ™Y™\™[˜Ù\Ëš[œÜXİÜ“[ÙOHœ[]HÜØ]™T™Y™\™[˜Ù\Ê
+NÜ™[™\Š
+NßNÃBˆÛÛœİ\ÚYÛØ[˜\ÏYØİ[Y[œ]Y\TÙ[XİÜŠ‹™\ÚYÛ‹XØ[˜\ÈŠNÃBˆYŠ\ÚYÛØ[˜\È	‰ˆ™Y™\™[˜Ù\ËÛÛOOH›YX\İ\™HŠXš[™Ø[˜\ÓYX\İ\™J\ÚYÛØ[˜\Ëİ[š]Î
+˜Ø[˜\Õ[š]ÈŠKÛ“YX\İ\™N›YX\İ\™[Y[OÜİ]\ÏX	ÛYX\İ\™[Y[™\İ[˜ÙKÑš^Y
+Š_H	İ
+˜Ø[˜\Õ[š]ÈŠ_H0­È	İ
+›YX\İ\™R[Š_XÙØİ[Y[œ]Y\TÙ[XİÜŠˆÜİ]\ÈŠK^ÛÛ[\İ]\Îß_JNÃBˆYˆ
+\ÚYÛØ[˜\È	‰ˆ™Y™\™[˜Ù\ËÛÛOOH›YX\İ\™HŠHš[™Ø[˜\Ñ˜YÊ\ÚYÛØ[˜\ËØÙ[™J
+K˜Ø[˜\ÓØš™XİÈÏÈ×KÃBˆÛ”Ù[XİœÙ[XİØ[˜\ÓØš™XİBˆÛ”™\Ú^™JYÚ^™J^ÃBˆHØÛÛ[Z]›Ú™XİÚ[™ÙJ˜Ø[˜\Ë[Øš™Xİ\™\Ú^™H‹
+˜Y
+OOÙY]ØÙ[™J˜Y
+Xİ]™K[™^
+OOÙ˜YœØÙ[™\ÖÚ[™^O]\]PØ[˜\ÓØš™Xİ
+Xİ]™KYÚ^™JNßJNßJNÜÙ[XİØ[˜\ÓØš™Xİ
+Y
+NßCBˆØ]Ú
+\œ›ÜŠ^ÜÙ]İ]\Ê\œ›Ü‹›Y\ÜØYÙJNßCBˆKBˆÛ“[İ™JYÜÚ][ÛŠ^ÃBˆHØÛÛ[Z]›Ú™XİÚ[™ÙJ˜Ø[˜\Ë[Øš™Xİ[[İ™H‹
+˜Y
+OOÙY]ØÙ[™J˜Y
+Xİ]™K[™^
+OOÙ˜YœØÙ[™\ÖÚ[™^O]\]PØ[˜\ÓØš™Xİ
+Xİ]™KYÜÚ][ÛŠNßJNßJNÜÙ[XİØ[˜\ÓØš™Xİ
+Y
+NßCBˆØ]Ú
+\œ›ÜŠ^ÜÙ]İ]\Ê\œ›Ü‹›Y\ÜØYÙJNßCBˆCBˆJNÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆÙ^ÜXØ[˜\ÈŠK›Û˜ÛXÚÏJ
+OOÃBˆİÛ›ØY^
+Ø[˜\Ôİ™ÊØÙ[™J
+K˜Ø[˜\ÓØš™XİÈÏÈ×K›Ú™Xİ›˜[YJK	ÜØY™Qš[Tİ[J›Ú™Xİ›˜[YJ_KXØ[˜\Ëœİ™Øš[XYÙKÜİ™ÊŞ[ŠNÜÙ]İ]\Ê
+˜Ø[˜\Ñ^ÜYŠJNÃBˆNÃBˆØİ[Y[œ]Y\TÙ[XİÜ[
+–Ù]KXØ[˜\Ë[Øš™XİHŠK™›Ü‘XXÚ
+
+[[Y[
+OOÃBˆÛÛœİÙ[XİJ
+OOÜ™Y™\™[˜Ù\Ë›Øš™XİYY[[Y[™]\Ù]˜Ø[˜\ÓØš™XİÜ™Y™\™[˜Ù\Ëš[œÜXİÜ“[ÙOHœ[]HÜØ]™T™Y™\™[˜Ù\Ê
+NÜ™[™\Š
+NßNÃBˆ[[Y[›ÛšÙ^YİÛJ]™[
+OOÚYˆ
+È‘[\ˆ‹ˆ—Kš[˜ÛY\Ê]™[šÙ^JJ^Ù]™[œ™]™[Y˜][
+
+NÜÙ[Xİ
+
+Nß_NÃBˆJNÃBˆÛÛœİ\SØš™XİYØİ[Y[œ]Y\TÙ[XİÜŠˆØ\K[Øš™XİŠNÃBˆYˆ
+\SØš™Xİ
+H\SØš™Xİ›Û˜ÛXÚÏJ
+OOÃBˆHÃBˆÛÛœİÚ[™Ù\Ï^ßNÃBˆ›Üˆ
+ÛÛœİ[œ]ÙˆØİ[Y[œ]Y\TÙ[XİÜ[
+–Ù]K[Øš™Xİ]˜[YWHŠJHÚYˆ
+Z[œ]˜[YKš[J
+HZ[œ]˜ÚXÚÕ˜[Y]J
+JH™]\›ˆ[œ]œ™\Ü˜[Y]J
+NØÚ[™Ù\ÖÚ[œ]™]\Ù]›Øš™Xİ˜[YWOS[X™\Š[œ]˜[YJNßCBˆÛÛœİ^YØİ[Y[œ]Y\TÙ[XİÜŠˆØØ[˜\Ë]^ŠNÚYŠ^
+XÚ[™Ù\Ë^]^˜[YNÃBˆÛÛ[Z]›Ú™XİÚ[™ÙJ˜Ø[˜\Ë[Øš™XİYY]‹
+˜Y
+OOÙY]ØÙ[™J˜Y
+Xİ]™K[™^
+OOÙ˜YœØÙ[™\ÖÚ[™^O]\]PØ[˜\ÓØš™Xİ
+Xİ]™K™Y™\™[˜Ù\Ë›Øš™XİYÚ[™Ù\ÊNßJNßJNÜ™[™\Š
+NÃBˆHØ]Ú
+\œ›ÜŠHÜÙ]İ]\Ê\œ›Ü‹›Y\ÜØYÙJNßCBˆNÃBˆÛÛœİZ[Øš™XİYØİ[Y[œ]Y\TÙ[XİÜŠˆÜZ[[Øš™XİŠNÚYŠZ[Øš™Xİ
+\Z[Øš™Xİ›Û˜ÛXÚÏJ
+OOØÛÛ[Z]›Ú™XİÚ[™ÙJ˜Ø[˜\Ë[Øš™Xİ\Z[‹
+˜Y
+OOÙY]ØÙ[™J˜Y
+Xİ]™K[™^
+OOÙ˜YœØÙ[™\ÖÚ[™^O]\]PØ[˜\ÓØš™Xİ
+Xİ]™K™Y™\™[˜Ù\Ë›Øš™XİYÙš[œÙ[XİY
+
+Kš^JNßJNßJNÜ™[™\Š
+NßNÃBˆÛÛœİ[]SØš™XİYØİ[Y[œ]Y\TÙ[XİÜŠˆÙ[]K[Øš™XİŠNÚYŠ[]SØš™Xİ
+Y[]SØš™Xİ›Û˜ÛXÚÏJ
+OOØÛÛ[Z]›Ú™XİÚ[™ÙJ˜Ø[˜\Ë[Øš™XİY[]H‹
+˜Y
+OOÙY]ØÙ[™J˜Y
+Xİ]™JOOØXİ]™K˜Ø[˜\ÓØš™XİÏXXİ]™K˜Ø[˜\ÓØš™XİË™š[\Š
+Øš™Xİ
+OO›Øš™XİšYOO\™Y™\™[˜Ù\Ë›Øš™XİY
+NßJNßJNÜ™Y™\™[˜Ù\Ë›Øš™XİY[[Ü™[™\Š
+NßNÃBˆÛÛœİ\XØ]Qš^\™P]ÛYØİ[Y[œ]Y\TÙ[XİÜŠˆÙ\XØ]KYš^\™HŠK[]Qš^\™P]ÛYØİ[Y[œ]Y\TÙ[XİÜŠˆÙ[]KYš^\™HŠNÃBˆYˆ
+\XØ]Qš^\™P]ÛŠH\XØ]Qš^\™P]Û‹›Û˜ÛXÚÏJ
+OOÃBˆHÃBˆÛÛœİš^\™O\Ù[XİYš^\™J
+KYXÜ\Ëœ˜[™ÛUURQ
+
+NÃBˆÛÛ[Z]›Ú™XİÚ[™ÙJ™š^\™KY\XØ]H‹
+˜Y
+OO“Øš™Xİ˜\ÜÚYÛŠ˜Y\XØ]Qš^\™J˜Yš^\™KšYÚY˜[YN˜	Ùš^\™K›˜[Y_H0­È	İ
+˜ÛÜSX™[Š_XJJJNÃBˆ™Y™\™[˜Ù\Ë™š^\™RYZYÜØ]™T™Y™\™[˜Ù\Ê
+NÜ™[™\Š
+NÃBˆHØ]Ú
+\œ›ÜŠHÜÙ]İ]\Ê\œ›Ü‹›Y\ÜØYÙJNßCBˆNÃBˆYˆ
+[]Qš^\™P]ÛŠH[]Qš^\™P]Û‹›Û˜ÛXÚÏJ
+OOÃBˆÛÛœİY\Ù[XİYš^\™J
+KšYÃBˆÛÛ[Z]›Ú™XİÚ[™ÙJ™š^\™KY[]H‹
+˜Y
+OO“Øš™Xİ˜\ÜÚYÛŠ˜Y[]Qš^\™J˜YY
+JJNÃBˆ™Y™\™[˜Ù\Ë™š^\™RY\›Ú™Xİ™š^\™\ÖÌOËšYÏÈ[ÜØ]™T™Y™\™[˜Ù\Ê
+NÜ™[™\Š
+NÃBˆNÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆØ\K\›ÛÛHŠK›Û˜ÛXÚÏJ
+OOÃBˆHÃBˆÛÛœİ˜[Y\Ï^ßNÃBˆ›Üˆ
+ÛÛœİÙ^HÙˆÈÚY‹šZYÚ‹™\—JHÃBˆÛÛœİ[œ]YØİ[Y[œ]Y\TÙ[XİÜŠÜ›ÛÛKIÚÙ^_X
+NÃBˆYˆ
+Z[œ]˜[YKš[J
+HZ[œ]˜ÚXÚÕ˜[Y]J
+JH™]\›ˆ[œ]œ™\Ü˜[Y]J
+NÃBˆ˜[Y\ÖÚÙ^WOS[X™\Š[œ]˜[YJNÃBˆCBˆÛÛœİ›ÛÛO\›ÛÛQ[Y[œÚ[ÛœÊ˜[Y\ÊNÃBˆÛÛ[Z]›Ú™XİÚ[™ÙJœØÙ[™K\›ÛÛK\™\Ú^™H‹
+˜Y
+OOÙY]ØÙ[™J˜Y
+Xİ]™JOOØXİ]™Kœ›ÛÛO\›ÛÛNßJNßJNÜ™[™\Š
+NÃBˆHØ]Ú
+\œ›ÜŠHÜÙ]İ]\Ê\œ›Ü‹›Y\ÜØYÙJNßCBˆNÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆÙ^Ü]šY]ÜÜŠK›Û˜ÛXÚÏX\Ş[˜Ê
+OOÃBˆYˆ
+\™[™\™\Ëœİ\ÜY
+H™]\›ÃBˆHÃBˆÛÛœİ›ØX]ØZ]™[™\™\‹˜Ø\\™T™Ê
+K\›UT“˜Ü™X]SØš™XİT“
+›ØŠNÃBˆHØÛÛœİ[šÏYØİ[Y[˜Ü™X]Q[[Y[
+˜HŠNÛ[šËš™Y]\›Û[šË™İÛ›ØYX	ÜØY™Qš[Tİ[J›Ú™Xİ›˜[YJ_K]šY]ÜÜœ™ØÛ[šË˜ÛXÚÊ
+NßCBˆš[˜[HÕT“œ™]›ÚÙSØš™XİT“
+\›
+NßCBˆÙ]İ]\Ê
+šY]ÜÜ^ÜYŠJNÃBˆHØ]Ú
+\œ›ÜŠHÜÙ]İ]\Ê\œ›Ü‹›Y\ÜØYÙJNßCBˆNÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆİšY]ÜÜ\›Ú™Xİ[ÛˆŠK›Û˜ÛXÚÏJ
+OOÜ™Y™\™[˜Ù\Ëœ›Ú™Xİ[Û\™Y™\™[˜Ù\Ëœ›Ú™Xİ[ÛOOH›ÜÙÜ˜\XÈˆÈœ\œÜXİ]™Hˆˆ›ÜÙÜ˜\XÈÜØ]™T™Y™\™[˜Ù\Ê
+NÜ™[™\Š
+NßNÂˆØİ[Y[œ]Y\TÙ[XİÜ[
+–Ù]K[^Y\‹]š\ÚXš[]WHŠK™›Ü‘XXÚ
+
+]ÛŠOO˜]Û‹›Û˜ÛXÚÏJ
+OOÃBˆÛÛœİÙ^OX]Û‹™]\Ù]›^Y\•š\ÚXš[]NÃBˆÛÛ[Z]›Ú™XİÚ[™ÙJœØÙ[™K[^Y\‹]š\ÚXš[]H‹
+˜Y
+OOÙY]ØÙ[™J˜Y
+\™Ù]
+OOİ\™Ù]š\ÚXš[]O^Ë‹‹\™Ù]š\ÚXš[]KÚÙ^WN\™Ù]š\ÚXš[]OË–ÚÙ^WOOOY˜[Ù_NßJNßJNÜ™[™\Š
+NÃBˆJNÃBˆÛÛœİÙ^Yœ˜[YP]ÛYØİ[Y[œ]Y\TÙ[XİÜŠˆÜØ]™KZÙ^Yœ˜[YHŠNÃBˆYˆ
+Ù^Yœ˜[YP]ÛŠHÙ^Yœ˜[YP]Û‹›Û˜ÛXÚÏJ
+OOÃBˆHÃBˆÛÛœİ[YOYØİ[Y[œ]Y\TÙ[XİÜŠˆÚÙ^Yœ˜[YK][YHŠK˜[YOYØİ[Y[œ]Y\TÙ[XİÜŠˆÚÙ^Yœ˜[YK]˜[YHŠNÃBˆ›Üˆ
+ÛÛœİ[œ]Ùˆİ[YK˜[YWJHYˆ
+Z[œ]˜[YKš[J
+HZ[œ]˜ÚXÚÕ˜[Y]J
+JH™]\›ˆ[œ]œ™\Ü˜[Y]J
+NÃBˆÛÛœİÚ[›™[R”ÓÓ‹œ\œÙJØİ[Y[œ]Y\TÙ[XİÜŠˆÚÙ^Yœ˜[YKXÚ[›™[ŠK˜[YJKİYO\›Ú™Xİ˜İY\Ë™š[™
+
+][JOOš][KšYOO\™Y™\™[˜Ù\Ë˜İYRY
+HÏÈ›Ú™Xİ˜İY\Ë˜]
+LJNÃBˆÛÛ[Z]›Ú™XİÚ[™ÙJ˜İYKZÙ^Yœ˜[YK\Ø]™H‹
+˜Y
+OOÙ˜Y˜İY\ÏY˜Y˜İY\Ë›X\
+
+][JOOš][KšYOOXİYKšYÈÙ]Ú[›™[Ù^Yœ˜[YJ][KË‹‹˜Ú[›™[[YN“[X™\Š[YK˜[YJK˜[YN“[X™\Š˜[YK˜[YJ_JHˆ][JNßJNÜ™[™\Š
+NÃBˆHØ]Ú
+\œ›ÜŠHÜÙ]İ]\Ê\œ›Ü‹›Y\ÜØYÙJNßCBˆNÃBˆØİ[Y[œ]Y\TÙ[XİÜ[
+–Ù]K\™[[İ™KZÙ^Yœ˜[YWHŠK™›Ü‘XXÚ
+
+]ÛŠOO˜]Û‹›Û˜ÛXÚÏJ
+OOÃBˆÛÛœİİYO\›Ú™Xİ˜İY\Ë™š[™
+
+][JOOš][KšYOO\™Y™\™[˜Ù\Ë˜İYRY
+HÏÈ›Ú™Xİ˜İY\Ë˜]
+LJNÃBˆÛÛ[Z]›Ú™XİÚ[™ÙJ˜İYKZÙ^Yœ˜[YKY[]H‹
+˜Y
+OOØÛÛœİ\™Ù]Y˜Y˜İY\Ë™š[™
+
+][JOOš][KšYOOXİYKšY
+Nİ\™Ù]˜Ú[›™[Ù^Yœ˜[Y\ËœÜXÙJ[X™\Š]Û‹™]\Ù]œ™[[İ™RÙ^Yœ˜[YJKJNßJNÜ™[™\Š
+NÃBˆJNÃBˆØİ[Y[œ]Y\TÙ[XİÜ[
+–Ù]KZ[œÜXİÜ—HŠK™›Ü‘XXÚ
+
+]ÛŠOO˜]Û‹›Û˜ÛXÚÏJ
+OOÜ™Y™\™[˜Ù\Ëš[œÜXİÜ“[ÙOX]Û‹™]\Ù]š[œÜXİÜÜØ]™T™Y™\™[˜Ù\Ê
+NÜ™[™\Š
+NßJNÃBˆÛÛœİ\QÙ[™\˜]YJÙ[™\˜]ÜŠOOÃBˆHÃBˆÛÛœİÙ[™\˜]YYÙ[™\˜]ÜŠ
+NÃBˆ]]]PÛÛİ\œÊ
+ÛÛÜœÊOO˜ÛÛÜœË›X\
+
+ÛÛÜ‹[™^
+OO˜ÛÛÜ‹›ØÚÙYÈÛÛÜˆˆË‹‹˜ÛÛÜ‹^™Ù[™\˜]YÚ[™^	YÙ[™\˜]Y›[™İ_JJNÃBˆHØ]Ú
+\œ›ÜŠHÈØİ[Y[œ]Y\TÙ[XİÜŠˆÜİ]\ÈŠK^ÛÛ[\İ]\ÏY\œ›Ü‹›Y\ÜØYÙNÈCBˆNÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆØİ\İÛKZY\ÈŠK›Û˜ÛXÚÏJ
+OO˜\QÙ[™\˜]Y
 
 
+OOÃBˆÛÛœİ[œ]YØİ[Y[œ]Y\TÙ[XİÜŠˆØİ\İÛK\ÜXÚ[™ÈŠNÃBˆYˆ
+Z[œ]˜[YKš[J
+HZ[œ]˜ÚXÚÕ˜[Y]J
+JH›İÈ™]È\œ›ÜŠ‘[\ˆ˜[YYHÜXÚ[™ËˆŠNÃBˆ™]\›ˆİ\İÛRYR\›[ÛJ™Y™\™[˜Ù\ËœÙYY[X™\Š[œ]˜[YJKX]›Z[ŠÌ‹[]J
+K˜ÛÛÜœË›[™İ
+JNÃBˆJNÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆÜ\˜Ù\X[\ØØ[HŠK›Û˜ÛXÚÏJ
+OO˜\QÙ[™\˜]Y
+
+
+OOœ\˜Ù\X[ØØ[J™Y™\™[˜Ù\ËœÙYYX]›X^
+‹X]›Z[ŠÌ‹[]J
+K˜ÛÛÜœË›[™İ
+JJJNÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆØ\K[ÜXÚ]HŠK›Û˜ÛXÚÏJ
+OOÃBˆÛÛœİ[œ]YØİ[Y[œ]Y\TÙ[XİÜŠˆÜİØ]Ú[ÜXÚ]HŠNÃBˆYˆ
+Z[œ]˜[YKš[J
+HZ[œ]˜ÚXÚÕ˜[Y]J
+JH™]\›ˆ[œ]œ™\Ü˜[Y]J
+NÃBˆ]]]PÛÛİ\œÊ
+ÛÛÜœÊOO\]TİØ]Ú
+ÛÛÜœËÙ[XİY
+
+KšYÛÜXÚ]N“[X™\Š[œ]˜[YJKÌLJJNÃBˆNÃBˆÛÛœİÛÛ\\š\ÛÛYØİ[Y[œ]Y\TÙ[XİÜŠˆİ™\œÚ[Û‹XÛÛ\\š\ÛÛˆŠNÂˆÛÛœİ\]PÛÛ\\š\ÛÛJ
+OOÂˆÛÛœİØ]™Y\›Ú™Xİœ[]\Ë™š[™
+
+][JOOš][KšYOOYØİ[Y[œ]Y\TÙ[XİÜŠˆÜ[]K]™\œÚ[ÛˆŠK˜[YJNÂˆYˆ
+\Ø]™Y
+HØÛÛ\\š\ÛÛ‹š[›™\’SXÛ\ÜÏHœ[]KY[\K\İ]H‰İ
+œØ]™U™\œÚ[Û•ĞÛÛ\\™HŠ_OÜ˜Ü™]\›ßBˆÛÛœİÙ[JÛÛÜŠOO˜ÛÛÜˆÈÜ[ˆİ[OH˜˜XÚÙÜ›İ[™‰ÜİØ]ÚÜÜĞÛÛÜŠÛÛÜŠ_NÙ\Ü^Nš[›[™KX›ØÚÎİÚYŒLœÚZYÚŒLœÜÜ[ˆ	Ù\ØÊÛÛÜ‹›˜[YJ_H	ÜİØ]ÚÜÜĞÛÛÜŠÛÛÜŠ_Xˆ¸ %ÂˆÛÛ\\š\ÛÛ‹š[›™\’SXX›OXY‰İ
+˜İ\œ™[™\œÚ[ÛˆŠ_Oİ‰İ
+œØ]™Y™\œÚ[ÛœÈŠ_OİİİXY›ÙO‰ØÛÛ\\™T[]\Ê[]J
+KØ]™Y
+K›X\
+
+›İÊOO˜ˆÛ\ÜÏH‰Ü›İË˜Ú[™ÙYÈš\ËXÚ[™ÙYˆˆˆŸH‰ØÙ[
+›İË˜İ\œ™[
+_Oİ‰ØÙ[
+›İËœØ]™Y
+_Oİİ˜
+Kš›Ú[ŠˆŠ_Oİ›ÙOİX›O˜ÂˆNÂˆØİ[Y[œ]Y\TÙ[XİÜŠˆÜ[]K]™\œÚ[ÛˆŠK›Û˜Ú[™ÙO]\]PÛÛ\\š\ÛÛÂˆ\]PÛÛ\\š\ÛÛŠ
+NÂˆÛÛœİÜ[”[]TÜİ™\JšYÙÙ\”Ù[XİÜ‹Üİ™\”Ù[XİÜŠOOÂˆÛÛœİšYÙÙ\YØİ[Y[œ]Y\TÙ[XİÜŠšYÙÙ\”Ù[XİÜŠKÜİ™\YØİ[Y[œ]Y\TÙ[XİÜŠÜİ™\”Ù[XİÜŠNÂˆšYÙÙ\‹›Û˜ÛXÚÏJ
+OOÂˆÛÛœİ™Xİ]šYÙÙ\‹™Ù]›İ[™[™ĞÛY[™Xİ
+
+KÚY\Üİ™\”Ù[XİÜOOHˆÜ[]K]™\œÚ[ÛœË[Y[HˆÈÌŒˆŒÂˆÜİ™\‹œİ[K›YX	ÓX]›X^
+X]›Z[Š™Xİ›YÚ[™İËš[›™\•ÚY]ÚYN
+J_\ÂˆÜİ™\‹œİ[KÜX	ÓX]›Z[Š™Xİ˜›İÛJÍÚ[™İËš[›™\’ZYÚLÌ
+_\ÂˆÜİ™\‹œÚİÔÜİ™\Š
+NÂˆNÂˆNÂˆÜ[”[]TÜİ™\ŠˆÛÜ[‹]™\œÚ[ÛœÈ‹ˆÜ[]K]™\œÚ[ÛœË[Y[HŠNÂˆÜ[”[]TÜİ™\ŠˆÛÜ[‹XÛÛ\\™H‹ˆÜ[]KXÛÛ\\™K[Y[HŠNÂˆØİ[Y[œ]Y\TÙ[XİÜŠˆÜØ]™K]™\œÚ[ÛˆŠK›Û˜ÛXÚÏJ
+OOÃBˆÛÛ[Z]›Ú™XİÚ[™ÙJœ[]K]™\œÚ[Û‹\Ø]™H‹
+˜Y
+OOÙ˜Yœ[]\Ëœ\Ú
+Û˜\Úİ[]J˜Yœ[]\ÖÌK	Ù˜Yœ[]\ÖÌK›˜[Y_H0­È	Ù˜Yœ[]\Ë›[™İX
+JNßJNÃBˆ™[™\Š
+NÃBˆNÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆÜ™\İÜ™K]™\œÚ[ÛˆŠK›Û˜ÛXÚÏJ
+OOÃBˆÛÛœİYYØİ[Y[œ]Y\TÙ[XİÜŠˆÜ[]K]™\œÚ[ÛˆŠK˜[YNÃBˆÛÛœİÛ˜\Úİ\›Ú™Xİœ[]\Ë™š[™
+
+][K[™^
+OOš[™^Œ	‰ˆ][KšYOOZY
+NÃBˆYˆ
+\Û˜\Úİ
+H™]\›ÃBˆÛÛ[Z]›Ú™XİÚ[™ÙJœ[]K]™\œÚ[Û‹\™\İÜ™H‹
+˜Y
+OOÙ˜Yœ[]\ÖÌO\™\İÜ™T[]J˜Yœ[]\ÖÌKÛ˜\Úİ
+NßJNÃBˆ™[™\Š
+NÃBˆNÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆØ\K[ÚÛÚŠK›Û˜ÛXÚÏJ
+OOÃBˆHÃBˆÛÛœİ˜[Y\ÏSØš™Xİ™œ›ÛQ[šY\ÊÈ›‹˜È‹š—K›X\
+
+Ù^JOOÃBˆÛÛœİ[œ]YØİ[Y[œ]Y\TÙ[XİÜŠÛÚÛÚIÚÙ^_X
+NÃBˆYˆ
+Z[œ]˜[YKš[J
+HZ[œ]˜ÚXÚÕ˜[Y]J
+JH›İÈ™]È\œ›ÜŠ‘[\ˆ˜[YÒÓÒ˜[Y\ËˆŠNÃBˆ™]\›ˆÚÙ^K[X™\Š[œ]˜[YJWNÃBˆJJNÃBˆÛÛœİ™\İ[[X\ÚÛÚÔÜ™ØŠ˜[Y\ÊNÃBˆ]]]PÛÛİ\œÊ
+ÛÛÜœÊOO\]TİØ]Ú
+ÛÛÜœËÙ[XİY
+
+KšYÚ^œ™\İ[š^JJNÃBˆYˆ
+™\İ[›X\Y
+HØİ[Y[œ]Y\TÙ[XİÜŠˆÜİ]\ÈŠK^ÛÛ[\İ]\ÏX	İ
+˜Ú›ÛXSX\YŠ_H	Ü™\İ[˜Ú›ÛXKÑš^Y
+
+_XÃBˆHØ]Ú
+\œ›ÜŠHÈØİ[Y[œ]Y\TÙ[XİÜŠˆÜİ]\ÈŠK^ÛÛ[\İ]\ÏY\œ›Ü‹›Y\ÜØYÙNÈCBˆNÃBˆÛÛœİÛÛ˜\İ]ÛYØİ[Y[œ]Y\TÙ[XİÜŠˆØ\KXÛÛ˜\İŠNÃBˆYˆ
+ÛÛ˜\İ]ÛŠHÛÛ˜\İ]Û‹›Û˜ÛXÚÏJ
+OOÃBˆÛÛœİ˜XÚÙÜ›İ[™[›Ü›X[^™R^
+™Y™\™[˜Ù\Ë˜ÛÛ˜\İ˜XÚÙÜ›İ[™
+HÏÈˆÌŒLŒŒÃBˆÛÛœİ^\İYÙÙ\İÛÛ˜\İ
+Ù[XİY
+
+Kš^˜XÚÙÜ›İ[™
+NÃBˆYˆ
+^
+H]]]PÛÛİ\œÊ
+ÛÛÜœÊOO\]TİØ]Ú
+ÛÛÜœËÙ[XİY
+
+KšYÚ^JJNÃBˆNÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆØÛÛ˜\İX˜XÚÙÜ›İ[™ŠK›Û˜Ú[™ÙOJ]™[
+OOÜ™Y™\™[˜Ù\Ë˜ÛÛ˜\İ˜XÚÙÜ›İ[™Y]™[\™Ù]˜[YNÜØ]™T™Y™\™[˜Ù\Ê
+NÜ™[™\Š
+NßNÃBˆØİ[Y[œ]Y\TÙ[XİÜ[
+–Ù]K\˜\İ\—HŠK™›Ü‘XXÚ
+
+]ÛŠOO˜]Û‹›Û˜ÛXÚÏX\Ş[˜Ê
+OOÃBˆ]Û‹™\ØX›Y]YNÃBˆHÃBˆÛÛœİ›ØX]ØZ][]T˜\İ\ŠİXİ\™YÛÛ™J[]J
+JK]Û‹™]\Ù]œ˜\İ\ŠNÃBˆÛÛœİ\›UT“˜Ü™X]SØš™XİT“
+›ØŠK[šÏYØİ[Y[˜Ü™X]Q[[Y[
+˜HŠNÃBˆ[šËš™Y]\›Û[šË™İÛ›ØYX	ÜØY™Qš[Tİ[J›Ú™Xİ›˜[YJ_K\[]K‰Ø]Û‹™]\Ù]œ˜\İ\OOHš[XYÙKÜ™ÈˆÈœ™ÈˆˆšœÈŸXÃBˆ[šË˜ÛXÚÊ
+NÜÙ][Y[İ]
+
+
+OO•T“œ™]›ÚÙSØš™XİT“
+\›
+KL
+NÃBˆHØ]Ú
+\œ›ÜŠHÈØİ[Y[œ]Y\TÙ[XİÜŠˆÜİ]\ÈŠK^ÛÛ[\İ]\ÏY\œ›Ü‹›Y\ÜØYÙNÈCBˆš[˜[HÈ]Û‹™\ØX›YY˜[ÙNÈCBˆJNÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆØ\KZÛŠK›Û˜ÛXÚÏJ
+OOÃBˆHÃBˆÛÛœİ˜[Y\ÏVÈšYH‹œØ]\˜][Ûˆ‹›YÚ™\ÜÈ—K›X\
+
+Ù^JOOÃBˆÛÛœİ[œ]YØİ[Y[œ]Y\TÙ[XİÜŠØÛÛÜ‹IÚÙ^_X
+NÃBˆYˆ
+Z[œ]˜[YKš[J
+HZ[œ]˜ÚXÚÕ˜[Y]J
+JH›İÈ™]È\œ›ÜŠ	İ
+Ù^J_Nˆ[\ˆH˜[Y˜[YK˜
+NÃBˆ™]\›ˆ[X™\Š[œ]˜[YJNÃBˆJNÃBˆÛÛœİ^\™Ø•Ò^
+ÛÔ™ØŠÚ˜[Y\ÖÌKÎ˜[Y\ÖÌWKÌL˜[Y\ÖÌ—KÌLJJNÃBˆ]]]PÛÛİ\œÊ
+ÛÛÜœÊOO\]TİØ]Ú
+ÛÛÜœËÙ[XİY
+
+KšYÚ^JJNÃBˆHØ]Ú
+\œ›ÜŠHÈØİ[Y[œ]Y\TÙ[XİÜŠˆÜİ]\ÈŠK^ÛÛ[\İ]\ÏY\œ›Ü‹›Y\ÜØYÙNÈCBˆNÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆØÛÜKZ^ŠK›Û˜ÛXÚÏX\Ş[˜Ê
+OOÃBˆHÃBˆYˆ
+[˜]šYØ]Ü‹˜Û\›Ø\™ËÜš]U^
+H›İÈ™]È\œ›ÜŠÛ\›Ø\™\È[˜]˜Z[X›H[ˆ\Èœ›İÜÙ\‹ˆŠNÃBˆ]ØZ]˜]šYØ]Ü‹˜Û\›Ø\™Üš]U^
+İØ]ÚÜÜĞÛÛÜŠÙ[XİY
+
+JJNÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆÜİ]\ÈŠK^ÛÛ[\İ]\Ï]
+˜ÛÜYYŠNÃBˆHØ]Ú
+\œ›ÜŠHÈØİ[Y[œ]Y\TÙ[XİÜŠˆÜİ]\ÈŠK^ÛÛ[\İ]\ÏY\œ›Ü‹›Y\ÜØYÙNÈCBˆNÃBˆØİ[Y[œ]Y\TÙ[XİÜ[
+–Ù]K\İØ]ÚHŠK™›Ü‘XXÚ
+
+]ÛŠOOÃBˆ]Û‹™˜YÙØX›O]YNÃBˆ]Û‹›Û™˜YÜİ\J]™[
+OOÙ]™[™]U˜[œÙ™\‹œÙ]]J˜\XØ][Û‹ŞXYYİ[‹\İØ]Ú‹]Û‹™]\Ù]œİØ]Ú
+NÙ]™[™]U˜[œÙ™\‹™Y™™Xİ[İÙYH›[İ™HßNÃBˆ]Û‹›Û™˜YÛİ™\J]™[
+OOÚYŠË‹‹™]™[™]U˜[œÙ™\‹\\×Kš[˜ÛY\Ê˜\XØ][Û‹ŞXYYİ[‹\İØ]ÚŠJ^Ù]™[œ™]™[Y˜][
+
+NÙ]™[™]U˜[œÙ™\‹™›ÜY™™XİH›[İ™Hß_NÃBˆ]Û‹›Û™›ÜJ]™[
+OOÃBˆÛÛœİÛİ\˜ÙRYY]™[™]U˜[œÙ™\‹™Ù]]J˜\XØ][Û‹ŞXYYİ[‹\İØ]ÚŠK\™Ù]YX]Û‹™]\Ù]œİØ]ÚÃBˆYˆ
+\Ûİ\˜ÙRYÛİ\˜ÙRYOO]\™Ù]Y\[]J
+K˜ÛÛÜœËœÛÛYJ
+ÛÛÜŠOO˜ÛÛÜ‹šYOO\Ûİ\˜ÙRY
+JH™]\›ÃBˆ]™[œ™]™[Y˜][
+
+NÃBˆ]]]PÛÛİ\œÊ
+ÛÛÜœÊOOœ™[Ü™\”İØ]Ú
+ÛÛÜœËÛİ\˜ÙRY\™Ù]Y
+JNÃBˆNÃBˆJNÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆÜ™[[İ™K\İØ]ÚŠK›Û˜ÛXÚÏJ
+OO›]]]PÛÛİ\œÊ
+ÛÛÜœÊOOœ™[[İ™TİØ]Ú
+ÛÛÜœËÙ[XİY
+
+KšY
+JNÃBˆØİ[Y[œ]Y\TÙ[XİÜ[
+–Ù]K[[İ™K\İØ]ÚHŠK™›Ü‘XXÚ
+
+]ÛŠOO˜]Û‹›Û˜ÛXÚÏJ
+OO›]]]PÛÛİ\œÊ
+ÛÛÜœÊOO›[İ™TİØ]Ú
+ÛÛÜœËÙ[XİY
+
+KšY[X™\Š]Û‹™]\Ù]›[İ™TİØ]Ú
+JJJNÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆÙ^˜XİZ[XYÙHŠK›Û˜ÛXÚÏJ
+OO™Øİ[Y[œ]Y\TÙ[XİÜŠˆÜ[]KZ[XYÙHŠK˜ÛXÚÊ
+NÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆÜ[]KZ[XYÙHŠK›Û˜Ú[™ÙOX\Ş[˜Ê]™[
+OOÃBˆÛÛœİÙš[WOY]™[\™Ù]™š[\ÎÃBˆYˆ
+Yš[JH™]\›ÃBˆÛÛœİ›Ú™XİY\›Ú™XİšYÃBˆHÃBˆÛÛœİÛÛÜœÏX]ØZ]™XY[XYÙT[]Jš[KÛÛ‘XÛÙYŠ\ÜÙ]
+OOš[XYÙP\ÜÙ]Ë˜Y
+\ÜÙ]
+_JNÃBˆYˆ
+›Ú™XİšYOO\›Ú™XİY
+H™]\›ÃBˆ]]]PÛÛİ\œÊ
+^\İ[™ÊOO–Ë‹‹™^\İ[™Ë‹‹˜ÛÛÜœË›X\
+
+ÛÛÜŠOOŠÚY˜Ü\Ëœ˜[™ÛUURQ
+
+K˜[YN˜ÛÛÜ‹š^^˜ÛÛÜ‹š^ØÚÙY™˜[Ù_JJWJNÃBˆHØ]Ú
+\œ›ÜŠHÈØİ[Y[œ]Y\TÙ[XİÜŠˆÜİ]\ÈŠK^ÛÛ[\İ]\ÏY\œ›Ü‹›Y\ÜØYÙNÈCBˆNÃBˆÛÛœİÚÙ[]ÛYØİ[Y[œ]Y\TÙ[XİÜŠˆÙ^Ü]ÚÙ[œÈŠNÃBˆYˆ
+ÚÙ[]ÛŠHÚÙ[]Û‹›Û˜ÛXÚÏJ
+OOÃBˆHÈİÛ›ØY^
+\ÚYÛ•ÚÙ[’œÛÛŠ[]J
+JK	ÜØY™Qš[Tİ[J›Ú™Xİ›˜[YJ_K]ÚÙ[œËšœÛÛ˜˜\XØ][Û‹ÚœÛÛˆŠNÈCBˆØ]Ú
+\œ›ÜŠHÈØİ[Y[œ]Y\TÙ[XİÜŠˆÜİ]\ÈŠK^ÛÛ[\İ]\ÏY\œ›Ü‹›Y\ÜØYÙNÈCBˆNÃBˆÛÛœİİ™Ğ]ÛYØİ[Y[œ]Y\TÙ[XİÜŠˆÙ^Ü\İ™ÈŠNÃBˆÛÛœİİYT]ÛYØİ[Y[œ]Y\TÙ[XİÜŠˆÙ^ÜXİYK\ˆŠNÃBˆYŠİYT]ÛŠXİYT]Û‹›Û˜ÛXÚÏX\Ş[˜Ê
+OOÃBˆÛÛœİÛ˜\Úİ\İXİ\™YÛÛ™J›Ú™Xİ˜İY\ÊNÃBˆÛÛœİš[[˜[YOX	ÜØY™Qš[Tİ[J›Ú™Xİ›˜[YJ_KXİY\Ëœ˜ÃBˆİYT]Û‹™\ØX›Y]YNÃBˆHÃBˆÛÛœİØİYTŸOX]ØZ][\Ü
+‹‹Ù^ÜÜ‹šœÈŠNÃBˆİÛ›ØY^
+]ØZ]İYTŠÛ˜\Úİ
+Kš[[˜[YK˜\XØ][Û‹ÜˆŠNÃBˆXØ]Ú
+\œ›ÜŠ^ÜÙ]İ]\Ê\œ›Ü‹›Y\ÜØYÙJNßCBˆš[˜[^ØİYT]Û‹™\ØX›YY˜[ÙNßCBˆNÃBˆÛÛœİ]ÛYØİ[Y[œ]Y\TÙ[XİÜŠˆÙ^Ü\ˆŠNÃBˆYŠ]ÛŠ\]Û‹›Û˜ÛXÚÏX\Ş[˜Ê
+OOÃBˆÛÛœİÛ˜\Úİ\İXİ\™YÛÛ™J[]J
+JKš[[˜[YOX	ÜØY™Qš[Tİ[J›Ú™Xİ›˜[YJ_K\[]Kœ˜Ü]Û‹™\ØX›Y]YNÃBˆHØÛÛœİÜ[]TŸOX]ØZ][\Ü
+‹‹Ù^ÜÜ‹šœÈŠNÙİÛ›ØY^
+]ØZ][]TŠÛ˜\Úİ
+Kš[[˜[YK˜\XØ][Û‹ÜˆŠNßCBˆØ]Ú
+\œ›ÜŠ^ÜÙ]İ]\Ê\œ›Ü‹›Y\ÜØYÙJNßYš[˜[^Ü]Û‹™\ØX›YY˜[ÙNßCBˆNÃBˆYˆ
+İ™Ğ]ÛŠHİ™Ğ]Û‹›Û˜ÛXÚÏJ
+OOÃBˆHÈİÛ›ØY^
+[]Tİ™Ê[]J
+JK	ÜØY™Qš[Tİ[J›Ú™Xİ›˜[YJ_K\[]Kœİ™Øš[XYÙKÜİ™ÊŞ[ŠNÈCBˆØ]Ú
+\œ›ÜŠHÈØİ[Y[œ]Y\TÙ[XİÜŠˆÜİ]\ÈŠK^ÛÛ[\İ]\ÏY\œ›Ü‹›Y\ÜØYÙNÈCBˆNÃBˆØİ[Y[œ]Y\TÙ[XİÜ[
+–Ù]K[^Y\‹Yš^\™WHŠK™›Ü‘XXÚ
+
+]ÛŠOO˜]Û‹›Û˜ÛXÚÏJ
+OOÃBˆİÜ^X˜XÚÊ
+NÃBˆ™Y™\™[˜Ù\Ë™š^\™RYX]Û‹™]\Ù]›^Y\‘š^\™NÃBˆ™Y™\™[˜Ù\Ëš[œÜXİÜ“[ÙOH™š^\™HÃBˆ™Y™\™[˜Ù\ËšY]ÏH›YÚÃBˆ™Y™\™[˜Ù\Ë›[Ù[OH˜Ø[˜\ÈÃBˆØ]™T™Y™\™[˜Ù\Ê
+NÃBˆ™[™\Š
+NÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆÙš^\™K\Ù[XİŠOË™›Øİ\Ê
+NÃBˆJNÃBˆØİ[Y[œ]Y\TÙ[XİÜ[
+–Ù]K[[İ™KXİYWHŠK™›Ü‘XXÚ
+
+]ÛŠOO˜]Û‹›Û˜ÛXÚÏJ
+OOÃBˆÛÛœİİYO\›Ú™Xİ˜İY\Ë™š[™
+
+][JOOš][KšYOO\™Y™\™[˜Ù\Ë˜İYRY
+HÏÈ›Ú™Xİ˜İY\Ë˜]
+LJNÃBˆÛÛ[Z]›Ú™XİÚ[™ÙJ˜İYK\™[Ü™\ˆ‹
+˜Y
+OOÙ˜Y˜İY\Ï[[İ™PİYJ˜Y˜İY\ËİYKšY[X™\Š]Û‹™]\Ù]›[İ™PİYJJNßJNÃBˆ™[™\Š
+NÃBˆJNÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆÜ^K\Ù\]Y[˜ÙHŠK›Û˜ÛXÚÏ\^TÙ\]Y[˜ÙNÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆÜ]\ÙK\^X˜XÚÈŠK›Û˜ÛXÚÏ]ÙÙÛT^X˜XÚÔ]\ÙNÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆÜÙ\]Y[˜ÙK[ÛÜŠK›Û˜Ú[™ÙOJ]™[
+OOÜ™Y™\™[˜Ù\Ë›ÛÜÙ\]Y[˜ÙOY]™[\™Ù]˜ÚXÚÙYÜØ]™T™Y™\™[˜Ù\Ê
+NßNÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆÜÙ\]Y[˜ÙK\ÙYZÈŠK›Û˜Ú[™ÙOJ]™[
+OOœ^TÙ\]Y[˜ÙJÜÙYZÎ“[X™\Š]™[\™Ù]˜[YJK]\ÙYY_JNÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆÜ^KYY™™XİŠK›Û˜ÛXÚÏ\^QY™™XİÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆÜ^K]˜XÚÜÈŠK›Û˜ÛXÚÏ\^P\œ˜[™Ù[Y[ÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆØ\œ˜[™Ù[Y[\ÙYZÈŠK›Û˜Ú[™ÙOJ]™[
+OOœ^P\œ˜[™Ù[Y[
+ÜÙYZÎ“[X™\Š]™[\™Ù]˜[YJK]\ÙYY_JNÃBˆš[™[Y[[™TÙYZÊØİ[Y[œ]Y\TÙ[XİÜŠ‹˜\œ˜[™Ù[Y[][Y[[™H[Y[[™K\[\ˆŠKÃBˆÜ[“X]›X^
+Ì\œ˜[™Ù[Y[\˜][ÛŠ›Ú™Xİ˜İY\ÊJK\˜][Û˜\œ˜[™Ù[Y[\˜][ÛŠ›Ú™Xİ˜İY\ÊK˜[YNœ^X˜XÚĞÛØÚÈ	‰ˆ\œ˜[™Ù[Y[\˜][ÛŠ›Ú™Xİ˜İY\ÊOŒÈ^X˜XÚÔÜÚ][ÛŠ^X˜XÚĞÛØÚË™[\ÙY
+\™›Ü›X[˜ÙK››İÊ
+JK\œ˜[™Ù[Y[\˜][ÛŠ›Ú™Xİ˜İY\ÊK›ÛÛX[Š™Y™\™[˜Ù\Ë›ÛÜÙ\]Y[˜ÙJJK[YHˆX™[
+œÙYZÕ˜XÚÜÈŠKBˆÛ”™]šY]Ê[YJ^ÙØİ[Y[œ]Y\TÙ[XİÜŠˆØ\œ˜[™Ù[Y[\^ZXYŠKœİ[K›YX	İ[YKÓX]›X^
+Ì\œ˜[™Ù[Y[\˜][ÛŠ›Ú™Xİ˜İY\ÊJJŒLIXßKBˆÛ”ÙYZÊ[YKÚÙ^X›Ø\™J^Ü^P\œ˜[™Ù[Y[
+ÜÙYZÎ[YK]\ÙYY_JNÚYŠÙ^X›Ø\™
+YØİ[Y[œ]Y\TÙ[XİÜŠ‹˜\œ˜[™Ù[Y[][Y[[™H[Y[[™K\[\ˆŠOË™›Øİ\Ê
+NßCBˆJNÃBˆÛÛœİØÚY[P]ÛYØİ[Y[œ]Y\TÙ[XİÜŠˆÜØÚY[KXİYHŠNÃBˆYˆ
+ØÚY[P]ÛŠHØÚY[P]Û‹›Û˜ÛXÚÏJ
+OOÃBˆHÃBˆÛÛœİ[œ]YØİ[Y[œ]Y\TÙ[XİÜŠˆØİYK\İ\][YHŠNÃBˆYˆ
+Z[œ]˜[YKš[J
+HZ[œ]˜ÚXÚÕ˜[Y]J
+JH™]\›ˆ[œ]œ™\Ü˜[Y]J
+NÃBˆÛÛœİİYO\›Ú™Xİ˜İY\Ë™š[™
+
+][JOOš][KšYOO\™Y™\™[˜Ù\Ë˜İYRY
+HÏÈ›Ú™Xİ˜İY\Ë˜]
+LJNÃBˆÛÛœİ˜XÚÏYØİ[Y[œ]Y\TÙ[XİÜŠˆØİYK]˜XÚË[˜[YHŠK˜[YNÃBˆÛÛ[Z]›Ú™XİÚ[™ÙJ˜İYK\ØÚY[H‹
+˜Y
+OOÙ˜Y˜İY\Ï\ØÚY[PİYJ˜Y˜İY\ËİYKšY˜XÚË[X™\Š[œ]˜[YJJNßJNÜ™[™\Š
+NÃBˆHØ]Ú
+\œ›ÜŠHÜÙ]İ]\Ê\œ›Ü‹›Y\ÜØYÙJNßCBˆNÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆÜØ]™KYÜ›İ\ŠK›Û˜ÛXÚÏJ
+OOÃBˆHÃBˆÛÛœİ˜[YOYØİ[Y[œ]Y\TÙ[XİÜŠˆÙÜ›İ\[˜[YHŠK˜[YKš^\™RYÏVË‹‹™Øİ[Y[œ]Y\TÙ[XİÜ[
+–Ù]KYÜ›İ\[Y[X™\—N˜ÚXÚÙYŠWK›X\
+
+[œ]
+OOš[œ]˜[YJNÃBˆÛÛœİYYØİ[Y[œ]Y\TÙ[XİÜŠˆÜØ]™KYÜ›İ\ŠK™]\Ù]™Ü›İ\YÜ\Ëœ˜[™ÛUURQ
+
+NÃBˆÛÛ[Z]›Ú™XİÚ[™ÙJ™š^\™KYÜ›İ\\Ø]™H‹
+˜Y
+OOÙ˜Y™š^\™QÜ›İ\Ï\Ø]™Qš^\™QÜ›İ\
+˜Y™š^\™QÜ›İ\ÈÏÈ×K˜Y™š^\™\ËÚY˜[YKš^\™RYßJNßJNÜ™[™\Š
+NÃBˆHØ]Ú
+\œ›ÜŠHÈÙ]İ]\Ê\œ›Ü‹›Y\ÜØYÙJNÈCBˆNÃBˆÛÛœİÛX\‘Ü›İ\Y]ÜJ
+OOÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆÜØ]™KYÜ›İ\ŠK™]\Ù]™Ü›İ\YHˆÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆÙÜ›İ\[˜[YHŠK˜[YOHˆÃBˆØİ[Y[œ]Y\TÙ[XİÜ[
+–Ù]KYÜ›İ\[Y[X™\—HŠK™›Ü‘XXÚ
+
+[œ]
+OOÚ[œ]˜ÚXÚÙYY˜[ÙNßJNÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆÙÜ›İ\[˜[YHŠK™›Øİ\Ê
+NÃBˆNÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆÜØ]™KYÜ›İ\ŠKš[œÙ\Y˜XÙ[S
+˜Y\™[™‹]ÛˆYH›™]ËYÜ›İ\‰İ
+›™]ÑÜ›İ\Š_OØ]Û˜
+NÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆÛ™]ËYÜ›İ\ŠK›Û˜ÛXÚÏXÛX\‘Ü›İ\Y]ÜÃBˆØİ[Y[œ]Y\TÙ[XİÜ[
+–Ù]KY[]KYÜ›İ\HŠK™›Ü‘XXÚ
+
+]ÛŠOOÃBˆÛÛœİY]YØİ[Y[˜Ü™X]Q[[Y[
+˜]ÛˆŠNÙY]^ÛÛ[]
+™Y]Ü›İ\ŠNÃBˆY]›Û˜ÛXÚÏJ
+OOÃBˆÛÛœİÜ›İ\\›Ú™Xİ™š^\™QÜ›İ\Ë™š[™
+
+][JOOš][KšYOOX]Û‹™]\Ù]™[]QÜ›İ\
+NÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆÜØ]™KYÜ›İ\ŠK™]\Ù]™Ü›İ\YYÜ›İ\šYÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆÙÜ›İ\[˜[YHŠK˜[YOYÜ›İ\›˜[YNÃBˆØİ[Y[œ]Y\TÙ[XİÜ[
+–Ù]KYÜ›İ\[Y[X™\—HŠK™›Ü‘XXÚ
+
+[œ]
+OOÚ[œ]˜ÚXÚÙYYÜ›İ\™š^\™RYËš[˜ÛY\Ê[œ]˜[YJNßJNÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆÙÜ›İ\[˜[YHŠK™›Øİ\Ê
+NÃBˆNÃBˆ]Û‹š[œÙ\Y˜XÙ[[[Y[
+˜™Y›Ü™X™YÚ[ˆ‹Y]
+NÃBˆJNÃBˆØİ[Y[œ]Y\TÙ[XİÜ[
+–Ù]KY[]KYÜ›İ\HŠK™›Ü‘XXÚ
+
+]ÛŠOO˜]Û‹›Û˜ÛXÚÏJ
+OOÃBˆÛÛ[Z]›Ú™XİÚ[™ÙJ™š^\™KYÜ›İ\Y[]H‹
+˜Y
+OOÙ˜Y™š^\™QÜ›İ\ÏJ˜Y™š^\™QÜ›İ\ÈÏÈ×JK™š[\Š
+Ü›İ\
+OO™Ü›İ\šYOOX]Û‹™]\Ù]™[]QÜ›İ\
+NßJNÜ™[™\Š
+NÃBˆJNÃBˆÛÛœİ\XØ]P]ÛYØİ[Y[œ]Y\TÙ[XİÜŠˆÙ\XØ]KXİYHŠK[]P]ÛYØİ[Y[œ]Y\TÙ[XİÜŠˆÙ[]KXİYHŠNÃBˆYˆ
+\XØ]P]ÛŠH\XØ]P]Û‹›Û˜ÛXÚÏJ
+OOÃBˆÛÛœİİYO\›Ú™Xİ˜İY\Ë™š[™
+
+][JOOš][KšYOO\™Y™\™[˜Ù\Ë˜İYRY
+HÏÈ›Ú™Xİ˜İY\Ë˜]
+LJNÃBˆÛÛœİYXÜ\Ëœ˜[™ÛUURQ
+
+NÃBˆÛÛ[Z]›Ú™XİÚ[™ÙJ˜İYKY\XØ]H‹
+˜Y
+OOÙ˜Y˜İY\ÏY\XØ]PİYJ˜Y˜İY\ËİYKšYÚY˜[YN˜	ØİYK›˜[Y_H0­È	İ
+˜ÛÜSX™[Š_XJNßJNÃBˆ™Y™\™[˜Ù\Ë˜İYRYZYÜØ]™T™Y™\™[˜Ù\Ê
+NÜ™[™\Š
+NÃBˆNÃBˆYˆ
+[]P]ÛŠH[]P]Û‹›Û˜ÛXÚÏJ
+OOÃBˆÛÛœİİYO\›Ú™Xİ˜İY\Ë™š[™
+
+][JOOš][KšYOO\™Y™\™[˜Ù\Ë˜İYRY
+HÏÈ›Ú™Xİ˜İY\Ë˜]
+LJNÃBˆÛÛœİ[™^\›Ú™Xİ˜İY\Ëš[™^ÙŠİYJNÃBˆÛÛ[Z]›Ú™XİÚ[™ÙJ˜İYKY[]H‹
+˜Y
+OOÙ˜Y˜İY\Ï\™[[İ™PİYJ˜Y˜İY\ËİYKšY
+NßJNÃBˆ™Y™\™[˜Ù\Ë˜İYRY\›Ú™Xİ˜İY\ÖÓX]›Z[Š[™^›Ú™Xİ˜İY\Ë›[™İLJWOËšYÏÈ[ÃBˆØ]™T™Y™\™[˜Ù\Ê
+NÜ™[™\Š
+NÃBˆNÃBˆÛÛœİY]]ÛYØİ[Y[œ]Y\TÙ[XİÜŠˆÙY]XİYHŠNÃBˆYˆ
+Y]]ÛŠHY]]Û‹›Û˜ÛXÚÏJ
+OOÃBˆHÃBˆÛÛœİÚ[™Ù\Ï^Û˜[YN™Øİ[Y[œ]Y\TÙ[XİÜŠˆÙY]XİYK[˜[YHŠK˜[Y_NÃBˆ›Üˆ
+ÛÛœİÙ^HÙˆÈ™\˜][Ûˆ‹™˜YH‹™[^H‹™˜YSİ]—JHÃBˆÛÛœİ[œ]YØİ[Y[œ]Y\TÙ[XİÜŠÙY]XİYKIÚÙ^_X
+NÃBˆYˆ
+Z[œ]˜[YKš[J
+HZ[œ]˜ÚXÚÕ˜[Y]J
+JH›İÈ™]È\œ›ÜŠ	İ
+Ù^J_Nˆ[\ˆH˜[Y˜[YK˜
+NÃBˆÚ[™Ù\ÖÚÙ^WOS[X™\Š[œ]˜[YJNÃBˆCBˆÛÛœİİYO\›Ú™Xİ˜İY\Ë™š[™
+
+][JOOš][KšYOO\™Y™\™[˜Ù\Ë˜İYRY
+HÏÈ›Ú™Xİ˜İY\Ë˜]
+LJNÃBˆÛÛ[Z]›Ú™XİÚ[™ÙJ˜İYKYY]‹
+˜Y
+OOÙ˜Y˜İY\ÏY˜Y˜İY\Ë›X\
+
+][JOOš][KšYOOXİYKšYÈY]İYJ][KÚ[™Ù\ÊHˆ][JNßJNÃBˆ™[™\Š
+NÃBˆHØ]Ú
+\œ›ÜŠHÈØİ[Y[œ]Y\TÙ[XİÜŠˆÜİ]\ÈŠK^ÛÛ[\İ]\ÏY\œ›Ü‹›Y\ÜØYÙNÈCBˆNÃBˆØİ[Y[œ]Y\TÙ[XİÜ[
+–Ù]KXİYWHŠK™›Ü‘XXÚ
+
+]ÛŠOO˜]Û‹›Û˜ÛXÚÏJ
+OOÃBˆİÜ^X˜XÚÊ
+NÃBˆ™Y™\™[˜Ù\Ë˜İYRYX]Û‹™]\Ù]˜İYNÃBˆØ]™T™Y™\™[˜Ù\Ê
+NÃBˆ™[™\Š
+NÃBˆJNÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆÛØØ[HŠK›Û˜Ú[™ÙHH
+]™[
+HOˆÈ™Y™\™[˜Ù\Ë›ØØ[HH]™[\™Ù]˜[YNÈØ]™T™Y™\™[˜Ù\Ê
+NÈİ]\ÈH
+œİ]\ÓØØ[HŠNÈ™[™\Š
+NÈNÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆİ[YHŠK›Û˜ÛXÚÈH
+
+HOˆÈ™Y™\™[˜Ù\Ë[YHH™Y™\™[˜Ù\Ë[YHOOH™\šÈˆÈ›YÚˆˆ™\šÈÈØ]™T™Y™\™[˜Ù\Ê
+NÈİ]\ÈH
+œİ]\Õ[YHŠNÈ™[™\Š
+NÈNÃBˆØİ[Y[œ]Y\TÙ[XİÜ[
+–Ù]K[[Ù[WHŠK™›Ü‘XXÚ
+
+]ÛŠHOˆ]Û‹›Û˜ÛXÚÈH
+
+HOˆÃBˆÛÛœİÙ^OX]Û‹™]\Ù]›[Ù[NÃBˆYŠÙ^OOOH˜ÛÜ[İŠ^Ù›Ø][™Ğ›İ›Ü[Š
+NÜ™]\›ßCBˆİÜ^X˜XÚÊ
+NÃBˆ™Y™\™[˜Ù\Ë›[Ù[OZÙ^NÃBˆYˆ
+Ù^HOOH›YÚŠHÈ™Y™\™[˜Ù\ËšY]ÏH›YÚÈ™Y™\™[˜Ù\Ëš[œÜXİÜ“[ÙOH™š^\™HÈCBˆYˆ
+Ù^HOOHœ[]HŠHÈ™Y™\™[˜Ù\ËšY]ÏHœ[]HÈ™Y™\™[˜Ù\Ëš[œÜXİÜ“[ÙOHœ[]HÈCBˆØ]™T™Y™\™[˜Ù\Ê
+NÃBˆİ]\Ï]
+œİ]\Ó[Ù[HŠH
+È]Û‹^ÛÛ[š[J
+NÃBˆ™[™\Š
+NÃBˆJNÃBˆØİ[Y[œ]Y\TÙ[XİÜ[
+–Ù]K]ÛÛHŠK™›Ü‘XXÚ
+
+]ÛŠHOˆ]Û‹›Û˜ÛXÚÈH
+
+HOˆÃBˆ™Y™\™[˜Ù\ËÛÛX]Û‹™]\Ù]ÛÛÃBˆYˆ
+ÈœÚ\\È‹^—Kš[˜ÛY\Ê™Y™\™[˜Ù\ËÛÛ
+JHÃBˆÛÛœİYXÜ\Ëœ˜[™ÛUURQ
+
+NÃBˆÛÛ[Z]›Ú™XİÚ[™ÙJ˜Ø[˜\Ë[Øš™XİXY‹
+˜Y
+OOÙY]ØÙ[™J˜Y
+Xİ]™K[™^
+OOÙ˜YœØÙ[™\ÖÚ[™^OXYØ[˜\ÓØš™Xİ
+Xİ]™K™Y™\™[˜Ù\ËÛÛOOHœÚ\\ÈˆÈ
+™Y™\™[˜Ù\ËœÚ\RÚ[™OOH™[\ÙHˆÈ™[\ÙHˆˆœ™XİŠHˆ^‹Ù[XİY
+
+Kš^ÚY^
+^Š_JNßJNßJNÃBˆ™Y™\™[˜Ù\Ë›Øš™XİYZYÜ™Y™\™[˜Ù\ËšY]ÏHœ[]HÜ™Y™\™[˜Ù\Ëš[œÜXİÜ“[ÙOHœ[]HÃBˆCBˆYˆ
+™Y™\™[˜Ù\ËÛÛOOH™š^\™HŠHÈ™Y™\™[˜Ù\Ë›[Ù[OH›Xœ˜\HÈ™Y™\™[˜Ù\ËšY]ÏH›YÚÈCBˆYˆ
+™Y™\™[˜Ù\ËÛÛOOH›Ü˜š]ˆ™Y™\™[˜Ù\ËÛÛOOH›X]\šX[ŠH™Y™\™[˜Ù\ËšY]ÏH›YÚÃBˆYˆ
+Èœ[]Pœ\Ú‹›YX\İ\™H—Kš[˜ÛY\Ê™Y™\™[˜Ù\ËÛÛ
+JH™Y™\™[˜Ù\ËšY]ÏHœ[]HÃBˆØ]™T™Y™\™[˜Ù\Ê
+NÃBˆİ]\Ï]
+œİ]\ÕÛÛŠH
+È]Û‹^ÛÛ[š[J
+NÃBˆ™[™\Š
+NÃBˆYŠ™Y™\™[˜Ù\ËÛÛOOH›YX\İ\™HŠ^ÙØİ[Y[œ]Y\TÙ[XİÜŠ‹™\ÚYÛ‹XØ[˜\ÈŠOË™›Øİ\Ê
+NÜİ]\Ï]
+›YX\İ\™R[ŠNÙØİ[Y[œ]Y\TÙ[XİÜŠˆÜİ]\ÈŠK^ÛÛ[\İ]\ÎßCBˆYˆ
+™Y™\™[˜Ù\ËÛÛOOH›Ü˜š]ŠHØİ[Y[œ]Y\TÙ[XİÜŠˆÛYÚXØ[˜\ÈŠOË™›Øİ\Ê
+NÃBˆYˆ
+™Y™\™[˜Ù\ËÛÛOOH›X]\šX[ŠHØİ[Y[œ]Y\TÙ[XİÜŠˆØ\K\ØÙ[™HŠOË™›Øİ\Ê
+NÃBˆYˆ
+™Y™\™[˜Ù\ËÛÛOOHœ[]Pœ\ÚŠHØİ[Y[œ]Y\TÙ[XİÜŠˆÜİØ]ÚZ^ŠOË™›Øİ\Ê
+NÃBˆJNÃBˆØİ[Y[œ]Y\TÙ[XİÜ[
+–Ù]K\İØ]ÚHŠK™›Ü‘XXÚ
+
+]ÛŠHOˆ]Û‹›Û˜ÛXÚÈH
+
+HOˆÈ™Y™\™[˜Ù\ËœÙ[XİYH]Û‹™]\Ù]œİØ]ÚÈ™Y™\™[˜Ù\Ëš[œÜXİÜ“[ÙOHœ[]HÈØ]™T™Y™\™[˜Ù\Ê
+NÈ™[™\Š
+NÈJNÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆÜ›Ú™Xİ[˜[YHŠK›Û˜Ú[™ÙHH
+]™[
+HOˆÈÛÛœİ˜[YOY]™[\™Ù]˜[YKš[J
+NÈYŠ˜[YI‰›˜[YHOO\›Ú™Xİ›˜[YJHÛÛ[Z]›Ú™XİÚ[™ÙJœ›Ú™Xİ\™[˜[YH‹
+˜Y
+OOÙ˜Y›˜[YO[˜[YNßJNÈ™[™\Š
+NÈNÃBˆÛÛœİØÙ[™TÙ[XİYØİ[Y[œ]Y\TÙ[XİÜŠˆÜØÙ[™K\Ù[XİŠNÚYŠØÙ[™TÙ[Xİ
+\ØÙ[™TÙ[Xİ›Û˜Ú[™ÙOJ]™[
+OOÚYŠ\›Ú™XİœØÙ[™\ËœÛÛYJ
+][JOOš][KšYOOY]™[\™Ù]˜[YJJ\™]\›Ü™Y™\™[˜Ù\ËœØÙ[™RYY]™[\™Ù]˜[YNÜ™Y™\™[˜Ù\Ë›Øš™XİY[[ÜØ]™T™Y™\™[˜Ù\Ê
+NÜ™[™\Š
+NßNÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆÜÙYYŠK›Û˜Ú[™ÙHH
+]™[
+HOˆÈÛÛœİ^H›Ü›X[^™R^
+]™[\™Ù]˜[YJNÈYˆ
+^
+H™Y™\™[˜Ù\ËœÙYYH^È]™[\™Ù]˜[YHH™Y™\™[˜Ù\ËœÙYYÈØ]™T™Y™\™[˜Ù\Ê
+NÈNÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆÚ\›[ÛHŠK›Û˜Ú[™ÙHH
+]™[
+HOˆÈ™Y™\™[˜Ù\Ëš\›[ÛHH]™[\™Ù]˜[YNÈØ]™T™Y™\™[˜Ù\Ê
+NÈNÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆÜ™\›ÛŠK›Û˜ÛXÚÈH
+
+HOˆ]]]PÛÛİ\œÊ
+ÛÛİ\œÊHOˆ™\›Û[›ØÚÙY
+ÛÛİ\œË™Y™\™[˜Ù\ËœÙYY™Y™\™[˜Ù\Ëš\›[ÛJJNÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆØYXÛÛİ\ˆŠK›Û˜ÛXÚÈH
+
+HOˆ]]]PÛÛİ\œÊ
+ÛÛİ\œÊHOˆÈÛÛœİYHİØ]ÚIÑ]K››İÊ
+_XÈ™Y™\™[˜Ù\ËœÙ[XİYHYÈ™]\›ˆË‹‹˜ÛÛİ\œËÈY˜[YN˜İØ]Ú	ØÛÛİ\œË›[™İ
+È_X^œ™Y™\™[˜Ù\ËœÙYYØÚÙY™˜[ÙHWNÈJNÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆØ\KXÛÛİ\ˆŠK›Û˜ÛXÚÈH
+
+HOˆÈÛÛœİ˜[YHHØİ[Y[œ]Y\TÙ[XİÜŠˆÜİØ]Ú[˜[YHŠK˜[YKš[J
+K^H›Ü›X[^™R^
+Øİ[Y[œ]Y\TÙ[XİÜŠˆÜİØ]ÚZ^ŠK˜[YJNÈYˆ
+Z^
+H™]\›ˆÙ]İ]\Ê‘[\ˆH˜[YËHÜˆ‹YYÚ]V˜[YKˆŠNÈ]]]PÛÛİ\œÊ
+ÛÛİ\œÊHOˆ\]TİØ]Ú
+ÛÛİ\œËÙ[XİY
+
+KšYÈ˜[YN›˜[YHÙ[XİY
+
+K›˜[YK^JJNÈNÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆÛØÚË\İØ]ÚŠK›Û˜ÛXÚÈH
+
+HOˆ]]]PÛÛİ\œÊ
+ÛÛİ\œÊHOˆ\]TİØ]Ú
+ÛÛİ\œËÙ[XİY
+
+KšYÈØÚÙYˆ\Ù[XİY
+
+K›ØÚÙYJJNÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆÜØ]™HŠK›Û˜ÛXÚÈH
+
+HOˆÈØ]™T›Ú™Xİ
+
+NÈ™[™\Š
+NÈNÂˆØİ[Y[œ]Y\TÙ[XİÜŠˆÛ™]Ë\›Ú™XİŠK›Û˜ÛXÚÏXÜ™X]S™]Ô›Ú™XİÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆİ[™ÈŠK›Û˜ÛXÚÈH[™ÎÈØİ[Y[œ]Y\TÙ[XİÜŠˆÜ™YÈŠK›Û˜ÛXÚÈH™YÎÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆİÙÙÛK[^ŠK›Û˜ÛXÚÈH
+
+HOˆÈ™Y™\™[˜Ù\Ë›^Ü[ˆH\™Y™\™[˜Ù\Ë›^Ü[ÈØ]™T™Y™\™[˜Ù\Ê
+NÈ™[™\Š
+NÈNÃBˆÛÛœİX]\šX[\™Ù]YØİ[Y[œ]Y\TÙ[XİÜŠˆÛX]\šX[]\™Ù]ŠNÚYŠX]\šX[\™Ù]
+HX]\šX[\™Ù]›Û˜Ú[™ÙOJ
+OOÜ™Y™\™[˜Ù\Ë›X]\šX[\™Ù][X]\šX[\™Ù]˜[YNÜØ]™T™Y™\™[˜Ù\Ê
+NßNÃBˆÛÛœİ\TØÙ[™HHØİ[Y[œ]Y\TÙ[XİÜŠˆØ\K\ØÙ[™HŠNÈYˆ
+\TØÙ[™JH\TØÙ[™K›Û˜ÛXÚÈH
+
+HOˆÈÛÛœİ\™Ù][X]\šX[\™Ù]˜[YNØÛÛ[Z]›Ú™XİÚ[™ÙJœØÙ[™K[X]\šX[‹
+˜Y
+OOÙY]ØÙ[™J˜Y
+Xİ]™K[™^
+OOÙ˜YœØÙ[™\ÖÚ[™^OX\TØÙ[™SX]\šX[
+Xİ]™K\™Ù]Ù[XİY
+
+Kš^
+NßJNßJNÜİ]\ÈH	İ
+˜\HŠ_H	ÜÙ[XİY
+
+Kš^XÜ™[™\Š
+NÈNÃBˆÛÛœİ™\Ù]Ø[Y\˜HH
+
+HOˆ™[™\™\Ëœ™\Ù]
+
+NÂˆØİ[Y[œ]Y\TÙ[XİÜŠˆÜ™\Ù]XØ[Y\˜HŠOË˜Y]™[\İ[™\Š˜ÛXÚÈ‹™\Ù]Ø[Y\˜JNÂˆØİ[Y[œ]Y\TÙ[XİÜŠˆØYYš^\™HŠK›Û˜ÛXÚÈH
+
+HOˆÈYš\X[š^\™J
+NÈ™[™\Š
+NÈNÃBˆÛÛœİ›XÚÛİ]]ÛˆHØİ[Y[œ]Y\TÙ[XİÜŠˆØ›XÚÛİ]ŠNÈYˆ
+›XÚÛİ]]ÛŠH›XÚÛİ]]Û‹›Û˜ÛXÚÈH
+
+HOˆÈXİ]˜]P›XÚÛİ]
+
+NÈ™[™\Š
+NÈNÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆØ\KYš^\™KXÛÛİ\ˆŠK›Û˜ÛXÚÈH
+
+HOˆÈ\T[]UÕš\X[š^\™\Ê
+NÈ™[™\Š
+NÈNÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆØÜ™X]KXİYHŠK›Û˜ÛXÚÈHÜ™X]PİYTÛ˜\ÚİÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆÜ^KXİYHŠK›Û˜ÛXÚÈH^S]\İİYNÃBˆØİ[Y[œ]Y\TÙ[XİÜŠˆÜİÜXİYHŠK›Û˜ÛXÚÈH
+
+HOˆÈİÜ^X˜XÚÊ
+NÈ™[™\Š
+NÈNÃBˆØİ[Y[œ]Y\TÙ[XİÜ[
+–Ù]KY^ÜHŠK™›Ü‘XXÚ
+
+]ÛŠHOˆ]Û‹›Û˜ÛXÚÈH
+
+HOˆ^Üš[J]Û‹™]\Ù]™^Ü
+JNÃBˆÛÛœİÛÜÙQ^ÜÈHØİ[Y[œ]Y\TÙ[XİÜŠˆØÛÜÙKY^ÜÈŠNÈYˆ
+ÛÜÙQ^ÜÊHÛÜÙQ^ÜË›Û˜ÛXÚÈH
+
+HOˆÈ™Y™\™[˜Ù\Ë›[Ù[OH˜Ø[˜\ÈÈ™[™\Š
+NÈNÃBˆÛÛœİÜ[]ÛYØİ[Y[œ]Y\TÙ[XİÜŠˆÛÜ[‹\›Ú™XİŠK›Ú™Xİš[OYØİ[Y[œ]Y\TÙ[XİÜŠˆÜ›Ú™XİYš[HŠNÈYŠÜ[]Û‰‰œ›Ú™Xİš[J^ÛÜ[]Û‹›Û˜ÛXÚÏJ
+OOœ›Ú™Xİš[K˜ÛXÚÊ
+NÜ›Ú™Xİš[K›Û˜Ú[™ÙOJ
+OOØÛÛœİÙš[WO\›Ú™Xİš[K™š[\ÎÚYŠš[JH[\Ü˜]]™T›Ú™Xİ
+š[JNßNßBˆÛÛœİ[XYÙR[\Ü]ÛYØİ[Y[œ]Y\TÙ[XİÜŠˆÚ[\ÜZ[XYÙHŠK[]R[XYÙOYØİ[Y[œ]Y\TÙ[XİÜŠˆÜ[]KZ[XYÙHŠNÚYŠ[XYÙR[\Ü]Û‰‰œ[]R[XYÙJZ[XYÙR[\Ü]Û‹›Û˜ÛXÚÏJ
+OOœ[]R[XYÙK˜ÛXÚÊ
+NÃBˆØİ[Y[œ]Y\TÙ[XİÜ[
+–Ù]K\›Ùš[WHŠK™›Ü‘XXÚ
+
+]ÛŠOO˜]Û‹›Û˜ÛXÚÏJ
+OOØYš\X[š^\™J]Û‹™]\Ù]œ›Ùš[JNÜ™[™\Š
+NßJNÃBˆÛÛœİÛÜÙSXœ˜\OYØİ[Y[œ]Y\TÙ[XİÜŠˆØÛÜÙK[Xœ˜\HŠNÈYŠÛÜÙSXœ˜\JHÛÜÙSXœ˜\K›Û˜ÛXÚÏJ
+OOÜ™Y™\™[˜Ù\Ë›[Ù[OH˜Ø[˜\ÈÜ™[™\Š
+NßNÃBˆÛÛœİš^\™TÙ[XİYØİ[Y[œ]Y\TÙ[XİÜŠˆÙš^\™K\Ù[XİŠNÈYŠš^\™TÙ[Xİ
+Hš^\™TÙ[Xİ›Û˜Ú[™ÙOJ
+OOÜ™Y™\™[˜Ù\Ë™š^\™RYYš^\™TÙ[Xİ˜[YNÜØ]™T™Y™\™[˜Ù\Ê
+NÜ™[™\Š
+NßNÃBˆÛÛœİ\Qš^\™OYØİ[Y[œ]Y\TÙ[XİÜŠˆØ\KYš^\™HŠNÈYŠ\Qš^\™JH\Qš^\™K›Û˜ÛXÚÏX\Qš^\™R[œÜXİÜÂˆÛÛœİ\Qš^\™T]Ú]ÛYØİ[Y[œ]Y\TÙ[XİÜŠˆØ\KYš^\™K\]ÚŠNÈYŠ\Qš^\™T]Ú]ÛŠH\Qš^\™T]Ú]Û‹›Û˜ÛXÚÏX\Qš^\™T]ÚÃBˆÛÛœİ›Ü›HHØİ[Y[œ]Y\TÙ[XİÜŠˆÛ^Y›Ü›HŠNÈYˆ
+›Ü›JHØÛÛœİ]™RÜİYØİ[Y[˜Ü™X]Q[[Y[
+œÙXİ[ÛˆŠNÛ]™RÜİ˜Û\ÜÓ˜[YOH›]™KXÛÜ[İ\[™[Ù›Ü›K˜™Y›Ü™J]™RÜİ
+NÛ]™PÛÜ[İ[™[›[İ[
+]™RÜİ
+NØÛÛœİÜİYØİ[Y[˜Ü™X]Q[[Y[
+œÙXİ[ÛˆŠNÚÜİ™]\Ù]›^Ù\šXÙOHˆÚÜİ˜Û\ÜÓ˜[YOH›^\Ù\šXÙHÙ›Ü›Kœ™\XÙUÚ]
+Üİ
+NÛ^Ù\šXÙK›[İ[
+Üİ
+NßCBŸCBÚ[™İË˜Y]™[\İ[™\ŠšÙ^YİÛˆ‹
+]™[
+HOˆÈYˆ
+\ÑY]X›U\™Ù]
+]™[\™Ù]
+H]™[™Y˜][™]™[Y]™[š\ĞÛÛ\ÜÚ[™ÊH™]\›ÈÛÛœİÛÛ]ÛÛÚÜİ]
+]™[
+NÚYŠÛÛ
+^ØÛÛœİ]ÛYØİ[Y[œ]Y\TÙ[XİÜŠÙ]K]ÛÛH‰İÛÛH—X
+NÚYŠ]Ûˆ	‰ˆX]Û‹™\ØX›Y
+^Ù]™[œ™]™[Y˜][
+
+NØ]Û‹˜ÛXÚÊ
+Nß\™]\›ßHÛÛœİÚÜİ]YY]Ü”ÚÜİ]
+]™[
+NÈYˆ
+\ÚÜİ]
+H™]\›È]™[œ™]™[Y˜][
+
+NÈYˆ
+ÚÜİ]OOHœØ]™HŠHÈØ]™T›Ú™Xİ
+
+NÈ™[™\Š
+NÈH[ÙHYˆ
+ÚÜİ]OOH[™ÈŠH[™Ê
+NÈ[ÙH™YÊ
+NÈJNÃB˜XØÛİ[œİXœØÜšX™J
+
+OOœ™[™\Š
+JNÃBœ™[™\Š
+NÃBƒBƒB
