@@ -324,7 +324,8 @@ function render() {
   const nav = [
     ["canvas", "⌂", true], ["palette", "◉", true], ["light", "☼", true], ["copilot", "◌", true], ["library", "▱", true], ["export", "↗", true], ["community", "♧", false]
   ].map(([key, icon, enabled]) => {const labelKey={canvas:"moduleCanvas",light:"moduleLight",copilot:"moduleCopilot"}[key] ?? key;return `<button class="module ${studioActiveModule(preferences) === key ? "is-active" : ""}" data-module="${key}" ${enabled ? "" : disabled(`${t(key)} ${t("availableLater")}`)}><span>${icon}</span>${t(labelKey)}</button>`;}).join("");
-  const tools = [["select","↖",true],["paletteBrush","◉",true],["fixture","☀",true],["material","◆",true],["shapes","□",false],["text","T",false],["measure","⌗",false],["orbit","◎",true],["aiPin","✦",false]].map(([key, icon, enabled]) => `<button class="tool ${preferences.tool === key ? "is-active" : ""}" data-tool="${key}" ${enabled ? "" : disabled(`${t(key)} ${t("availableLater")}`)}><span>${icon}</span>${t(key)}</button>`).join("");
+  const compactToolLabelKeys={paletteBrush:"brushShort",fixture:"fixtureShort",material:"materialShort",orbit:"orbitShort"};
+  const tools = [["select","↖",true],["paletteBrush","◉",true],["fixture","☀",true],["material","◆",true],["shapes","□",false],["text","T",false],["measure","⌗",false],["orbit","◎",true],["aiPin","✦",false]].map(([key, icon, enabled]) => `<button class="tool ${preferences.tool === key ? "is-active" : ""}" data-tool="${key}" aria-label="${esc(t(key))}" ${enabled ? "" : disabled(`${t(key)} ${t("availableLater")}`)}><span aria-hidden="true">${icon}</span>${esc(t(compactToolLabelKeys[key] ?? key))}</button>`).join("");
   const swatches = palette().colors.map((swatch)=>swatchButton(swatch,active.id)).join("");
   const patchedFixtures = project.fixtures.filter((fixture) => fixture.patchAssignment);
   const virtualFrame = dmxFrame(project.fixtures);
