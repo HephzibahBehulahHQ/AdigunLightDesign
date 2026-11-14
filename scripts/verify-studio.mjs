@@ -258,6 +258,8 @@ try {
   assert.equal(await page.locator('[data-scene-editor="room"]').evaluate((element) => element.open), true, "Room ribbon command opens the existing editable dimensions");
   await page.locator('[data-module="light"]').click();
   assert.equal(await page.locator("#fixture-inspector-panel").isVisible(), true, "Light Lab module selects the fixture inspector");
+  assert.equal(await page.locator(".inspector-group-dmx #apply-fixture").count(),1,"the working fixture and patch action is grouped with DMX controls");
+  assert.equal(await page.locator(".inspector-group-dmx .fixture-output-note").innerText(),"Virtual output only · CH 1–512","DMX panel states the real virtual-only channel range");
   await page.locator('[data-open-scene-editor="room"]').click();
   assert.equal(await page.locator('[data-scene-editor="room"]').evaluate((element) => element.open), true, "Room ribbon command opens the existing editable dimensions");
   await page.locator('[data-open-scene-editor="stage"]').click();
