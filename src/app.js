@@ -256,7 +256,7 @@ function compact(value, digits = 1) { return Number(value).toFixed(digits); }
 function colourSpaceMarkup(hex) { const rgb=hexToRgb(hex),hsl=rgbToHsl(rgb),hsv=rgbToHsv(rgb),lab=rgbToLab(rgb),oklab=rgbToOklab(rgb); return `<section class="colour-space-card" aria-label="${t("colorSpaces")}"><h3>${t("colorSpaces")}</h3><dl><div><dt>sRGB</dt><dd>${Math.round(rgb.r)}, ${Math.round(rgb.g)}, ${Math.round(rgb.b)}</dd></div><div><dt>HSL</dt><dd>${compact(hsl.h)}° · ${compact(hsl.s*100)}% · ${compact(hsl.l*100)}%</dd></div><div><dt>HSV</dt><dd>${compact(hsv.h)}° · ${compact(hsv.s*100)}% · ${compact(hsv.v*100)}%</dd></div><div><dt>CIELAB</dt><dd>${compact(lab.l)}, ${compact(lab.a)}, ${compact(lab.b)}</dd></div><div><dt>OKLab</dt><dd>${compact(oklab.l,3)}, ${compact(oklab.a,3)}, ${compact(oklab.b,3)}</dd></div></dl><small class="${isSrgbGamut(rgb)?"pass":"fail"}">${isSrgbGamut(rgb)?t("inSrgb"):t("outsideSrgb")}</small></section>`; }
 function fixtureLibraryMarkup() { return fixtureProfiles.map((profile)=>`<article><b>${esc(profile.model)}</b><small>${esc(profile.type)} · ${profile.modes[0].channels.length} CH</small><p>${esc(profile.validationStatus)} · ${esc(profile.provenance)}</p><button data-profile="${profile.id}">${t("addToVirtualPatch")}</button></article>`).join(""); }
 function selectedFixture() { return project.fixtures.find((fixture)=>fixture.id===preferences.fixtureId) ?? project.fixtures[0]; }
-function fixtureInspectorMarkup() { const fixture=selectedFixture(),profile=getFixtureProfile(fixture.profileId),mode=profile.modes.find((item)=>item.id===fixture.modeId) ?? profile.modes[0],patch=fixture.patchAssignment ?? {universe:1,startAddress:1}; return `<section class="fixture-inspector"><h3>${t("virtualFixture")}</h3><label>${t("fixtureLabel")}<select id="fixture-select">${fixtureOptions(project.fixtures,fixture.id)}</select></label><div class="fixture-profile-summary" title="${esc(profile.validationStatus)}"><span><small>Type</small><b>${esc(profile.type)}</b></span><span><small>Mode</small><b>${esc(mode?.name ?? profile.model)}</b></span></div><label>${t("colourName")}<input id="fixture-name" value="${esc(fixture.name)}" /></label>${fixturePlacementMarkup(fixture.transform,t("fixturePlacement"),t("fixtureDragHint"))}<div class="fixture-grid"><label>${t("universe")}<input id="fixture-universe" type="number" min="1" value="${patch.universe}" /></label><label>${t("address")}<input id="fixture-address" type="number" min="1" max="512" value="${patch.startAddress}" /></label><label>${t("dimmer")}<input id="fixture-dimmer" type="number" min="0" max="255" value="${fixture.properties.dimmer ?? 0}" /></label><label>${t("beam")}<input id="fixture-beam" type="number" min="0" max="255" value="${fixture.properties.beam ?? 0}" /></label></div><button id="apply-fixture" class="wide">${t("applyFixturePatch")}</button></section>`; }
+function fixtureInspectorMarkup() { const fixture=selectedFixture(),profile=getFixtureProfile(fixture.profileId),mode=profile.modes.find((item)=>item.id===fixture.modeId) ?? profile.modes[0],patch=fixture.patchAssignment ?? {universe:1,startAddress:1}; return `<section class="fixture-inspector"><h3>${t("virtualFixture")}</h3><label>${t("fixtureLabel")}<select id="fixture-select">${fixtureOptions(project.fixtures,fixture.id)}</select></label><div class="fixture-profile-summary" title="${esc(profile.validationStatus)}"><span><small>Type</small><b>${esc(profile.type)}</b></span><span><small>Mode</small><b>${esc(mode?.name ?? profile.model)}</b></span></div><label>${t("colourName")}<input id="fixture-name" value="${esc(fixture.name)}" /></label>${fixturePlacementMarkup(fixture.transform,t("fixturePlacement"),t("fixtureDragHint"))}<div class="fixture-grid"><label>${t("universe")}<input id="fixture-universe" type="number" min="1" value="${patch.universe}" /></label><label>${t("startAddress")}<input id="fixture-address" type="number" min="1" max="512" value="${patch.startAddress}" /></label><label>${t("dimmer")}<input id="fixture-dimmer" type="number" min="0" max="255" value="${fixture.properties.dimmer ?? 0}" /></label><label>${t("beam")}<input id="fixture-beam" type="number" min="0" max="255" value="${fixture.properties.beam ?? 0}" /></label></div><button id="apply-fixture" class="wide">${t("applyFixtureProperties")}</button></section>`; }
 function applyFixtureInspector() {
   const fixture=selectedFixture();
   if (!fixture) return;
@@ -276,7 +276,6 @@ function applyFixtureInspector() {
         const aiming=Object.fromEntries(["pan","tilt"].filter((key)=>document.querySelector(`#fixture-${key}`)).map((key)=>[key,value(`#fixture-${key}`)]));
         return {red:rgb.r,green:rgb.g,blue:blueChannel ? value("#fixture-blue-channel") : rgb.b,...aiming,...(white ? {white:value("#fixture-white")} : {})};
       })()},
-      universe:value("#fixture-universe"),startAddress:value("#fixture-address")
     };
     commitProjectChange("fixture-update",(draft)=>{draft.fixtures=updateFixture(draft.fixtures,fixture.id,changes);});
     updateRendererFromFixtures();
@@ -285,6 +284,22 @@ function applyFixtureInspector() {
   } catch(error) { document.querySelector("#status").textContent=status=error.message; }
 }
 
+function applyFixturePatch() {
+  const fixture=selectedFixture();
+  if (!fixture) return;
+  const value=(id)=>{
+    const input=document.querySelector(id);
+    if (!input.value.trim() || !input.checkValidity()) throw new Error(`${input.closest("label").textContent.trim()}: enter a valid value.`);
+    return Number(input.value);
+  };
+  try {
+    const universe=value("#fixture-universe"),startAddress=value("#fixture-address");
+    commitProjectChange("fixture-patch",(draft)=>{draft.fixtures=patchFixture(draft.fixtures,fixture.id,universe,startAddress);});
+    updateRendererFromFixtures();
+    status=phrase("fixturePatched",{name:fixture.name,universe,address:startAddress});
+    render();
+  } catch(error) { document.querySelector("#status").textContent=status=error.message; }
+}
 function render() {
   preferences.luxOpen=true; // Floating-window state controls visibility; keep its content mounted.
   cleanupTopMenu?.();
@@ -544,7 +559,7 @@ function render() {
     bodies.light.append(advancedLight);
     const effectControls=document.querySelector("#effect-type").closest(".dmx-actions");
     const effectScope=document.createElement("p");effectScope.textContent=t("allVirtualFixtures");bodies.effects.append(effectScope,effectControls);
-    const outputNote=document.createElement("small");outputNote.className="fixture-output-note";outputNote.textContent=t("fixtureOutputNote");bodies.dmx.append(outputNote,apply);
+    const outputNote=document.createElement("small");outputNote.className="fixture-output-note";outputNote.textContent=t("fixtureOutputNote");const applyPatch=document.createElement("button");applyPatch.type="button";applyPatch.id="apply-fixture-patch";applyPatch.className="wide";applyPatch.textContent=t("applyPatch");bodies.dmx.append(outputNote,applyPatch);bodies.fixture.append(apply);
     if(actions){const actionDetails=document.createElement("details");actionDetails.className="fixture-actions-details";const actionSummary=document.createElement("summary");actionSummary.textContent=t("fixtureActions");actionDetails.append(actionSummary,actions);bodies.fixture.append(actionDetails);}
     fixturePanel.append(...Object.values(bodies));
     inspector.querySelector(".section-title h2").textContent=`${t("selectedFixtureTitle")}: ${selectedFixture().name}`;
@@ -1035,6 +1050,7 @@ function bind() {
   const closeLibrary=document.querySelector("#close-library"); if(closeLibrary) closeLibrary.onclick=()=>{preferences.module="canvas";render();};
   const fixtureSelect=document.querySelector("#fixture-select"); if(fixtureSelect) fixtureSelect.onchange=()=>{preferences.fixtureId=fixtureSelect.value;savePreferences();render();};
   const applyFixture=document.querySelector("#apply-fixture"); if(applyFixture) applyFixture.onclick=applyFixtureInspector;
+  const applyFixturePatchButton=document.querySelector("#apply-fixture-patch"); if(applyFixturePatchButton) applyFixturePatchButton.onclick=applyFixturePatch;
   const form = document.querySelector("#lux-form"); if (form) {const liveHost=document.createElement("section");liveHost.className="live-copilot-panel";form.before(liveHost);liveCopilotPanel.mount(liveHost);const host=document.createElement("section");host.dataset.luxService="";host.className="lux-service";form.replaceWith(host);luxService.mount(host);}
 }
 window.addEventListener("keydown", (event) => { if (isEditableTarget(event.target) || event.defaultPrevented || event.isComposing) return; const tool=toolShortcut(event);if(tool){const button=document.querySelector(`[data-tool="${tool}"]`);if(button && !button.disabled){event.preventDefault();button.click();}return;} const shortcut=editorShortcut(event); if (!shortcut) return; event.preventDefault(); if (shortcut === "save") { saveProject(); render(); } else if (shortcut === "undo") undo(); else redo(); });
