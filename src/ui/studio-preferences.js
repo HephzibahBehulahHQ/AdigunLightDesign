@@ -11,10 +11,7 @@ export const studioDefaults = Object.freeze({
   seed:"#2196F3"
 });
 
-export function viewCommandSource({palette,light}) {
-  return `<div class="view-command-source" hidden><button class="tab" data-view="palette">2D ${palette}</button><button class="tab" data-view="light">3D ${light}</button></div>`;
-}
-
 export function studioActiveModule({module,view}) {
-  return module === "palette" || module === "light" ? (view === "light" ? "light" : "palette") : module;
+  if (module === "library" || module === "copilot") return module;
+  return view === "light" ? "light" : "palette";
 }

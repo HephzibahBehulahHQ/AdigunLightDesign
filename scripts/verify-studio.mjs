@@ -127,14 +127,20 @@ try {
   assert.equal((await page.locator(".header-project-context").innerText()).replace(/\s+/g," ").trim(),"Studio Mood • Scene 01","header context shows the active scene number as in the reference");
   assert.match(await page.locator(".tool-section > h2").innerText(),/Tools — One Click/,"the tool group uses the one-click reference label");
   assert.equal((await page.locator(".product-lockup strong").innerText()).replace(/\s+/g, " ").trim(), "Adigun Light Design", "the header wordmark keeps the approved three-word spacing");
-  assert.deepEqual(await page.locator(".workspace-switcher button").evaluateAll((buttons)=>buttons.map((button)=>button.innerText.trim())),["2D Palette","3D Studio","Timeline"],"workspace shortcuts match the approved header");
+  assert.deepEqual(await page.locator(".module-nav button").evaluateAll((buttons)=>buttons.map((button)=>button.innerText.trim())),["Design","3D Studio","Fixture Library","AI Co-Pilot Lux"],"primary navigation exposes only direct workspace and assistant actions");
+  assert.equal(await page.locator(".module-nav #show-timeline, .workspace-switcher").count(),0,"duplicate view and timeline navigation is removed");
   const switcherCanvas=await page.locator(".scene-preview").boundingBox();
-  await page.locator('.workspace-switcher [data-view="palette"]').click();
-  assert.equal(await page.locator("#palette-inspector-panel").isVisible(),true,"2D Palette opens the existing palette workspace");
-  await page.locator('.workspace-switcher [data-view="light"]').click();
+  await page.locator('.module-nav [data-module="palette"]').click();
+  assert.equal(await page.locator("#palette-inspector-panel").isVisible(),true,"Design opens the existing 2D palette workspace");
+  await page.locator('.module-nav [data-module="light"]').click();
   assert.equal(await page.locator("#fixture-inspector-panel").isVisible(),true,"3D Studio opens the existing lighting workspace");
-  await page.locator("#show-timeline").click();
-  assert.equal(await page.locator(".lower-workspace .timeline").evaluate((panel)=>panel===globalThis.document.activeElement),true,"Timeline focuses the docked timeline without scrolling the document");
+  assert.equal(await page.locator(".lower-workspace .timeline").isVisible(),true,"the cue timeline stays docked in the workspace");
+  await page.locator('.module-nav [data-module="library"]').click();
+  assert.equal(await page.locator(".library-drawer .fixture-library article").count(),3,"Fixture Library opens the three real generic profiles");
+  await page.locator("#close-library").click();
+  await page.locator('.module-nav [data-module="copilot"]').click();
+  assert.equal(await page.locator("#floating-lux-window").isVisible(),true,"Lux navigation opens the existing assistant");
+  await page.locator("#toggle-lux").click();
   assert.deepEqual(await page.locator(".scene-preview").boundingBox(),switcherCanvas,"workspace shortcuts leave the 3D canvas stationary");
 
   assert.equal(await page.locator(".inspector > .section-title button:disabled").count(), 0, "the contextual inspector header has no inert close control");
@@ -143,16 +149,16 @@ try {
   assert.equal(await page.locator('.command-group[data-command-group="scene"] #apply-scene, .command-group[data-command-group="scene"] #material-target').count(), 0, "canvas quick actions do not duplicate scene-ribbon controls");
   assert.equal(await page.locator("#material-target").inputValue(), "wall", "the quick-paint control opens on Walls as shown in the reference");
   assert.equal(await page.locator("#material-target").evaluate((select)=>select.closest("label").firstChild.textContent.trim()), "Paint:", "the canvas quick-paint control has a compact reference label");
-  assert.equal((await page.locator("#apply-scene").innerText()).trim(), "Apply colour", "the canvas action uses the concise reference label");
-  assert.equal((await page.locator("#reset-camera").innerText()).trim(), "Reset view", "the Scene ribbon exposes Reset view");
-  assert.equal((await page.locator("#reset-camera-canvas").innerText()).trim(), "Reset view", "the canvas quick-action lane exposes Reset view");
+  assert.equal((await page.locator("#apply-scene").innerText()).trim(), "Paint surface", "the canvas action identifies its scene surface target");
+  assert.equal((await page.locator("#reset-camera").innerText()).trim(), "Reset camera", "the Scene ribbon has the single camera reset action");
+  assert.equal(await page.locator("#reset-camera-canvas").count(),0,"the duplicate canvas camera reset is removed");
   assert.deepEqual(await page.locator('.command-group[data-command-group="scene"]').evaluate((group)=>[...group.querySelectorAll("button")].map((button)=>button.dataset.cameraAxis?.toUpperCase() ?? button.dataset.openSceneEditor ?? button.id)),["room","stage","X","Y","Z","reset-camera"],"Scene commands follow the reference order");
-  for (const [locale,labels] of Object.entries({de:["Bemalen:","Wände","Farbe anwenden","Ansicht zurücksetzen"],yo:["Kún:","Àwọn ògiri","Lò àwọ̀","Tún ìwò padà"],pcm:["Paint:","Walls","Apply colour","Reset view"]})) {
+  for (const [locale,labels] of Object.entries({de:["Bemalen:","Wände","Oberfläche färben","Kamera zurücksetzen"],yo:["Kún:","Àwọn ògiri","Kún ojú ilẹ̀","Tún kámẹ́rà bẹ̀rẹ̀"],pcm:["Paint:","Walls","Paint surface","Reset camera"]})) {
     await page.locator("#locale").selectOption(locale);
     assert.equal(await page.locator("#material-target").evaluate((select)=>select.closest("label").firstChild.textContent.trim()),labels[0],`${locale} paint label remains translated`);
     assert.equal((await page.locator("#material-target option:checked").innerText()).trim(),labels[1],`${locale} paint target remains translated`);
     assert.equal((await page.locator("#apply-scene").innerText()).trim(),labels[2],`${locale} Apply colour remains translated`);
-    assert.equal((await page.locator("#reset-camera-canvas").innerText()).trim(),labels[3],`${locale} Reset view remains translated`);
+    assert.equal((await page.locator("#reset-camera").innerText()).trim(),labels[3],`${locale} camera reset remains translated`);
   }
   await page.locator("#locale").selectOption("en");
   assert.deepEqual(await page.locator('[data-command-group="project"]').evaluate((group)=>[...group.querySelectorAll("button")].map((button)=>button.id)),["new-project","open-project","save","import-image"],"project commands match New, Open, Save, Import order");
@@ -196,18 +202,18 @@ try {
 
   assert.deepEqual(await page.locator('[data-command-group="scene"] [data-camera-axis]').evaluateAll((buttons)=>buttons.map((button)=>button.innerText.trim())),["View X","View Y","View Z"],"camera view labels match the approved Scene ribbon");
   assert.equal(await page.locator(".scene-preview .viewport-axis-controls").count(), 0, "camera controls do not cover the 3D canvas");
-  for (const selector of ["#viewport-performance", "#viewport-projection", "#viewport-fit", "#viewport-fullscreen"]) {
+  for (const selector of ["#viewport-projection", "#viewport-fullscreen"]) {
     assert.equal(await page.locator(`.workspace-tabs ${selector}`).count(), 1, `${selector} stays docked in the scene header`);
   }
-  assert.deepEqual(await page.locator(".workspace-tabs").evaluate((row)=>[...row.querySelectorAll(":scope > button.view-menu")].map((button)=>button.id)),["viewport-performance","viewport-projection","viewport-fit","viewport-fullscreen"],"scene header controls follow the reference order");
-  assert.equal(await page.locator("#fixture-inspector-panel .light-advanced-controls #preview-quality").count(),1,"renderer quality remains available in advanced Light controls");
+  assert.deepEqual(await page.locator(".workspace-tabs").evaluate((row)=>[...row.querySelectorAll(":scope > button.view-menu")].map((button)=>button.id)),["viewport-projection","viewport-fullscreen"],"scene header keeps only unique projection and fullscreen actions");
+  assert.equal(await page.locator('[data-command-group="scene"] #preview-quality').count(),1,"renderer quality has one clearly labeled home in the Scene ribbon");
   const sceneHeaderCanvas=await page.locator(".scene-preview").boundingBox();
-  await page.locator("#viewport-performance").click();
-  assert.equal(await page.locator("#preview-quality").inputValue(), "performance", "Performance switches the renderer to its real performance profile");
-  await page.locator("#viewport-performance").click();
-  assert.equal(await page.locator("#preview-quality").inputValue(), "balanced", "Performance toggles back to the balanced renderer profile");
-  await page.locator("#viewport-fit").click();
-  assert.deepEqual(await page.locator(".scene-preview").boundingBox(), sceneHeaderCanvas, "Fit resets the camera without moving the canvas");
+  await page.locator("#preview-quality").selectOption("performance");
+  assert.equal(await page.locator("#preview-quality").inputValue(), "performance", "the single quality selector switches the renderer to its performance profile");
+  await page.locator("#preview-quality").selectOption("balanced");
+  assert.equal(await page.locator("#preview-quality").inputValue(), "balanced", "the same quality selector restores the balanced renderer profile");
+  await page.locator("#reset-camera").click();
+  assert.deepEqual(await page.locator(".scene-preview").boundingBox(), sceneHeaderCanvas, "Reset camera does not move the canvas");
   for (const axis of ["x", "y", "z"]) {
     const control = page.locator(`[data-command-group="scene"] [data-camera-axis="${axis}"]`);
     assert.equal(await control.isEnabled(), true, `${axis.toUpperCase()} camera view is enabled with the active WebGL renderer`);
@@ -270,8 +276,8 @@ try {
   assert.equal(await page.locator('[data-layer-fixture]').nth(1).getAttribute("aria-pressed"), "true", "fixture selection follows the selected project fixture");
   await page.locator('[data-module="palette"]').click();
   assert.equal(await page.locator(".palette-panel").isVisible(), true, "2D palette view opens");
-  assert.match(await page.locator('[data-module="light"]').innerText(), /3D Light Lab/, "module navigation matches the approved studio label");
-  assert.equal(await page.locator("#palette-inspector-panel").isVisible(), true, "Palette Engine module selects the palette inspector");
+  assert.match(await page.locator('[data-module="light"]').innerText(), /3D Studio/, "module navigation clearly names the lighting workspace");
+  assert.equal(await page.locator("#palette-inspector-panel").isVisible(), true, "Design selects the palette inspector");
   const canvasBeforeSceneSettings=await page.locator(".scene-preview").boundingBox();
   await page.locator('[data-open-scene-editor="room"]').click();
   assert.equal(await page.locator(".scene-preview.light-canvas").isVisible(), true, "Room command opens its real settings in the 3D studio");

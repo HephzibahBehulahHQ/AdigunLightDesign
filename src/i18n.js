@@ -312,6 +312,11 @@ Object.assign(messages.pcm,{paintColon:"Paint:",applyColour:"Apply colour",reset
 
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }
 
+Object.assign(messages.en,{moduleDesign:"Design",moduleStudio:"3D Studio",moduleFixtures:"Fixture Library",paintSurface:"Paint surface",applySwatchColour:"Set swatch colour",applySwatchToFixtures:"Apply swatch to fixtures",previewSelectedCue:"Preview selected cue",playCueList:"Play cue list",previewEffect:"Preview effect"});
+Object.assign(messages.de,{moduleDesign:"Entwurf",moduleStudio:"3D-Studio",moduleFixtures:"Leuchtenbibliothek",paintSurface:"Oberfläche färben",applySwatchColour:"Farbe festlegen",applySwatchToFixtures:"Farbfeld auf Leuchten anwenden",previewSelectedCue:"Ausgewählten Cue vorspielen",playCueList:"Cue-Liste abspielen",previewEffect:"Effekt vorspielen"});
+Object.assign(messages.yo,{moduleDesign:"Ìṣètò",moduleStudio:"Yàrá 3D",moduleFixtures:"Ibi ìkójọ fìtílà",paintSurface:"Kún ojú ilẹ̀",applySwatchColour:"Ṣètò àwọ̀ swatch",applySwatchToFixtures:"Lo swatch sí àwọn fìtílà",previewSelectedCue:"Ṣeré cue tí a yàn",playCueList:"Ṣeré àkójọ cue",previewEffect:"Ṣàfihàn ipa"});
+Object.assign(messages.pcm,{moduleDesign:"Design",moduleStudio:"3D Studio",moduleFixtures:"Fixture Library",paintSurface:"Paint surface",applySwatchColour:"Set swatch colour",applySwatchToFixtures:"Apply swatch to fixtures",previewSelectedCue:"Preview selected cue",playCueList:"Play cue list",previewEffect:"Preview effect"});
+
 
 
 Object.assign(messages.en,{versions:"Versions",compare:"Compare",saveVersionToCompare:"Save a palette version to compare it with the current palette."});
