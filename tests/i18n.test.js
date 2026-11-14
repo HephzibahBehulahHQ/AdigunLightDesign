@@ -5,10 +5,10 @@ import { messages, supportedLocales, translate } from "../src/i18n.js";
 test("ships all required locale dictionaries for the editor shell", () => { assert.deepEqual(supportedLocales, ["en", "de", "yo", "pcm"]); for (const locale of supportedLocales) for (const key of ["canvas","luxUnavailable","language","layersLighting","timeline","verifiedFormats","validHex"]) assert.ok(messages[locale][key], `${locale} is missing ${key}`); });
 test("falls back to English only for a missing translation key", () => { assert.equal(translate("de", "canvas"), "Leinwand erstellen"); assert.equal(translate("missing", "canvas"), "Create Canvas"); });
 
-test("assistant branding matches the Lux co-pilot reference in every locale", () => {
+test("assistant branding consistently uses Adigun Bot in every locale", () => {
   for (const locale of supportedLocales) {
-    for (const key of ["luxBrand", "luxTitle", "copilot", "openLux", "askLux", "sendLux", "botNewSuggestion"]) {
-      assert.match(messages[locale][key], /Lux/iu, `${locale}.${key}`);
+    for (const key of ["luxBrand", "luxTitle", "copilot", "openLux", "askLux", "sendLux", "botNewSuggestion", "moduleCopilot"]) {
+      assert.match(messages[locale][key], /Adigun Bot/iu, `${locale}.${key}`);
     }
   }
 });
