@@ -557,7 +557,7 @@ function render() {
   bindFixtureSliders(document.querySelector(".inspector"),{channelLabel:t("virtualChannelValue")});
   if(preferences.view==="light"){
     const axes=document.createElement("div");axes.className="viewport-axis-controls";axes.setAttribute("role","group");axes.setAttribute("aria-label",t("cameraAxisViews"));
-    axes.innerHTML=["x","y","z"].map(axis=>`<button type="button" class="axis-view-${axis}" data-camera-axis="${axis}" title="${t(`cameraView_${axis}`)}" aria-label="${t(`cameraView_${axis}`)}" disabled>${axis.toUpperCase()}</button>`).join("");
+    axes.innerHTML=["x","y","z"].map(axis=>`<button type="button" class="axis-view-${axis}" data-camera-axis="${axis}" title="${t(`cameraView_${axis}`)}" aria-label="${t(`cameraView_${axis}`)}" disabled>View ${axis.toUpperCase()}</button>`).join("");
     const sceneCommandGroup=document.querySelector('.command-group[data-command-group="scene"]');sceneCommandGroup.append(axes);const resetCameraCommand=document.querySelector("#reset-camera");if(resetCameraCommand)sceneCommandGroup.append(resetCameraCommand);axes.querySelectorAll("[data-camera-axis]").forEach(button=>button.onclick=()=>{renderer?.setView?.(button.dataset.cameraAxis);document.querySelector("#light-canvas")?.focus();});
   }
   const luxPanel=document.querySelector(".lux-panel");
