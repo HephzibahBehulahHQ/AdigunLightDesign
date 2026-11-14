@@ -304,7 +304,7 @@ function render() {
   const contrastBackground=normalizeHex(preferences.contrastBackground) ?? "#0B1220";
   const contrast = contrastResult(compositeSwatch(active,contrastBackground), contrastBackground);
   const colourSpaces = colourSpaceMarkup(active.hex);
-  const commandGroups={project:t("project"),history:`${t("undo")} / ${t("redo")}`,view:`${t("palette")} / ${t("light")}`,scene:t("sceneHeader"),palette:t("palette"),fixtures:t("fixture"),export:t("export")};
+  const commandGroups={project:t("project"),history:t("commandHistory"),view:`${t("palette")} / ${t("light")}`,scene:t("sceneHeader"),palette:t("commandPalette"),fixtures:t("commandFixtures"),export:t("commandExport")};
   const nav = [
     ["canvas", "⌂", true], ["palette", "◉", true], ["light", "☼", true], ["copilot", "◌", true], ["library", "▱", true], ["export", "↗", true], ["community", "♧", false]
   ].map(([key, icon, enabled]) => {const labelKey={canvas:"moduleCanvas",light:"moduleLight",copilot:"moduleCopilot"}[key] ?? key;return `<button class="module ${studioActiveModule(preferences) === key ? "is-active" : ""}" data-module="${key}" ${enabled ? "" : disabled(`${t(key)} ${t("availableLater")}`)}><span>${icon}</span>${t(labelKey)}</button>`;}).join("");
@@ -502,7 +502,7 @@ function render() {
   const commandGroup=(name)=>document.querySelector(`.command-group[data-command-group="${name}"]`);
   const dock=(selector,groupName,wrap=false)=>{const control=document.querySelector(selector);if(control){const group=commandGroup(groupName);group.append(wrap ? control.closest("label") : control);}};
   dock("#reset-camera","scene");
-  dock("#seed","palette");dock("#harmony","palette");dock("#reroll","palette");dock("#add-colour","palette");dock("#custom-spacing","palette",true);dock("#custom-hues","palette");dock("#perceptual-scale","palette");dock("#temperature-strength","palette",true);dock('[data-temperature="warm"]',"palette");dock('[data-temperature="cool"]',"palette");
+  dock("#harmony","palette");dock("#reroll","palette");dock("#add-colour","palette");dock("#save-version","palette");dock("#palette-version","palette");dock("#restore-version","palette");dock(".palette-comparison","palette");
   dock("#export-viewport","export");dock("#export-canvas","export");
   const canvasObject=scene().canvasObjects?.find((object)=>object.id===preferences.objectId);
   if (canvasObject && preferences.view==="palette") palettePanel.insertAdjacentHTML("beforeend", `<fieldset class="canvas-object-editor"><legend>${t("canvasObject")}</legend>${["x","y",...(canvasObject.type!=="text" ? ["width","height"] : ["fontSize"])].map((key)=>`<label>${["x","y"].includes(key) ? key.toUpperCase() : t(key)}<input data-object-value="${key}" type="number" step="any" required value="${canvasObject[key]}"></label>`).join("")}${canvasObject.type==="text" ? `<label>${t("text")}<input id="canvas-text" maxlength="2048" value="${esc(canvasObject.text)}"></label>` : ""}<button id="apply-object">${t("apply")}</button><button id="paint-object">${t("applySwatch")}</button><button id="delete-object">${t("deleteObject")}</button><button id="copy-object">${t("duplicateObject")}</button><button data-object-stack="-1">${t("sendBackward")}</button><button data-object-stack="1">${t("bringForward")}</button></fieldset>`);
