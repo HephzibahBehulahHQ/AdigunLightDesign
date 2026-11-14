@@ -101,6 +101,10 @@ try {
 
   await page.setViewportSize({ width: 1754, height: 878 });
   assert.equal(await page.locator(".left-rail-heading").isVisible(), true, "left rail has the compact project/layers/tools header from the reference");
+  assert.deepEqual(await page.locator('[data-command-group="project"]').evaluate((group)=>[...group.querySelectorAll("button")].map((button)=>button.id)),["new-project","open-project","save","import-image"],"project commands match New, Open, Save, Import order");
+  const importChooser=page.waitForEvent("filechooser");
+  await page.locator("#import-image").click();
+  await importChooser;
   assert.equal(await page.locator('.command-ribbon [data-command-group="view"]').count(), 0, "module navigation does not repeat a duplicate view group in the command ribbon");
   assert.equal(await page.locator('[data-command-group="scene"] [data-open-scene-editor="room"]').isVisible(), true, "Scene ribbon opens room dimensions");
   assert.equal(await page.locator('[data-command-group="scene"] [data-open-scene-editor="stage"]').isVisible(), true, "Scene ribbon opens stage settings");
@@ -228,6 +232,7 @@ try {
   await page.locator("#fixture-blue-channel").fill("199");
   assert.equal(await page.locator("#fixture-blue-channel-value").innerText(), "78%", "the screenshot shows the staged reference channel value");
   assert.equal(await page.locator("#fixture-colour-hex").innerText(), "#2196F3", "staging the blue value leaves the applied fixture colour unchanged");
+  await page.evaluate(()=>document.activeElement?.blur?.());
   await page.locator("#reset-camera").click();
   await page.screenshot({ path: resolve("outputs", "studio-acceptance-reference-1754x878.png") });
   for (let index = 0; index < 2; index += 1) await page.locator("#add-fixture").click();
@@ -276,10 +281,18 @@ try {
   assert.equal(exportedProject.name, "Studio Acceptance", "Project JSON contains the saved project name");
   await page.reload();
   assert.equal(await page.locator("#project-name").inputValue(), "Studio Acceptance", "Project name persists across reload");
-  await page.locator("#import-project").click();
+  await page.locator("#open-project").click();
   await page.locator("#project-file").setInputFiles(exportPath);
   await page.waitForFunction(() => globalThis.document.querySelector("#project-name")?.value === "Studio Acceptance");
-  assert.equal(await page.locator("#project-name").inputValue(), "Studio Acceptance", "Exported project imports through the existing file picker handler");
+  assert.equal(await page.locator("#project-name").inputValue(), "Studio Acceptance", "Exported project opens through the project file picker");
+  page.once("dialog",(dialog)=>dialog.dismiss());
+  await page.locator("#new-project").click();
+  assert.equal(await page.locator("#project-name").inputValue(), "Studio Acceptance", "canceling New preserves the current project");
+  page.once("dialog",(dialog)=>dialog.accept());
+  await page.locator("#new-project").click();
+  await page.waitForFunction(()=>globalThis.document.querySelector("#project-name")?.value==="Studio Mood");
+  assert.equal(await page.locator("[data-layer-fixture]").count(),9,"New creates a fresh reference starter project");
+  assert.equal(await page.locator(".header-save-status").innerText(),"Saved locally","New saves its fresh starter project locally");
   const canvasAfter = await page.locator(".scene-preview").boundingBox();
   assert.deepEqual(canvasAfter, canvasBefore, "ordinary tools and view changes preserve the canvas bounds");
   assert.deepEqual(runtimeErrors, [], "browser reports no runtime errors");
