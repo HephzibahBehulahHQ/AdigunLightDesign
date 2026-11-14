@@ -294,10 +294,10 @@ Object.assign(messages.yo,{moduleCanvas:"Kánfásì",moduleLight:"Yàrá Ìmọ�
 Object.assign(messages.pcm,{moduleCanvas:"Canvas",moduleLight:"3D Light Lab",moduleCopilot:"AI Co-Pilot Lux"});
 
 
-Object.assign(messages.en,{commandHistory:"History",commandPalette:"Palette",commandFixtures:"Fixtures"});
-Object.assign(messages.de,{commandHistory:"Verlauf",commandPalette:"Palette",commandFixtures:"Leuchten"});
-Object.assign(messages.yo,{commandHistory:"Ìtàn iṣẹ́",commandPalette:"Àkójọpọ̀ àwọ̀",commandFixtures:"Àwọn fìtílà"});
-Object.assign(messages.pcm,{commandHistory:"History",commandPalette:"Palette",commandFixtures:"Fixtures"});
+Object.assign(messages.en,{commandHistory:"History",commandPalette:"Palette",commandFixtures:"Fixtures",commandExport:"Export"});
+Object.assign(messages.de,{commandHistory:"Verlauf",commandPalette:"Palette",commandFixtures:"Leuchten",commandExport:"Export"});
+Object.assign(messages.yo,{commandHistory:"Ìtàn iṣẹ́",commandPalette:"Àkójọpọ̀ àwọ̀",commandFixtures:"Àwọn fìtílà",commandExport:"Ìtẹ̀jáde"});
+Object.assign(messages.pcm,{commandHistory:"History",commandPalette:"Palette",commandFixtures:"Fixtures",commandExport:"Export"});
 
 Object.assign(messages.en,{paintColon:"Paint:",applyColour:"Apply colour",resetView:"Reset view"});
 Object.assign(messages.de,{paintColon:"Bemalen:",applyColour:"Farbe anwenden",resetView:"Ansicht zurücksetzen"});
