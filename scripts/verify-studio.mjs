@@ -482,7 +482,7 @@ try {
   assert.equal(await page.locator(".design-canvas [data-canvas-object]").count(),0,"discard removes unsaved canvas work");
   const canvasAfter = await page.locator(".scene-preview").boundingBox();
   assert.deepEqual(canvasAfter, canvasBefore, "ordinary tools and view changes preserve the canvas bounds");
-  await page.locator('[data-command-menu-trigger="scene"]').click();
+  await openCommandMenu("scene");
   await page.locator("#room-template").selectOption("kitchen");
   await page.locator("#add-room-scene").click();
   assert.equal(await page.locator("#scene-select option").count(),2,"Add room creates a second saved scene in the project");
