@@ -293,6 +293,11 @@ Object.assign(messages.de,{moduleCanvas:"Leinwand",moduleLight:"3D-Lichtlabor",m
 Object.assign(messages.yo,{moduleCanvas:"Kánfásì",moduleLight:"Yàrá Ìmọ́lẹ̀ 3D",moduleCopilot:"AI Co-Pilot Lux"});
 Object.assign(messages.pcm,{moduleCanvas:"Canvas",moduleLight:"3D Light Lab",moduleCopilot:"AI Co-Pilot Lux"});
 
+Object.assign(messages.en,{paintColon:"Paint:",applyColour:"Apply colour",resetView:"Reset view"});
+Object.assign(messages.de,{paintColon:"Bemalen:",applyColour:"Farbe anwenden",resetView:"Ansicht zurücksetzen"});
+Object.assign(messages.yo,{paintColon:"Kún:",applyColour:"Lò àwọ̀",resetView:"Tún ìwò padà"});
+Object.assign(messages.pcm,{paintColon:"Paint:",applyColour:"Apply colour",resetView:"Reset view"});
+
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }
 
 

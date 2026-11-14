@@ -106,6 +106,20 @@ try {
   assert.equal(await page.locator(".scene-preview .canvas-actions #apply-scene").count(), 1, "Apply colour stays in the canvas quick-action lane");
   assert.equal(await page.locator(".scene-preview .canvas-actions #material-target").count(), 1, "surface painting stays in the canvas quick-action lane");
   assert.equal(await page.locator('.command-group[data-command-group="scene"] #apply-scene, .command-group[data-command-group="scene"] #material-target').count(), 0, "canvas quick actions do not duplicate scene-ribbon controls");
+  assert.equal(await page.locator("#material-target").inputValue(), "wall", "the quick-paint control opens on Walls as shown in the reference");
+  assert.equal(await page.locator("#material-target").evaluate((select)=>select.closest("label").firstChild.textContent.trim()), "Paint:", "the canvas quick-paint control has a compact reference label");
+  assert.equal((await page.locator("#apply-scene").innerText()).trim(), "Apply colour", "the canvas action uses the concise reference label");
+  assert.equal((await page.locator("#reset-camera").innerText()).trim(), "Reset view", "the Scene ribbon exposes Reset view");
+  assert.equal((await page.locator("#reset-camera-canvas").innerText()).trim(), "Reset view", "the canvas quick-action lane exposes Reset view");
+  assert.deepEqual(await page.locator('.command-group[data-command-group="scene"]').evaluate((group)=>[...group.querySelectorAll("button")].map((button)=>button.dataset.cameraAxis?.toUpperCase() ?? button.dataset.openSceneEditor ?? button.id)),["room","stage","X","Y","Z","reset-camera"],"Scene commands follow the reference order");
+  for (const [locale,labels] of Object.entries({de:["Bemalen:","Wände","Farbe anwenden","Ansicht zurücksetzen"],yo:["Kún:","Àwọn ògiri","Lò àwọ̀","Tún ìwò padà"],pcm:["Paint:","Walls","Apply colour","Reset view"]})) {
+    await page.locator("#locale").selectOption(locale);
+    assert.equal(await page.locator("#material-target").evaluate((select)=>select.closest("label").firstChild.textContent.trim()),labels[0],`${locale} paint label remains translated`);
+    assert.equal((await page.locator("#material-target option:checked").innerText()).trim(),labels[1],`${locale} paint target remains translated`);
+    assert.equal((await page.locator("#apply-scene").innerText()).trim(),labels[2],`${locale} Apply colour remains translated`);
+    assert.equal((await page.locator("#reset-camera-canvas").innerText()).trim(),labels[3],`${locale} Reset view remains translated`);
+  }
+  await page.locator("#locale").selectOption("en");
   assert.deepEqual(await page.locator('[data-command-group="project"]').evaluate((group)=>[...group.querySelectorAll("button")].map((button)=>button.id)),["new-project","open-project","save","import-image"],"project commands match New, Open, Save, Import order");
   const importChooser=page.waitForEvent("filechooser");
   await page.locator("#import-image").click();
