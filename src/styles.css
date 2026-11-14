@@ -427,3 +427,13 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
   .command-ribbon .harmony-command select { width:24px; min-width:24px; height:25px; min-height:25px; margin:0; padding:0; border:0; background:#182237; color:#dce8fc; font-size:0; }
   .command-ribbon .harmony-command select option { font-size:12px; }
 }
+
+
+/* Give ribbon scrolling and its affordance independent, non-overlapping lanes. */
+@media (min-width:1100px) {
+  .command-ribbon { display:grid; grid-template-columns:minmax(0,1fr) 86px; gap:0; overflow:hidden; }
+  .command-ribbon-content { display:flex; align-items:stretch; gap:8px; min-width:0; min-height:50px; height:50px; padding:0 8px; overflow-x:auto; overflow-y:hidden; white-space:nowrap; scrollbar-width:thin; }
+  .command-ribbon .ribbon-scroll-hint { position:static; display:flex; align-self:center; justify-self:stretch; flex-direction:column; justify-content:center; gap:2px; width:76px; height:34px; margin:0 5px; padding:3px 6px; border:1px solid #344965; border-radius:6px; background:#101a2b; color:#dce8fc; text-align:center; pointer-events:none; }
+  .command-ribbon .ribbon-scroll-hint b { color:var(--cyan); font-size:10px; line-height:1; }
+  .command-ribbon .ribbon-scroll-hint small { color:var(--muted); font-size:8px; line-height:1; }
+}

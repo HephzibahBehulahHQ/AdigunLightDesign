@@ -163,12 +163,15 @@ try {
     assert.equal(await page.locator(`[data-tool="${key}"]`).isEnabled(), true, `${key} tool is enabled`);
   }
   const canvasBefore = await page.locator(".scene-preview").boundingBox();
-  const ribbonScroll = await page.locator(".command-ribbon").evaluate((element) => {
+  const ribbonScroll = await page.locator(".command-ribbon-content").evaluate((element) => {
     const maxScroll = element.scrollWidth - element.clientWidth;
     element.scrollLeft = maxScroll;
     return { maxScroll, scrollLeft: element.scrollLeft };
   });
   assert.ok(ribbonScroll.maxScroll > 0, "long command ribbon scrolls horizontally inside its lane");
+  assert.equal(await page.locator(".command-ribbon .ribbon-scroll-hint").count(), 1, "the ribbon scroll affordance is present without duplicating commands");
+  assert.equal(await page.locator(".command-ribbon .ribbon-scroll-hint").isVisible(), true, "the ribbon scroll affordance stays visible");
+  assert.equal(await page.locator(".command-ribbon .ribbon-scroll-hint").evaluate((hint)=>[...globalThis.document.querySelectorAll(".command-group button")].some((button)=>{const a=hint.getBoundingClientRect(),b=button.getBoundingClientRect();return a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;})),false,"the pinned hint never covers a ribbon command");
   assert.ok(ribbonScroll.scrollLeft > 0, "horizontal ribbon scrolling reaches additional commands");
   assert.deepEqual(await page.locator(".scene-preview").boundingBox(), canvasBefore, "scrolling the command ribbon leaves the central canvas in place");
   await page.locator('[data-tool="shapes"]').click();
