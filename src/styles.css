@@ -466,3 +466,8 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
 .inspector .inspector-group > h3 { display:flex; align-items:center; min-height:18px; box-sizing:border-box; margin:0 -7px 4px; padding:0 7px 3px; border-radius:5px 5px 0 0; background:#23314b; }
 
 @media (min-width:1100px) { .inspector .inspector-group { margin-block:2px; padding-block:4px; } }
+
+@media (min-width:1100px) {
+  .lux-panel.is-docked:not(.is-dock-expanded) { flex:0 0 97px !important; height:97px !important; min-height:0; }
+  .lux-panel.is-docked:not(.is-dock-expanded) .bot-window-body { display:none !important; }
+}
