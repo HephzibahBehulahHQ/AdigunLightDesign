@@ -36,6 +36,7 @@ try {
   const runtimeErrors = [];
   page.on("pageerror", (error) => runtimeErrors.push(error.message));
   await page.goto(`http://127.0.0.1:${address.port}/`, { waitUntil: "networkidle" });
+  assert.equal(await page.locator(".header-save-status").innerText(), "Saved locally", "the seeded reference project is saved in browser storage on first open");
 
   const reports = [];
   for (const [width, height] of viewports) {
