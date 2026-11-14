@@ -290,8 +290,11 @@ try {
   await toolsToggle.click();
 
   await page.locator('[data-tool="shapes"]').click();
+  assert.equal(await page.locator("#tool-list").evaluate(panel=>panel.matches(":popover-open")),false,"selecting a tool closes the Tools panel");
+  assert.equal(await page.locator('[data-tool="shapes"]').isVisible(),false,"closed Tools controls do not remain over the sidebar");
   assert.equal(await page.locator(".design-canvas [data-canvas-object]").count(), 1, "Shapes adds an editable canvas object");
   await page.locator('[data-tool="text"]').click();
+  assert.equal(await page.locator("#tool-list").evaluate(panel=>panel.matches(":popover-open")),false,"Text selection also closes Tools");
   assert.equal(await page.locator(".design-canvas [data-canvas-object]").count(), 2, "Text adds an editable canvas object");
   const textEditor=page.locator("#canvas-text");
   assert.equal(await textEditor.isVisible(), true, "Text tool opens the selected text object in the inspector editor");
