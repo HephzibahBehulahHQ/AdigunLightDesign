@@ -102,7 +102,7 @@ try {
     if(report.inspectorScroll.scrollHeight>report.inspectorScroll.clientHeight) assert.ok(["auto","scroll"].includes(report.inspectorScroll.overflowY), `inspector overflow scrolls inside its own lane at ${width}×${height}`);
     if(width===1880 && height===690){
       const canvasBefore=await page.locator(".scene-preview").boundingBox();
-      const dimensionsBefore=await page.evaluate(()=>[document.documentElement.scrollWidth,document.documentElement.scrollHeight]);
+      const dimensionsBefore=await page.evaluate(()=>[globalThis.document.documentElement.scrollWidth,globalThis.document.documentElement.scrollHeight]);
       const scrollTop=await page.locator("#fixture-inspector-panel").evaluate(panel=>{panel.scrollTop=panel.scrollHeight;return panel.scrollTop;});
       assert.ok(scrollTop>0,"short viewport provides independent fixture-inspector scrolling");
       assert.deepEqual(await page.locator(".scene-preview").boundingBox(),canvasBefore,"inspector scrolling leaves the central canvas stationary");
