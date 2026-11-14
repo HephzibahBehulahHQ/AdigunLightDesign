@@ -293,6 +293,7 @@ try {
   assert.equal(await page.locator("#tool-list").evaluate(panel=>panel.matches(":popover-open")),false,"selecting a tool closes the Tools panel");
   assert.equal(await page.locator('[data-tool="shapes"]').isVisible(),false,"closed Tools controls do not remain over the sidebar");
   assert.equal(await page.locator(".design-canvas [data-canvas-object]").count(), 1, "Shapes adds an editable canvas object");
+  await toolsToggle.click();
   await page.locator('[data-tool="text"]').click();
   assert.equal(await page.locator("#tool-list").evaluate(panel=>panel.matches(":popover-open")),false,"Text selection also closes Tools");
   assert.equal(await page.locator(".design-canvas [data-canvas-object]").count(), 2, "Text adds an editable canvas object");
@@ -341,6 +342,7 @@ try {
   assert.equal(await page.locator("#room-width").inputValue(), "6.5", "Room edits apply to the selected scene");
   await page.locator("#scene-select").selectOption(firstSceneId);
   await page.locator("#scene-select").selectOption(firstSceneId);
+  await page.locator("#toggle-tools").click();
   await page.locator('[data-tool="measure"]').click();
   await page.locator(".design-canvas").press("ArrowRight");
   assert.match(await page.locator("#status").innerText(), /canvas units/i, "Measure reports a live canvas distance");
