@@ -97,6 +97,7 @@ export function validateProject(input: unknown): ProjectValidationResult {
   const scenes = records(project.scenes);
   const projectSceneIds = new Set((scenes ?? []).flatMap((scene) => typeof scene.id === "string" ? [scene.id] : []));
   const legacySceneId = (scenes?.find((scene) => typeof scene.id === "string")?.id as string | undefined) ?? "studio-room";
+  const fixtureSceneIds = new Map((fixtures ?? []).flatMap((fixture) => typeof fixture.id === "string" ? [[fixture.id,typeof fixture.sceneId === "string" ? fixture.sceneId : legacySceneId] as const] : []));
   const cues = records(project.cues);
   if (Array.isArray(project.cues) && cues) {
     const cuesByScene = new Map<string,Cue[]>();
@@ -119,6 +120,7 @@ export function validateProject(input: unknown): ProjectValidationResult {
       for (const targetValue of cue.targets as unknown[]) {
         const target = asRecord(targetValue);
         if (target && (!fixtureIds.has(target.fixtureId) || targetIds.has(target.fixtureId))) errors.push("Cue targets require unique existing fixture references.");
+        if (target && typeof target.fixtureId === "string" && fixtureSceneIds.has(target.fixtureId) && fixtureSceneIds.get(target.fixtureId)!==cueSceneId) errors.push("Cue targets must belong to the same scene as the cue.");
         if (target) targetIds.add(target.fixtureId);
         const properties = asRecord(target?.properties);
         if (!target || typeof target.fixtureId !== "string" || !properties || !Object.values(properties).every((value) => typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= 255)) errors.push("Cue targets require fixture ids and DMX channel values from 0 to 255.");
@@ -134,6 +136,7 @@ export function validateProject(input: unknown): ProjectValidationResult {
     for (const fixture of fixtures) {
       if (typeof fixture.id !== "string" || !fixture.id.trim() || fixtureIds.has(fixture.id) || typeof fixture.name !== "string" || typeof fixture.profileId !== "string" || typeof fixture.modeId !== "string") errors.push("Fixtures require unique ids, names, profiles, and modes.");
       if (typeof fixture.id === "string") fixtureIds.add(fixture.id);
+      if (fixture.sceneId !== undefined && (typeof fixture.sceneId !== "string" || !projectSceneIds.has(fixture.sceneId))) errors.push("Fixtures must reference an existing scene when a scene id is provided.");
       const profile = fixtureProfiles.find((item) => item.id === fixture.profileId);
       const mode = profile?.modes.find((item) => item.id === fixture.modeId);
       if (!mode) errors.push("Fixture profile or mode is unsupported.");

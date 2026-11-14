@@ -1,7 +1,7 @@
 export interface FixtureMode {id:string;name:string;channels:string[];}
 export interface FixtureProfile {id:string;manufacturer:string;model:string;type:string;provenance:string;validationStatus:string;license?:string;physicalDimensions?:{width:number;height:number;depth:number;unit:string};panTiltLimits?:{pan:number;tilt:number};modes:[FixtureMode,...FixtureMode[]];}
 export interface FixturePatch {fixtureId:string;universe:number;startAddress:number;channelFootprint:number;}
-export interface Fixture {id:string;profileId:string;modeId:string;name:string;transform:{x:number;y:number;z:number;rotation:number};properties:Record<string,number>;patchAssignment:FixturePatch|null;}
+export interface Fixture {id:string;profileId:string;modeId:string;name:string;sceneId?:string;transform:{x:number;y:number;z:number;rotation:number};properties:Record<string,number>;patchAssignment:FixturePatch|null;}
 export interface FixtureChanges {name?:string;properties?:Record<string,number>;transform?:Partial<Fixture["transform"]>;universe?:number;startAddress?:number;}
 export const genericRgbWash:FixtureProfile = {
   id: "generic-rgb-wash",

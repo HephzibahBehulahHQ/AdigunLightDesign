@@ -100,13 +100,14 @@ function phrase(key, values = {}) { return t(key).replace(/\{(\w+)\}/g, (_, name
 function palette() { return project.palettes[0]; }
 function selected() { return palette().colors.find((swatch) => swatch.id === preferences.selected) ?? palette().colors[0]; }
 function scene() { if (!project.scenes[0]) project.scenes.push({ id:"studio-room", name:"Living room", roomType:"living-room", materialColor:"#C21888" }); const active=project.scenes.find((item)=>item.id===preferences.sceneId) ?? project.scenes[0]; preferences.sceneId=active.id; return active; }
+function sceneFixtures(fixtures=project.fixtures,sceneId=scene().id,scenes=project.scenes) { const legacySceneId=scenes[0]?.id ?? "studio-room"; return fixtures.filter((fixture)=>(fixture.sceneId ?? legacySceneId)===sceneId); }
 function sceneCues(cues=project.cues,sceneId=scene().id,scenes=project.scenes) { const legacySceneId=scenes[0]?.id ?? "studio-room"; return cues.filter((cue)=>(cue.sceneId ?? legacySceneId)===sceneId); }
 function replaceSceneCues(cues,replacements,sceneId=scene().id,scenes=project.scenes) { const legacySceneId=scenes[0]?.id ?? "studio-room",belongs=(cue)=>(cue.sceneId ?? legacySceneId)===sceneId,first=cues.findIndex(belongs),others=cues.filter((cue)=>!belongs(cue)),index=first<0 ? others.length : cues.slice(0,first).filter((cue)=>!belongs(cue)).length; others.splice(index,0,...replacements); return others; }
 function editScene(draft,update) { const index=Math.max(0,draft.scenes.findIndex((item)=>item.id===preferences.sceneId)); update(draft.scenes[index],index,draft.scenes); }
 function sceneSelectMarkup() { const activeId=scene().id; return `<select id="scene-select" aria-label="${t("sceneHeader")}">${project.scenes.map((item,index)=>`<option value="${esc(item.id)}" ${item.id===activeId ? "selected" : ""}>${esc(`${t("sceneHeader")} ${String(index+1).padStart(2,"0")} / ${item.name}`)}</option>`).join("")}</select>`; }
-function addVirtualFixture(profileId) { const fixture=createFixture(project.fixtures.length+1,profileId); commitProjectChange("fixture-add",(draft)=>{draft.fixtures=patchFixture([...draft.fixtures,fixture],fixture.id);}); preferences.fixtureId=fixture.id;savePreferences(); const patch=project.fixtures.find((item)=>item.id===fixture.id)?.patchAssignment; status=phrase("fixturePatched",{name:fixture.name,universe:1,address:patch?.startAddress ?? 1}); }
-function activateBlackout() { commitProjectChange("dmx-blackout",(draft)=>{draft.fixtures=blackout(draft.fixtures);}); status="Virtual blackout applied. Physical output remains disabled."; }
-function applyPaletteToVirtualFixtures() { const rgb=hexToRgb(selected().hex); commitProjectChange("palette-to-fixtures",(draft)=>{draft.fixtures=draft.fixtures.map((fixture)=>({ ...fixture, properties:{ ...fixture.properties, red:rgb.r, green:rgb.g, blue:rgb.b } }));}); updateRendererFromFixtures(); status=`${selected().hex} applied to ${project.fixtures.length} virtual fixture(s).`; }
+function addVirtualFixture(profileId) { const fixture={...createFixture(project.fixtures.length+1,profileId),sceneId:scene().id}; commitProjectChange("fixture-add",(draft)=>{draft.fixtures=patchFixture([...draft.fixtures,fixture],fixture.id);}); preferences.fixtureId=fixture.id;savePreferences(); const patch=project.fixtures.find((item)=>item.id===fixture.id)?.patchAssignment; status=phrase("fixturePatched",{name:fixture.name,universe:1,address:patch?.startAddress ?? 1}); }
+function activateBlackout() { const ids=new Set(sceneFixtures().map((fixture)=>fixture.id));commitProjectChange("dmx-blackout",(draft)=>{const values=new Map(blackout(draft.fixtures.filter((fixture)=>ids.has(fixture.id))).map((fixture)=>[fixture.id,fixture]));draft.fixtures=draft.fixtures.map((fixture)=>values.get(fixture.id) ?? fixture);}); status="Virtual blackout applied. Physical output remains disabled."; }
+function applyPaletteToVirtualFixtures() { const rgb=hexToRgb(selected().hex),ids=new Set(sceneFixtures().map((fixture)=>fixture.id)); commitProjectChange("palette-to-fixtures",(draft)=>{draft.fixtures=draft.fixtures.map((fixture)=>ids.has(fixture.id)?({ ...fixture, properties:{ ...fixture.properties, red:rgb.r, green:rgb.g, blue:rgb.b } }):fixture);}); updateRendererFromFixtures(); status=`${selected().hex} applied to ${sceneFixtures().length} virtual fixture(s).`; }
 function createCueSnapshot() {
   try {
     const timing={};
@@ -117,12 +118,12 @@ function createCueSnapshot() {
     }
     let cue;
     const groupId=document.querySelector("#cue-group").value;
-    commitProjectChange("cue-create",(draft)=>{const sceneCueList=sceneCues(draft.cues,preferences.sceneId,draft.scenes);cue=createCue(groupFixtures(draft.fixtures,draft.fixtureGroups ?? [],groupId),{name:`Look ${sceneCueList.length+1}`,sceneId:preferences.sceneId,...timing});draft.cues=[...draft.cues,cue];});
+    commitProjectChange("cue-create",(draft)=>{const sceneCueList=sceneCues(draft.cues,preferences.sceneId,draft.scenes);cue=createCue(groupFixtures(sceneFixtures(draft.fixtures,preferences.sceneId,draft.scenes),draft.fixtureGroups ?? [],groupId),{name:`Look ${sceneCueList.length+1}`,sceneId:preferences.sceneId,...timing});draft.cues=[...draft.cues,cue];});
     status=`${cue.name} captured with ${cue.targets.length} fixture target(s).`;
     render();
   } catch(error) { document.querySelector("#status").textContent=status=error.message; }
 }
-function currentRendererFixtures() { return project.fixtures.map((fixture)=>({...fixture,selected:fixture.id===selectedFixture()?.id})); }
+function currentRendererFixtures() { return sceneFixtures().map((fixture)=>({...fixture,selected:fixture.id===selectedFixture()?.id})); }
 function updateRendererFromFixtures() { const fixtures=currentRendererFixtures();renderer?.setFixtures(fixtures);rendererFixtureSignature=lightLabFixtureState(fixtures); }
 function updateDmxFeedback(fixtures) {
   const snapshot=virtualDmxPreview(fixtures,preferences.fixtureId);
@@ -145,7 +146,7 @@ function playEffect() {
   if (!input.value.trim() || !input.checkValidity()) return input.reportValidity();
   const settings={type:document.querySelector("#effect-type").value,period:Number(input.value)};
   if (settings.type==="panTilt") { settings.minimum=64;settings.maximum=192; }
-  const source=structuredClone(project.fixtures);
+  const source=structuredClone(sceneFixtures());
   if (!source.length) return;
   evaluateEffect(source,settings,0);
   stopPlayback();
@@ -160,7 +161,7 @@ function playEffect() {
 function playSequence({seek=0,paused=false}={}) {
   const sceneCueList=sceneCues();if (!sceneCueList.length) return;
   stopPlayback();
-  const source=structuredClone(project.fixtures),cues=structuredClone(sceneCueList);
+  const source=structuredClone(sceneFixtures()),cues=structuredClone(sceneCueList);
   playbackClock=createPlaybackClock(performance.now());
   playbackClock.seek(seek,performance.now());
   if (paused) playbackClock.pause(performance.now());
@@ -184,7 +185,7 @@ function playLatestCue() {
   const sceneCueList=sceneCues(),cue=sceneCueList.find((item)=>item.id===preferences.cueId) ?? sceneCueList.at(-1);
   if (!cue) return;
   stopPlayback();
-  const source=structuredClone(project.fixtures);
+  const source=structuredClone(sceneFixtures());
   playbackClock=createPlaybackClock(performance.now());
   preferences.view="light";
   playbackTimer=setInterval(()=>{
@@ -198,7 +199,7 @@ function playLatestCue() {
 function playArrangement({seek=0,paused=false}={}) {
   const sceneCueList=sceneCues();if (!sceneCueList.length) return;
   stopPlayback();
-  const source=structuredClone(project.fixtures),cues=structuredClone(sceneCueList),duration=arrangementDuration(cues);
+  const source=structuredClone(sceneFixtures()),cues=structuredClone(sceneCueList),duration=arrangementDuration(cues);
   playbackClock=createPlaybackClock(performance.now());preferences.view="light";
   playbackClock.seek(seek,performance.now());
   if (paused) playbackClock.pause(performance.now());
@@ -365,8 +366,8 @@ function disabled(title) { return `disabled title="${esc(title)}"`; }
 function compact(value, digits = 1) { return Number(value).toFixed(digits); }
 function colourSpaceMarkup(hex) { const rgb=hexToRgb(hex),hsl=rgbToHsl(rgb),hsv=rgbToHsv(rgb),lab=rgbToLab(rgb),oklab=rgbToOklab(rgb); return `<section class="colour-space-card" aria-label="${t("colorSpaces")}"><h3>${t("colorSpaces")}</h3><dl><div><dt>sRGB</dt><dd>${Math.round(rgb.r)}, ${Math.round(rgb.g)}, ${Math.round(rgb.b)}</dd></div><div><dt>HSL</dt><dd>${compact(hsl.h)}° · ${compact(hsl.s*100)}% · ${compact(hsl.l*100)}%</dd></div><div><dt>HSV</dt><dd>${compact(hsv.h)}° · ${compact(hsv.s*100)}% · ${compact(hsv.v*100)}%</dd></div><div><dt>CIELAB</dt><dd>${compact(lab.l)}, ${compact(lab.a)}, ${compact(lab.b)}</dd></div><div><dt>OKLab</dt><dd>${compact(oklab.l,3)}, ${compact(oklab.a,3)}, ${compact(oklab.b,3)}</dd></div></dl><small class="${isSrgbGamut(rgb)?"pass":"fail"}">${isSrgbGamut(rgb)?t("inSrgb"):t("outsideSrgb")}</small></section>`; }
 function fixtureLibraryMarkup() { return fixtureProfiles.map((profile)=>`<article><b>${esc(profile.model)}</b><small>${esc(profile.type)} · ${profile.modes[0].channels.length} CH</small><p>${esc(profile.validationStatus)} · ${esc(profile.provenance)}</p><button data-profile="${profile.id}">${t("addToVirtualPatch")}</button></article>`).join(""); }
-function selectedFixture() { return project.fixtures.find((fixture)=>fixture.id===preferences.fixtureId) ?? project.fixtures[0]; }
-function fixtureInspectorMarkup() { const fixture=selectedFixture(),profile=getFixtureProfile(fixture.profileId),mode=profile.modes.find((item)=>item.id===fixture.modeId) ?? profile.modes[0],patch=fixture.patchAssignment ?? {universe:1,startAddress:1}; return `<section class="fixture-inspector"><h3>${t("virtualFixture")}</h3><label>${t("fixtureLabel")}<select id="fixture-select">${fixtureOptions(project.fixtures,fixture.id)}</select></label><div class="fixture-profile-summary" title="${esc(profile.validationStatus)}"><span><small>Type</small><b>${esc(profile.type)}</b></span><span><small>Mode</small><b>${esc(mode?.name ?? profile.model)}</b></span></div><label>${t("colourName")}<input id="fixture-name" value="${esc(fixture.name)}" /></label>${fixturePlacementMarkup(fixture.transform,t("fixturePlacement"),t("fixtureDragHint"))}<div class="fixture-grid"><label>${t("universe")}<input id="fixture-universe" type="number" min="1" value="${patch.universe}" /></label><label>${t("startAddress")}<input id="fixture-address" type="number" min="1" max="512" value="${patch.startAddress}" /></label><label>${t("dimmer")}<input id="fixture-dimmer" type="number" min="0" max="255" value="${fixture.properties.dimmer ?? 0}" /></label><label>${t("beam")}<input id="fixture-beam" type="number" min="0" max="255" value="${fixture.properties.beam ?? 0}" /></label></div><button id="apply-fixture" class="wide">${t("applyFixtureProperties")}</button></section>`; }
+function selectedFixture() { const fixtures=sceneFixtures();return fixtures.find((fixture)=>fixture.id===preferences.fixtureId) ?? fixtures[0]; }
+function fixtureInspectorMarkup() { const fixture=selectedFixture();if(!fixture)return "";const fixtures=sceneFixtures(),profile=getFixtureProfile(fixture.profileId),mode=profile.modes.find((item)=>item.id===fixture.modeId) ?? profile.modes[0],patch=fixture.patchAssignment ?? {universe:1,startAddress:1}; return `<section class="fixture-inspector"><h3>${t("virtualFixture")}</h3><label>${t("fixtureLabel")}<select id="fixture-select">${fixtureOptions(fixtures,fixture.id)}</select></label><div class="fixture-profile-summary" title="${esc(profile.validationStatus)}"><span><small>Type</small><b>${esc(profile.type)}</b></span><span><small>Mode</small><b>${esc(mode?.name ?? profile.model)}</b></span></div><label>${t("colourName")}<input id="fixture-name" value="${esc(fixture.name)}" /></label>${fixturePlacementMarkup(fixture.transform,t("fixturePlacement"),t("fixtureDragHint"))}<div class="fixture-grid"><label>${t("universe")}<input id="fixture-universe" type="number" min="1" value="${patch.universe}" /></label><label>${t("startAddress")}<input id="fixture-address" type="number" min="1" max="512" value="${patch.startAddress}" /></label><label>${t("dimmer")}<input id="fixture-dimmer" type="number" min="0" max="255" value="${fixture.properties.dimmer ?? 0}" /></label><label>${t("beam")}<input id="fixture-beam" type="number" min="0" max="255" value="${fixture.properties.beam ?? 0}" /></label></div><button id="apply-fixture" class="wide">${t("applyFixtureProperties")}</button></section>`; }
 function applyFixtureInspector() {
   const fixture=selectedFixture();
   if (!fixture) return;
@@ -427,6 +428,7 @@ function render() {
   document.documentElement.lang = preferences.locale;
   document.documentElement.dataset.theme = preferences.theme;
   const active = selected();
+  const activeFixtures=sceneFixtures();
   const displayedSceneNumber=Math.max(1,project.scenes.findIndex((item)=>item.id===scene().id)+1);
   const contrastBackground=normalizeHex(preferences.contrastBackground) ?? "#0B1220";
   const contrast = contrastResult(compositeSwatch(active,contrastBackground), contrastBackground);
@@ -447,8 +449,8 @@ function render() {
   const compactToolLabelKeys={paletteBrush:"brushShort",fixture:"fixtureShort",material:"materialShort",orbit:"orbitShort"};
   const tools = [["select","↖"],["paletteBrush","◉"],["fixture","☀"],["material","◆"],["shapes","□"],["text","T"],["measure","⌗"],["orbit","◎"]].map(([key, icon]) => `<button type="button" class="tool ${preferences.tool === key ? "is-active" : ""}" data-tool="${key}" aria-label="${esc(t(key))}"><span aria-hidden="true">${icon}</span>${esc(t(compactToolLabelKeys[key] ?? key))}</button>`).join("");
   const swatches = palette().colors.map((swatch)=>swatchButton(swatch,active.id)).join("");
-  const patchedFixtures = project.fixtures.filter((fixture) => fixture.patchAssignment);
-  const virtualFrame = dmxFrame(project.fixtures);
+  const patchedFixtures = activeFixtures.filter((fixture) => fixture.patchAssignment);
+  const virtualFrame = dmxFrame(activeFixtures);
   const sceneCueList=sceneCues(),activeCue=sceneCueList.find((cue)=>cue.id===preferences.cueId) ?? sceneCueList.at(-1);
   const timeline=timelineLayout(sceneCueList);
   const cueBlocks = `<div class="timeline-scale"><div class="timeline-ruler">${timeline.ticks.map((tick)=>`<span style="left:${tick.left}%">${Number(tick.time.toFixed(1))}s</span>`).join("")}</div><div class="timeline-lane">${sceneCueList.map((cue,index) => `<button type="button" class="cue-block" data-cue="${esc(cue.id)}" aria-pressed="${cue.id===activeCue?.id}" title="${esc(cue.name)} · ${cue.duration}s" style="left:${timeline.segments[index].left}%;width:${timeline.segments[index].width}%">${esc(cue.name)} · ${cue.duration}s</button>`).join("") || `<small class="empty-cues">${t("noCues")}</small>`}</div><div id="timeline-playhead" class="timeline-playhead" aria-hidden="true"></div></div>`;
@@ -474,7 +476,7 @@ function render() {
         <div class="workspace-tabs panel"><strong class="studio-panel-title">${preferences.view === "light" ? `${t("sceneHeader")} ${String(displayedSceneNumber).padStart(2,"0")} / ${scene().id === "studio-room" ? t("mockupRoomTitle") : esc(scene().name)}` : `2D ${t("palette")} / ${esc(project.name)}`}</strong><small class="studio-panel-title-meta">${preferences.view === "light" ? t("viewportFixedHint") : t("palette")}</small><span></span><button id="viewport-projection" class="view-menu" ${preferences.view === "light" ? "" : disabled(t("select3d"))}>${t("perspective")}⌄</button></div>
         ${preferences.view === "light" ? `<div class="scene-preview light-canvas panel"><div class="scene-title"><b>${esc(project.name)} • ${t("rgbwPreview")}</b><small>${t("sceneView")} • ${t("rgbwPreviewSubtitle")}</small></div><canvas id="light-canvas" tabindex="0" aria-label="${t("previewLabel")}"></canvas><div class="canvas-actions"><button id="apply-scene">${t("paintSurface")}</button></div></div>` : `<div class="scene-preview panel" role="img" aria-label="${t("scenePreview")}"><div class="scene-title"><b>${t("scenePreview")}</b><small>${t("sceneNote")}</small></div><div class="beam beam-blue"></div><div class="beam beam-amber"></div><div class="beam beam-magenta"></div><div class="stage-truss"></div><div class="scene-wall"><div class="art-frame"></div><div class="couch"></div><div class="plant plant-left"></div><div class="plant plant-right"></div><div class="lamp"></div></div><div class="axis"><i>X</i><b>Y</b><em>Z</em></div></div>`}
         <div class="lower-workspace"><section class="palette-panel panel"><div class="section-title"><h2>◉ ${t("activePalette")} — ${esc(palette().name)}</h2></div><div class="swatches">${swatches}</div><div class="palette-actions"><input id="seed" value="${preferences.seed}" aria-label="Seed colour" maxlength="7" /><label class="harmony-command"><span>◇ ${t("harmonies")}</span><select id="harmony" aria-label="${t("harmony")}">${["analogous","complementary","splitComplementary","triadic","tetradic","square","monochromatic"].map((type) => `<option value="${type}" ${type === preferences.harmony ? "selected" : ""}>${type}</option>`).join("")}</select></label><button id="reroll">⟳ ${t("reroll")}</button><button id="add-colour">＋ ${t("add")}</button></div></section>
-          <section class="timeline panel" tabindex="-1"><div class="section-title"><h2>◌ ${t("timeline")}</h2><span class="m-badge">M5 · ${t("simulationOnly")}</span></div><p>${project.fixtures.length ? `${t("universe")} 1 · ${patchedFixtures.length}/${project.fixtures.length} ${t("fixturesPatched")} · 1–${Math.max(0,...patchedFixtures.map((fixture)=>fixture.patchAssignment.startAddress+fixture.patchAssignment.channelFootprint-1))} ${t("activeChannels")}.` : t("noFixtures")}</p><div class="dmx-actions"><button id="add-fixture">＋ ${t("addWash")}</button><button id="apply-fixture-colour" ${project.fixtures.length ? "" : "disabled"}>${t("applySwatchToFixtures")}</button><button id="create-cue" ${project.fixtures.length ? "" : "disabled"}>＋ ${t("captureCue")}</button><button id="play-cue" ${sceneCueList.length ? "" : "disabled"}>▶ ${t("previewSelectedCue")}</button><button id="stop-cue" ${playbackTimer ? "" : "disabled"}>■ ${t("stop")}</button><span>CH 1: ${virtualFrame[0]} · ${t("outputDisabled")}</span></div><div class="cue-track" aria-label="${t("timeline")}">${cueBlocks}</div></section></div>
+          <section class="timeline panel" tabindex="-1"><div class="section-title"><h2>◌ ${t("timeline")}</h2><span class="m-badge">M5 · ${t("simulationOnly")}</span></div><p>${activeFixtures.length ? `${t("universe")} 1 · ${patchedFixtures.length}/${activeFixtures.length} ${t("fixturesPatched")} · 1–${Math.max(0,...patchedFixtures.map((fixture)=>fixture.patchAssignment.startAddress+fixture.patchAssignment.channelFootprint-1))} ${t("activeChannels")}.` : t("noFixtures")}</p><div class="dmx-actions"><button id="add-fixture">＋ ${t("addWash")}</button><button id="apply-fixture-colour" ${activeFixtures.length ? "" : "disabled"}>${t("applySwatchToFixtures")}</button><button id="create-cue" ${activeFixtures.length ? "" : "disabled"}>＋ ${t("captureCue")}</button><button id="play-cue" ${sceneCueList.length ? "" : "disabled"}>▶ ${t("previewSelectedCue")}</button><button id="stop-cue" ${playbackTimer ? "" : "disabled"}>■ ${t("stop")}</button><span>CH 1: ${virtualFrame[0]} · ${t("outputDisabled")}</span></div><div class="cue-track" aria-label="${t("timeline")}">${cueBlocks}</div></section></div>
       </section>
       <aside class="inspector panel"><div class="section-title"><h2>◈ ${t("inspector")}</h2></div><div class="inspector-tabs"></div><div class="selected-preview" style="--selected:${active.hex}"></div><label>${t("colourName")}<input id="swatch-name" value="${esc(active.name)}" /></label><label>${t("hex")}<div class="input-row"><input id="swatch-hex" value="${active.hex}" spellcheck="false" /><button id="apply-colour">${t("applySwatchColour")}</button></div></label><button id="lock-swatch" class="wide">${active.locked ? "⌁ " + t("unlock") : "⌁ " + t("lock")}</button><section class="contrast-card"><h3>${t("contrast")}</h3><b>${contrast.ratio.toFixed(2)} : 1</b><span class="${contrast.aa ? "pass" : "fail"}">AA ${contrast.aa ? "pass" : "review"}</span><small>Against Midnight Navy #0B1220</small></section></aside>
       <aside class="lux-panel panel ${preferences.luxOpen ? "" : "is-collapsed"}"><div class="lux-heading"><div><span class="lux-icon">✦</span><h2>${t("luxTitle")} ✨</h2></div><button id="toggle-lux" class="subtle" aria-label="${preferences.luxOpen ? t("closePanel") : t("openLux")}">${preferences.luxOpen ? "×" : "✦"}</button></div>${preferences.luxOpen ? `<p class="lux-subtitle">${t("luxSubtitle")}</p><div class="lux-message"><b>${t("luxBrand")} · ${t("offline")}</b><p>${t("luxUnavailable")}</p><ul><li>${t("luxLocal")}</li><li>${t("luxNoUpload")}</li></ul></div><form id="lux-form" class="lux-input"><input id="lux-question" placeholder="${t("askLux")}" aria-label="${t("askLux")}" /><button aria-label="${t("sendLux")}">➤</button></form>` : ""}</aside>
@@ -487,11 +489,11 @@ function render() {
     for(const id of ids){const control=document.getElementById(id);if(control){host.append(control);control.classList.add("command-menu-item");}}
   }
   document.querySelector(".contrast-card").insertAdjacentHTML("beforebegin", colourSpaces);
-  if (project.fixtures.length) document.querySelector(".selected-preview").insertAdjacentHTML("afterend", fixtureInspectorMarkup());
+  if (activeFixtures.length) document.querySelector(".selected-preview").insertAdjacentHTML("afterend", fixtureInspectorMarkup());
   if (preferences.module === "library") { const drawer=document.createElement("section"); drawer.className="library-drawer panel"; drawer.setAttribute("aria-label",t("library")); drawer.innerHTML=`<div class="section-title"><h2>▱ ${t("library")}</h2><button id="close-library" class="subtle" aria-label="${t("close")}">×</button></div><p>${t("virtualLibraryNote")}</p><div class="fixture-library">${fixtureLibraryMarkup()}</div>`; app.insertBefore(drawer,app.querySelector("footer")); }
   document.querySelector(".cue-track").insertAdjacentHTML("beforebegin", `<div class="cue-timing">${["duration","fade","delay"].map((key)=>`<label>${t(key)} (s)<input id="cue-${key}" type="number" required min="${key === "duration" ? ".1" : "0"}" step=".1" value="${key === "duration" ? "5" : key === "fade" ? "1" : "0"}" /></label>`).join("")}</div>`);
   if (activeCue) document.querySelector(".cue-track").insertAdjacentHTML("beforebegin", `<div class="cue-timing"><label>${t("timeline")}<input id="edit-cue-name" value="${esc(activeCue.name)}" /></label>${["duration","fade","delay"].map((key)=>`<label>${t(key)} (s)<input id="edit-cue-${key}" type="number" required min="0" step=".1" value="${activeCue[key] ?? 0}" /></label>`).join("")}<button id="edit-cue">${t("saveCueTiming")}</button></div>`);
-  document.querySelector(".dmx-actions").insertAdjacentHTML("beforeend", `<button id="blackout" ${project.fixtures.length ? "" : "disabled"}>${t("blackout")}</button>`);
+  document.querySelector(".dmx-actions").insertAdjacentHTML("beforeend", `<button id="blackout" ${activeFixtures.length ? "" : "disabled"}>${t("blackout")}</button>`);
   document.querySelector(".dmx-actions").insertAdjacentHTML("beforeend", `<button id="play-sequence" ${sceneCueList.length ? "" : "disabled"}>▶ ${t("playCueList")}</button>`);
   const blackoutCommand=document.querySelector("#blackout"),fixtureCommandGroup=commandMenus.querySelector('[data-command-group="fixtures"]');
   if(blackoutCommand&&fixtureCommandGroup){fixtureCommandGroup.append(blackoutCommand);blackoutCommand.classList.add("command-menu-item");}
@@ -505,9 +507,9 @@ function render() {
   sequenceTrack.replaceWith(sequenceDetails);sequenceDetails.append(sequenceTrack);
   document.querySelector("#stop-cue").insertAdjacentHTML("beforebegin",`<button id="play-tracks" ${sceneCueList.length ? "" : "disabled"}>▶ ${t("playTracks")}</button>`);
   document.querySelector("#create-cue").insertAdjacentHTML("beforebegin", `<label>${t("captureGroup")} <select id="cue-group"><option value="">${t("allFixtures")}</option>${(project.fixtureGroups ?? []).map((group)=>`<option value="${esc(group.id)}">${esc(group.name)}</option>`).join("")}</select></label>`);
-  document.querySelector(".timeline").insertAdjacentHTML("beforeend", `<details class="fixture-group-editor"><summary>${t("fixtureGroups")}</summary><label>${t("groupName")} <input id="group-name" maxlength="120"></label><div>${project.fixtures.map((fixture)=>`<label><input type="checkbox" data-group-member value="${esc(fixture.id)}"> ${esc(fixture.name)}</label>`).join("")}</div><button id="save-group">${t("saveGroup")}</button>${(project.fixtureGroups ?? []).map((group)=>`<p>${esc(group.name)} · ${group.fixtureIds.length} <button data-delete-group="${esc(group.id)}">${t("deleteGroup")}</button></p>`).join("")}</details>`);
+  document.querySelector(".timeline").insertAdjacentHTML("beforeend", `<details class="fixture-group-editor"><summary>${t("fixtureGroups")}</summary><label>${t("groupName")} <input id="group-name" maxlength="120"></label><div>${activeFixtures.map((fixture)=>`<label><input type="checkbox" data-group-member value="${esc(fixture.id)}"> ${esc(fixture.name)}</label>`).join("")}</div><button id="save-group" ${activeFixtures.length ? "" : "disabled"}>${t("saveGroup")}</button>${(project.fixtureGroups ?? []).map((group)=>`<p>${esc(group.name)} · ${group.fixtureIds.filter((id)=>activeFixtures.some((fixture)=>fixture.id===id)).length} <button data-delete-group="${esc(group.id)}">${t("deleteGroup")}</button></p>`).filter((_,index)=>(project.fixtureGroups[index]?.fixtureIds ?? []).some((id)=>activeFixtures.some((fixture)=>fixture.id===id))).join("")}</details>`);
   document.querySelector(".timeline").insertAdjacentHTML("beforeend", `<div class="dmx-actions"><label><input id="sequence-loop" type="checkbox" ${preferences.loopSequence ? "checked" : ""}> ${t("loopSequence")}</label><label>${t("seekSequence")} <input id="sequence-seek" type="range" min="0" max="${sequenceDuration}" step="0.1" value="0" ${sequenceDuration ? "" : "disabled"}></label><output id="sequence-position">0 / ${sequenceDuration.toFixed(1)} s</output></div>`);
-  document.querySelector(".timeline").insertAdjacentHTML("beforeend", `<div class="dmx-actions"><label>${t("virtualEffect")} <select id="effect-type"><option value="pulse">${t("pulse")}</option><option value="chase">${t("chase")}</option></select></label><label>${t("effectPeriod")} <input id="effect-period" type="number" min="0.1" max="120" step="0.1" value="2"></label><button id="play-effect" ${project.fixtures.length ? "" : "disabled"}>▶ ${t("previewEffect")}</button></div>`);
+  document.querySelector(".timeline").insertAdjacentHTML("beforeend", `<div class="dmx-actions"><label>${t("virtualEffect")} <select id="effect-type"><option value="pulse">${t("pulse")}</option><option value="chase">${t("chase")}</option></select></label><label>${t("effectPeriod")} <input id="effect-period" type="number" min="0.1" max="120" step="0.1" value="2"></label><button id="play-effect" ${activeFixtures.length ? "" : "disabled"}>▶ ${t("previewEffect")}</button></div>`);
   if (activeCue) {
     const index=sceneCueList.indexOf(activeCue);
     const scheduled=tracks.flatMap((track)=>track.entries).find((entry)=>entry.cue.id===activeCue.id);
@@ -549,7 +551,7 @@ function render() {
     input.oninput=update;
     update();
   }
-  if (project.fixtures.length) document.querySelector(".tool-section").insertAdjacentHTML("afterend", `<section class="fixture-list-section"><h2>${t("fixtureList")} <span>${project.fixtures.length}</span></h2><ul class="fixture-layer-list" aria-label="${t("layersLighting")}">${project.fixtures.map((fixture)=>`<li><button type="button" class="fixture-select" data-layer-fixture="${esc(fixture.id)}" aria-pressed="${fixture.id===selectedFixture()?.id}"><span aria-hidden="true">☼</span><span class="fixture-name">${esc(fixture.name)}</span></button><button type="button" class="fixture-delete" data-delete-fixture-row="${esc(fixture.id)}" aria-label="${esc(t("deleteFixture"))}: ${esc(fixture.name)}" title="${esc(t("deleteFixture"))}">×</button></li>`).join("")}</ul></section>`);
+  document.querySelector(".tool-section").insertAdjacentHTML("afterend", `<section class="fixture-list-section"><h2><button type="button" id="toggle-fixtures" class="fixture-list-toggle" aria-haspopup="true" aria-expanded="false" aria-controls="fixture-list">${t("fixtureList")} <span>${activeFixtures.length}</span><span aria-hidden="true">⌄</span></button></h2>${activeFixtures.length ? `<ul id="fixture-list" class="fixture-layer-list fixture-list-popover" aria-label="${t("layersLighting")}" popover="auto">${activeFixtures.map((fixture)=>`<li><button type="button" class="fixture-select" data-layer-fixture="${esc(fixture.id)}" aria-pressed="${fixture.id===selectedFixture()?.id}"><span aria-hidden="true">☼</span><span class="fixture-name">${esc(fixture.name)}</span></button><button type="button" class="fixture-delete" data-delete-fixture-row="${esc(fixture.id)}" aria-label="${esc(t("deleteFixture"))}: ${esc(fixture.name)}" title="${esc(t("deleteFixture"))}">×</button></li>`).join("")}</ul>` : `<p class="fixture-empty">${t("noFixtures")} · <button type="button" class="fixture-empty-add">＋ ${t("addWash")}</button></p>`}</section>`);
   document.querySelector(".swatches").insertAdjacentHTML("afterend", `<p class="palette-summary">${t("seedColour")}: ${esc(preferences.seed)} · ${t("harmony")}: ${esc(preferences.harmony)} · ${palette().colors.length} ${t("summarySwatches")} · ${palette().colors.filter((colour)=>colour.locked).length} ${t("summaryLocked")}</p>`);
   document.querySelector(".export-grid")?.insertAdjacentHTML("beforeend", `<button id="export-svg">SVG</button><button id="export-pdf" aria-describedby="pdf-export-limit">${t("paletteSheetPdf")}</button><small id="pdf-export-limit">${t("pdfPaletteLimit")}</small><button id="export-cue-pdf" aria-describedby="cue-pdf-limit">${t("cueSheetPdf")}</button><small id="cue-pdf-limit">${t("cuePdfLimit")}</small><button id="export-tokens">${t("designTokens")}</button>`);
   document.querySelector(".palette-actions").insertAdjacentHTML("beforeend", `<button id="extract-image">${t("extractImage")}</button><input id="palette-image" type="file" accept="image/png,image/jpeg,image/webp" hidden />`);
@@ -589,7 +591,7 @@ function render() {
   }
   const projectionButton=document.querySelector(".view-menu");
   document.querySelector(".workspace-tabs").insertAdjacentHTML("beforeend", `<button id="viewport-fullscreen" class="view-menu" aria-label="${t("fullscreenViewport")}" title="${t("fullscreenViewport")}" ${canFullscreen(document.querySelector(".scene-preview"),document) ? "" : "disabled"}>${icon("fullscreen")}</button>`);
-  if (preferences.view==="light") { const previewCountLabel=`${t("webglPreview")} · ${phrase("previewFixtureCount",{shown:scene().visibility?.lighting===false ? 0 : Math.min(project.fixtures.length,previewQuality(preferences.previewQuality).fixtures),total:project.fixtures.length})}`; const previewSubtitle=document.querySelector(".scene-title small"); previewSubtitle.title=previewCountLabel; previewSubtitle.setAttribute("aria-label",previewCountLabel); }
+  if (preferences.view==="light") { const previewCountLabel=`${t("webglPreview")} · ${phrase("previewFixtureCount",{shown:scene().visibility?.lighting===false ? 0 : Math.min(activeFixtures.length,previewQuality(preferences.previewQuality).fixtures),total:activeFixtures.length})}`; const previewSubtitle=document.querySelector(".scene-title small"); previewSubtitle.title=previewCountLabel; previewSubtitle.setAttribute("aria-label",previewCountLabel); }
   projectionButton.insertAdjacentHTML("afterend", `<button id="export-canvas" class="view-menu" ${preferences.view==="palette" ? "" : "disabled"}>↗ ${t("exportCanvas")}</button>`);
   const materialButton=document.querySelector("#apply-scene");
   if (materialButton) materialButton.insertAdjacentHTML("beforebegin", `<label>${t("paintColon")} <select id="material-target">${["wall","accent","floor","ceiling"].map((target)=>`<option value="${target}" ${preferences.materialTarget===target ? "selected" : ""}>${t(`surface_${target}`)}</option>`).join("")}</select></label>`);
@@ -730,7 +732,7 @@ function render() {
     else {renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {camera:viewportCamera,accent,room:scene().room,roomType:scene().roomType,ambience:roomAmbience(scene()),materials:scene().materials,stage:scene().stage,quality:preferences.previewQuality,projection:preferences.projection==="orthographic" ? "orthographic" : "perspective",visibility:scene().visibility,fixtures,onSelect(id){stopPlayback();preferences.fixtureId=id;preferences.inspectorMode="fixture";savePreferences();render();},onTransform(id,transform){commitProjectChange("fixture-move",(draft)=>{draft.fixtures=updateFixture(draft.fixtures,id,{transform});});updateRendererFromFixtures();}});rendererConfigSignature=nextRendererConfig;rendererFixtureSignature=fixtureSignature;rendererAccent=accent;}
     document.querySelectorAll("[data-camera-axis]").forEach(button=>button.disabled=!renderer.supported);
     if (!renderer.supported) {
-      document.querySelector(".scene-title small").title=phrase("previewFixtureCount",{shown:0,total:project.fixtures.length}); document.querySelector(".scene-title small").setAttribute("aria-label",document.querySelector(".scene-title small").title);
+      document.querySelector(".scene-title small").title=phrase("previewFixtureCount",{shown:0,total:sceneFixtures().length}); document.querySelector(".scene-title small").setAttribute("aria-label",document.querySelector(".scene-title small").title);
       const note=document.createElement("p");
       note.className="webgl-unavailable";
       note.setAttribute("role","status");
@@ -823,7 +825,7 @@ function bind() {
   if (deleteFixtureButton) deleteFixtureButton.onclick=()=>{
     const id=selectedFixture().id;
     commitProjectChange("fixture-delete",(draft)=>Object.assign(draft,deleteFixture(draft,id)));
-    preferences.fixtureId=project.fixtures[0]?.id ?? null;savePreferences();render();
+    preferences.fixtureId=sceneFixtures().find((fixture)=>fixture.id!==id)?.id ?? null;savePreferences();render();
   };
   document.querySelector("#apply-room").onclick=()=>{
     try {
@@ -1029,7 +1031,7 @@ function bind() {
     const id=button.dataset.deleteFixtureRow;
     if(!project.fixtures.some((fixture)=>fixture.id===id))return;
     commitProjectChange("fixture-delete",(draft)=>Object.assign(draft,deleteFixture(draft,id)));
-    if(preferences.fixtureId===id)preferences.fixtureId=project.fixtures[0]?.id ?? null;
+    if(preferences.fixtureId===id)preferences.fixtureId=sceneFixtures().find((fixture)=>fixture.id!==id)?.id ?? null;
     savePreferences();render();
   });
   document.querySelectorAll("[data-move-cue]").forEach((button)=>button.onclick=()=>{
@@ -1156,7 +1158,7 @@ function bind() {
   });
   document.querySelectorAll("[data-swatch]").forEach((button) => button.onclick = () => { preferences.selected = button.dataset.swatch; preferences.inspectorMode="palette"; savePreferences(); render(); });
   document.querySelector("#project-name").onchange = (event) => { const name=event.target.value.trim(); if(name&&name!==project.name) commitProjectChange("project-rename",(draft)=>{draft.name=name;}); render(); };
-  const sceneSelect=document.querySelector("#scene-select");if(sceneSelect)sceneSelect.onchange=(event)=>{if(!project.scenes.some((item)=>item.id===event.target.value))return;stopPlayback();preferences.sceneId=event.target.value;preferences.objectId=null;preferences.cueId=sceneCues(project.cues,preferences.sceneId).at(-1)?.id ?? null;savePreferences();render();};
+  const sceneSelect=document.querySelector("#scene-select");if(sceneSelect)sceneSelect.onchange=(event)=>{if(!project.scenes.some((item)=>item.id===event.target.value))return;stopPlayback();preferences.sceneId=event.target.value;preferences.objectId=null;preferences.fixtureId=sceneFixtures(project.fixtures,preferences.sceneId).at(-1)?.id ?? null;preferences.cueId=sceneCues(project.cues,preferences.sceneId).at(-1)?.id ?? null;savePreferences();render();};
   const addRoomButton=document.querySelector("#add-room-scene");if(addRoomButton)addRoomButton.onclick=showRoomSceneDialog;
   document.querySelector("#seed").onchange = (event) => { const hex = normalizeHex(event.target.value); if (hex) preferences.seed = hex; event.target.value = preferences.seed; savePreferences(); };
   document.querySelector("#harmony").onchange = (event) => { preferences.harmony = event.target.value; savePreferences(); };
@@ -1192,6 +1194,19 @@ function bind() {
     surface.addEventListener("pointerenter",clearToolsClose);
     surface.addEventListener("pointerleave",scheduleToolsClose);
   }
+  const fixturesToggle=document.querySelector("#toggle-fixtures"),fixturesMenu=document.querySelector("#fixture-list"),fixturesSection=document.querySelector(".fixture-list-section");
+  if(fixturesToggle&&fixturesMenu){
+    const placeFixturesMenu=()=>{if(!fixturesMenu.matches(":popover-open"))return;const trigger=fixturesToggle.getBoundingClientRect(),width=Math.min(Math.max(trigger.width,240),innerWidth-16),height=Math.min(fixturesMenu.scrollHeight,Math.max(120,Math.min(innerHeight*.55,innerHeight-16)));let top=trigger.bottom+4;if(top+height>innerHeight-8)top=Math.max(8,trigger.top-height-4);fixturesMenu.style.left=`${Math.max(8,Math.min(trigger.left,innerWidth-width-8))}px`;fixturesMenu.style.top=`${top}px`;fixturesMenu.style.width=`${width}px`;fixturesMenu.style.maxHeight=`${height}px`;};
+    let fixtureLeaveTimer;
+    const clearFixtureLeave=()=>clearTimeout(fixtureLeaveTimer);
+    const closeFixtureMenu=()=>{clearFixtureLeave();if(fixturesMenu.matches(":popover-open"))fixturesMenu.hidePopover();};
+    fixturesToggle.onclick=()=>{clearFixtureLeave();if(fixturesMenu.matches(":popover-open"))closeFixtureMenu();else{fixturesMenu.showPopover();placeFixturesMenu();requestAnimationFrame(placeFixturesMenu);}};
+    fixturesMenu.addEventListener("toggle",()=>fixturesToggle.setAttribute("aria-expanded",String(fixturesMenu.matches(":popover-open"))));
+    const scheduleFixtureLeave=()=>{if(!matchMedia("(hover: hover) and (pointer: fine)").matches)return;clearFixtureLeave();fixtureLeaveTimer=setTimeout(()=>{if(!fixturesSection.matches(":hover")&&!fixturesMenu.matches(":hover"))closeFixtureMenu();},180);};
+    for(const surface of [fixturesSection,fixturesMenu]){surface.addEventListener("pointerenter",clearFixtureLeave);surface.addEventListener("pointerleave",scheduleFixtureLeave);}
+    window.addEventListener("resize",placeFixturesMenu,{passive:true});
+    document.querySelectorAll("[data-layer-fixture],[data-delete-fixture-row],.fixture-empty-add").forEach(button=>button.addEventListener("click",closeFixtureMenu));
+  }
   document.querySelector("#new-project").onclick=createNewProject;
   document.querySelector("#undo").onclick = undo; document.querySelector("#redo").onclick = redo;
   document.querySelector("#toggle-lux").onclick = () => { preferences.luxOpen = !preferences.luxOpen; savePreferences(); render(); };
@@ -1200,6 +1215,7 @@ function bind() {
   const resetCamera = () => renderer?.reset();
   document.querySelector("#reset-camera")?.addEventListener("click",resetCamera);
   document.querySelector("#add-fixture").onclick = () => { addVirtualFixture(); render(); };
+  document.querySelector(".fixture-empty-add")?.addEventListener("click",()=>{addVirtualFixture();render();});
   const blackoutButton = document.querySelector("#blackout"); if (blackoutButton) blackoutButton.onclick = () => { activateBlackout(); render(); };
   document.querySelector("#apply-fixture-colour").onclick = () => { applyPaletteToVirtualFixtures(); render(); };
   document.querySelector("#create-cue").onclick = createCueSnapshot;
