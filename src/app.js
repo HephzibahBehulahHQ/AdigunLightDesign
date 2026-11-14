@@ -304,7 +304,7 @@ function render() {
   const contrastBackground=normalizeHex(preferences.contrastBackground) ?? "#0B1220";
   const contrast = contrastResult(compositeSwatch(active,contrastBackground), contrastBackground);
   const colourSpaces = colourSpaceMarkup(active.hex);
-  const commandGroups={project:t("project"),history:`${t("undo")} / ${t("redo")}`,view:`${t("palette")} / ${t("light")}`,scene:t("scenePreview"),palette:t("palette"),fixtures:t("fixture"),export:t("export")};
+  const commandGroups={project:t("project"),history:`${t("undo")} / ${t("redo")}`,view:`${t("palette")} / ${t("light")}`,scene:t("sceneHeader"),palette:t("palette"),fixtures:t("fixture"),export:t("export")};
   const nav = [
     ["canvas", "⌂", true], ["palette", "◉", true], ["light", "☼", true], ["copilot", "◌", true], ["library", "▱", true], ["export", "↗", true], ["community", "♧", false]
   ].map(([key, icon, enabled]) => {const labelKey={canvas:"moduleCanvas",light:"moduleLight",copilot:"moduleCopilot"}[key] ?? key;return `<button class="module ${studioActiveModule(preferences) === key ? "is-active" : ""}" data-module="${key}" ${enabled ? "" : disabled(`${t(key)} ${t("availableLater")}`)}><span>${icon}</span>${t(labelKey)}</button>`;}).join("");
