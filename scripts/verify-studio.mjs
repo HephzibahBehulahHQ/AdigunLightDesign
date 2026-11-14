@@ -110,9 +110,11 @@ try {
   assert.equal(await page.locator('[data-command-group="scene"] [data-open-scene-editor="stage"]').isVisible(), true, "Scene ribbon opens stage settings");
   assert.equal(await page.locator('[data-command-group="scene"] [data-camera-axis]').count(), 3, "X/Y/Z camera views are docked in the Scene ribbon");
   assert.equal(await page.locator(".scene-preview .viewport-axis-controls").count(), 0, "camera controls do not cover the 3D canvas");
-  for (const selector of ["#viewport-performance", "#viewport-fit", "#viewport-fullscreen", "#preview-quality"]) {
+  for (const selector of ["#viewport-performance", "#viewport-projection", "#viewport-fit", "#viewport-fullscreen"]) {
     assert.equal(await page.locator(`.workspace-tabs ${selector}`).count(), 1, `${selector} stays docked in the scene header`);
   }
+  assert.deepEqual(await page.locator(".workspace-tabs").evaluate((row)=>[...row.querySelectorAll(":scope > button.view-menu")].map((button)=>button.id)),["viewport-performance","viewport-projection","viewport-fit","viewport-fullscreen"],"scene header controls follow the reference order");
+  assert.equal(await page.locator("#fixture-inspector-panel .light-advanced-controls #preview-quality").count(),1,"renderer quality remains available in advanced Light controls");
   const sceneHeaderCanvas=await page.locator(".scene-preview").boundingBox();
   await page.locator("#viewport-performance").click();
   assert.equal(await page.locator("#preview-quality").inputValue(), "performance", "Performance switches the renderer to its real performance profile");
