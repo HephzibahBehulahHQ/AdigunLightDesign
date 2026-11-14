@@ -258,7 +258,7 @@ try {
   const exportTrigger=page.locator('[data-command-menu-trigger="export"]');
   await exportTrigger.click();
   const exportBounds=await page.locator("#command-menu-panel-export").boundingBox();
-  assert.ok(exportBounds.x>=0&&exportBounds.right<=1754&&exportBounds.y>=0&&exportBounds.y+exportBounds.height<=878,"the right-edge Export menu repositions within the viewport");
+  assert.ok(exportBounds.x>=0&&exportBounds.x+exportBounds.width<=1754&&exportBounds.y>=0&&exportBounds.y+exportBounds.height<=878,"the right-edge Export menu repositions within the viewport");
   await page.locator(".footer-ready").click();
 
   await page.locator('[data-tool="shapes"]').click();
