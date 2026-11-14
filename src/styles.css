@@ -511,3 +511,19 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
 @media (min-width:1100px) {
   .left-rail .tool-list { padding-bottom:12px; }
 }
+
+/* Use the reference's quiet navy action bars for fixture and patch commands. */
+@media (min-width:1100px) {
+  #fixture-inspector-panel .inspector-group .wide {
+    border:1px solid #3a4e6d;
+    background:#1d2a40;
+    box-shadow:inset 0 1px #ffffff08;
+    font-weight:650;
+  }
+  #fixture-inspector-panel .inspector-group .wide::before {
+    content:"✓";
+    margin-right:7px;
+    color:var(--cyan);
+    font-weight:800;
+  }
+}
