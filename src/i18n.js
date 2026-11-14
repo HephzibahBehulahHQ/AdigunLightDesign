@@ -323,3 +323,13 @@ Object.assign(messages.en,{exportPngShort:"PNG"});
 Object.assign(messages.de,{exportPngShort:"PNG"});
 Object.assign(messages.yo,{exportPngShort:"PNG"});
 Object.assign(messages.pcm,{exportPngShort:"PNG"});
+
+Object.assign(messages.en,{workspaceViews:"Workspace views",viewPalette2D:"2D Palette",viewStudio3D:"3D Studio",timelineFocused:"Timeline focused"});
+Object.assign(messages.de,{workspaceViews:"Arbeitsbereichsansichten",viewPalette2D:"2D-Palette",viewStudio3D:"3D-Studio",timelineFocused:"Zeitleiste fokussiert"});
+Object.assign(messages.yo,{workspaceViews:"Àwọn ojú iṣẹ́",viewPalette2D:"Àkójọpọ̀ àwọ̀ 2D",viewStudio3D:"Yàrá 3D",timelineFocused:"A dojúkọ àkókò iṣẹ́"});
+Object.assign(messages.pcm,{workspaceViews:"Workspace views",viewPalette2D:"2D Palette",viewStudio3D:"3D Studio",timelineFocused:"Timeline focused"});
+
+Object.assign(messages.en,{viewTimeline:"Timeline"});
+Object.assign(messages.de,{viewTimeline:"Zeitleiste"});
+Object.assign(messages.yo,{viewTimeline:"Àkókò iṣẹ́"});
+Object.assign(messages.pcm,{viewTimeline:"Timeline"});

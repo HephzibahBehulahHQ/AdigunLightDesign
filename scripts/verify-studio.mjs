@@ -102,6 +102,16 @@ try {
   await page.setViewportSize({ width: 1754, height: 878 });
   assert.equal(await page.locator(".left-rail-heading").isVisible(), true, "left rail has the compact project/layers/tools header from the reference");
   assert.equal((await page.locator(".product-lockup strong").innerText()).replace(/\s+/g, " ").trim(), "Adigun Light Design", "the header wordmark keeps the approved three-word spacing");
+  assert.deepEqual(await page.locator(".workspace-switcher button").evaluateAll((buttons)=>buttons.map((button)=>button.innerText.trim())),["2D Palette","3D Studio","Timeline"],"workspace shortcuts match the approved header");
+  const switcherCanvas=await page.locator(".scene-preview").boundingBox();
+  await page.locator('.workspace-switcher [data-view="palette"]').click();
+  assert.equal(await page.locator("#palette-inspector-panel").isVisible(),true,"2D Palette opens the existing palette workspace");
+  await page.locator('.workspace-switcher [data-view="light"]').click();
+  assert.equal(await page.locator("#fixture-inspector-panel").isVisible(),true,"3D Studio opens the existing lighting workspace");
+  await page.locator("#show-timeline").click();
+  assert.equal(await page.locator(".lower-workspace .timeline").evaluate((panel)=>panel===globalThis.document.activeElement),true,"Timeline focuses the docked timeline without scrolling the document");
+  assert.deepEqual(await page.locator(".scene-preview").boundingBox(),switcherCanvas,"workspace shortcuts leave the 3D canvas stationary");
+
   assert.equal(await page.locator(".inspector > .section-title button:disabled").count(), 0, "the contextual inspector header has no inert close control");
   assert.equal(await page.locator(".scene-preview .canvas-actions #apply-scene").count(), 1, "Apply colour stays in the canvas quick-action lane");
   assert.equal(await page.locator(".scene-preview .canvas-actions #material-target").count(), 1, "surface painting stays in the canvas quick-action lane");
