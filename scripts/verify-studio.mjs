@@ -472,6 +472,7 @@ try {
   await page.waitForFunction(()=>globalThis.document.querySelector("#project-name")?.value==="Studio Mood");
   assert.equal(await page.locator("[data-layer-fixture]").count(),9,"Save then continue creates a fresh starter workspace");
   assert.equal(await page.locator(".header-save-status").innerText(),"Unsaved project","the fresh workspace is not mistaken for a saved project");
+  await page.locator("#toggle-tools").click();
   await page.locator('[data-tool="shapes"]').click();
   const beforeUnload=await page.evaluate(()=>{const event=new Event("beforeunload",{cancelable:true});globalThis.dispatchEvent(event);return event.defaultPrevented;});
   assert.equal(beforeUnload,true,"unsaved work registers the browser native leave warning");
