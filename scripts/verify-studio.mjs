@@ -37,6 +37,9 @@ try {
   page.on("pageerror", (error) => runtimeErrors.push(error.message));
   await page.goto(`http://127.0.0.1:${address.port}/`, { waitUntil: "networkidle" });
   assert.equal(await page.locator(".header-save-status").innerText(), "Saved locally", "the seeded reference project is saved in browser storage on first open");
+  assert.equal(await page.locator(".studio-panel-title").innerText(),"Scene 01 / 3D Mockup Room","the studio heading matches the approved room label");
+  assert.equal(await page.locator(".scene-title b").innerText(),"STUDIO MOOD • RGBW PREVIEW","the live preview badge identifies the studio RGBW view");
+  assert.equal(await page.locator(".scene-title small").innerText(),"Scene view • virtual RGBW previsualization","the preview subtitle describes the live virtual view accurately");
   assert.match(await page.locator(".footer-ready").innerText(),/^● READY · Studio Mood \/ Scene 01 · 3D \/ Virtual DMX · Project saved$/,"footer status matches the approved project, scene, mode, and save summary");
 
   const reports = [];
