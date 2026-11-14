@@ -685,3 +685,25 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
   .command-menu-system { gap:1px; }
   .command-menu-panel[popover] { width:min(290px,calc(100vw - 16px)); }
 }
+
+
+.project-dialog { position:fixed; inset:0; width:min(480px,calc(100vw - 24px)); max-width:calc(100vw - 24px); max-height:min(78dvh,620px); margin:auto; padding:0; overflow:hidden; border:1px solid #456184; border-radius:12px; background:#101a2b; color:#e3ecfb; box-shadow:0 24px 80px #000c; }
+.project-dialog::backdrop { background:#030712bd; backdrop-filter:blur(3px); }
+.project-dialog-card { display:grid; gap:14px; max-height:min(78dvh,620px); margin:0; padding:16px; overflow:auto; }
+.project-dialog-card > header { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.project-dialog-card h2 { margin:0; color:#f8fafc; font-size:16px; }
+.project-dialog-card button { min-height:36px; padding:7px 11px; border:1px solid #3c5272; border-radius:7px; background:#1b2a42; color:#edf4ff; font:inherit; cursor:pointer; }
+.project-dialog-card button:hover { border-color:#a855f7; background:#263752; }
+.project-dialog-card button:focus-visible,.project-dialog-field input:focus-visible { outline:2px solid #22d3ee; outline-offset:2px; }
+.project-dialog-card .project-dialog-close { width:34px; min-height:34px; padding:0; font-size:20px; }
+.project-dialog-field { display:grid; gap:7px; color:#b8c6dc; font-size:13px; font-weight:650; }
+.project-dialog-field input { width:100%; min-height:38px; padding:8px 10px; border:1px solid #456184; border-radius:7px; background:#0b1220; color:#f8fafc; font:inherit; }
+.project-dialog-message,.project-dialog-empty { margin:0; color:#c8d4e6; line-height:1.5; }
+.project-dialog-actions { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:8px; }
+.project-dialog-actions [data-discard] { border-color:#7f3d52; }
+.project-dialog-actions [data-save],.project-dialog-actions button[type="submit"] { border-color:#8b5cf6; background:#512d88; }
+.saved-project-list { display:grid; gap:7px; max-height:min(48dvh,380px); overflow:auto; overscroll-behavior:contain; }
+.project-dialog-card .saved-project-entry { display:grid; gap:4px; width:100%; min-height:52px; text-align:left; }
+.saved-project-entry strong { color:#f8fafc; }
+.saved-project-entry small { color:#a9b5c9; font-size:11px; }
+@media (max-width:520px) { .project-dialog-actions { display:grid; grid-template-columns:1fr; } .project-dialog-actions button { width:100%; } }
