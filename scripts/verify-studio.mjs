@@ -156,6 +156,9 @@ try {
   assert.equal(await page.locator('[data-command-group="scene"] [data-open-scene-editor="room"]').isVisible(), true, "Scene ribbon opens room dimensions");
   assert.equal(await page.locator('[data-command-group="scene"] [data-open-scene-editor="stage"]').isVisible(), true, "Scene ribbon opens stage settings");
   assert.equal(await page.locator('[data-command-group="scene"] [data-camera-axis]').count(), 3, "X/Y/Z camera views are docked in the Scene ribbon");
+  assert.deepEqual(await page.locator('[data-command-group="export"] > button').evaluateAll((buttons)=>buttons.slice(0,2).map((button)=>button.id)),["export-viewport","export-canvas"],"PNG and canvas export lead the Export command group");
+  assert.match((await page.locator("#export-viewport").innerText()).trim(),/PNG/,"the primary export action is visibly labeled PNG");
+
   assert.deepEqual(await page.locator('[data-command-group="scene"] [data-camera-axis]').evaluateAll((buttons)=>buttons.map((button)=>button.innerText.trim())),["View X","View Y","View Z"],"camera view labels match the approved Scene ribbon");
   assert.equal(await page.locator(".scene-preview .viewport-axis-controls").count(), 0, "camera controls do not cover the 3D canvas");
   for (const selector of ["#viewport-performance", "#viewport-projection", "#viewport-fit", "#viewport-fullscreen"]) {
