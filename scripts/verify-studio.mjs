@@ -59,6 +59,9 @@ try {
       const scene = box(".scene-preview");
       const dock = box(".lower-workspace");
       const inspector = box(".inspector");
+      const inspectorContent = box("#fixture-inspector-panel");
+      const lux = box(".lux-panel.is-docked");
+      const inspectorScroll = (() => { const panel=doc.querySelector("#fixture-inspector-panel");return {scrollHeight:panel.scrollHeight,clientHeight:panel.clientHeight,overflowY:browser.getComputedStyle(panel).overflowY}; })();
       const footer = box("footer");
       const labelGaps = [...doc.querySelectorAll(".command-group")].flatMap((group) => {
         const label = group.querySelector("span");
@@ -77,6 +80,9 @@ try {
         scene,
         dock,
         inspector,
+        inspectorContent,
+        lux,
+        inspectorScroll,
         footer,
         minimumLabelGap: labelGaps.length ? Math.min(...labelGaps) : null,
       };
@@ -91,6 +97,18 @@ try {
     assert.ok(report.left.right <= report.scene.x + 1, `left rail does not overlap canvas at ${width}×${height}`);
     assert.ok(report.scene.right <= report.inspector.x + 1, `canvas does not overlap inspector at ${width}×${height}`);
     assert.ok(report.scene.bottom <= report.dock.y + 1, `canvas does not overlap dock at ${width}×${height}`);
+    assert.ok(report.inspectorContent.bottom <= report.lux.y + 1, `inspector scroll lane stops before docked Lux at ${width}×${height}`);
+    assert.ok(report.inspectorScroll.scrollHeight >= report.inspectorScroll.clientHeight, `fixture inspector has a bounded scroll viewport at ${width}×${height}`);
+    if(report.inspectorScroll.scrollHeight>report.inspectorScroll.clientHeight) assert.ok(["auto","scroll"].includes(report.inspectorScroll.overflowY), `inspector overflow scrolls inside its own lane at ${width}×${height}`);
+    if(width===1880 && height===690){
+      const canvasBefore=await page.locator(".scene-preview").boundingBox();
+      const dimensionsBefore=await page.evaluate(()=>[globalThis.document.documentElement.scrollWidth,globalThis.document.documentElement.scrollHeight]);
+      const scrollTop=await page.locator("#fixture-inspector-panel").evaluate(panel=>{panel.scrollTop=panel.scrollHeight;return panel.scrollTop;});
+      assert.ok(scrollTop>0,"short viewport provides independent fixture-inspector scrolling");
+      assert.deepEqual(await page.locator(".scene-preview").boundingBox(),canvasBefore,"inspector scrolling leaves the central canvas stationary");
+      assert.deepEqual(await page.evaluate(()=>[globalThis.document.documentElement.scrollWidth,globalThis.document.documentElement.scrollHeight]),dimensionsBefore,"inspector scrolling does not scroll the document");
+      await page.locator("#fixture-inspector-panel").evaluate(panel=>panel.scrollTop=0);
+    }
     assert.ok(Math.abs(report.scene.x - report.dock.x) <= 1, `canvas and dock share the same left edge at ${width}×${height}`);
     assert.ok(Math.abs(report.scene.width - report.dock.width) <= 1, `canvas and dock share the same width at ${width}×${height}`);
     assert.ok(report.minimumLabelGap === null || report.minimumLabelGap >= 0, `ribbon labels clear buttons at ${width}×${height}`);
