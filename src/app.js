@@ -363,7 +363,7 @@ function render() {
     <footer class="studio-footer"><span class="footer-ready"><i aria-hidden="true">●</i> ${t("ready").toUpperCase()} · ${esc(project.name)} / ${t("sceneHeader")} ${String(displayedSceneNumber).padStart(2,"0")} · 3D / ${t("virtualDmx")} · ${t(projectPersisted ? "projectSavedShort" : "sessionOnly")}</span><span id="status" role="status" aria-live="polite">${status || t("footerControls")}</span><span class="footer-shortcuts">${t("keyboardShortcuts")}</span></footer>`;
   if(reuseRenderer)document.querySelector("#light-canvas")?.replaceWith(previousCanvas);
   const ribbon=document.querySelector(".command-ribbon");
-  for(const [group,ids] of [["history",["undo","redo"]],["fixtures",["add-fixture","apply-fixture-colour"]]]){
+  for(const [group,ids] of [["history",["undo","redo"]],["fixtures",["add-fixture","apply-fixture-colour","blackout"]]]){
     const host=ribbon.querySelector(`[data-command-group="${group}"]`);
     for(const id of ids){let control=document.getElementById(id);if(id.startsWith("ribbon-view-")){const view=id.endsWith("palette")?"palette":"light";control=document.querySelector(`[data-view="${view}"]`);control.id=id;control.dataset.ribbonView=view;}if(control){host.append(control);control.classList.add("ribbon-command");}}
   }
