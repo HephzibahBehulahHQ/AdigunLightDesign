@@ -131,7 +131,7 @@ try {
     assert.equal(await page.locator(`.command-group[data-command-group="palette"] ${selector}`).count(), 1, `${selector} is available in the Palette command group`);
   }
   for (const selector of ["#seed", "#custom-spacing", "#custom-hues", "#perceptual-scale", "#temperature-strength"]) {
-    assert.equal(await page.locator(`#palette-inspector-panel ${selector}`).count(), 1, `${selector} remains available in its independent palette panel`);
+    assert.equal(await page.locator(`#palette-panel ${selector}`).count(), 1, `${selector} remains available in its independent palette panel`);
     assert.equal(await page.locator(`.command-group[data-command-group="palette"] ${selector}`).count(), 0, `${selector} does not crowd the primary Palette ribbon`);
   }
 
