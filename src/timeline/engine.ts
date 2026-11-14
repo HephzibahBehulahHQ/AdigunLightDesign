@@ -42,9 +42,9 @@ export function editCue(cue:Cue, changes:CueOptions) {
   return {...cue,...revised,targets:structuredClone(cue.targets)};
 }
 
-export function createCue(fixtures:readonly Fixture[], { id = crypto.randomUUID(), name = `Look ${Date.now()}`, duration = 5, fade = 1, delay = 0, fadeOut = 0 }:CueOptions = {}):Cue {
+export function createCue(fixtures:readonly Fixture[], { id = crypto.randomUUID(), name = `Look ${Date.now()}`, duration = 5, fade = 1, delay = 0, fadeOut = 0, sceneId }:CueOptions = {}):Cue {
   if (![duration,fade,delay,fadeOut].every(Number.isFinite) || duration <= 0 || fade < 0 || delay < 0 || fadeOut<0 || delay + fade + fadeOut > duration) throw new Error("Cue timing requires a positive duration and nonnegative delay/fades fitting within it.");
-  return { id, name, duration, fade, delay, fadeOut, targets:fixtures.map((fixture) => ({ fixtureId:fixture.id, properties:structuredClone(fixture.properties) })), keyframes:[{ time:delay, value:"start" }, { time:delay + fade, value:"target" },...(fadeOut ? [{time:duration-fadeOut,value:"hold-end"},{time:duration,value:"source"}] : [])] };
+  return { id, name, duration, fade, delay, fadeOut, ...(sceneId ? {sceneId} : {}), targets:fixtures.map((fixture) => ({ fixtureId:fixture.id, properties:structuredClone(fixture.properties) })), keyframes:[{ time:delay, value:"start" }, { time:delay + fade, value:"target" },...(fadeOut ? [{time:duration-fadeOut,value:"hold-end"},{time:duration,value:"source"}] : [])] };
 }
 
 export function evaluateCue(sourceFixtures:readonly Fixture[], cue:Cue, elapsedSeconds:number) {
