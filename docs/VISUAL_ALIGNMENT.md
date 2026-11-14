@@ -6,6 +6,7 @@ The active visual acceptance target is the owner-supplied
 1754 × 878, with 18px below the footer. SHA-256:
 `e6360f05dd72a7b19e43a521a3ec7771dd8d57011bf383cf13c0d34c398691af`.
 This target supersedes the 3 November screenshot for current layout comparisons.
+
 Studio camera corrections now honor the document's positive-Z rear-wall
 convention, keeping that wall behind the sofa instead of between the viewer and
 furniture. The camera aims at 55% of room height, rather than near the floor.
@@ -22,9 +23,11 @@ math/lifecycle guarantees, not screenshot evidence or exact visual acceptance.
 Historical camera validation, before the compact-studio releases: 221 tests
 passed with zero failures or skips; project checks and the Vite build passed.
 The build was Auth-unconfigured at that time.
+
 The 3 November screenshot is historical; current layout comparisons use the
 14 November target. The correction rejecting the five-card project overview
 and dead workspace remains binding.
+
 Keep the workspace to the top header/navigation, bottom status trailer,
 full-height left layers/tools, central scene with palette and timeline dock, and
 full-height right inspector. Do not add internal implementation, milestone,
