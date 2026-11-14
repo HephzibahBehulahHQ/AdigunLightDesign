@@ -325,6 +325,11 @@ Object.assign(messages.yo,{versions:"Àwọn ẹ̀dà",compare:"Fi wé",saveVers
 Object.assign(messages.pcm,{versions:"Versions",compare:"Compare",saveVersionToCompare:"Save a palette version to compare am with the current palette."});
 
 Object.assign(messages.en,{exportPngShort:"PNG"});
+Object.assign(messages.en,{saveCueTiming:"Save cue timing",setSwatchOpacity:"Set swatch opacity",applyStageSettings:"Apply stage settings",applyRoomDimensions:"Apply room dimensions",applyObjectChanges:"Apply object changes"});
+Object.assign(messages.de,{saveCueTiming:"Cue-Zeit speichern",setSwatchOpacity:"Deckkraft festlegen",applyStageSettings:"Bühneneinstellungen anwenden",applyRoomDimensions:"Raummaße anwenden",applyObjectChanges:"Objektänderungen anwenden"});
+Object.assign(messages.yo,{saveCueTiming:"Fi àkókò cue pamọ́",setSwatchOpacity:"Ṣètò bí àwọ̀ ṣe hàn",applyStageSettings:"Lo ètò pèpéle",applyRoomDimensions:"Lo ìwọ̀n yàrá",applyObjectChanges:"Lo àyípadà ohun"});
+Object.assign(messages.pcm,{saveCueTiming:"Save cue timing",setSwatchOpacity:"Set swatch opacity",applyStageSettings:"Apply stage settings",applyRoomDimensions:"Apply room dimensions",applyObjectChanges:"Apply object changes"});
+
 Object.assign(messages.de,{exportPngShort:"PNG"});
 Object.assign(messages.yo,{exportPngShort:"PNG"});
 Object.assign(messages.pcm,{exportPngShort:"PNG"});
