@@ -663,3 +663,11 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
   .topbar { grid-template-columns:270px auto minmax(230px,1fr) auto; }
   .topbar .product-lockup strong { font-size:24px; letter-spacing:-.2px; }
 }
+@media (min-width:1500px) {
+  .topbar { grid-template-columns:270px auto minmax(230px,1fr) 451px; }
+  .header-project-context { justify-self:end; width:255px; margin-right:5px; }
+  .topbar .utility-controls.top-menu { width:451px; min-width:0; gap:0; justify-content:space-between; }
+  .top-menu-button,.top-menu .language { width:40px; height:32px; min-width:40px; flex-basis:40px; }
+  .top-menu .language select { width:40px; }
+  .header-save-status { width:125px; min-width:125px; justify-content:center; box-sizing:border-box; }
+}
