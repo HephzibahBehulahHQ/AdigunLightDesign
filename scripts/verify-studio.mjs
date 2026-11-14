@@ -273,7 +273,7 @@ try {
   await page.locator("#apply-object").click();
   assert.equal(await page.locator(".design-canvas text").textContent(), "Editable label", "Apply object changes updates the text shown on the canvas");
   const firstSceneId=await page.locator("#scene-select").inputValue();
-  await page.locator("#save").click();
+  await clickCommand("project","#save");
   const projectForSceneSwitch=await page.evaluate(()=>JSON.parse(localStorage.getItem("adigunlightdesign/project-v1")));
   projectForSceneSwitch.scenes.push({...structuredClone(projectForSceneSwitch.scenes[0]),id:"acceptance-secondary-scene",name:"Secondary room",canvasObjects:[]});
   await page.evaluate((project)=>localStorage.setItem("adigunlightdesign/project-v1",JSON.stringify(project)),projectForSceneSwitch);
@@ -421,7 +421,7 @@ try {
   await page.locator("#stop-cue").click();
   await page.locator("#project-name").fill("Studio Acceptance");
   await page.locator("#project-name").press("Tab");
-  await page.locator("#save").click();
+  await clickCommand("project","#save");
   const exportPromise = page.waitForEvent("download");
   await clickCommand("export",'[data-export="project"]');
   const projectExport = await exportPromise;
