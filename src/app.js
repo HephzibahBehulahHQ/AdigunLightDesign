@@ -326,7 +326,7 @@ function render() {
       ${topMenuMarkup({t,locale:preferences.locale,saved:projectPersisted,user:account.user})}<button id="theme" type="button" hidden aria-label="${t("appearance")}"></button>
     </header>
     <nav class="module-nav" aria-label="${t("appModules")}">${nav}</nav>
-    <nav class="command-ribbon" aria-label="${t("tools")}"><div class="command-ribbon-content"><div class="command-group" data-command-group="project"><span>${commandGroups.project}</span><button type="button" id="new-project">＋ ${t("newProject")}</button><button id="open-project">${t("openProject")}</button><button type="button" id="save">${t("save")}</button><button id="import-image" title="${t("importImage")}" aria-label="${t("importImage")}">${t("importAction")}</button><input id="project-file" type="file" accept="application/json,.json" hidden /></div><div class="command-group" data-command-group="history"><span>${commandGroups.history}</span><button id="undo" ${undoStack.length ? "" : "disabled"}>↶ ${t("undo")}</button><button id="redo" ${redoStack.length ? "" : "disabled"}>↷ ${t("redo")}</button></div><div class="command-group" data-command-group="scene"><span>${commandGroups.scene}</span><button type="button" data-open-scene-editor="room">${t("roomCommand")}</button><button type="button" data-open-scene-editor="stage">${t("stageCommand")}</button></div><div class="command-group" data-command-group="palette"><span>${commandGroups.palette}</span></div><div class="command-group" data-command-group="fixtures"><span>${commandGroups.fixtures}</span></div><div class="command-group" data-command-group="export"><span>${commandGroups.export}</span><button data-export="project">Project JSON</button><button data-export="palette">Palette JSON</button><button data-export="css">CSS variables</button><button data-export="ase" title="${t("aseExportLimit")}">${t("aseExport")}</button><button data-export="patch">Patch CSV</button><button data-export="cues">Cue CSV</button></div></div><span class="ribbon-scroll-hint" aria-hidden="true"><b>DRAG ↔</b><small>SCROLL RIBBON</small></span></nav>
+    <nav class="command-ribbon" aria-label="${t("tools")}"><div class="command-ribbon-content"><div class="command-group" data-command-group="project"><span>${commandGroups.project}</span><button type="button" id="new-project">＋ ${t("newProject")}</button><button id="open-project">${t("openProject")}</button><button type="button" id="save">${t("save")}</button><button id="import-image" title="${t("importImage")}" aria-label="${t("importImage")}">${t("importAction")}</button><input id="project-file" type="file" accept="application/json,.json" hidden /></div><div class="command-group" data-command-group="history"><span>${commandGroups.history}</span><button id="undo" ${undoStack.length ? "" : "disabled"}>↶ ${t("undo")}</button><button id="redo" ${redoStack.length ? "" : "disabled"}>↷ ${t("redo")}</button></div><div class="command-group" data-command-group="scene"><span>${commandGroups.scene}</span><button type="button" data-open-scene-editor="room">${t("roomCommand")}</button><button type="button" data-open-scene-editor="stage">${t("stageCommand")}</button></div><div class="command-group" data-command-group="palette"><span>${commandGroups.palette}</span><button type="button" id="open-versions">${t("versions")}</button><button type="button" id="open-compare">${t("compare")}</button></div><div class="command-group" data-command-group="fixtures"><span>${commandGroups.fixtures}</span></div><div class="command-group" data-command-group="export"><span>${commandGroups.export}</span><button data-export="project">Project JSON</button><button data-export="palette">Palette JSON</button><button data-export="css">CSS variables</button><button data-export="ase" title="${t("aseExportLimit")}">${t("aseExport")}</button><button data-export="patch">Patch CSV</button><button data-export="cues">Cue CSV</button></div></div><span class="ribbon-scroll-hint" aria-hidden="true"><b>DRAG ↔</b><small>SCROLL RIBBON</small></span></nav>
     <main id="workspace" class="editor-layout">
       <aside class="left-rail panel">
         <div class="left-rail-heading"><h2>${t("project")} • ${t("layers")} • ${t("tools")}</h2></div>
@@ -429,8 +429,8 @@ function render() {
   const oklch=oklabToOklch(rgbToOklab(hexToRgb(active.hex)));
   document.querySelector("#lock-swatch").insertAdjacentHTML("beforebegin", `<section class="colour-space-card"><h3>OKLCH</h3>${[["l",oklch.l,1,t("lightness")],["c",oklch.c,1,t("chroma")],["h",oklch.h,360,t("hue")]].map(([key,value,max,label])=>`<label>${label} (0–${max})<input id="oklch-${key}" type="number" required min="0" max="${max}" step="any" value="${compact(value,4)}" /></label>`).join("")}<button id="apply-oklch" class="wide">${t("apply")} OKLCH</button></section>`);
   document.querySelector("#oklch-l").closest("label").firstChild.textContent="L (0–1)";
-  document.querySelector(".palette-panel").insertAdjacentHTML("beforeend", `<div class="palette-actions"><button id="save-version">${t("saveVersion")}</button><select id="palette-version" aria-label="${t("savedVersions")}">${project.palettes.slice(1).map((item)=>`<option value="${esc(item.id)}">${esc(item.name)}</option>`).join("")}</select><button id="restore-version" ${project.palettes.length<2 ? "disabled" : ""}>${t("restoreVersion")}</button></div>`);
-  if (project.palettes.length>1) document.querySelector(".palette-panel").insertAdjacentHTML("beforeend", `<details class="palette-comparison"><summary>${t("compareVersions")}</summary><div id="version-comparison"></div></details>`);
+  document.querySelector(".palette-panel").insertAdjacentHTML("beforeend", `<div id="palette-versions-menu" class="palette-ribbon-popover" popover><div class="palette-actions"><button id="save-version">${t("saveVersion")}</button><select id="palette-version" aria-label="${t("savedVersions")}">${project.palettes.slice(1).map((item)=>`<option value="${esc(item.id)}">${esc(item.name)}</option>`).join("")}</select><button id="restore-version" ${project.palettes.length<2 ? "disabled" : ""}>${t("restoreVersion")}</button></div></div><div id="palette-compare-menu" class="palette-ribbon-popover" popover><div id="version-comparison"></div></div>`);
+
   document.querySelector("#lock-swatch").insertAdjacentHTML("beforebegin", `<label>${t("opacity")} (%)<input id="swatch-opacity" type="number" required min="0" max="100" step="any" value="${(active.opacity ?? 1)*100}" /></label><button id="apply-opacity" class="wide">${t("apply")}</button>`);
   for (const button of document.querySelectorAll("[data-swatch]")) {
     const swatch=palette().colors.find((item)=>item.id===button.dataset.swatch);
@@ -502,7 +502,7 @@ function render() {
   const commandGroup=(name)=>document.querySelector(`.command-group[data-command-group="${name}"]`);
   const dock=(selector,groupName,wrap=false)=>{const control=document.querySelector(selector);if(control){const group=commandGroup(groupName);group.append(wrap ? control.closest("label") : control);}};
   dock("#reset-camera","scene");
-  dock(".harmony-command","palette",true);dock("#reroll","palette");dock("#add-colour","palette");dock("#save-version","palette");dock("#palette-version","palette");dock("#restore-version","palette");dock(".palette-comparison","palette");
+  dock(".harmony-command","palette",true);dock("#reroll","palette");dock("#add-colour","palette");
   dock("#export-viewport","export");dock("#export-canvas","export");
   const canvasObject=scene().canvasObjects?.find((object)=>object.id===preferences.objectId);
   if (canvasObject && preferences.view==="palette") palettePanel.insertAdjacentHTML("beforeend", `<fieldset class="canvas-object-editor"><legend>${t("canvasObject")}</legend>${["x","y",...(canvasObject.type!=="text" ? ["width","height"] : ["fontSize"])].map((key)=>`<label>${["x","y"].includes(key) ? key.toUpperCase() : t(key)}<input data-object-value="${key}" type="number" step="any" required value="${canvasObject[key]}"></label>`).join("")}${canvasObject.type==="text" ? `<label>${t("text")}<input id="canvas-text" maxlength="2048" value="${esc(canvasObject.text)}"></label>` : ""}<button id="apply-object">${t("apply")}</button><button id="paint-object">${t("applySwatch")}</button><button id="delete-object">${t("deleteObject")}</button><button id="copy-object">${t("duplicateObject")}</button><button data-object-stack="-1">${t("sendBackward")}</button><button data-object-stack="1">${t("bringForward")}</button></fieldset>`);
@@ -738,16 +738,25 @@ function bind() {
     mutateColours((colors)=>updateSwatch(colors,selected().id,{opacity:Number(input.value)/100}));
   };
   const comparison=document.querySelector("#version-comparison");
-  if (comparison) {
-    const updateComparison=()=>{
-      const saved=project.palettes.find((item)=>item.id===document.querySelector("#palette-version").value);
-      if (!saved) return;
-      const cell=(color)=>color ? `<span style="background:${swatchCssColor(color)};display:inline-block;width:12px;height:12px"></span> ${esc(color.name)} ${swatchCssColor(color)}` : "—";
-      comparison.innerHTML=`<table><thead><tr><th>${t("currentVersion")}</th><th>${t("savedVersions")}</th></tr></thead><tbody>${comparePalettes(palette(),saved).map((row)=>`<tr class="${row.changed ? "is-changed" : ""}"><td>${cell(row.current)}</td><td>${cell(row.saved)}</td></tr>`).join("")}</tbody></table>`;
+  const updateComparison=()=>{
+    const saved=project.palettes.find((item)=>item.id===document.querySelector("#palette-version").value);
+    if (!saved) {comparison.innerHTML=`<p class="palette-empty-state">${t("saveVersionToCompare")}</p>`;return;}
+    const cell=(color)=>color ? `<span style="background:${swatchCssColor(color)};display:inline-block;width:12px;height:12px"></span> ${esc(color.name)} ${swatchCssColor(color)}` : "—";
+    comparison.innerHTML=`<table><thead><tr><th>${t("currentVersion")}</th><th>${t("savedVersions")}</th></tr></thead><tbody>${comparePalettes(palette(),saved).map((row)=>`<tr class="${row.changed ? "is-changed" : ""}"><td>${cell(row.current)}</td><td>${cell(row.saved)}</td></tr>`).join("")}</tbody></table>`;
+  };
+  document.querySelector("#palette-version").onchange=updateComparison;
+  updateComparison();
+  const openPalettePopover=(triggerSelector,popoverSelector)=>{
+    const trigger=document.querySelector(triggerSelector),popover=document.querySelector(popoverSelector);
+    trigger.onclick=()=>{
+      const rect=trigger.getBoundingClientRect(),width=popoverSelector==="#palette-versions-menu" ? 320 : 420;
+      popover.style.left=`${Math.max(8,Math.min(rect.left,window.innerWidth-width-8))}px`;
+      popover.style.top=`${Math.min(rect.bottom+4,window.innerHeight-300)}px`;
+      popover.showPopover();
     };
-    document.querySelector("#palette-version").onchange=updateComparison;
-    updateComparison();
-  }
+  };
+  openPalettePopover("#open-versions","#palette-versions-menu");
+  openPalettePopover("#open-compare","#palette-compare-menu");
   document.querySelector("#save-version").onclick=()=>{
     commitProjectChange("palette-version-save",(draft)=>{draft.palettes.push(snapshotPalette(draft.palettes[0],`${draft.palettes[0].name} · ${draft.palettes.length}`));});
     render();
