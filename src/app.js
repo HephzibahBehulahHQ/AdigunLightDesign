@@ -396,7 +396,7 @@ function render() {
   if (document.querySelector(".fixture-inspector")) {
     const properties=selectedFixture().properties;
     const color=rgbToHex({r:properties.red ?? 0,g:properties.green ?? 0,b:properties.blue ?? 0});
-    document.querySelector("#apply-fixture").insertAdjacentHTML("beforebegin", `<label class="fixture-colour-label">${t("selectedColour")}<span class="fixture-colour-control"><input id="fixture-colour" type="color" value="${color}" /><output id="fixture-colour-hex" aria-label="${t("selectedColour")} hex">${color.toUpperCase()}</output></span></label>`);
+    document.querySelector("#apply-fixture").insertAdjacentHTML("beforebegin", `<label class="fixture-colour-label">${t("colourLabel")}<span class="fixture-colour-control"><input id="fixture-colour" type="color" value="${color}" /><output id="fixture-colour-hex" aria-label="${t("selectedColour")} hex">${color.toUpperCase()}</output></span></label>`);
     const fixture=selectedFixture(),profile=getFixtureProfile(fixture.profileId);
     const mode=profile.modes.find((item)=>item.id===fixture.modeId);
     if (!mode?.channels.includes("beam")) document.querySelector("#fixture-beam").closest("label").remove();
@@ -536,9 +536,10 @@ function render() {
       const input=fixturePanel.querySelector(`#${id}`);if(input)bodies.light.append(input.closest("label"));
     }
     for (const id of ["fixture-universe","fixture-address"]) bodies.dmx.append(fixturePanel.querySelector(`#${id}`).closest("label"));
-    const apply=fixturePanel.querySelector("#apply-fixture"),actions=fixturePanel.querySelector(".dmx-actions");
+    const apply=fixturePanel.querySelector("#apply-fixture"),actions=fixturePanel.querySelector(".dmx-actions"),selectedFixtureField=fixturePanel.querySelector("#fixture-select")?.closest("label");
+    selectedFixtureField?.classList.add("fixture-select-field");
     fixturePanel.querySelector(":scope > h3")?.remove();
-    for (const node of [...fixturePanel.children]) if(node!==apply && node!==actions)bodies.fixture.append(node);
+    for (const node of [...fixturePanel.children]) if(node!==apply && node!==actions && node!==selectedFixtureField)bodies.fixture.append(node);
     const nameLabel=bodies.fixture.querySelector("#fixture-name")?.closest("label");
     const configuration=document.createElement("details");configuration.className="fixture-configuration-details";
     const configurationSummary=document.createElement("summary");configurationSummary.textContent="Name and position";configuration.append(configurationSummary);
@@ -546,9 +547,10 @@ function render() {
     const placement=bodies.fixture.querySelector(".fixture-placement");
     if(placement){
       const readout=document.createElement("p");readout.className="fixture-position-summary";
-      const refreshPosition=()=>{const value=(key)=>fixturePanel.querySelector(`#fixture-${key}`)?.value ?? "0";readout.textContent=`X ${value("x")} m · Y ${value("y")} m · Z ${value("z")} m · Pan ${selectedFixture().properties.pan ?? 0} · Tilt ${selectedFixture().properties.tilt ?? 0} · R ${value("rotation")}°`;};
+      const refreshPosition=()=>{const value=(key)=>fixturePanel.querySelector(`#fixture-${key}`)?.value ?? "0";const coordinate=(key)=>Number(value(key)||0).toFixed(1),properties=selectedFixture().properties;
+        readout.textContent=`Position X ${coordinate("x")} Y ${coordinate("y")} Z ${coordinate("z")}\nPan ${value("pan")||properties.pan||0} Tilt ${value("tilt")||properties.tilt||0} Rotation ${value("rotation")}`;};
       refreshPosition();
-      for(const input of placement.querySelectorAll("input"))input.addEventListener("input",refreshPosition);
+      for(const input of [...placement.querySelectorAll("input"),...["pan","tilt"].map((key)=>fixturePanel.querySelector(`#fixture-${key}`)).filter(Boolean)])input.addEventListener("input",refreshPosition);
       placement.replaceWith(configuration);configuration.append(placement);bodies.fixture.insertBefore(readout,configuration);
     } else if(nameLabel) {
       nameLabel.replaceWith(configuration);
