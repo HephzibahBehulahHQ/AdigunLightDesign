@@ -313,3 +313,8 @@ Object.assign(messages.pcm,{paintColon:"Paint:",applyColour:"Apply colour",reset
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }
 
 
+
+Object.assign(messages.en,{versions:"Versions",compare:"Compare",saveVersionToCompare:"Save a palette version to compare it with the current palette."});
+Object.assign(messages.de,{versions:"Versionen",compare:"Vergleichen",saveVersionToCompare:"Speichern Sie eine Palettenversion, um sie mit der aktuellen Palette zu vergleichen."});
+Object.assign(messages.yo,{versions:"Àwọn ẹ̀dà",compare:"Fi wé",saveVersionToCompare:"Fi ẹ̀dà àkójọpọ̀ àwọ̀ pamọ́ kí o lè fi wé èyí tó wà lọ́wọ́."});
+Object.assign(messages.pcm,{versions:"Versions",compare:"Compare",saveVersionToCompare:"Save a palette version to compare am with the current palette."});

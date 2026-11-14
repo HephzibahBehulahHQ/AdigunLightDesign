@@ -128,8 +128,25 @@ try {
   assert.equal((await page.locator('[data-command-group="scene"] > span').innerText()).trim(), "SCENE", "the command ribbon labels this group with the concise Scene heading from the reference");
   assert.deepEqual(await page.locator(".command-group > span").evaluateAll((items)=>items.map((item)=>item.textContent.trim())),["Project","History","Scene","Palette","Fixtures","Export"],"ribbon groups follow the approved compact studio order");
   assert.equal((await page.locator('.command-group[data-command-group="palette"] .harmony-command > span').innerText()).trim(), "◇ Harmonies", "palette harmony control matches the reference label");
-  for (const selector of ["#harmony", "#reroll", "#add-colour", "#save-version", "#palette-version", "#restore-version"]) {
+  for (const [button,label] of [["#open-versions","Versions"],["#open-compare","Compare"]]) {
+    assert.equal((await page.locator(`.command-group[data-command-group="palette"] ${button}`).innerText()).trim(),label,`${label} is a primary Palette ribbon action`);
+  }
+  await page.locator("#open-compare").click();
+  assert.equal(await page.locator("#palette-compare-menu").evaluate((menu)=>menu.matches(":popover-open")),true,"Compare opens its working popover");
+  assert.match(await page.locator("#version-comparison").innerText(),/Save a palette version/,"Compare explains the empty state before a version exists");
+  await page.locator("#palette-compare-menu").evaluate((menu)=>menu.hidePopover());
+  await page.locator("#open-versions").click();
+  await page.locator("#save-version").click();
+  await page.waitForFunction(()=>globalThis.document.querySelector("#palette-version option"));
+  await page.locator("#open-compare").click();
+  assert.ok(await page.locator("#version-comparison table tbody tr").count()>0,"Compare renders rows after a version is saved");
+  await page.locator("#palette-compare-menu").evaluate((menu)=>menu.hidePopover());
+
+  for (const selector of ["#harmony", "#reroll", "#add-colour"]) {
     assert.equal(await page.locator(`.command-group[data-command-group="palette"] ${selector}`).count(), 1, `${selector} is available in the Palette command group`);
+  }
+  for (const selector of ["#save-version", "#palette-version", "#restore-version"]) {
+    assert.equal(await page.locator(`#palette-versions-menu ${selector}`).count(), 1, `${selector} remains available in the Versions popover`);
   }
   for (const selector of ["#seed", "#custom-spacing", "#custom-hues", "#perceptual-scale", "#temperature-strength"]) {
     assert.equal(await page.locator(`.lower-workspace .palette-panel ${selector}`).count(), 1, `${selector} remains available in its independent palette panel`);
