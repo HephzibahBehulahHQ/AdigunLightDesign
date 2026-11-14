@@ -1176,8 +1176,8 @@ function bind() {
   const clearToolsClose=()=>clearTimeout(toolsCloseTimer);
   toolsToggle.onclick=()=>{
     clearToolsClose();
-    if(toolMenu.matches(":popover-open"))toolMenu.hidePopover();
-    else {toolMenu.showPopover();placeToolsMenu();requestAnimationFrame(placeToolsMenu);}
+    if(toolMenu.matches(":popover-open")){toolMenu.hidePopover();toolsToggle.setAttribute("aria-expanded","false");}
+    else {toolMenu.showPopover();toolsToggle.setAttribute("aria-expanded","true");placeToolsMenu();requestAnimationFrame(placeToolsMenu);}
   };
   toolMenu.addEventListener("toggle",()=>toolsToggle.setAttribute("aria-expanded",String(toolMenu.matches(":popover-open"))));
   const scheduleToolsClose=()=>{
