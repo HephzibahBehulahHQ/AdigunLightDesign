@@ -318,3 +318,8 @@ Object.assign(messages.en,{versions:"Versions",compare:"Compare",saveVersionToCo
 Object.assign(messages.de,{versions:"Versionen",compare:"Vergleichen",saveVersionToCompare:"Speichern Sie eine Palettenversion, um sie mit der aktuellen Palette zu vergleichen."});
 Object.assign(messages.yo,{versions:"Àwọn ẹ̀dà",compare:"Fi wé",saveVersionToCompare:"Fi ẹ̀dà àkójọpọ̀ àwọ̀ pamọ́ kí o lè fi wé èyí tó wà lọ́wọ́."});
 Object.assign(messages.pcm,{versions:"Versions",compare:"Compare",saveVersionToCompare:"Save a palette version to compare am with the current palette."});
+
+Object.assign(messages.en,{exportPngShort:"PNG"});
+Object.assign(messages.de,{exportPngShort:"PNG"});
+Object.assign(messages.yo,{exportPngShort:"PNG"});
+Object.assign(messages.pcm,{exportPngShort:"PNG"});
