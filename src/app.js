@@ -24,6 +24,7 @@ import { timelineLayout } from "./timeline/layout.js";
 import { arrangeTracks,arrangementDuration,evaluateTracks,scheduleCue } from "./timeline/tracks.js";
 import { setChannelKeyframe } from "./timeline/keyframes.js";
 import { roomDimensions } from "./domain/room.js";
+import { createRoomScene,roomAmbience,roomPresetName,roomPresetOptions } from "./domain/room-presets.js";
 import { duplicateFixture,deleteFixture } from "./domain/fixture-operations.ts";
 import { readBrowserStorage,writeBrowserStorage } from "./domain/browser-storage.js";
 import { applySceneMaterial } from "./domain/scene-materials.js";
@@ -98,7 +99,7 @@ function t(key) { return translate(preferences.locale, key); }
 function phrase(key, values = {}) { return t(key).replace(/\{(\w+)\}/g, (_, name) => values[name] ?? ""); }
 function palette() { return project.palettes[0]; }
 function selected() { return palette().colors.find((swatch) => swatch.id === preferences.selected) ?? palette().colors[0]; }
-function scene() { if (!project.scenes[0]) project.scenes.push({ id:"studio-room", name:"Studio room", materialColor:"#C21888" }); const active=project.scenes.find((item)=>item.id===preferences.sceneId) ?? project.scenes[0]; preferences.sceneId=active.id; return active; }
+function scene() { if (!project.scenes[0]) project.scenes.push({ id:"studio-room", name:"Living room", roomType:"living-room", materialColor:"#C21888" }); const active=project.scenes.find((item)=>item.id===preferences.sceneId) ?? project.scenes[0]; preferences.sceneId=active.id; return active; }
 function editScene(draft,update) { const index=Math.max(0,draft.scenes.findIndex((item)=>item.id===preferences.sceneId)); update(draft.scenes[index],index,draft.scenes); }
 function sceneSelectMarkup() { const activeId=scene().id; return `<select id="scene-select" aria-label="${t("sceneHeader")}">${project.scenes.map((item,index)=>`<option value="${esc(item.id)}" ${item.id===activeId ? "selected" : ""}>${esc(`${t("sceneHeader")} ${String(index+1).padStart(2,"0")} / ${item.name}`)}</option>`).join("")}</select>`; }
 function addVirtualFixture(profileId) { const fixture=createFixture(project.fixtures.length+1,profileId); commitProjectChange("fixture-add",(draft)=>{draft.fixtures=patchFixture([...draft.fixtures,fixture],fixture.id);}); preferences.fixtureId=fixture.id;savePreferences(); const patch=project.fixtures.find((item)=>item.id===fixture.id)?.patchAssignment; status=phrase("fixturePatched",{name:fixture.name,universe:1,address:patch?.startAddress ?? 1}); }
@@ -425,7 +426,7 @@ function render() {
   const commandMenuContent={
     project:`<button type="button" id="new-project">＋ ${t("newProject")}</button><button type="button" id="open-project">${t("openProject")}</button><button type="button" id="save">${t("save")}</button><button type="button" id="import-project">${t("importProject")}</button><button type="button" id="import-image" title="${t("importImage")}" aria-label="${t("importImage")}">${t("importAction")}</button><input id="project-file" type="file" accept="application/json,.json" hidden />`,
     history:`<button type="button" id="undo" ${undoStack.length ? "" : "disabled"}>↶ ${t("undo")}</button><button type="button" id="redo" ${redoStack.length ? "" : "disabled"}>↷ ${t("redo")}</button>`,
-    scene:`<button type="button" data-open-scene-editor="room">${t("roomCommand")}</button><button type="button" data-open-scene-editor="stage">${t("stageCommand")}</button><label class="preview-quality">${t("previewQuality")} <select id="preview-quality" ${preferences.view==="light" ? "" : disabled(t("select3d"))}>${Object.keys(previewQualities).map((key)=>`<option value="${key}" ${key===(preferences.previewQuality ?? "balanced") ? "selected" : ""}>${t(`quality_${key}`)}</option>`).join("")}</select></label><button type="button" id="reset-camera">${t("resetCamera")}</button>`,
+    scene:`<label class="room-template-field">${t("chooseRoomTemplate")}<select id="room-template" aria-label="${t("chooseRoomTemplate")}">${roomPresetOptions(preferences.locale).map(item=>`<option value="${item.id}">${esc(item.label)}</option>`).join("")}</select></label><button type="button" id="add-room-scene">＋ ${t("addRoomScene")}</button><button type="button" data-open-scene-editor="room">${t("roomCommand")}</button><button type="button" data-open-scene-editor="stage">${t("stageCommand")}</button><label class="preview-quality">${t("previewQuality")} <select id="preview-quality" ${preferences.view==="light" ? "" : disabled(t("select3d"))}>${Object.keys(previewQualities).map((key)=>`<option value="${key}" ${key===(preferences.previewQuality ?? "balanced") ? "selected" : ""}>${t(`quality_${key}`)}</option>`).join("")}</select></label><button type="button" id="reset-camera">${t("resetCamera")}</button>`,
     palette:`<button type="button" data-menu-keep-open id="open-versions" aria-expanded="false">${t("versions")}</button><button type="button" data-menu-keep-open id="open-compare" aria-expanded="false">${t("compare")}</button>`,
     fixtures:"",
     export:`<button data-export="project">Project JSON</button><button data-export="palette">Palette JSON</button><button data-export="css">CSS variables</button><button data-export="ase" title="${t("aseExportLimit")}">${t("aseExport")}</button><button data-export="patch">Patch CSV</button><button data-export="cues">Cue CSV</button>`
@@ -602,9 +603,11 @@ function render() {
   document.querySelector(".timeline").insertAdjacentHTML("beforeend", `<details class="fixture-group-editor"><summary>${t("virtualDmx")} · ${t("outputDisabled")}</summary><pre id="virtual-dmx-monitor"></pre></details>`);
   updateDmxFeedback(project.fixtures);
   const room=roomDimensions(scene().room);
+  const ambience=roomAmbience(scene());
+  const roomName=roomPresetName(scene().roomType,preferences.locale);
   const stage=stageSettings(scene().stage);
   document.querySelector(".left-rail").insertAdjacentHTML("beforeend", `<details class="fixture-group-editor" data-scene-editor="stage"><summary>${t("stagePlatform")}</summary><label><input id="stage-enabled" type="checkbox" ${stage.enabled ? "checked" : ""}> ${t("showStage")}</label>${["x","y","z","width","height","depth"].map((key)=>`<label>${["x","y","z"].includes(key) ? key.toUpperCase() : t(key)} (m)<input id="stage-${key}" type="number" step="any" required value="${stage[key]}"></label>`).join("")}<label>${t("selectedColour")}<input id="stage-color" type="color" value="${stage.color}"></label><button id="apply-stage">${t("applyStageSettings")}</button></details>`);
-  document.querySelector(".left-rail").insertAdjacentHTML("beforeend", `<details class="fixture-group-editor" data-scene-editor="room"><summary>${t("roomDimensions")}</summary>${["width","height","depth"].map((key)=>`<label>${t(key)} (m)<input id="room-${key}" type="number" required min="2" max="${key==="height" ? 20 : 50}" step="any" value="${room[key]}"></label>`).join("")}<button id="apply-room">${t("applyRoomDimensions")}</button></details>`);
+  document.querySelector(".left-rail").insertAdjacentHTML("beforeend", `<details class="fixture-group-editor" data-scene-editor="room"><summary>${t("roomDimensions")}</summary><p class="room-type-label">${t("roomType")}: ${esc(roomName)}</p>${["width","height","depth"].map((key)=>`<label>${t(key)} (m)<input id="room-${key}" type="number" required min="2" max="${key==="height" ? 20 : 50}" step="any" value="${room[key]}"></label>`).join("")}<label>${t("ambientFill")}<input id="room-ambience-color" type="color" value="${ambience.color}"></label><label>${t("ambientLevel")} · ${Math.round(ambience.intensity*100)}%<input id="room-ambience-level" type="range" min="0" max="100" step="1" value="${Math.round(ambience.intensity*100)}"></label><button id="apply-room">${t("applyRoomDimensions")}</button></details>`);
   for (const [index,[key,labelKey,helpKey]] of [["lighting","layersLighting","layerLightingHelp"],["palette","layersPalette","layerPaletteHelp"],["props","layersScene","layerPropsHelp"]].entries()) {
     const item=document.querySelectorAll(".layer-list li")[index],visible=scene().visibility?.[key]!==false;
     const label=t(labelKey),help=esc(t(helpKey));
@@ -712,7 +715,7 @@ function render() {
   if (preferences.view === "light") {
     const fixtures=currentRendererFixtures(),fixtureSignature=lightLabFixtureState(fixtures),accent=scene().materialColor;
     if(reuseRenderer){if(fixtureSignature!==rendererFixtureSignature)renderer.setFixtures(fixtures);if(accent!==rendererAccent)renderer.setAccent(accent);rendererFixtureSignature=fixtureSignature;rendererAccent=accent;}
-    else {renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {camera:viewportCamera,accent,room:scene().room,materials:scene().materials,stage:scene().stage,quality:preferences.previewQuality,projection:preferences.projection==="orthographic" ? "orthographic" : "perspective",visibility:scene().visibility,fixtures,onSelect(id){stopPlayback();preferences.fixtureId=id;preferences.inspectorMode="fixture";savePreferences();render();},onTransform(id,transform){commitProjectChange("fixture-move",(draft)=>{draft.fixtures=updateFixture(draft.fixtures,id,{transform});});updateRendererFromFixtures();}});rendererConfigSignature=nextRendererConfig;rendererFixtureSignature=fixtureSignature;rendererAccent=accent;}
+    else {renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {camera:viewportCamera,accent,room:scene().room,roomType:scene().roomType,ambience:roomAmbience(scene()),materials:scene().materials,stage:scene().stage,quality:preferences.previewQuality,projection:preferences.projection==="orthographic" ? "orthographic" : "perspective",visibility:scene().visibility,fixtures,onSelect(id){stopPlayback();preferences.fixtureId=id;preferences.inspectorMode="fixture";savePreferences();render();},onTransform(id,transform){commitProjectChange("fixture-move",(draft)=>{draft.fixtures=updateFixture(draft.fixtures,id,{transform});});updateRendererFromFixtures();}});rendererConfigSignature=nextRendererConfig;rendererFixtureSignature=fixtureSignature;rendererAccent=accent;}
     document.querySelectorAll("[data-camera-axis]").forEach(button=>button.disabled=!renderer.supported);
     if (!renderer.supported) {
       document.querySelector(".scene-title small").title=phrase("previewFixtureCount",{shown:0,total:project.fixtures.length}); document.querySelector(".scene-title small").setAttribute("aria-label",document.querySelector(".scene-title small").title);
@@ -819,7 +822,10 @@ function bind() {
         values[key]=Number(input.value);
       }
       const room=roomDimensions(values);
-      commitProjectChange("scene-room-resize",(draft)=>{editScene(draft,(active)=>{active.room=room;});});render();
+      const ambienceColor=normalizeHex(document.querySelector("#room-ambience-color").value);
+      const ambienceLevel=Number(document.querySelector("#room-ambience-level").value)/100;
+      if(!ambienceColor||!Number.isFinite(ambienceLevel)||ambienceLevel<0||ambienceLevel>1)throw new Error(t("invalidAmbientFill"));
+      commitProjectChange("scene-room-settings",(draft)=>{editScene(draft,(active)=>{active.room=room;active.ambience={color:ambienceColor,intensity:ambienceLevel};});});status=t("roomSettingsSaved");render();
     } catch(error) {setStatus(error.message);}
   };
   document.querySelector("#export-viewport").onclick=async()=>{
@@ -1139,6 +1145,7 @@ function bind() {
   document.querySelectorAll("[data-swatch]").forEach((button) => button.onclick = () => { preferences.selected = button.dataset.swatch; preferences.inspectorMode="palette"; savePreferences(); render(); });
   document.querySelector("#project-name").onchange = (event) => { const name=event.target.value.trim(); if(name&&name!==project.name) commitProjectChange("project-rename",(draft)=>{draft.name=name;}); render(); };
   const sceneSelect=document.querySelector("#scene-select");if(sceneSelect)sceneSelect.onchange=(event)=>{if(!project.scenes.some((item)=>item.id===event.target.value))return;preferences.sceneId=event.target.value;preferences.objectId=null;savePreferences();render();};
+  const addRoomButton=document.querySelector("#add-room-scene");if(addRoomButton)addRoomButton.onclick=()=>{try{const presetId=document.querySelector("#room-template").value;const roomScene=createRoomScene(presetId,{name:roomPresetName(presetId,preferences.locale)});commitProjectChange("scene-create",(draft)=>{draft.scenes.push(roomScene);});preferences.sceneId=roomScene.id;preferences.objectId=null;preferences.view="light";savePreferences();status=t("roomSceneAdded");render();}catch(error){setStatus(error.message);}};
   document.querySelector("#seed").onchange = (event) => { const hex = normalizeHex(event.target.value); if (hex) preferences.seed = hex; event.target.value = preferences.seed; savePreferences(); };
   document.querySelector("#harmony").onchange = (event) => { preferences.harmony = event.target.value; savePreferences(); };
   document.querySelector("#reroll").onclick = () => mutateColours((colours) => rerollUnlocked(colours, preferences.seed, preferences.harmony));

@@ -482,6 +482,24 @@ try {
   assert.equal(await page.locator(".design-canvas [data-canvas-object]").count(),0,"discard removes unsaved canvas work");
   const canvasAfter = await page.locator(".scene-preview").boundingBox();
   assert.deepEqual(canvasAfter, canvasBefore, "ordinary tools and view changes preserve the canvas bounds");
+  await clickCommand("scene","#add-room-scene");
+  assert.equal(await page.locator("#scene-select option").count(),2,"Add room creates a second saved scene in the project");
+  const addedRoomId=await page.locator("#scene-select").inputValue();
+  assert.match(await page.locator("#scene-select option:checked").innerText(),/Kitchen/,"the selected scene is labeled with its room template");
+  assert.match(await page.locator(".workspace-tabs .studio-panel-title").innerText(),/Kitchen/,"the studio header identifies the active room in the 3D preview");
+  await clickCommand("scene",'[data-open-scene-editor="room"]');
+  assert.match(await page.locator('[data-scene-editor="room"] .room-type-label').innerText(),/Kitchen/,"room settings identify the selected template");
+  const defaultAmbient=await page.locator("#room-ambience-color").inputValue();
+  await page.locator("#room-ambience-color").fill("#52B8D8");
+  await page.locator("#room-ambience-level").fill("44");
+  await page.locator("#apply-room").click();
+  await page.locator("#scene-select").selectOption("studio-room");
+  assert.equal(await page.locator("#room-ambience-color").inputValue(),"#FFD2A0","each scene retains its own ambient color");
+  await page.locator("#scene-select").selectOption(addedRoomId);
+  assert.equal(await page.locator("#room-ambience-color").inputValue(),"#52B8D8","ambient color and intensity persist with the selected scene");
+  assert.equal(await page.locator("#room-ambience-level").inputValue(),"44","room ambient intensity is editable and persisted");
+  await clickCommand("history","#undo");
+  assert.equal(await page.locator("#room-ambience-color").inputValue(),defaultAmbient,"ambient settings participate in project undo");
   assert.deepEqual(runtimeErrors, [], "browser reports no runtime errors");
 
   console.log(JSON.stringify({ viewports: reports, tools: coreTools, shapeAndTextCreation: true, measurement: true, fixtureSelection: true, paletteSwitch: true, timelinePlayback: true, projectSaveReload: true, projectJsonImportExport: true, commandMenus: true, fixtureListScroll: true, inspectorScroll: true, canvasStayedFixed: true, runtimeErrors }, null, 2));

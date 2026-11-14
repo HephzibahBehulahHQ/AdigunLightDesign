@@ -12,7 +12,7 @@ const studioRig = [
 export function createStudioMoodProject() {
   const project=createProject({ name:"Studio Mood" });
   project.palettes=[{ id:"studio-modern", name:"Studio Modern", harmonyType:"analogous", colors:starterPalette }];
-  project.scenes=[{ id:"studio-room", name:"Main room", materialColor:"#C21888" }];
+  project.scenes=[{ id:"studio-room", name:"Main room", roomType:"living-room", materialColor:"#C21888" }];
   const fixtureSpecs=[
     ...studioRig.map((properties,index)=>({index:index+1,profileId:"generic-moving-head-rgbw",name:`Moving Head RGB ${index+1}`,properties})),
     ...Array.from({length:4},(_,offset)=>({index:offset+4,profileId:"generic-rgb-wash"})),
