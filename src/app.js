@@ -363,7 +363,7 @@ function render() {
     <footer class="studio-footer"><span class="footer-ready"><i aria-hidden="true">●</i> ${t("ready").toUpperCase()} · ${esc(project.name)} / ${t("sceneHeader")} ${String(displayedSceneNumber).padStart(2,"0")} · 3D / ${t("virtualDmx")} · ${t(projectPersisted ? "projectSavedShort" : "sessionOnly")}</span><span id="status" role="status" aria-live="polite">${status || t("footerControls")}</span><span class="footer-shortcuts">${t("keyboardShortcuts")}</span></footer>`;
   if(reuseRenderer)document.querySelector("#light-canvas")?.replaceWith(previousCanvas);
   const ribbon=document.querySelector(".command-ribbon");
-  for(const [group,ids] of [["history",["undo","redo"]],["fixtures",["add-fixture","apply-fixture-colour","blackout"]]]){
+  for(const [group,ids] of [["history",["undo","redo"]],["fixtures",["add-fixture","apply-fixture-colour"]]]){
     const host=ribbon.querySelector(`[data-command-group="${group}"]`);
     for(const id of ids){let control=document.getElementById(id);if(id.startsWith("ribbon-view-")){const view=id.endsWith("palette")?"palette":"light";control=document.querySelector(`[data-view="${view}"]`);control.id=id;control.dataset.ribbonView=view;}if(control){host.append(control);control.classList.add("ribbon-command");}}
   }
@@ -374,6 +374,8 @@ function render() {
   if (activeCue) document.querySelector(".cue-track").insertAdjacentHTML("beforebegin", `<div class="cue-timing"><label>${t("timeline")}<input id="edit-cue-name" value="${esc(activeCue.name)}" /></label>${["duration","fade","delay"].map((key)=>`<label>${t(key)} (s)<input id="edit-cue-${key}" type="number" required min="0" step=".1" value="${activeCue[key] ?? 0}" /></label>`).join("")}<button id="edit-cue">${t("apply")}</button></div>`);
   document.querySelector(".dmx-actions").insertAdjacentHTML("beforeend", `<button id="blackout" ${project.fixtures.length ? "" : "disabled"}>${t("blackout")}</button>`);
   document.querySelector(".dmx-actions").insertAdjacentHTML("beforeend", `<button id="play-sequence" ${project.cues.length ? "" : "disabled"}>▶ ${t("playSequence")}</button>`);
+  const blackoutCommand=document.querySelector("#blackout");
+  if(blackoutCommand){document.querySelector('.command-group[data-command-group="fixtures"]').append(blackoutCommand);blackoutCommand.classList.add("ribbon-command");}
   document.querySelector("#stop-cue").insertAdjacentHTML("beforebegin", `<button id="pause-playback" aria-pressed="${Boolean(playbackClock?.paused)}" ${playbackTimer ? "" : "disabled"}>${t(playbackClock?.paused ? "resumePlayback" : "pausePlayback")}</button>`);
   const sequenceDuration=project.cues.reduce((sum,cue)=>sum+cue.duration,0);
   const tracks=arrangeTracks(project.cues);
