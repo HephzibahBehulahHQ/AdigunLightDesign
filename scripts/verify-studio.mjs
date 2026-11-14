@@ -407,7 +407,7 @@ try {
   await page.evaluate(()=>globalThis.globalThis.document.activeElement?.blur?.());
   await clickCommand("scene","#reset-camera");
   await page.screenshot({ path: resolve("outputs", "studio-acceptance-reference-1754x878.png") });
-  for (let index = 0; index < 2; index += 1) await clickCommand("fixtures","#add-fixture");
+  for (let index = 0; index < 12; index += 1) await clickCommand("fixtures","#add-fixture");
   const fixtureList = page.locator(".fixture-layer-list");
   const fixtureListScroll = await fixtureList.evaluate((element) => {
     const maxScroll = element.scrollHeight - element.clientHeight;
