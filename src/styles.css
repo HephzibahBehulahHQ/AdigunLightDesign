@@ -507,3 +507,7 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
 @media (min-width:1100px) {
   .left-rail .fixture-layer-list { max-height:260px; }
 }
+
+@media (min-width:1100px) {
+  .left-rail .tool-list { padding-bottom:12px; }
+}
