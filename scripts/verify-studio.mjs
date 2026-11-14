@@ -242,9 +242,9 @@ try {
   assert.equal(await page.locator("#command-menu-panel-scene").evaluate(panel=>panel.matches(":popover-open")),false,"Escape closes the menu");
   await sceneMenuTrigger.focus();await page.keyboard.press("ArrowDown");
   assert.equal(await page.locator("#command-menu-panel-scene").evaluate(panel=>panel.matches(":popover-open")),true,"Arrow Down opens the focused menu");
-  assert.equal(await page.evaluate(()=>document.activeElement?.closest(".command-menu-panel")!==null),true,"Arrow Down moves focus into the menu");
+  assert.equal(await page.evaluate(()=>globalThis.document.activeElement?.closest(".command-menu-panel")!==null),true,"Arrow Down moves focus into the menu");
   await page.keyboard.press("Escape");
-  assert.equal(await sceneMenuTrigger.evaluate(trigger=>document.activeElement===trigger),true,"Escape restores focus to the menu trigger");
+  assert.equal(await sceneMenuTrigger.evaluate(trigger=>globalThis.document.activeElement===trigger),true,"Escape restores focus to the menu trigger");
   const triggerBox=await projectMenuTrigger.boundingBox();
   await page.mouse.move(triggerBox.x+triggerBox.width/2,triggerBox.y+triggerBox.height/2);
   await projectMenuTrigger.click();
@@ -382,7 +382,7 @@ try {
   await page.locator("#fixture-blue-channel").fill("199");
   assert.equal(await page.locator("#fixture-blue-channel-value").innerText(), "78%", "the screenshot shows the staged reference channel value");
   assert.equal(await page.locator("#fixture-colour-hex").innerText(), "#2196F3", "staging the blue value leaves the applied fixture colour unchanged");
-  await page.evaluate(()=>globalThis.document.activeElement?.blur?.());
+  await page.evaluate(()=>globalThis.globalThis.document.activeElement?.blur?.());
   await clickCommand("scene","#reset-camera");
   await page.screenshot({ path: resolve("outputs", "studio-acceptance-reference-1754x878.png") });
   for (let index = 0; index < 2; index += 1) await clickCommand("fixtures","#add-fixture");
