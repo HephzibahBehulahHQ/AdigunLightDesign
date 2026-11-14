@@ -262,6 +262,19 @@ try {
   assert.ok(exportBounds.x>=0&&exportBounds.x+exportBounds.width<=1754&&exportBounds.y>=0&&exportBounds.y+exportBounds.height<=878,"the right-edge Export menu repositions within the viewport");
   await page.locator(".footer-ready").click();
 
+  const toolsToggle=page.locator("#toggle-tools");
+  assert.equal(await toolsToggle.getAttribute("aria-expanded"),"false","Tools is collapsed initially");
+  const fixtureListTall=await page.locator(".fixture-layer-list").boundingBox();
+  await toolsToggle.click();
+  assert.equal(await toolsToggle.getAttribute("aria-expanded"),"true","clicking Tools opens the tool grid");
+  assert.equal(await page.locator('[data-tool="shapes"]').isVisible(),true,"tools are available from the expanded menu");
+  const fixtureListShort=await page.locator(".fixture-layer-list").boundingBox();
+  assert.ok(fixtureListTall.height>fixtureListShort.height+20,"the fixture list gains sidebar height when Tools is collapsed");
+  await toolsToggle.click();
+  assert.equal(await toolsToggle.getAttribute("aria-expanded"),"false","clicking Tools again collapses the tool grid");
+  assert.equal(await page.locator('[data-tool="shapes"]').isVisible(),false,"collapsed tools do not occupy the sidebar");
+  await toolsToggle.click();
+
   await page.locator('[data-tool="shapes"]').click();
   assert.equal(await page.locator(".design-canvas [data-canvas-object]").count(), 1, "Shapes adds an editable canvas object");
   await page.locator('[data-tool="text"]').click();
