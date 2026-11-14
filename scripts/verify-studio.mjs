@@ -241,7 +241,7 @@ try {
   assert.equal(await page.locator(".design-canvas [data-canvas-object]").count(), 2, "Text adds an editable canvas object");
   const textEditor=page.locator("#canvas-text");
   assert.equal(await textEditor.isVisible(), true, "Text tool opens the selected text object in the inspector editor");
-  assert.equal(await textEditor.evaluate((input) => document.activeElement === input), true, "Text input receives focus immediately");
+  assert.equal(await textEditor.evaluate((input) => input.ownerDocument.activeElement === input), true, "Text input receives focus immediately");
   assert.equal(await textEditor.inputValue(), "Text", "new text placeholder is selected for replacement");
   await textEditor.fill("Editable label");
   await page.locator("#apply-object").click();
