@@ -57,6 +57,22 @@ test("validates imported cue timing and captured channel values", () => {
     assert.equal(validateProject(project).valid,false);
   }
 });
+
+test("validates cue scheduling independently for each scene and keeps legacy cues in the first scene", () => {
+  const project=createProject(),fixture=createFixture();fixture.id="f";
+  project.fixtures=[fixture];
+  project.scenes=[{id:"living",name:"Living room",materialColor:"#C21888"},{id:"library",name:"Library",materialColor:"#5B5143"}];
+  const living={...createCue(project.fixtures,{id:"living-cue"}),trackId:"Main",startTime:0};
+  const library={...createCue(project.fixtures,{id:"library-cue",sceneId:"library"}),trackId:"Main",startTime:0};
+  project.cues=[living,library];
+  assert.equal(validateProject(project).valid,true,"matching track times in different scenes do not conflict");
+  project.cues=[living,{...library,sceneId:"living"}];
+  assert.equal(validateProject(project).valid,false,"overlapping cues on one scene track remain invalid");
+  project.cues=[living,{...library,sceneId:"missing"}];
+  assert.equal(validateProject(project).valid,false,"explicit cue scene ids must reference a project scene");
+  project.cues=[createCue(project.fixtures)];
+  assert.equal(validateProject(project).valid,true,"legacy cues without a scene id remain valid");
+});
 import { createProject, validateProject, CURRENT_SCHEMA_VERSION } from "../src/domain/project.js";
 
 test("creates a versioned project document", () => {

@@ -94,14 +94,23 @@ export function validateProject(input: unknown): ProjectValidationResult {
   }
 
   const fixtures = records(project.fixtures);
+  const scenes = records(project.scenes);
+  const projectSceneIds = new Set((scenes ?? []).flatMap((scene) => typeof scene.id === "string" ? [scene.id] : []));
+  const legacySceneId = (scenes?.find((scene) => typeof scene.id === "string")?.id as string | undefined) ?? "studio-room";
   const cues = records(project.cues);
   if (Array.isArray(project.cues) && cues) {
-    try { arrangeTracks(cues as unknown as Cue[]); } catch { errors.push("Cue track scheduling is invalid."); }
+    const cuesByScene = new Map<string,Cue[]>();
     const cueIds = new Set<string>();
     const fixtureIds = new Set((fixtures ?? []).map((fixture) => fixture.id));
     for (const cue of cues) {
       if (typeof cue.id !== "string" || !cue.id.trim() || cueIds.has(cue.id) || typeof cue.name !== "string" || !cue.name.trim()) errors.push("Cues require unique ids and nonempty names.");
       if (typeof cue.id === "string") cueIds.add(cue.id);
+      const explicitSceneId = cue.sceneId;
+      if (explicitSceneId !== undefined && (typeof explicitSceneId !== "string" || !projectSceneIds.has(explicitSceneId))) errors.push("Cues must reference an existing scene when a scene id is provided.");
+      const cueSceneId = typeof explicitSceneId === "string" && projectSceneIds.has(explicitSceneId) ? explicitSceneId : legacySceneId;
+      const sceneCues = cuesByScene.get(cueSceneId) ?? [];
+      sceneCues.push(cue as unknown as Cue);
+      cuesByScene.set(cueSceneId,sceneCues);
       if (!validateChannelKeyframes(cue as unknown as Cue)) errors.push("Cue channel keyframes are invalid.");
       const duration = cue.duration, fade = cue.fade, delay = cue.delay ?? 0, fadeOut = cue.fadeOut ?? 0;
       if (![duration, fade, delay, fadeOut].every((value) => typeof value === "number" && Number.isFinite(value)) || typeof duration !== "number" || typeof fade !== "number" || typeof delay !== "number" || typeof fadeOut !== "number" || duration <= 0 || fade < 0 || delay < 0 || fadeOut < 0 || delay + fade + fadeOut > duration) errors.push("Cue timing is invalid.");
@@ -114,6 +123,9 @@ export function validateProject(input: unknown): ProjectValidationResult {
         const properties = asRecord(target?.properties);
         if (!target || typeof target.fixtureId !== "string" || !properties || !Object.values(properties).every((value) => typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= 255)) errors.push("Cue targets require fixture ids and DMX channel values from 0 to 255.");
       }
+    }
+    for (const sceneCues of cuesByScene.values()) {
+      try { arrangeTracks(sceneCues); } catch { errors.push("Cue track scheduling is invalid."); }
     }
   }
 
@@ -145,7 +157,6 @@ export function validateProject(input: unknown): ProjectValidationResult {
     }
   }
 
-  const scenes = records(project.scenes);
   if (Array.isArray(project.scenes) && scenes) {
     const sceneIds = new Set<string>();
     for (const scene of scenes) {

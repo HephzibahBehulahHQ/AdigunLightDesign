@@ -100,6 +100,8 @@ function phrase(key, values = {}) { return t(key).replace(/\{(\w+)\}/g, (_, name
 function palette() { return project.palettes[0]; }
 function selected() { return palette().colors.find((swatch) => swatch.id === preferences.selected) ?? palette().colors[0]; }
 function scene() { if (!project.scenes[0]) project.scenes.push({ id:"studio-room", name:"Living room", roomType:"living-room", materialColor:"#C21888" }); const active=project.scenes.find((item)=>item.id===preferences.sceneId) ?? project.scenes[0]; preferences.sceneId=active.id; return active; }
+function sceneCues(cues=project.cues,sceneId=scene().id,scenes=project.scenes) { const legacySceneId=scenes[0]?.id ?? "studio-room"; return cues.filter((cue)=>(cue.sceneId ?? legacySceneId)===sceneId); }
+function replaceSceneCues(cues,replacements,sceneId=scene().id,scenes=project.scenes) { const legacySceneId=scenes[0]?.id ?? "studio-room",belongs=(cue)=>(cue.sceneId ?? legacySceneId)===sceneId,first=cues.findIndex(belongs),others=cues.filter((cue)=>!belongs(cue)),index=first<0 ? others.length : cues.slice(0,first).filter((cue)=>!belongs(cue)).length; others.splice(index,0,...replacements); return others; }
 function editScene(draft,update) { const index=Math.max(0,draft.scenes.findIndex((item)=>item.id===preferences.sceneId)); update(draft.scenes[index],index,draft.scenes); }
 function sceneSelectMarkup() { const activeId=scene().id; return `<select id="scene-select" aria-label="${t("sceneHeader")}">${project.scenes.map((item,index)=>`<option value="${esc(item.id)}" ${item.id===activeId ? "selected" : ""}>${esc(`${t("sceneHeader")} ${String(index+1).padStart(2,"0")} / ${item.name}`)}</option>`).join("")}</select>`; }
 function addVirtualFixture(profileId) { const fixture=createFixture(project.fixtures.length+1,profileId); commitProjectChange("fixture-add",(draft)=>{draft.fixtures=patchFixture([...draft.fixtures,fixture],fixture.id);}); preferences.fixtureId=fixture.id;savePreferences(); const patch=project.fixtures.find((item)=>item.id===fixture.id)?.patchAssignment; status=phrase("fixturePatched",{name:fixture.name,universe:1,address:patch?.startAddress ?? 1}); }
@@ -115,7 +117,7 @@ function createCueSnapshot() {
     }
     let cue;
     const groupId=document.querySelector("#cue-group").value;
-    commitProjectChange("cue-create",(draft)=>{cue=createCue(groupFixtures(draft.fixtures,draft.fixtureGroups ?? [],groupId),{name:`Look ${draft.cues.length+1}`,...timing});draft.cues=[...draft.cues,cue];});
+    commitProjectChange("cue-create",(draft)=>{const sceneCueList=sceneCues(draft.cues,preferences.sceneId,draft.scenes);cue=createCue(groupFixtures(draft.fixtures,draft.fixtureGroups ?? [],groupId),{name:`Look ${sceneCueList.length+1}`,sceneId:preferences.sceneId,...timing});draft.cues=[...draft.cues,cue];});
     status=`${cue.name} captured with ${cue.targets.length} fixture target(s).`;
     render();
   } catch(error) { document.querySelector("#status").textContent=status=error.message; }
@@ -156,9 +158,9 @@ function playEffect() {
   render();
 }
 function playSequence({seek=0,paused=false}={}) {
-  if (!project.cues.length) return;
+  const sceneCueList=sceneCues();if (!sceneCueList.length) return;
   stopPlayback();
-  const source=structuredClone(project.fixtures),cues=structuredClone(project.cues);
+  const source=structuredClone(project.fixtures),cues=structuredClone(sceneCueList);
   playbackClock=createPlaybackClock(performance.now());
   playbackClock.seek(seek,performance.now());
   if (paused) playbackClock.pause(performance.now());
@@ -179,7 +181,7 @@ function playSequence({seek=0,paused=false}={}) {
   document.querySelector("#sequence-preview-details").open=true;
 }
 function playLatestCue() {
-  const cue=project.cues.find((item)=>item.id===preferences.cueId) ?? project.cues.at(-1);
+  const sceneCueList=sceneCues(),cue=sceneCueList.find((item)=>item.id===preferences.cueId) ?? sceneCueList.at(-1);
   if (!cue) return;
   stopPlayback();
   const source=structuredClone(project.fixtures);
@@ -194,9 +196,9 @@ function playLatestCue() {
   render();
 }
 function playArrangement({seek=0,paused=false}={}) {
-  if (!project.cues.length) return;
+  const sceneCueList=sceneCues();if (!sceneCueList.length) return;
   stopPlayback();
-  const source=structuredClone(project.fixtures),cues=structuredClone(project.cues),duration=arrangementDuration(cues);
+  const source=structuredClone(project.fixtures),cues=structuredClone(sceneCueList),duration=arrangementDuration(cues);
   playbackClock=createPlaybackClock(performance.now());preferences.view="light";
   playbackClock.seek(seek,performance.now());
   if (paused) playbackClock.pause(performance.now());
@@ -447,9 +449,9 @@ function render() {
   const swatches = palette().colors.map((swatch)=>swatchButton(swatch,active.id)).join("");
   const patchedFixtures = project.fixtures.filter((fixture) => fixture.patchAssignment);
   const virtualFrame = dmxFrame(project.fixtures);
-  const activeCue=project.cues.find((cue)=>cue.id===preferences.cueId) ?? project.cues.at(-1);
-  const timeline=timelineLayout(project.cues);
-  const cueBlocks = `<div class="timeline-scale"><div class="timeline-ruler">${timeline.ticks.map((tick)=>`<span style="left:${tick.left}%">${Number(tick.time.toFixed(1))}s</span>`).join("")}</div><div class="timeline-lane">${project.cues.map((cue,index) => `<button type="button" class="cue-block" data-cue="${esc(cue.id)}" aria-pressed="${cue.id===activeCue?.id}" title="${esc(cue.name)} · ${cue.duration}s" style="left:${timeline.segments[index].left}%;width:${timeline.segments[index].width}%">${esc(cue.name)} · ${cue.duration}s</button>`).join("") || `<small class="empty-cues">${t("noCues")}</small>`}</div><div id="timeline-playhead" class="timeline-playhead" aria-hidden="true"></div></div>`;
+  const sceneCueList=sceneCues(),activeCue=sceneCueList.find((cue)=>cue.id===preferences.cueId) ?? sceneCueList.at(-1);
+  const timeline=timelineLayout(sceneCueList);
+  const cueBlocks = `<div class="timeline-scale"><div class="timeline-ruler">${timeline.ticks.map((tick)=>`<span style="left:${tick.left}%">${Number(tick.time.toFixed(1))}s</span>`).join("")}</div><div class="timeline-lane">${sceneCueList.map((cue,index) => `<button type="button" class="cue-block" data-cue="${esc(cue.id)}" aria-pressed="${cue.id===activeCue?.id}" title="${esc(cue.name)} · ${cue.duration}s" style="left:${timeline.segments[index].left}%;width:${timeline.segments[index].width}%">${esc(cue.name)} · ${cue.duration}s</button>`).join("") || `<small class="empty-cues">${t("noCues")}</small>`}</div><div id="timeline-playhead" class="timeline-playhead" aria-hidden="true"></div></div>`;
   app.innerHTML = `
     <header class="topbar">
       <div class="brand-lockup" aria-label="${t("brandAlt")}">
@@ -472,7 +474,7 @@ function render() {
         <div class="workspace-tabs panel"><strong class="studio-panel-title">${preferences.view === "light" ? `${t("sceneHeader")} ${String(displayedSceneNumber).padStart(2,"0")} / ${scene().id === "studio-room" ? t("mockupRoomTitle") : esc(scene().name)}` : `2D ${t("palette")} / ${esc(project.name)}`}</strong><small class="studio-panel-title-meta">${preferences.view === "light" ? t("viewportFixedHint") : t("palette")}</small><span></span><button id="viewport-projection" class="view-menu" ${preferences.view === "light" ? "" : disabled(t("select3d"))}>${t("perspective")}⌄</button></div>
         ${preferences.view === "light" ? `<div class="scene-preview light-canvas panel"><div class="scene-title"><b>${esc(project.name)} • ${t("rgbwPreview")}</b><small>${t("sceneView")} • ${t("rgbwPreviewSubtitle")}</small></div><canvas id="light-canvas" tabindex="0" aria-label="${t("previewLabel")}"></canvas><div class="canvas-actions"><button id="apply-scene">${t("paintSurface")}</button></div></div>` : `<div class="scene-preview panel" role="img" aria-label="${t("scenePreview")}"><div class="scene-title"><b>${t("scenePreview")}</b><small>${t("sceneNote")}</small></div><div class="beam beam-blue"></div><div class="beam beam-amber"></div><div class="beam beam-magenta"></div><div class="stage-truss"></div><div class="scene-wall"><div class="art-frame"></div><div class="couch"></div><div class="plant plant-left"></div><div class="plant plant-right"></div><div class="lamp"></div></div><div class="axis"><i>X</i><b>Y</b><em>Z</em></div></div>`}
         <div class="lower-workspace"><section class="palette-panel panel"><div class="section-title"><h2>◉ ${t("activePalette")} — ${esc(palette().name)}</h2></div><div class="swatches">${swatches}</div><div class="palette-actions"><input id="seed" value="${preferences.seed}" aria-label="Seed colour" maxlength="7" /><label class="harmony-command"><span>◇ ${t("harmonies")}</span><select id="harmony" aria-label="${t("harmony")}">${["analogous","complementary","splitComplementary","triadic","tetradic","square","monochromatic"].map((type) => `<option value="${type}" ${type === preferences.harmony ? "selected" : ""}>${type}</option>`).join("")}</select></label><button id="reroll">⟳ ${t("reroll")}</button><button id="add-colour">＋ ${t("add")}</button></div></section>
-          <section class="timeline panel" tabindex="-1"><div class="section-title"><h2>◌ ${t("timeline")}</h2><span class="m-badge">M5 · ${t("simulationOnly")}</span></div><p>${project.fixtures.length ? `${t("universe")} 1 · ${patchedFixtures.length}/${project.fixtures.length} ${t("fixturesPatched")} · 1–${Math.max(0,...patchedFixtures.map((fixture)=>fixture.patchAssignment.startAddress+fixture.patchAssignment.channelFootprint-1))} ${t("activeChannels")}.` : t("noFixtures")}</p><div class="dmx-actions"><button id="add-fixture">＋ ${t("addWash")}</button><button id="apply-fixture-colour" ${project.fixtures.length ? "" : "disabled"}>${t("applySwatchToFixtures")}</button><button id="create-cue" ${project.fixtures.length ? "" : "disabled"}>＋ ${t("captureCue")}</button><button id="play-cue" ${project.cues.length ? "" : "disabled"}>▶ ${t("previewSelectedCue")}</button><button id="stop-cue" ${playbackTimer ? "" : "disabled"}>■ ${t("stop")}</button><span>CH 1: ${virtualFrame[0]} · ${t("outputDisabled")}</span></div><div class="cue-track" aria-label="${t("timeline")}">${cueBlocks}</div></section></div>
+          <section class="timeline panel" tabindex="-1"><div class="section-title"><h2>◌ ${t("timeline")}</h2><span class="m-badge">M5 · ${t("simulationOnly")}</span></div><p>${project.fixtures.length ? `${t("universe")} 1 · ${patchedFixtures.length}/${project.fixtures.length} ${t("fixturesPatched")} · 1–${Math.max(0,...patchedFixtures.map((fixture)=>fixture.patchAssignment.startAddress+fixture.patchAssignment.channelFootprint-1))} ${t("activeChannels")}.` : t("noFixtures")}</p><div class="dmx-actions"><button id="add-fixture">＋ ${t("addWash")}</button><button id="apply-fixture-colour" ${project.fixtures.length ? "" : "disabled"}>${t("applySwatchToFixtures")}</button><button id="create-cue" ${project.fixtures.length ? "" : "disabled"}>＋ ${t("captureCue")}</button><button id="play-cue" ${sceneCueList.length ? "" : "disabled"}>▶ ${t("previewSelectedCue")}</button><button id="stop-cue" ${playbackTimer ? "" : "disabled"}>■ ${t("stop")}</button><span>CH 1: ${virtualFrame[0]} · ${t("outputDisabled")}</span></div><div class="cue-track" aria-label="${t("timeline")}">${cueBlocks}</div></section></div>
       </section>
       <aside class="inspector panel"><div class="section-title"><h2>◈ ${t("inspector")}</h2></div><div class="inspector-tabs"></div><div class="selected-preview" style="--selected:${active.hex}"></div><label>${t("colourName")}<input id="swatch-name" value="${esc(active.name)}" /></label><label>${t("hex")}<div class="input-row"><input id="swatch-hex" value="${active.hex}" spellcheck="false" /><button id="apply-colour">${t("applySwatchColour")}</button></div></label><button id="lock-swatch" class="wide">${active.locked ? "⌁ " + t("unlock") : "⌁ " + t("lock")}</button><section class="contrast-card"><h3>${t("contrast")}</h3><b>${contrast.ratio.toFixed(2)} : 1</b><span class="${contrast.aa ? "pass" : "fail"}">AA ${contrast.aa ? "pass" : "review"}</span><small>Against Midnight Navy #0B1220</small></section></aside>
       <aside class="lux-panel panel ${preferences.luxOpen ? "" : "is-collapsed"}"><div class="lux-heading"><div><span class="lux-icon">✦</span><h2>${t("luxTitle")} ✨</h2></div><button id="toggle-lux" class="subtle" aria-label="${preferences.luxOpen ? t("closePanel") : t("openLux")}">${preferences.luxOpen ? "×" : "✦"}</button></div>${preferences.luxOpen ? `<p class="lux-subtitle">${t("luxSubtitle")}</p><div class="lux-message"><b>${t("luxBrand")} · ${t("offline")}</b><p>${t("luxUnavailable")}</p><ul><li>${t("luxLocal")}</li><li>${t("luxNoUpload")}</li></ul></div><form id="lux-form" class="lux-input"><input id="lux-question" placeholder="${t("askLux")}" aria-label="${t("askLux")}" /><button aria-label="${t("sendLux")}">➤</button></form>` : ""}</aside>
@@ -490,28 +492,28 @@ function render() {
   document.querySelector(".cue-track").insertAdjacentHTML("beforebegin", `<div class="cue-timing">${["duration","fade","delay"].map((key)=>`<label>${t(key)} (s)<input id="cue-${key}" type="number" required min="${key === "duration" ? ".1" : "0"}" step=".1" value="${key === "duration" ? "5" : key === "fade" ? "1" : "0"}" /></label>`).join("")}</div>`);
   if (activeCue) document.querySelector(".cue-track").insertAdjacentHTML("beforebegin", `<div class="cue-timing"><label>${t("timeline")}<input id="edit-cue-name" value="${esc(activeCue.name)}" /></label>${["duration","fade","delay"].map((key)=>`<label>${t(key)} (s)<input id="edit-cue-${key}" type="number" required min="0" step=".1" value="${activeCue[key] ?? 0}" /></label>`).join("")}<button id="edit-cue">${t("saveCueTiming")}</button></div>`);
   document.querySelector(".dmx-actions").insertAdjacentHTML("beforeend", `<button id="blackout" ${project.fixtures.length ? "" : "disabled"}>${t("blackout")}</button>`);
-  document.querySelector(".dmx-actions").insertAdjacentHTML("beforeend", `<button id="play-sequence" ${project.cues.length ? "" : "disabled"}>▶ ${t("playCueList")}</button>`);
+  document.querySelector(".dmx-actions").insertAdjacentHTML("beforeend", `<button id="play-sequence" ${sceneCueList.length ? "" : "disabled"}>▶ ${t("playCueList")}</button>`);
   const blackoutCommand=document.querySelector("#blackout"),fixtureCommandGroup=commandMenus.querySelector('[data-command-group="fixtures"]');
   if(blackoutCommand&&fixtureCommandGroup){fixtureCommandGroup.append(blackoutCommand);blackoutCommand.classList.add("command-menu-item");}
   document.querySelector("#stop-cue").insertAdjacentHTML("beforebegin", `<button id="pause-playback" aria-pressed="${Boolean(playbackClock?.paused)}" ${playbackTimer ? "" : "disabled"}>${t(playbackClock?.paused ? "resumePlayback" : "pausePlayback")}</button>`);
-  const sequenceDuration=project.cues.reduce((sum,cue)=>sum+cue.duration,0);
-  const tracks=arrangeTracks(project.cues);
+  const sequenceDuration=sceneCueList.reduce((sum,cue)=>sum+cue.duration,0);
+  const tracks=arrangeTracks(sceneCueList);
   const sequenceTrack=document.querySelector(".timeline > .cue-track");
-  document.querySelector(".timeline > .section-title").insertAdjacentHTML("afterend",arrangementTimelineMarkup(project.cues,activeCue?.id,t("noCues")));
+  document.querySelector(".timeline > .section-title").insertAdjacentHTML("afterend",arrangementTimelineMarkup(sceneCueList,activeCue?.id,t("noCues")));
   const sequenceDetails=document.createElement("details");sequenceDetails.className="fixture-group-editor";sequenceDetails.id="sequence-preview-details";
   sequenceDetails.innerHTML=`<summary>${t("playCueList")}</summary>`;
   sequenceTrack.replaceWith(sequenceDetails);sequenceDetails.append(sequenceTrack);
-  document.querySelector("#stop-cue").insertAdjacentHTML("beforebegin",`<button id="play-tracks" ${project.cues.length ? "" : "disabled"}>▶ ${t("playTracks")}</button>`);
+  document.querySelector("#stop-cue").insertAdjacentHTML("beforebegin",`<button id="play-tracks" ${sceneCueList.length ? "" : "disabled"}>▶ ${t("playTracks")}</button>`);
   document.querySelector("#create-cue").insertAdjacentHTML("beforebegin", `<label>${t("captureGroup")} <select id="cue-group"><option value="">${t("allFixtures")}</option>${(project.fixtureGroups ?? []).map((group)=>`<option value="${esc(group.id)}">${esc(group.name)}</option>`).join("")}</select></label>`);
   document.querySelector(".timeline").insertAdjacentHTML("beforeend", `<details class="fixture-group-editor"><summary>${t("fixtureGroups")}</summary><label>${t("groupName")} <input id="group-name" maxlength="120"></label><div>${project.fixtures.map((fixture)=>`<label><input type="checkbox" data-group-member value="${esc(fixture.id)}"> ${esc(fixture.name)}</label>`).join("")}</div><button id="save-group">${t("saveGroup")}</button>${(project.fixtureGroups ?? []).map((group)=>`<p>${esc(group.name)} · ${group.fixtureIds.length} <button data-delete-group="${esc(group.id)}">${t("deleteGroup")}</button></p>`).join("")}</details>`);
   document.querySelector(".timeline").insertAdjacentHTML("beforeend", `<div class="dmx-actions"><label><input id="sequence-loop" type="checkbox" ${preferences.loopSequence ? "checked" : ""}> ${t("loopSequence")}</label><label>${t("seekSequence")} <input id="sequence-seek" type="range" min="0" max="${sequenceDuration}" step="0.1" value="0" ${sequenceDuration ? "" : "disabled"}></label><output id="sequence-position">0 / ${sequenceDuration.toFixed(1)} s</output></div>`);
   document.querySelector(".timeline").insertAdjacentHTML("beforeend", `<div class="dmx-actions"><label>${t("virtualEffect")} <select id="effect-type"><option value="pulse">${t("pulse")}</option><option value="chase">${t("chase")}</option></select></label><label>${t("effectPeriod")} <input id="effect-period" type="number" min="0.1" max="120" step="0.1" value="2"></label><button id="play-effect" ${project.fixtures.length ? "" : "disabled"}>▶ ${t("previewEffect")}</button></div>`);
   if (activeCue) {
-    const index=project.cues.indexOf(activeCue);
+    const index=sceneCueList.indexOf(activeCue);
     const scheduled=tracks.flatMap((track)=>track.entries).find((entry)=>entry.cue.id===activeCue.id);
     document.querySelector("#edit-cue").insertAdjacentHTML("afterend", `<label>${t("trackName")}<input id="cue-track-name" maxlength="80" value="${esc(activeCue.trackId ?? "Main")}"></label><label>${t("startTime")}<input id="cue-start-time" type="number" min="0" step="0.1" required value="${scheduled.start}"></label><button id="schedule-cue">${t("scheduleCue")}</button>`);
     document.querySelector("#edit-cue").insertAdjacentHTML("afterend", `<button id="duplicate-cue">${t("duplicateCue")}</button><button id="delete-cue">${t("deleteCue")}</button>`);
-    document.querySelector("#edit-cue").insertAdjacentHTML("afterend", `<button data-move-cue="-1" ${index === 0 ? "disabled" : ""}>← ${t("earlier")}</button><button data-move-cue="1" ${index === project.cues.length - 1 ? "disabled" : ""}>${t("later")} →</button>`);
+    document.querySelector("#edit-cue").insertAdjacentHTML("afterend", `<button data-move-cue="-1" ${index === 0 ? "disabled" : ""}>← ${t("earlier")}</button><button data-move-cue="1" ${index === sceneCueList.length - 1 ? "disabled" : ""}>${t("later")} →</button>`);
   }
   if (document.querySelector(".fixture-inspector")) {
     const properties=selectedFixture().properties;
@@ -574,7 +576,7 @@ function render() {
   }
   document.querySelector(".selected-preview").style.background=swatchCssColor(active);
   document.querySelector(".palette-panel").insertAdjacentHTML("beforeend", `<div class="palette-actions"><label>${t("hueSpacing")}<input id="custom-spacing" type="number" min="-360" max="360" step="any" value="30" /></label><button id="custom-hues">${t("customHues")}</button><button id="perceptual-scale">${t("perceptualScale")}</button></div>`);
-  const arrangementEnd=arrangementDuration(project.cues);
+  const arrangementEnd=arrangementDuration(sceneCueList);
   document.querySelector(".palette-panel").insertAdjacentHTML("beforeend", `<div class="palette-actions"><label>${t("temperatureStrength")} (%)<input id="temperature-strength" type="number" min="0" max="100" step="1" required value="20"></label><button data-temperature="warm">${t("warmPalette")}</button><button data-temperature="cool">${t("coolPalette")}</button></div>`);
   document.querySelectorAll("[data-module]").forEach((button)=>{button.querySelector("span").innerHTML=icon(button.dataset.module);});
   document.querySelectorAll("[data-tool]").forEach((button)=>{button.querySelector("span").innerHTML=icon(button.dataset.tool);});
@@ -857,12 +859,12 @@ function bind() {
     try {
       const time=document.querySelector("#keyframe-time"),value=document.querySelector("#keyframe-value");
       for (const input of [time,value]) if (!input.value.trim() || !input.checkValidity()) return input.reportValidity();
-      const channel=JSON.parse(document.querySelector("#keyframe-channel").value),cue=project.cues.find((item)=>item.id===preferences.cueId) ?? project.cues.at(-1);
+      const channel=JSON.parse(document.querySelector("#keyframe-channel").value),cue=sceneCues().find((item)=>item.id===preferences.cueId) ?? sceneCues().at(-1);
       commitProjectChange("cue-keyframe-save",(draft)=>{draft.cues=draft.cues.map((item)=>item.id===cue.id ? setChannelKeyframe(item,{...channel,time:Number(time.value),value:Number(value.value)}) : item);});render();
     } catch(error) {setStatus(error.message);}
   };
   document.querySelectorAll("[data-remove-keyframe]").forEach((button)=>button.onclick=()=>{
-    const cue=project.cues.find((item)=>item.id===preferences.cueId) ?? project.cues.at(-1);
+    const cue=sceneCues().find((item)=>item.id===preferences.cueId) ?? sceneCues().at(-1);
     commitProjectChange("cue-keyframe-delete",(draft)=>{const target=draft.cues.find((item)=>item.id===cue.id);target.channelKeyframes.splice(Number(button.dataset.removeKeyframe),1);});render();
   });
   document.querySelectorAll("[data-inspector]").forEach((button)=>button.onclick=()=>{preferences.inspectorMode=button.dataset.inspector;savePreferences();render();});
@@ -1031,8 +1033,8 @@ function bind() {
     savePreferences();render();
   });
   document.querySelectorAll("[data-move-cue]").forEach((button)=>button.onclick=()=>{
-    const cue=project.cues.find((item)=>item.id===preferences.cueId) ?? project.cues.at(-1);
-    commitProjectChange("cue-reorder",(draft)=>{draft.cues=moveCue(draft.cues,cue.id,Number(button.dataset.moveCue));});
+    const cueList=sceneCues(),cue=cueList.find((item)=>item.id===preferences.cueId) ?? cueList.at(-1);
+    commitProjectChange("cue-reorder",(draft)=>{draft.cues=replaceSceneCues(draft.cues,moveCue(sceneCues(draft.cues,preferences.sceneId,draft.scenes),cue.id,Number(button.dataset.moveCue)),preferences.sceneId,draft.scenes);});
     render();
   });
   document.querySelector("#play-sequence").onclick=playSequence;
@@ -1043,8 +1045,8 @@ function bind() {
   document.querySelector("#play-tracks").onclick=playArrangement;
   document.querySelector("#arrangement-seek").onchange=(event)=>playArrangement({seek:Number(event.target.value),paused:true});
   bindTimelineSeek(document.querySelector(".arrangement-timeline .timeline-ruler"),{
-    span:Math.max(30,arrangementDuration(project.cues)),duration:arrangementDuration(project.cues),value:playbackClock && arrangementDuration(project.cues)>0 ? playbackPosition(playbackClock.elapsed(performance.now()),arrangementDuration(project.cues),Boolean(preferences.loopSequence)).time : 0,label:t("seekTracks"),
-    onPreview(time){document.querySelector("#arrangement-playhead").style.left=`${time/Math.max(30,arrangementDuration(project.cues))*100}%`;},
+    span:Math.max(30,arrangementDuration(sceneCues())),duration:arrangementDuration(sceneCues()),value:playbackClock && arrangementDuration(sceneCues())>0 ? playbackPosition(playbackClock.elapsed(performance.now()),arrangementDuration(sceneCues()),Boolean(preferences.loopSequence)).time : 0,label:t("seekTracks"),
+    onPreview(time){document.querySelector("#arrangement-playhead").style.left=`${time/Math.max(30,arrangementDuration(sceneCues()))*100}%`;},
     onSeek(time,{keyboard}){playArrangement({seek:time,paused:true});if(keyboard)document.querySelector(".arrangement-timeline .timeline-ruler")?.focus();}
   });
   const scheduleButton=document.querySelector("#schedule-cue");
@@ -1052,9 +1054,9 @@ function bind() {
     try {
       const input=document.querySelector("#cue-start-time");
       if (!input.value.trim() || !input.checkValidity()) return input.reportValidity();
-      const cue=project.cues.find((item)=>item.id===preferences.cueId) ?? project.cues.at(-1);
+      const cue=sceneCues().find((item)=>item.id===preferences.cueId) ?? sceneCues().at(-1);
       const track=document.querySelector("#cue-track-name").value;
-      commitProjectChange("cue-schedule",(draft)=>{draft.cues=scheduleCue(draft.cues,cue.id,track,Number(input.value));});render();
+      commitProjectChange("cue-schedule",(draft)=>{draft.cues=replaceSceneCues(draft.cues,scheduleCue(sceneCues(draft.cues,preferences.sceneId,draft.scenes),cue.id,track,Number(input.value)),preferences.sceneId,draft.scenes);});render();
     } catch(error) {setStatus(error.message);}
   };
   document.querySelector("#save-group").onclick=()=>{
@@ -1088,16 +1090,15 @@ function bind() {
   });
   const duplicateButton=document.querySelector("#duplicate-cue"),deleteButton=document.querySelector("#delete-cue");
   if (duplicateButton) duplicateButton.onclick=()=>{
-    const cue=project.cues.find((item)=>item.id===preferences.cueId) ?? project.cues.at(-1);
+    const cueList=sceneCues(),cue=cueList.find((item)=>item.id===preferences.cueId) ?? cueList.at(-1);
     const id=crypto.randomUUID();
-    commitProjectChange("cue-duplicate",(draft)=>{draft.cues=duplicateCue(draft.cues,cue.id,{id,name:`${cue.name} · ${t("copyLabel")}`});});
+    commitProjectChange("cue-duplicate",(draft)=>{draft.cues=replaceSceneCues(draft.cues,duplicateCue(sceneCues(draft.cues,preferences.sceneId,draft.scenes),cue.id,{id,name:`${cue.name} · ${t("copyLabel")}`}),preferences.sceneId,draft.scenes);});
     preferences.cueId=id;savePreferences();render();
   };
   if (deleteButton) deleteButton.onclick=()=>{
-    const cue=project.cues.find((item)=>item.id===preferences.cueId) ?? project.cues.at(-1);
-    const index=project.cues.indexOf(cue);
-    commitProjectChange("cue-delete",(draft)=>{draft.cues=removeCue(draft.cues,cue.id);});
-    preferences.cueId=project.cues[Math.min(index,project.cues.length-1)]?.id ?? null;
+    const cueList=sceneCues(),cue=cueList.find((item)=>item.id===preferences.cueId) ?? cueList.at(-1),index=cueList.indexOf(cue);
+    commitProjectChange("cue-delete",(draft)=>{draft.cues=replaceSceneCues(draft.cues,removeCue(sceneCues(draft.cues,preferences.sceneId,draft.scenes),cue.id),preferences.sceneId,draft.scenes);});
+    preferences.cueId=sceneCues()[Math.min(index,sceneCues().length-1)]?.id ?? null;
     savePreferences();render();
   };
   const editButton=document.querySelector("#edit-cue");
@@ -1109,7 +1110,7 @@ function bind() {
         if (!input.value.trim() || !input.checkValidity()) throw new Error(`${t(key)}: enter a valid value.`);
         changes[key]=Number(input.value);
       }
-      const cue=project.cues.find((item)=>item.id===preferences.cueId) ?? project.cues.at(-1);
+      const cue=sceneCues().find((item)=>item.id===preferences.cueId) ?? sceneCues().at(-1);
       commitProjectChange("cue-edit",(draft)=>{draft.cues=draft.cues.map((item)=>item.id===cue.id ? editCue(item,changes) : item);});
       render();
     } catch(error) { document.querySelector("#status").textContent=status=error.message; }
@@ -1155,7 +1156,7 @@ function bind() {
   });
   document.querySelectorAll("[data-swatch]").forEach((button) => button.onclick = () => { preferences.selected = button.dataset.swatch; preferences.inspectorMode="palette"; savePreferences(); render(); });
   document.querySelector("#project-name").onchange = (event) => { const name=event.target.value.trim(); if(name&&name!==project.name) commitProjectChange("project-rename",(draft)=>{draft.name=name;}); render(); };
-  const sceneSelect=document.querySelector("#scene-select");if(sceneSelect)sceneSelect.onchange=(event)=>{if(!project.scenes.some((item)=>item.id===event.target.value))return;preferences.sceneId=event.target.value;preferences.objectId=null;savePreferences();render();};
+  const sceneSelect=document.querySelector("#scene-select");if(sceneSelect)sceneSelect.onchange=(event)=>{if(!project.scenes.some((item)=>item.id===event.target.value))return;stopPlayback();preferences.sceneId=event.target.value;preferences.objectId=null;preferences.cueId=sceneCues(project.cues,preferences.sceneId).at(-1)?.id ?? null;savePreferences();render();};
   const addRoomButton=document.querySelector("#add-room-scene");if(addRoomButton)addRoomButton.onclick=showRoomSceneDialog;
   document.querySelector("#seed").onchange = (event) => { const hex = normalizeHex(event.target.value); if (hex) preferences.seed = hex; event.target.value = preferences.seed; savePreferences(); };
   document.querySelector("#harmony").onchange = (event) => { preferences.harmony = event.target.value; savePreferences(); };
