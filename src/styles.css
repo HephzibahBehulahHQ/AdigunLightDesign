@@ -630,15 +630,18 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
     margin:0;
     padding:2px 6px;
     overflow:hidden;
-    border:1px solid #34506b;
+    border:1px solid #276355;
     border-radius:6px;
-    background:#111c2d;
+    background:#0d2526;
     white-space:normal;
   }
   .lux-panel.is-docked:not(.is-dock-expanded) .lux-message b {
     display:block;
+    color:#6ee7b7;
     font-size:9px;
     line-height:10px;
+    letter-spacing:.02em;
+    text-transform:uppercase;
   }
   .lux-panel.is-docked:not(.is-dock-expanded) .lux-message p {
     display:block !important;
