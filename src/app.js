@@ -330,7 +330,7 @@ function render() {
     project:`<button type="button" id="new-project">＋ ${t("newProject")}</button><button type="button" id="open-project">${t("openProject")}</button><button type="button" id="save">${t("save")}</button><button type="button" id="import-image" title="${t("importImage")}" aria-label="${t("importImage")}">${t("importAction")}</button><input id="project-file" type="file" accept="application/json,.json" hidden />`,
     history:`<button type="button" id="undo" ${undoStack.length ? "" : "disabled"}>↶ ${t("undo")}</button><button type="button" id="redo" ${redoStack.length ? "" : "disabled"}>↷ ${t("redo")}</button>`,
     scene:`<button type="button" data-open-scene-editor="room">${t("roomCommand")}</button><button type="button" data-open-scene-editor="stage">${t("stageCommand")}</button><label class="preview-quality">${t("previewQuality")} <select id="preview-quality" ${preferences.view==="light" ? "" : disabled(t("select3d"))}>${Object.keys(previewQualities).map((key)=>`<option value="${key}" ${key===(preferences.previewQuality ?? "balanced") ? "selected" : ""}>${t(`quality_${key}`)}</option>`).join("")}</select></label><button type="button" id="reset-camera">${t("resetCamera")}</button>`,
-    palette:`<button type="button" id="open-versions">${t("versions")}</button><button type="button" id="open-compare">${t("compare")}</button>`,
+    palette:`<button type="button" data-menu-keep-open id="open-versions" aria-expanded="false">${t("versions")}</button><button type="button" data-menu-keep-open id="open-compare" aria-expanded="false">${t("compare")}</button>`,
     fixtures:"",
     export:`<button data-export="project">Project JSON</button><button data-export="palette">Palette JSON</button><button data-export="css">CSS variables</button><button data-export="ase" title="${t("aseExportLimit")}">${t("aseExport")}</button><button data-export="patch">Patch CSV</button><button data-export="cues">Cue CSV</button>`
   };
@@ -458,7 +458,7 @@ function render() {
   const oklch=oklabToOklch(rgbToOklab(hexToRgb(active.hex)));
   document.querySelector("#lock-swatch").insertAdjacentHTML("beforebegin", `<section class="colour-space-card"><h3>OKLCH</h3>${[["l",oklch.l,1,t("lightness")],["c",oklch.c,1,t("chroma")],["h",oklch.h,360,t("hue")]].map(([key,value,max,label])=>`<label>${label} (0–${max})<input id="oklch-${key}" type="number" required min="0" max="${max}" step="any" value="${compact(value,4)}" /></label>`).join("")}<button id="apply-oklch" class="wide">${t("apply")} OKLCH</button></section>`);
   document.querySelector("#oklch-l").closest("label").firstChild.textContent="L (0–1)";
-  document.querySelector(".palette-panel").insertAdjacentHTML("beforeend", `<div id="palette-versions-menu" class="palette-ribbon-popover" popover><div class="palette-actions"><button id="save-version">${t("saveVersion")}</button><select id="palette-version" aria-label="${t("savedVersions")}">${project.palettes.slice(1).map((item)=>`<option value="${esc(item.id)}">${esc(item.name)}</option>`).join("")}</select><button id="restore-version" ${project.palettes.length<2 ? "disabled" : ""}>${t("restoreVersion")}</button></div></div><div id="palette-compare-menu" class="palette-ribbon-popover" popover><div id="version-comparison"></div></div>`);
+  document.querySelector(".palette-panel").insertAdjacentHTML("beforeend", `<div id="palette-versions-menu" class="command-subpanel" hidden><div class="palette-actions"><button id="save-version">${t("saveVersion")}</button><select id="palette-version" aria-label="${t("savedVersions")}">${project.palettes.slice(1).map((item)=>`<option value="${esc(item.id)}">${esc(item.name)}</option>`).join("")}</select><button id="restore-version" ${project.palettes.length<2 ? "disabled" : ""}>${t("restoreVersion")}</button></div></div><div id="palette-compare-menu" class="command-subpanel" hidden><div id="version-comparison"></div></div>`);
 
   document.querySelector("#lock-swatch").insertAdjacentHTML("beforebegin", `<label>${t("opacity")} (%)<input id="swatch-opacity" type="number" required min="0" max="100" step="any" value="${(active.opacity ?? 1)*100}" /></label><button id="apply-opacity" class="wide">${t("setSwatchOpacity")}</button>`);
   for (const button of document.querySelectorAll("[data-swatch]")) {
@@ -527,6 +527,7 @@ function render() {
   for (const node of [...inspector.children]) if (!node.classList.contains("section-title") && !node.classList.contains("inspector-tabs") && node!==fixturePanel) palettePanel.append(node);
   inspector.append(palettePanel);
   const commandGroup=(name)=>document.querySelector(`.command-group[data-command-group="${name}"]`);
+  commandGroup("palette").append(document.querySelector("#palette-versions-menu"),document.querySelector("#palette-compare-menu"));
   const dock=(selector,groupName,wrap=false)=>{const control=document.querySelector(selector);if(control){const group=commandGroup(groupName);group.append(wrap ? control.closest("label") : control);}};
   dock("#reset-camera","scene");
   dock("#copy-object","history");dock("#delete-object","history");
@@ -778,17 +779,18 @@ function bind() {
   };
   document.querySelector("#palette-version").onchange=updateComparison;
   updateComparison();
-  const openPalettePopover=(triggerSelector,popoverSelector)=>{
-    const trigger=document.querySelector(triggerSelector),popover=document.querySelector(popoverSelector);
+  const togglePaletteSubpanel=(triggerSelector,panelSelector,otherTriggerSelector,otherPanelSelector)=>{
+    const trigger=document.querySelector(triggerSelector),panel=document.querySelector(panelSelector),otherTrigger=document.querySelector(otherTriggerSelector),otherPanel=document.querySelector(otherPanelSelector);
     trigger.onclick=()=>{
-      const rect=trigger.getBoundingClientRect(),width=popoverSelector==="#palette-versions-menu" ? 320 : 420;
-      popover.style.left=`${Math.max(8,Math.min(rect.left,window.innerWidth-width-8))}px`;
-      popover.style.top=`${Math.min(rect.bottom+4,window.innerHeight-300)}px`;
-      popover.showPopover();
+      const opening=panel.hidden;
+      panel.hidden=!opening;
+      trigger.setAttribute("aria-expanded",String(opening));
+      otherPanel.hidden=true;
+      otherTrigger.setAttribute("aria-expanded","false");
     };
   };
-  openPalettePopover("#open-versions","#palette-versions-menu");
-  openPalettePopover("#open-compare","#palette-compare-menu");
+  togglePaletteSubpanel("#open-versions","#palette-versions-menu","#open-compare","#palette-compare-menu");
+  togglePaletteSubpanel("#open-compare","#palette-compare-menu","#open-versions","#palette-versions-menu");
   document.querySelector("#save-version").onclick=()=>{
     commitProjectChange("palette-version-save",(draft)=>{draft.palettes.push(snapshotPalette(draft.palettes[0],`${draft.palettes[0].name} · ${draft.palettes.length}`));});
     render();
