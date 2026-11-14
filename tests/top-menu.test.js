@@ -24,7 +24,7 @@ test("Help opens the current project guide from main",()=>{
       setAttribute(){},addEventListener(){},show(){this.open=true;},close(){this.open=false;},
       getBoundingClientRect(){return {width:320,height:240};},querySelector(){return null;},remove(){}
     }),
-    defaultView:{AbortController,innerWidth:1024,innerHeight:768,setTimeout,clearTimeout},
+    defaultView:{AbortController,innerWidth:1024,innerHeight:768,setTimeout,clearTimeout,addEventListener(){}},
     querySelector:selector=>controls.get(selector),querySelectorAll:()=>[],addEventListener(){}
   };
   bindTopMenu({documentRef,project:createStudioMoodProject(),t:key=>translate("en",key),onSelect:()=>{}});
