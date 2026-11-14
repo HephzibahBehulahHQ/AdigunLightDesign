@@ -338,3 +338,9 @@ Object.assign(messages.en,{projectSavedShort:"Project saved"});
 Object.assign(messages.de,{projectSavedShort:"Projekt gespeichert"});
 Object.assign(messages.yo,{projectSavedShort:"A ti fipamọ́ iṣẹ́ akanṣe"});
 Object.assign(messages.pcm,{projectSavedShort:"Project don save"});
+
+
+Object.assign(messages.en,{mockupRoomTitle:"3D Mockup Room",rgbwPreview:"RGBW Preview",sceneView:"Scene view",rgbwPreviewSubtitle:"virtual RGBW previsualization"});
+Object.assign(messages.de,{mockupRoomTitle:"3D-Mockup-Raum",rgbwPreview:"RGBW-Vorschau",sceneView:"Szenenansicht",rgbwPreviewSubtitle:"virtuelle RGBW-Vorschau"});
+Object.assign(messages.yo,{mockupRoomTitle:"Yàrá Àpẹẹrẹ 3D",rgbwPreview:"Ìfihàn RGBW",sceneView:"Ìwò ìṣẹ̀lẹ̀",rgbwPreviewSubtitle:"àfihàn RGBW àfojúsùn"});
+Object.assign(messages.pcm,{mockupRoomTitle:"3D Mockup Room",rgbwPreview:"RGBW Preview",sceneView:"Scene view",rgbwPreviewSubtitle:"virtual RGBW previsualization"});
