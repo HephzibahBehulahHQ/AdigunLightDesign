@@ -239,6 +239,13 @@ try {
   assert.equal(await page.locator(".design-canvas [data-canvas-object]").count(), 1, "Shapes adds an editable canvas object");
   await page.locator('[data-tool="text"]').click();
   assert.equal(await page.locator(".design-canvas [data-canvas-object]").count(), 2, "Text adds an editable canvas object");
+  const textEditor=page.locator("#canvas-text");
+  assert.equal(await textEditor.isVisible(), true, "Text tool opens the selected text object in the inspector editor");
+  assert.equal(await textEditor.evaluate((input) => input.ownerDocument.activeElement === input), true, "Text input receives focus immediately");
+  assert.equal(await textEditor.inputValue(), "Text", "new text placeholder is selected for replacement");
+  await textEditor.fill("Editable label");
+  await page.locator("#apply-object").click();
+  assert.equal(await page.locator(".design-canvas text").textContent(), "Editable label", "Apply object changes updates the text shown on the canvas");
   const firstSceneId=await page.locator("#scene-select").inputValue();
   await page.locator("#save").click();
   const projectForSceneSwitch=await page.evaluate(()=>JSON.parse(localStorage.getItem("adigunlightdesign/project-v1")));

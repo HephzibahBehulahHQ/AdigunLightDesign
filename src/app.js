@@ -1011,6 +1011,7 @@ function bind() {
     savePreferences();
     status=t("statusTool") + button.textContent.trim();
     render();
+    if(preferences.tool==="text"){const editor=document.querySelector("#canvas-text");editor?.focus({preventScroll:true});editor?.select();}
     if(preferences.tool==="measure"){document.querySelector(".design-canvas")?.focus();status=t("measureHelp");document.querySelector("#status").textContent=status;}
     if (preferences.tool === "orbit") document.querySelector("#light-canvas")?.focus();
     if (preferences.tool === "material") document.querySelector("#apply-scene")?.focus();
