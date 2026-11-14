@@ -258,6 +258,10 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
   .layer-list { padding:0 9px 5px; gap:3px; font-size:11px; }
   .fixture-list-section { flex:1 1 0; min-height:0; display:flex; flex-direction:column; overflow:hidden; border-top:1px solid var(--line); }
   .fixture-list-section > h2 span { color:var(--muted); }
+  .fixture-list-toggle { display:flex; align-items:center; justify-content:space-between; width:100%; padding:0; color:var(--text); background:transparent; font:inherit; text-align:left; cursor:pointer; }
+  .fixture-list-popover { position:fixed; inset:auto; z-index:120; padding:6px; border:1px solid var(--line); border-radius:8px; background:var(--panel); box-shadow:0 12px 32px #0009; }
+  .fixture-empty { margin:8px; color:var(--muted); font-size:11px; }
+  .fixture-empty-add { padding:4px 6px; border:1px solid var(--line); border-radius:5px; color:var(--text); background:var(--panel-raised); cursor:pointer; }
   .left-rail .fixture-layer-list { flex:1 1 auto; min-height:0; max-height:none; overflow-y:auto; overscroll-behavior:contain; list-style:none; margin:0; padding:0 8px 5px; }
   .fixture-layer-list li { margin:0; }
   .fixture-layer-list button { display:flex; align-items:center; gap:5px; width:100%; min-width:0; height:25px; overflow:hidden; padding:3px 6px; border-radius:4px; background:transparent; text-align:left; white-space:nowrap; text-overflow:ellipsis; font-size:11px; }

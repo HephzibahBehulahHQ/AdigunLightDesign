@@ -35,6 +35,7 @@ try {
   const page = await context.newPage();
   const openCommandMenu=async(key)=>{const trigger=page.locator(`[data-command-menu-trigger="${key}"]`);if(await trigger.getAttribute("aria-expanded")!=="true")await trigger.click();};
   const clickCommand=async(key,selector)=>{await openCommandMenu(key);await page.locator(selector).click();};
+  const openFixtureList=async()=>{const trigger=page.locator("#toggle-fixtures");if(await trigger.getAttribute("aria-expanded")!=="true")await trigger.click();};
   const runtimeErrors = [];
   page.on("pageerror", (error) => runtimeErrors.push(error.message));
   await page.addInitScript(()=>localStorage.setItem("adigunlightdesign/project-v1",JSON.stringify({name:"stale working copy"})));
@@ -262,17 +263,30 @@ try {
   assert.ok(exportBounds.x>=0&&exportBounds.x+exportBounds.width<=1754&&exportBounds.y>=0&&exportBounds.y+exportBounds.height<=878,"the right-edge Export menu repositions within the viewport");
   await page.locator(".footer-ready").click();
 
-  const toolsToggle=page.locator("#toggle-tools"),toolMenu=page.locator("#tool-list");
-  const fixtureListBounds=await page.locator(".fixture-layer-list").boundingBox();
+  const toolsToggle=page.locator("#toggle-tools"),toolMenu=page.locator("#tool-list"),fixturesToggle=page.locator("#toggle-fixtures"),fixturesMenu=page.locator("#fixture-list");
+  const fixtureListBounds=await page.locator(".fixture-list-section").boundingBox();
   const sceneBoundsBeforeTools=await page.locator(".scene-preview").boundingBox();
+  await fixturesToggle.click();
+  assert.equal(await fixturesMenu.evaluate(panel=>panel.matches(":popover-open")),true,"clicking Fixture list opens its floating panel");
+  await page.mouse.move(30,fixtureListBounds.y+fixtureListBounds.height+12);
+  await page.waitForTimeout(80);
+  assert.equal(await fixturesMenu.evaluate(panel=>panel.matches(":popover-open")),true,"moving from the trigger into the fixture panel does not close it");
+  await page.mouse.move(1738,860);
+  await page.waitForTimeout(260);
+  assert.equal(await fixturesMenu.evaluate(panel=>panel.matches(":popover-open")),false,"leaving both the Fixture list trigger and panel closes it after a short delay");
+  await fixturesToggle.click();
+  await page.keyboard.press("Escape");
+  assert.equal(await fixturesToggle.getAttribute("aria-expanded"),"false","Escape closes the Fixture list panel");
+  await fixturesToggle.click();
   assert.equal(await toolsToggle.getAttribute("aria-expanded"),"false","Tools starts closed");
   await toolsToggle.click();
+  assert.equal(await fixturesMenu.evaluate(panel=>panel.matches(":popover-open")),false,"opening Tools closes the Fixture list panel");
   assert.equal(await toolsToggle.getAttribute("aria-expanded"),"true","clicking Tools opens its floating panel");
   assert.equal(await toolMenu.evaluate(panel=>panel.matches(":popover-open")),true,"Tools opens as a top-layer popover");
   assert.equal(await page.locator('[data-tool="shapes"]').isVisible(),true,"all tools are available in the floating panel");
   const toolBounds=await toolMenu.boundingBox(),viewport=page.viewportSize();
   assert.ok(toolBounds.x>=0&&toolBounds.x+toolBounds.width<=viewport.width&&toolBounds.y>=0&&toolBounds.y+toolBounds.height<=viewport.height,"the Tools panel stays inside the viewport");
-  assert.deepEqual(await page.locator(".fixture-layer-list").boundingBox(),fixtureListBounds,"opening Tools does not resize or displace the fixture list");
+  assert.deepEqual(await page.locator(".fixture-list-section").boundingBox(),fixtureListBounds,"opening Tools does not resize or displace the fixture list");
   assert.deepEqual(await page.locator(".scene-preview").boundingBox(),sceneBoundsBeforeTools,"opening Tools leaves the studio canvas stationary");
   await page.keyboard.press("Escape");
   await page.waitForTimeout(40);
@@ -286,7 +300,7 @@ try {
   await page.locator(".footer-ready").click();
   await page.waitForTimeout(40);
   assert.equal(await toolMenu.evaluate(panel=>panel.matches(":popover-open")),false,"clicking outside closes Tools");
-  assert.deepEqual(await page.locator(".fixture-layer-list").boundingBox(),fixtureListBounds,"closing Tools keeps the fixture list stationary");
+  assert.deepEqual(await page.locator(".fixture-list-section").boundingBox(),fixtureListBounds,"closing Tools keeps the fixture list stationary");
   await toolsToggle.click();
 
   await page.locator('[data-tool="shapes"]').click();
@@ -326,6 +340,11 @@ try {
   await page.locator("#scene-select").selectOption("acceptance-secondary-scene");
   assert.match(await page.locator("#scene-select option:checked").innerText(), /Secondary room/, "scene selector switches to the selected project scene");
   assert.match(await page.locator(".footer-ready").innerText(),/Scene 02/,"footer scene number updates when the active scene changes");
+  assert.equal(await page.locator(".fixture-layer-list li").count(),0,"a new room starts without borrowing the first room's fixtures");
+  await clickCommand("fixtures","#add-fixture");
+  assert.equal(await page.locator(".fixture-layer-list li").count(),1,"a fixture added in the selected room belongs to that room");
+  await openFixtureList();
+  const secondaryFixtureId=(await page.locator("[data-layer-fixture]").first().getAttribute("data-layer-fixture"));
   assert.equal(await page.locator(".timeline > .cue-track .cue-block").count(),0,"a new scene starts with its own empty cue timeline");
   assert.equal(await page.locator(".design-canvas [data-canvas-object]").count(), 0, "scene selection shows its own canvas objects");
   await page.locator("#create-cue").click();
@@ -336,18 +355,24 @@ try {
   const cueExport=await cueExportPromise, cueExportPath=await cueExport.path();
   const persistedSecondSceneCue=JSON.parse(await readFile(cueExportPath,"utf8")).cues.find(cue=>cue.id===secondSceneCueId);
   assert.equal(persistedSecondSceneCue.sceneId,"acceptance-secondary-scene","new cues store their owning scene id");
+  assert.deepEqual(persistedSecondSceneCue.targets.map(target=>target.fixtureId),[secondaryFixtureId],"a room cue captures only fixtures owned by that room");
   await page.locator("#toggle-tools").click();
   await page.locator('[data-tool="shapes"]').click();
   assert.equal(await page.locator(".design-canvas [data-canvas-object]").count(), 1, "canvas editing writes to the selected scene");
   await page.locator("#scene-select").selectOption(firstSceneId);
+  await openFixtureList();
   assert.equal(await page.locator(".timeline > .cue-track .cue-block").count(),firstSceneCueCount,"the first scene keeps its own cue lane");
+  assert.equal(await page.locator(".fixture-layer-list li").count(),9,"the first room retains its original fixture rig");
   assert.notEqual(await page.locator(".timeline > .cue-track .cue-block").last().getAttribute("data-cue"),secondSceneCueId,"switching scenes does not show the other scene's cues");
   assert.equal(await page.locator(".design-canvas [data-canvas-object]").count(), 2, "switching back preserves the first scene canvas");
   await page.locator("#scene-select").selectOption("acceptance-secondary-scene");
+  await openFixtureList();
   assert.equal(await page.locator(".timeline > .cue-track .cue-block").count(),1,"switching back restores the second scene cue lane");
+  assert.equal(await page.locator(".fixture-layer-list li").count(),1,"switching back restores the room's own fixture rig");
   assert.equal(await page.locator(".timeline > .cue-track .cue-block").getAttribute("data-cue"),secondSceneCueId,"the second scene cue remains selected in its own timeline");
   assert.equal(await page.locator(".design-canvas [data-canvas-object]").count(), 1, "secondary scene edits persist independently");
   await page.locator("#scene-select").selectOption(firstSceneId);
+  await openFixtureList();
   await clickCommand("scene",'[data-open-scene-editor="room"]');
   const firstRoomWidth=await page.locator("#room-width").inputValue();
   await page.locator("#scene-select").selectOption("acceptance-secondary-scene");
@@ -364,6 +389,7 @@ try {
   await page.locator('[data-tool="measure"]').click();
   await page.locator(".design-canvas").press("ArrowRight");
   assert.match(await page.locator("#status").innerText(), /canvas units/i, "Measure reports a live canvas distance");
+  await openFixtureList();
   await page.locator('[data-layer-fixture]').nth(1).click();
   assert.equal(await page.locator('[data-layer-fixture]').nth(1).getAttribute("aria-pressed"), "true", "fixture selection follows the selected project fixture");
   await page.locator('[data-module="palette"]').click();
@@ -427,6 +453,7 @@ try {
   await page.locator('[data-module="library"]').click();
   assert.equal(await page.locator('.fixture-library [data-profile="generic-led-strip-rgb"]').count(), 1, "the library exposes the tested virtual LED strip profile");
   await page.locator('[data-module="light"]').click();
+  await openFixtureList();
   assert.equal(await page.locator("[data-layer-fixture]").count(), 9, "the Studio Mood starter project opens with the nine real virtual fixtures in the approved composition");
   await page.locator("[data-layer-fixture]").last().click();
   assert.match(await page.locator(".inspector > .section-title h2").innerText(), /LED Strip RGB 9/, "the reference LED strip is selected on first open");
@@ -445,6 +472,7 @@ try {
   await clickCommand("scene","#reset-camera");
   await page.screenshot({ path: resolve("outputs", "studio-acceptance-reference-1754x878.png") });
   for (let index = 0; index < 12; index += 1) await clickCommand("fixtures","#add-fixture");
+  await openFixtureList();
   const fixtureList = page.locator(".fixture-layer-list");
   const fixtureListScroll = await fixtureList.evaluate((element) => {
     const maxScroll = element.scrollHeight - element.clientHeight;
@@ -507,6 +535,7 @@ try {
   await page.locator("#saved-project-name").fill("Imported acceptance");
   await page.locator(".project-dialog button[type=submit]").click();
   await page.waitForFunction(()=>globalThis.document.querySelector("#project-name")?.value==="Studio Mood");
+  await openFixtureList();
   assert.equal(await page.locator("[data-layer-fixture]").count(),9,"Save then continue creates a fresh starter workspace");
   assert.equal(await page.locator(".header-save-status").innerText(),"Unsaved project","the fresh workspace is not mistaken for a saved project");
   await page.locator("#toggle-tools").click();

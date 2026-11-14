@@ -60,18 +60,26 @@ test("validates imported cue timing and captured channel values", () => {
 
 test("validates cue scheduling independently for each scene and keeps legacy cues in the first scene", () => {
   const project=createProject(),fixture=createFixture();fixture.id="f";
-  project.fixtures=[fixture];
   project.scenes=[{id:"living",name:"Living room",materialColor:"#C21888"},{id:"library",name:"Library",materialColor:"#5B5143"}];
-  const living={...createCue(project.fixtures,{id:"living-cue"}),trackId:"Main",startTime:0};
-  const library={...createCue(project.fixtures,{id:"library-cue",sceneId:"library"}),trackId:"Main",startTime:0};
+  const libraryFixture={...createFixture(2),id:"f-library",sceneId:"library"};project.fixtures=[fixture,libraryFixture];
+  const living={...createCue([fixture],{id:"living-cue"}),trackId:"Main",startTime:0};
+  const library={...createCue([libraryFixture],{id:"library-cue",sceneId:"library"}),trackId:"Main",startTime:0};
   project.cues=[living,library];
   assert.equal(validateProject(project).valid,true,"matching track times in different scenes do not conflict");
   project.cues=[living,{...library,sceneId:"living"}];
   assert.equal(validateProject(project).valid,false,"overlapping cues on one scene track remain invalid");
   project.cues=[living,{...library,sceneId:"missing"}];
   assert.equal(validateProject(project).valid,false,"explicit cue scene ids must reference a project scene");
-  project.cues=[createCue(project.fixtures)];
+  project.cues=[createCue([fixture])];
   assert.equal(validateProject(project).valid,true,"legacy cues without a scene id remain valid");
+});
+
+test("fixtures and cue targets stay within their owning room",()=>{
+  const project=createProject(),living=createFixture(1),library={...createFixture(2),id:"library-fixture",sceneId:"library"};
+  project.scenes=[{id:"living",name:"Living room",materialColor:"#C21888"},{id:"library",name:"Library",materialColor:"#5B5143"}];project.fixtures=[living,library];
+  project.cues=[createCue([library],{sceneId:"library"})];assert.equal(validateProject(project).valid,true);
+  project.cues=[createCue([living],{sceneId:"library"})];assert.equal(validateProject(project).valid,false,"a cue cannot target a fixture owned by another room");
+  project.cues=[];project.fixtures[1].sceneId="missing";assert.equal(validateProject(project).valid,false,"fixture scene references must exist");
 });
 import { createProject, validateProject, CURRENT_SCHEMA_VERSION } from "../src/domain/project.js";
 
