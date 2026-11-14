@@ -71,7 +71,7 @@ preferences.seed=normalizeHex(preferences.seed) ?? defaults.seed;
 if (!Object.hasOwn(previewQualities,preferences.previewQuality)) preferences.previewQuality="balanced";
 let projectPersisted=false;
 let projectDirty=false;
-let activeSavedProjectId=null; let toolsExpanded=false;
+let activeSavedProjectId=null;
 let luxProposal=null;
 let luxConfirmationPending=false;
 let viewportCamera=null;
@@ -466,7 +466,7 @@ function render() {
         <div class="left-rail-heading"><h2>${t("project")} • ${t("layers")} • ${t("tools")}</h2></div>
         <section class="project-heading"><div><input id="project-name" value="${esc(project.name)}" aria-label="${t("project")} name" />${sceneSelectMarkup()}</div></section>
         <section class="layer-section"><h2>▰ ${t("layers")}</h2><ul class="layer-list"><li>⌄ ▣ ${t("layersLighting")} <span>◉</span></li><li>⌄ ▣ ${t("layersPalette")} <span>◉</span></li><li>⌄ ▣ ${t("layersScene")} <span>◉</span></li></ul></section>
-        <section class="tool-section"><h2><button type="button" id="toggle-tools" class="tool-section-toggle" aria-expanded="${toolsExpanded}" aria-controls="tool-list"><span>☼ ${t("toolsOneClick")}</span><span class="tools-caret" aria-hidden="true">${toolsExpanded ? "▴" : "▾"}</span></button></h2><div id="tool-list" class="tool-list" ${toolsExpanded ? "" : "hidden"}>${tools}</div></section>
+        <section class="tool-section"><h2><button type="button" id="toggle-tools" class="tool-section-toggle" aria-haspopup="true" aria-expanded="false" aria-controls="tool-list"><span>☼ ${t("toolsOneClick")}</span><span class="tools-caret" aria-hidden="true">▾</span></button></h2><div id="tool-list" class="tool-list tool-popover" popover="auto">${tools}</div></section>
       </aside>
       <section class="work-area">
         <div class="workspace-tabs panel"><strong class="studio-panel-title">${preferences.view === "light" ? `${t("sceneHeader")} ${String(displayedSceneNumber).padStart(2,"0")} / ${scene().id === "studio-room" ? t("mockupRoomTitle") : esc(scene().name)}` : `2D ${t("palette")} / ${esc(project.name)}`}</strong><small class="studio-panel-title-meta">${preferences.view === "light" ? t("viewportFixedHint") : t("palette")}</small><span></span><button id="viewport-projection" class="view-menu" ${preferences.view === "light" ? "" : disabled(t("select3d"))}>${t("perspective")}⌄</button></div>
@@ -1134,6 +1134,7 @@ function bind() {
     render();
   });
   document.querySelectorAll("[data-tool]").forEach((button) => button.onclick = () => {
+    if(toolMenu.matches(":popover-open"))toolMenu.hidePopover();
     preferences.tool=button.dataset.tool;
     if (["shapes","text"].includes(preferences.tool)) {
       const id=crypto.randomUUID();
@@ -1163,7 +1164,33 @@ function bind() {
   document.querySelector("#apply-colour").onclick = () => { const name = document.querySelector("#swatch-name").value.trim(), hex = normalizeHex(document.querySelector("#swatch-hex").value); if (!hex) return setStatus("Enter a valid 3- or 6-digit HEX value."); mutateColours((colours) => updateSwatch(colours, selected().id, { name:name || selected().name, hex })); };
   document.querySelector("#lock-swatch").onclick = () => mutateColours((colours) => updateSwatch(colours, selected().id, { locked:!selected().locked }));
   document.querySelector("#save").onclick = () => saveProject();
-  document.querySelector("#toggle-tools").onclick=()=>{toolsExpanded=!toolsExpanded;render();};
+  const toolsToggle=document.querySelector("#toggle-tools");
+  const toolMenu=document.querySelector("#tool-list");
+  const placeToolsMenu=()=>{
+    if(!toolMenu.matches(":popover-open"))return;
+    const trigger=toolsToggle.getBoundingClientRect(),panel=toolMenu.getBoundingClientRect(),gutter=8;
+    toolMenu.style.left=`${Math.max(gutter,Math.min(trigger.left,innerWidth-panel.width-gutter))}px`;
+    toolMenu.style.top=`${Math.max(gutter,Math.min(trigger.bottom,innerHeight-panel.height-gutter))}px`;
+  };
+  let toolsCloseTimer;
+  const clearToolsClose=()=>clearTimeout(toolsCloseTimer);
+  toolsToggle.onclick=()=>{
+    clearToolsClose();
+    if(toolMenu.matches(":popover-open"))toolMenu.hidePopover();
+    else {toolMenu.showPopover();placeToolsMenu();requestAnimationFrame(placeToolsMenu);}
+  };
+  toolMenu.addEventListener("toggle",()=>toolsToggle.setAttribute("aria-expanded",String(toolMenu.matches(":popover-open"))));
+  const scheduleToolsClose=()=>{
+    if(!matchMedia("(hover: hover) and (pointer: fine)").matches)return;
+    clearToolsClose();
+    toolsCloseTimer=setTimeout(()=>{
+      if(!document.querySelector(".tool-section")?.matches(":hover")&&!toolMenu.matches(":hover"))toolMenu.hidePopover();
+    },180);
+  };
+  for(const surface of [document.querySelector(".tool-section"),toolMenu]){
+    surface.addEventListener("pointerenter",clearToolsClose);
+    surface.addEventListener("pointerleave",scheduleToolsClose);
+  }
   document.querySelector("#new-project").onclick=createNewProject;
   document.querySelector("#undo").onclick = undo; document.querySelector("#redo").onclick = redo;
   document.querySelector("#toggle-lux").onclick = () => { preferences.luxOpen = !preferences.luxOpen; savePreferences(); render(); };
