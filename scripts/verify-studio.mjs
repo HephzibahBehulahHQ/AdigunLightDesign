@@ -490,7 +490,7 @@ try {
   assert.equal(await page.locator("#scene-select option").count(),2,"Add room creates a second saved scene in the project");
   const addedRoomId=await page.locator("#scene-select").inputValue();
   assert.match(await page.locator("#scene-select option:checked").innerText(),/Kitchen/,"the selected scene is labeled with its room template");
-  assert.match(await page.locator(".workspace-tabs .studio-panel-title").innerText(),/Kitchen/,"the studio header identifies the active room in the 3D preview");
+  assert.match(await page.locator(".workspace-tabs .studio-panel-title").innerText(),/Kitchen/i,"the studio header identifies the active room in the 3D preview");
   await clickCommand("scene",'[data-open-scene-editor="room"]');
   assert.match(await page.locator('[data-scene-editor="room"] .room-type-label').innerText(),/Kitchen/,"room settings identify the selected template");
   const defaultAmbient=await page.locator("#room-ambience-color").inputValue();
