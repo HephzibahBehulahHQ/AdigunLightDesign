@@ -61,7 +61,7 @@ import { readProjectFile } from "./domain/import-project.ts";
 import { editorShortcut, isEditableTarget,toolShortcut,toolKeys } from "./accessibility/shortcuts.js";
 import { commitTransaction, redoTransaction, undoTransaction } from "./domain/history.js";
 
-const storageKey = "adigunlightdesign/project-v1";
+const savedProjectsKey = "adigunlightdesign/saved-projects-v1";
 const preferencesKey = "adigunlightdesign/preferences-v1";
 const app = document.querySelector("#app");
 const defaults = studioDefaults;
@@ -87,11 +87,10 @@ let undoStack = [], redoStack = [], status = "", renderer = null, rendererConfig
 
 function safeParse(value) { try { return JSON.parse(value) ?? {}; } catch { return {}; } }
 function loadProject() {
-  const loaded = safeParse(readBrowserStorage(storageKey).value);
-  if (validateProject(loaded).valid) {projectPersisted=true;return prepareEditorProject(loaded);}
-  const starter=createStudioMoodProject();
-  projectPersisted=writeBrowserStorage(storageKey,JSON.stringify(starter)).ok;
-  return starter;
+  projectPersisted=false;
+  projectDirty=false;
+  activeSavedProjectId=null;
+  return createStudioMoodProject();
 }
 function t(key) { return translate(preferences.locale, key); }
 function phrase(key, values = {}) { return t(key).replace(/\{(\w+)\}/g, (_, name) => values[name] ?? ""); }
@@ -216,41 +215,136 @@ function downloadText(content, filename, type) { const file=new Blob([content],{
 function exportFile(kind) { if(kind==="ase"){try{downloadText(paletteAse(palette()),`${safeFileStem(palette().name)}.ase`,"application/octet-stream");status=t("aseExportLimit");}catch(error){status=error.message;}document.querySelector("#status").textContent=status;return;} const stem=safeFileStem(project.name); const exports={ project:[projectJson(project),`${stem}.ald.json`,"application/json"], palette:[paletteJson(palette()),`${stem}-palette.json`,"application/json"], css:[paletteCss(palette()),`${stem}-palette.css`,"text/css"], patch:[patchCsv(project.fixtures),`${stem}-patch.csv`,"text/csv"], cues:[cueCsv(project.cues),`${stem}-cues.csv`,"text/csv"] }; const [content,name,type]=exports[kind]; downloadText(content,name,type); status=`${name} downloaded.`; document.querySelector("#status").textContent=status; }
 function openCloudProject(document) {
   const next=prepareEditorProject(document);
-  stopPlayback();
-  undoStack=[structuredClone(project)];
-  redoStack=[];
-  project=next;
-  saveProject();
-  render();
+  requestWorkspaceReplacement(()=>{
+    stopPlayback();
+    undoStack=[structuredClone(project)];
+    redoStack=[];
+    project=next;
+    activeSavedProjectId=null;
+    projectPersisted=false;
+    projectDirty=true;
+    status=t("unsavedChanges");
+    render();
+  });
 }
-async function importNativeProject(file) { const result=await readProjectFile(file); if(!result.valid) return setStatus(result.errors.join(" ")); stopPlayback(); project=prepareEditorProject(result.project); undoStack=[];redoStack=[];saveProject();status=project.name+" opened locally.";render(); }
+async function importNativeProject(file) {
+  const result=await readProjectFile(file);
+  if(!result.valid) return setStatus(result.errors.join(" "));
+  requestWorkspaceReplacement(()=>{
+    stopPlayback();
+    project=prepareEditorProject(result.project);
+    activeSavedProjectId=null;
+    projectPersisted=false;
+    projectDirty=true;
+    undoStack=[];redoStack=[];
+    status=t("unsavedChanges");
+    render();
+  });
+}
+function readSavedProjects() {
+  const stored=safeParse(readBrowserStorage(savedProjectsKey).value);
+  return Array.isArray(stored.projects) ? stored.projects.filter((item)=>item?.id && validateProject(item.project).valid) : [];
+}
+function makeProjectDialog(title,content) {
+  const dialog=document.createElement("dialog");
+  dialog.className="project-dialog";
+  dialog.setAttribute("aria-labelledby","project-dialog-title");
+  dialog.innerHTML='<form method="dialog" class="project-dialog-card"><header><h2 id="project-dialog-title">'+esc(title)+'</h2><button type="button" class="project-dialog-close" aria-label="'+esc(t("close"))+'">×</button></header>'+content+'</form>';
+  document.body.append(dialog);
+  dialog.querySelector(".project-dialog-close").onclick=()=>{dialog.close();dialog.remove();};
+  return dialog;
+}
+function showSaveDialog(onSave) {
+  const dialog=makeProjectDialog(t("saveProjectTitle"),'<label class="project-dialog-field">'+esc(t("projectName"))+'<input id="saved-project-name" maxlength="120" required value="'+esc(project.name)+'" /></label><div class="project-dialog-actions"><button type="button" data-cancel>'+esc(t("cancel"))+'</button><button type="submit">'+esc(t("save"))+'</button></div>');
+  const form=dialog.querySelector("form"),input=dialog.querySelector("#saved-project-name");
+  dialog.querySelector("[data-cancel]").onclick=()=>{dialog.close();dialog.remove();};
+  form.onsubmit=(event)=>{event.preventDefault();const name=input.value.trim();if(!name){input.focus();return;}dialog.close();dialog.remove();onSave(name);};
+  dialog.addEventListener("close",()=>dialog.remove(),{once:true});
+  dialog.showModal();input.focus();input.select();
+}
+function persistProject(name) {
+  const projectCopy=structuredClone(project);
+  projectCopy.name=name;
+  projectCopy.updatedAt=new Date().toISOString();
+  const records=readSavedProjects();
+  const id=activeSavedProjectId || (globalThis.crypto?.randomUUID?.() ?? ("saved-"+Date.now()+"-"+Math.random().toString(36).slice(2)));
+  const next=[...records.filter((record)=>record.id!==id),{id,name,updatedAt:projectCopy.updatedAt,project:projectCopy}];
+  if(!writeBrowserStorage(savedProjectsKey,JSON.stringify({projects:next})).ok){projectPersisted=false;status=t("storageUnavailable");render();return false;}
+  project=prepareEditorProject(projectCopy);
+  activeSavedProjectId=id;
+  projectPersisted=true;
+  projectDirty=false;
+  status=t("projectSaved");
+  return true;
+}
+function saveProject(onSaved) {
+  const save=(name)=>{if(persistProject(name)){render();onSaved?.();}};
+  if(activeSavedProjectId){const current=readSavedProjects().find((record)=>record.id===activeSavedProjectId);if(current){save(current.name);return;}}
+  showSaveDialog(save);
+}
+function showSavedProjectsDialog() {
+  const records=readSavedProjects();
+  const entries=records.length ? records.map((record)=>'<button type="button" class="saved-project-entry" data-open-saved="'+esc(record.id)+'"><strong>'+esc(record.name)+'</strong><small>'+esc(record.updatedAt ? new Date(record.updatedAt).toLocaleString() : "")+'</small></button>').join("") : '<p class="project-dialog-empty">'+esc(t("savedProjectsEmpty"))+'</p>';
+  const dialog=makeProjectDialog(t("openProject"),'<div class="saved-project-list">'+entries+'</div><div class="project-dialog-actions"><button type="button" data-import>'+esc(t("importProject"))+'</button><button type="button" data-cancel>'+esc(t("cancel"))+'</button></div>');
+  dialog.querySelector("[data-cancel]").onclick=()=>{dialog.close();dialog.remove();};
+  dialog.querySelector("[data-import]").onclick=()=>{dialog.close();dialog.remove();document.querySelector("#project-file")?.click();};
+  dialog.querySelectorAll("[data-open-saved]").forEach((button)=>button.onclick=()=>{
+    const record=records.find((item)=>item.id===button.dataset.openSaved);
+    if(!record)return;
+    dialog.close();dialog.remove();
+    requestWorkspaceReplacement(()=>{
+      stopPlayback();
+      project=prepareEditorProject(record.project);
+      activeSavedProjectId=record.id;
+      projectPersisted=true;
+      projectDirty=false;
+      undoStack=[];redoStack=[];
+      preferences.fixtureId ??= project.fixtures.at(-1)?.id;
+      status=t("projectOpened");
+      render();
+    });
+  });
+  dialog.addEventListener("close",()=>dialog.remove(),{once:true});
+  dialog.showModal();
+}
+function requestWorkspaceReplacement(continueAction) {
+  if(!projectDirty){continueAction();return;}
+  const dialog=makeProjectDialog(t("unsavedChangesTitle"),'<p class="project-dialog-message">'+esc(t("unsavedChangesBody"))+'</p><div class="project-dialog-actions"><button type="button" data-cancel>'+esc(t("cancel"))+'</button><button type="button" data-discard>'+esc(t("discardChanges"))+'</button><button type="button" data-save>'+esc(t("saveAndContinue"))+'</button></div>');
+  const finish=(choice)=>{dialog.close();dialog.remove();if(choice==="discard"){projectDirty=false;projectPersisted=false;continueAction();}else if(choice==="save")saveProject(continueAction);};
+  dialog.querySelector("[data-cancel]").onclick=()=>finish("cancel");
+  dialog.querySelector("[data-discard]").onclick=()=>finish("discard");
+  dialog.querySelector("[data-save]").onclick=()=>finish("save");
+  dialog.addEventListener("cancel",(event)=>{event.preventDefault();finish("cancel");},{once:true});
+  dialog.addEventListener("close",()=>dialog.remove(),{once:true});
+  dialog.showModal();
+}
 function createNewProject() {
-  if (!window.confirm(t("confirmNewProject"))) return;
-  stopPlayback();
-  const locale=preferences.locale,theme=preferences.theme;
-  for (const key of Object.keys(preferences)) delete preferences[key];
-  Object.assign(preferences,defaults,{locale,theme,sceneId:"studio-room"});
-  project=createStudioMoodProject();
-  preferences.fixtureId=project.fixtures.at(-1)?.id;
-  undoStack=[];redoStack=[];
-  savePreferences();
-  saveProject();
-  status=project.name+" created locally.";
-  render();
+  requestWorkspaceReplacement(()=>{
+    stopPlayback();
+    const locale=preferences.locale,theme=preferences.theme;
+    for (const key of Object.keys(preferences)) delete preferences[key];
+    Object.assign(preferences,defaults,{locale,theme,sceneId:"studio-room"});
+    project=createStudioMoodProject();
+    preferences.fixtureId=project.fixtures.at(-1)?.id;
+    activeSavedProjectId=null;
+    projectPersisted=false;
+    projectDirty=false;
+    undoStack=[];redoStack=[];
+    savePreferences();
+    status=t("newWorkspaceReady");
+    render();
+  });
 }
 function savePreferences() { if (!writeBrowserStorage(preferencesKey,JSON.stringify(preferences)).ok) status=t("preferencesNotSaved"); }
-function saveProject() {
-  project.updatedAt = new Date().toISOString();
-  projectPersisted=writeBrowserStorage(storageKey,JSON.stringify(project)).ok;
-  status=t(projectPersisted ? "statusSaved" : "storageUnavailable");
-  const indicator=document.querySelector(".save-state");
-  const headerSave=document.querySelector(".header-save-status");if(headerSave){headerSave.textContent=t(projectPersisted ? "savedLocally" : "sessionOnly");headerSave.classList.toggle("is-saved",projectPersisted);}
-  if (indicator) {indicator.classList.toggle("is-unsaved",!projectPersisted);indicator.textContent=`● ${t(projectPersisted ? "saved" : "sessionOnly")}`;indicator.title=status;}
+function updateUnsavedStatus() {
+  projectDirty=true;
+  projectPersisted=false;
+  status=t("unsavedChanges");
 }
-function commitProjectChange(label, mutate) { stopPlayback(); const next=commitTransaction({project,undoStack,redoStack},label,mutate); const validation=validateProject(next.project); if (!validation.valid) throw new Error(validation.errors.join(" ")); project=next.project;undoStack=next.undoStack;redoStack=next.redoStack;saveProject(); }
+function commitProjectChange(label, mutate) { stopPlayback(); const next=commitTransaction({project,undoStack,redoStack},label,mutate); const validation=validateProject(next.project); if (!validation.valid) throw new Error(validation.errors.join(" ")); project=next.project;undoStack=next.undoStack;redoStack=next.redoStack;updateUnsavedStatus(); }
 function mutateColours(fn) { commitProjectChange("palette-update",(draft)=>{draft.palettes[0].colors=fn(structuredClone(draft.palettes[0].colors));}); render(); }
-function undo() { if (!undoStack.length) return setStatus(t("noUndo")); stopPlayback(); const next=undoTransaction({project,undoStack,redoStack});project=next.project;undoStack=next.undoStack;redoStack=next.redoStack;saveProject();status=t("statusUndo");render(); }
-function redo() { if (!redoStack.length) return setStatus(t("noRedo")); stopPlayback(); const next=redoTransaction({project,undoStack,redoStack});project=next.project;undoStack=next.undoStack;redoStack=next.redoStack;saveProject();status=t("statusRedo");render(); }
+function undo() { if (!undoStack.length) return setStatus(t("noUndo")); stopPlayback(); const next=undoTransaction({project,undoStack,redoStack});project=next.project;undoStack=next.undoStack;redoStack=next.redoStack;updateUnsavedStatus();status=t("statusUndo");render(); }
+function redo() { if (!redoStack.length) return setStatus(t("noRedo")); stopPlayback(); const next=redoTransaction({project,undoStack,redoStack});project=next.project;undoStack=next.undoStack;redoStack=next.redoStack;updateUnsavedStatus();status=t("statusRedo");render(); }
 function setStatus(value) { status = value; render(); }
 function disabled(title) { return `disabled title="${esc(title)}"`; }
 function compact(value, digits = 1) { return Number(value).toFixed(digits); }
@@ -327,7 +421,7 @@ function render() {
     ["palette", "◉", "moduleDesign"], ["light", "☼", "moduleStudio"], ["library", "▱", "moduleFixtures"], ["copilot", "◌", "moduleCopilot"]
   ].map(([key, icon, labelKey]) => `<button type="button" class="module ${studioActiveModule(preferences) === key ? "is-active" : ""}" data-module="${key}" aria-pressed="${studioActiveModule(preferences) === key}"><span>${icon}</span>${t(labelKey)}</button>`).join("");
   const commandMenuContent={
-    project:`<button type="button" id="new-project">＋ ${t("newProject")}</button><button type="button" id="open-project">${t("openProject")}</button><button type="button" id="save">${t("save")}</button><button type="button" id="import-image" title="${t("importImage")}" aria-label="${t("importImage")}">${t("importAction")}</button><input id="project-file" type="file" accept="application/json,.json" hidden />`,
+    project:`<button type="button" id="new-project">＋ ${t("newProject")}</button><button type="button" id="open-project">${t("openProject")}</button><button type="button" id="save">${t("save")}</button><button type="button" id="import-project">${t("importProject")}</button><button type="button" id="import-image" title="${t("importImage")}" aria-label="${t("importImage")}">${t("importAction")}</button><input id="project-file" type="file" accept="application/json,.json" hidden />`,
     history:`<button type="button" id="undo" ${undoStack.length ? "" : "disabled"}>↶ ${t("undo")}</button><button type="button" id="redo" ${redoStack.length ? "" : "disabled"}>↷ ${t("redo")}</button>`,
     scene:`<button type="button" data-open-scene-editor="room">${t("roomCommand")}</button><button type="button" data-open-scene-editor="stage">${t("stageCommand")}</button><label class="preview-quality">${t("previewQuality")} <select id="preview-quality" ${preferences.view==="light" ? "" : disabled(t("select3d"))}>${Object.keys(previewQualities).map((key)=>`<option value="${key}" ${key===(preferences.previewQuality ?? "balanced") ? "selected" : ""}>${t(`quality_${key}`)}</option>`).join("")}</select></label><button type="button" id="reset-camera">${t("resetCamera")}</button>`,
     palette:`<button type="button" data-menu-keep-open id="open-versions" aria-expanded="false">${t("versions")}</button><button type="button" data-menu-keep-open id="open-compare" aria-expanded="false">${t("compare")}</button>`,
@@ -1041,7 +1135,7 @@ function bind() {
   document.querySelector("#add-colour").onclick = () => mutateColours((colours) => { const id = `swatch-${Date.now()}`; preferences.selected = id; return [...colours, { id, name:`Swatch ${colours.length + 1}`, hex:preferences.seed, locked:false }]; });
   document.querySelector("#apply-colour").onclick = () => { const name = document.querySelector("#swatch-name").value.trim(), hex = normalizeHex(document.querySelector("#swatch-hex").value); if (!hex) return setStatus("Enter a valid 3- or 6-digit HEX value."); mutateColours((colours) => updateSwatch(colours, selected().id, { name:name || selected().name, hex })); };
   document.querySelector("#lock-swatch").onclick = () => mutateColours((colours) => updateSwatch(colours, selected().id, { locked:!selected().locked }));
-  document.querySelector("#save").onclick = () => { saveProject(); render(); };
+  document.querySelector("#save").onclick = () => saveProject();
   document.querySelector("#new-project").onclick=createNewProject;
   document.querySelector("#undo").onclick = undo; document.querySelector("#redo").onclick = redo;
   document.querySelector("#toggle-lux").onclick = () => { preferences.luxOpen = !preferences.luxOpen; savePreferences(); render(); };
@@ -1057,7 +1151,7 @@ function bind() {
   document.querySelector("#stop-cue").onclick = () => { stopPlayback(); render(); };
   document.querySelectorAll("[data-export]").forEach((button) => button.onclick = () => exportFile(button.dataset.export));
   const closeExports = document.querySelector("#close-exports"); if (closeExports) closeExports.onclick = () => { preferences.module="canvas"; render(); };
-  const openButton=document.querySelector("#open-project"), projectFile=document.querySelector("#project-file"); if(openButton&&projectFile){openButton.onclick=()=>projectFile.click();projectFile.onchange=()=>{const [file]=projectFile.files;if(file) importNativeProject(file);};}
+  const openButton=document.querySelector("#open-project"), projectFile=document.querySelector("#project-file"); if(openButton&&projectFile){openButton.onclick=showSavedProjectsDialog;document.querySelector("#import-project").onclick=()=>projectFile.click();projectFile.onchange=()=>{const [file]=projectFile.files;if(file) importNativeProject(file);projectFile.value="";};}
   const imageImportButton=document.querySelector("#import-image"),paletteImage=document.querySelector("#palette-image");if(imageImportButton&&paletteImage)imageImportButton.onclick=()=>paletteImage.click();
   document.querySelectorAll("[data-profile]").forEach((button)=>button.onclick=()=>{addVirtualFixture(button.dataset.profile);render();});
   const closeLibrary=document.querySelector("#close-library"); if(closeLibrary) closeLibrary.onclick=()=>{preferences.module="canvas";render();};
@@ -1066,7 +1160,8 @@ function bind() {
   const applyFixturePatchButton=document.querySelector("#apply-fixture-patch"); if(applyFixturePatchButton) applyFixturePatchButton.onclick=applyFixturePatch;
   const form = document.querySelector("#lux-form"); if (form) {const liveHost=document.createElement("section");liveHost.className="live-copilot-panel";form.before(liveHost);liveCopilotPanel.mount(liveHost);const host=document.createElement("section");host.dataset.luxService="";host.className="lux-service";form.replaceWith(host);luxService.mount(host);}
 }
-window.addEventListener("keydown", (event) => { if (isEditableTarget(event.target) || event.defaultPrevented || event.isComposing) return; const tool=toolShortcut(event);if(tool){const button=document.querySelector(`[data-tool="${tool}"]`);if(button && !button.disabled){event.preventDefault();button.click();}return;} const shortcut=editorShortcut(event); if (!shortcut) return; event.preventDefault(); if (shortcut === "save") { saveProject(); render(); } else if (shortcut === "undo") undo(); else redo(); });
+window.addEventListener("keydown", (event) => { if (isEditableTarget(event.target) || event.defaultPrevented || event.isComposing) return; const tool=toolShortcut(event);if(tool){const button=document.querySelector(`[data-tool="${tool}"]`);if(button && !button.disabled){event.preventDefault();button.click();}return;} const shortcut=editorShortcut(event); if (!shortcut) return; event.preventDefault(); if (shortcut === "save") { saveProject(); } else if (shortcut === "undo") undo(); else redo(); });
+window.addEventListener("beforeunload",(event)=>{if(!projectDirty)return;event.preventDefault();event.returnValue="";});
 account.subscribe(()=>render());
 render();
 
