@@ -262,9 +262,25 @@ try {
   assert.ok(exportBounds.x>=0&&exportBounds.x+exportBounds.width<=1754&&exportBounds.y>=0&&exportBounds.y+exportBounds.height<=878,"the right-edge Export menu repositions within the viewport");
   await page.locator(".footer-ready").click();
 
-  const toolsToggle=page.locator("#toggle-tools");
-  assert.equal(await toolsToggle.getAttribute("aria-expanded"),"false","Tools is collapsed initially");
-  const fixtureListTall=await page.locator(".fixture-layer-list").boundingBox();
+  const toolsToggle=page.locator("#toggle-tools"),toolMenu=page.locator("#tool-list");
+  const fixtureListBounds=await page.locator(".fixture-layer-list").boundingBox();
+  const sceneBoundsBeforeTools=await page.locator(".scene-preview").boundingBox();
+  assert.equal(await toolsToggle.getAttribute("aria-expanded"),"false","Tools starts closed");
+  await toolsToggle.click();
+  assert.equal(await toolsToggle.getAttribute("aria-expanded"),"true","clicking Tools opens its floating panel");
+  assert.equal(await toolMenu.evaluate(panel=>panel.matches(":popover-open")),true,"Tools opens as a top-layer popover");
+  assert.equal(await page.locator('[data-tool="shapes"]').isVisible(),true,"all tools are available in the floating panel");
+  const toolBounds=await toolMenu.boundingBox();
+  assert.ok(toolBounds.x>=0&&toolBounds.x+toolBounds.width<=page.viewportSize().width&&toolBounds.y>=0&&toolBounds.y+toolBounds.height<=page.viewportSize().height,"the Tools panel stays inside the viewport");
+  assert.deepEqual(await page.locator(".fixture-layer-list").boundingBox(),fixtureListBounds,"opening Tools does not resize or displace the fixture list");
+  assert.deepEqual(await page.locator(".scene-preview").boundingBox(),sceneBoundsBeforeTools,"opening Tools leaves the studio canvas stationary");
+  await page.keyboard.press("Escape");
+  await page.waitForFunction(()=>document.querySelector("#tool-list")?.matches(":popover-open")===false);
+  assert.equal(await toolsToggle.getAttribute("aria-expanded"),"false","Escape closes Tools");
+  await toolsToggle.click();
+  await toolsToggle.click();
+  assert.equal(await toolMenu.evaluate(panel=>panel.matches(":popover-open")),false,"clicking Tools again closes its panel");
+  assert.deepEqual(await page.locator(".fixture-layer-list").boundingBox(),fixtureListBounds,"closing Tools keeps the fixture list stationary");
   await toolsToggle.click();
   assert.equal(await toolsToggle.getAttribute("aria-expanded"),"true","clicking Tools opens the tool grid");
   assert.equal(await page.locator('[data-tool="shapes"]').isVisible(),true,"tools are available from the expanded menu");
