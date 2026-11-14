@@ -548,7 +548,7 @@ function render() {
     if(placement){
       const readout=document.createElement("p");readout.className="fixture-position-summary";
       const refreshPosition=()=>{const value=(key)=>fixturePanel.querySelector(`#fixture-${key}`)?.value ?? "0";const coordinate=(key)=>Number(value(key)||0).toFixed(1),properties=selectedFixture().properties;
-        readout.textContent=`Position X ${coordinate("x")} Y ${coordinate("y")} Z ${coordinate("z")}\\nPan ${value("pan")||properties.pan||0} Tilt ${value("tilt")||properties.tilt||0} Rotation ${value("rotation")}`;};
+        readout.textContent=`Position X ${coordinate("x")} Y ${coordinate("y")} Z ${coordinate("z")}\nPan ${value("pan")||properties.pan||0} Tilt ${value("tilt")||properties.tilt||0} Rotation ${value("rotation")}`;};
       refreshPosition();
       for(const input of [...placement.querySelectorAll("input"),...["pan","tilt"].map((key)=>fixturePanel.querySelector(`#fixture-${key}`)).filter(Boolean)])input.addEventListener("input",refreshPosition);
       placement.replaceWith(configuration);configuration.append(placement);bodies.fixture.insertBefore(readout,configuration);
