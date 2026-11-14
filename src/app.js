@@ -81,13 +81,16 @@ const liveCopilotPanel=createLiveCopilotPanel({feed:liveCanvasFeed,getLocale:()=
 }});
 const luxService=createLuxServicePanel({getProject:()=>project,getLocale:()=>preferences.locale,translate,imageAssets,onPreview:(proposal)=>{luxProposal=proposal;render();},onError:(message)=>setStatus(message),onNotify:()=>floatingBot.notify()});
 let project = loadProject();
+preferences.fixtureId ??= project.fixtures.at(-1)?.id;
 let undoStack = [], redoStack = [], status = "", renderer = null, rendererConfigSignature = null, rendererFixtureSignature = null, rendererAccent = null, playbackTimer = null, playbackClock = null;
 
 function safeParse(value) { try { return JSON.parse(value) ?? {}; } catch { return {}; } }
 function loadProject() {
   const loaded = safeParse(readBrowserStorage(storageKey).value);
   if (validateProject(loaded).valid) {projectPersisted=true;return prepareEditorProject(loaded);}
-  return createStudioMoodProject();
+  const starter=createStudioMoodProject();
+  projectPersisted=writeBrowserStorage(storageKey,JSON.stringify(starter)).ok;
+  return starter;
 }
 function t(key) { return translate(preferences.locale, key); }
 function phrase(key, values = {}) { return t(key).replace(/\{(\w+)\}/g, (_, name) => values[name] ?? ""); }

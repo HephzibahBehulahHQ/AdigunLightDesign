@@ -6,7 +6,7 @@ import { undoTransaction } from "../src/domain/history.js";
 const request={type:"adigunlightdesign.tool-call",version:1,name:"add_fixture",payload:{profileId:"generic-rgb-wash"}};
 test("preview preserves exact planned identities and commits one undoable action only after confirmation",()=>{
   const project=createStudioMoodProject(),state={project,undoStack:[],redoStack:[]},proposal=previewNativeToolAction(project,request);
-  assert.equal(project.fixtures.length,3);assert.equal(project.history.length,0);
+  assert.equal(project.fixtures.length,9);assert.equal(project.history.length,0);
   assert.equal(proposal.changes.length,1);
   const plannedId=proposal.changes[0].after.id;
   assert.throws(()=>confirmNativeToolAction(state,proposal),/confirmation/);

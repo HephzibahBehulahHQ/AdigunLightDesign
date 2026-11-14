@@ -22,6 +22,6 @@ test("project context is bounded and excludes image bytes history and private de
   project.scenes[0].room={width:10,height:4,depth:8};
   const before=JSON.stringify(project),context=buildLuxProjectContext(project),json=JSON.stringify(context);
   assert.ok(!json.includes("private-description-marker"));assert.ok(!json.includes("private-history-marker"));assert.ok(!json.includes("private-image-marker"));
-  assert.equal(context.totals.fixtures,3);assert.equal(context.fixtures[0].id,project.fixtures[0].id);
+  assert.equal(context.totals.fixtures,9);assert.equal(context.fixtures[0].id,project.fixtures[0].id);
   context.fixtures[0].properties.red=99;context.scenes[0].room.width=20;assert.equal(JSON.stringify(project),before);
 });
