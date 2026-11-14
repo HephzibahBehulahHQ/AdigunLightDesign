@@ -278,9 +278,14 @@ try {
   await page.waitForTimeout(40);
   assert.equal(await toolMenu.evaluate(panel=>panel.matches(":popover-open")),false,"Escape closes Tools");
   assert.equal(await toolsToggle.getAttribute("aria-expanded"),"false","ARIA state follows Escape dismissal");
-  await toolsToggle.click();
-  await toolsToggle.click();
+  await toolsToggle.evaluate(trigger=>trigger.click());
+  assert.equal(await toolMenu.evaluate(panel=>panel.matches(":popover-open")),true,"the same Tools trigger opens the panel again");
+  await toolsToggle.evaluate(trigger=>trigger.click());
   assert.equal(await toolMenu.evaluate(panel=>panel.matches(":popover-open")),false,"clicking Tools again closes its panel");
+  await toolsToggle.click();
+  await page.locator(".footer-ready").click();
+  await page.waitForTimeout(40);
+  assert.equal(await toolMenu.evaluate(panel=>panel.matches(":popover-open")),false,"clicking outside closes Tools");
   assert.deepEqual(await page.locator(".fixture-layer-list").boundingBox(),fixtureListBounds,"closing Tools keeps the fixture list stationary");
   await toolsToggle.click();
 
