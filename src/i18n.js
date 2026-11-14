@@ -356,3 +356,9 @@ Object.assign(messages.en,{startAddress:"Start",applyFixtureProperties:"Apply fi
 Object.assign(messages.de,{startAddress:"Startadresse",applyFixtureProperties:"Leuchteneigenschaften anwenden",applyPatch:"Patch anwenden"});
 Object.assign(messages.yo,{startAddress:"Ìbẹ̀rẹ̀",applyFixtureProperties:"Lo àwọn ànímọ́ ẹ̀rọ ìmọ́lẹ̀",applyPatch:"Lo patch"});
 Object.assign(messages.pcm,{startAddress:"Start",applyFixtureProperties:"Apply fixture properties",applyPatch:"Apply patch"});
+
+
+Object.assign(messages.en,{toolsOneClick:"Tools — One Click"});
+Object.assign(messages.de,{toolsOneClick:"Werkzeuge — Ein Klick"});
+Object.assign(messages.yo,{toolsOneClick:"Àwọn irinṣẹ́ — Tẹ̀ lẹ́ẹ̀kan"});
+Object.assign(messages.pcm,{toolsOneClick:"Tools — One Click"});
