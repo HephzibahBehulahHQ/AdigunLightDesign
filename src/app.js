@@ -49,6 +49,7 @@ import { bindFixtureSliders } from "./ui/fixture-sliders.js";
 import { bindCanvasMeasure } from "./ui/canvas-measure.js";
 import { paletteAse } from "./export/ase.js";
 import {topMenuMarkup,bindTopMenu} from "./ui/top-menu.js";
+import {bindCommandMenus} from "./ui/command-menus.js";
 import {createFloatingBot} from "./ui/floating-bot.js";
 import {createAccount} from "./cloud/account.js";
 import {openAccountDialog} from "./ui/account-dialog.js";
@@ -71,7 +72,7 @@ let projectPersisted=false;
 let luxProposal=null;
 let luxConfirmationPending=false;
 let viewportCamera=null;
-let cleanupTopMenu=null;
+let cleanupTopMenu=null, cleanupCommandMenus=null;
 const imageAssets=createImageAssetStore();
 const account=createAccount({publishableKey:typeof __ALD_SUPABASE_PUBLISHABLE_KEY__==="undefined" ? "" : __ALD_SUPABASE_PUBLISHABLE_KEY__});
 const liveCanvasFeed=createCanvasStateFeed();
@@ -303,6 +304,7 @@ function applyFixturePatch() {
 function render() {
   preferences.luxOpen=true; // Floating-window state controls visibility; keep its content mounted.
   cleanupTopMenu?.();
+  cleanupCommandMenus?.();
   const previousCanvas=document.querySelector("#light-canvas");
   const nextRendererConfig=preferences.view==="light" ? lightLabRendererConfig(scene(),preferences.previewQuality,preferences.projection) : null;
   const reuseRenderer=shouldReuseLightLabRenderer({renderer,canvas:previousCanvas,view:preferences.view,previousConfig:rendererConfigSignature,nextConfig:nextRendererConfig});
@@ -324,6 +326,15 @@ function render() {
   const nav = [
     ["palette", "◉", "moduleDesign"], ["light", "☼", "moduleStudio"], ["library", "▱", "moduleFixtures"], ["copilot", "◌", "moduleCopilot"]
   ].map(([key, icon, labelKey]) => `<button type="button" class="module ${studioActiveModule(preferences) === key ? "is-active" : ""}" data-module="${key}" aria-pressed="${studioActiveModule(preferences) === key}"><span>${icon}</span>${t(labelKey)}</button>`).join("");
+  const commandMenuContent={
+    project:`<button type="button" id="new-project">＋ ${t("newProject")}</button><button type="button" id="open-project">${t("openProject")}</button><button type="button" id="save">${t("save")}</button><button type="button" id="import-image" title="${t("importImage")}" aria-label="${t("importImage")}">${t("importAction")}</button><input id="project-file" type="file" accept="application/json,.json" hidden />`,
+    history:`<button type="button" id="undo" ${undoStack.length ? "" : "disabled"}>↶ ${t("undo")}</button><button type="button" id="redo" ${redoStack.length ? "" : "disabled"}>↷ ${t("redo")}</button>`,
+    scene:`<button type="button" data-open-scene-editor="room">${t("roomCommand")}</button><button type="button" data-open-scene-editor="stage">${t("stageCommand")}</button><label class="preview-quality">${t("previewQuality")} <select id="preview-quality" ${preferences.view==="light" ? "" : disabled(t("select3d"))}>${Object.keys(previewQualities).map((key)=>`<option value="${key}" ${key===(preferences.previewQuality ?? "balanced") ? "selected" : ""}>${t(`quality_${key}`)}</option>`).join("")}</select></label><button type="button" id="reset-camera">${t("resetCamera")}</button>`,
+    palette:`<button type="button" id="open-versions">${t("versions")}</button><button type="button" id="open-compare">${t("compare")}</button>`,
+    fixtures:"",
+    export:`<button data-export="project">Project JSON</button><button data-export="palette">Palette JSON</button><button data-export="css">CSS variables</button><button data-export="ase" title="${t("aseExportLimit")}">${t("aseExport")}</button><button data-export="patch">Patch CSV</button><button data-export="cues">Cue CSV</button>`
+  };
+  const commandMenusMarkup=`<div class="command-menu-system" aria-label="${t("tools")}">${Object.entries(commandGroups).map(([key,label])=>`<div class="command-menu" data-command-menu="${key}"><button type="button" class="command-menu-trigger" data-command-menu-trigger="${key}" aria-haspopup="dialog" aria-expanded="false" aria-controls="command-menu-panel-${key}">${label} <span aria-hidden="true">⌄</span></button><div id="command-menu-panel-${key}" class="command-group command-menu-panel" data-command-group="${key}" popover="auto" role="dialog" aria-label="${label}"><span>${label}</span>${commandMenuContent[key]}</div></div>`).join("")}</div>`;
   const compactToolLabelKeys={paletteBrush:"brushShort",fixture:"fixtureShort",material:"materialShort",orbit:"orbitShort"};
   const tools = [["select","↖"],["paletteBrush","◉"],["fixture","☀"],["material","◆"],["shapes","□"],["text","T"],["measure","⌗"],["orbit","◎"]].map(([key, icon]) => `<button type="button" class="tool ${preferences.tool === key ? "is-active" : ""}" data-tool="${key}" aria-label="${esc(t(key))}"><span aria-hidden="true">${icon}</span>${esc(t(compactToolLabelKeys[key] ?? key))}</button>`).join("");
   const swatches = palette().colors.map((swatch)=>swatchButton(swatch,active.id)).join("");
@@ -342,8 +353,7 @@ function render() {
       <div class="header-project-context" aria-label="${esc(t("project"))}: ${esc(project.name)} / ${esc(t("sceneHeader"))} ${String(displayedSceneNumber).padStart(2,"0")}"><span>${esc(project.name)}</span><b aria-hidden="true">•</b><span>${t("sceneHeader")} ${String(displayedSceneNumber).padStart(2,"0")}</span></div>
       ${topMenuMarkup({t,locale:preferences.locale,saved:projectPersisted,user:account.user})}<button id="theme" type="button" hidden aria-label="${t("appearance")}"></button>
     </header>
-    <nav class="module-nav" aria-label="${t("appModules")}">${nav}</nav>
-    <nav class="command-ribbon" aria-label="${t("tools")}"><div class="command-ribbon-content"><div class="command-group" data-command-group="project"><span>${commandGroups.project}</span><button type="button" id="new-project">＋ ${t("newProject")}</button><button id="open-project">${t("openProject")}</button><button type="button" id="save">${t("save")}</button><button id="import-image" title="${t("importImage")}" aria-label="${t("importImage")}">${t("importAction")}</button><input id="project-file" type="file" accept="application/json,.json" hidden /></div><div class="command-group" data-command-group="history"><span>${commandGroups.history}</span><button id="undo" ${undoStack.length ? "" : "disabled"}>↶ ${t("undo")}</button><button id="redo" ${redoStack.length ? "" : "disabled"}>↷ ${t("redo")}</button></div><div class="command-group" data-command-group="scene"><span>${commandGroups.scene}</span><button type="button" data-open-scene-editor="room">${t("roomCommand")}</button><button type="button" data-open-scene-editor="stage">${t("stageCommand")}</button><label class="preview-quality">${t("previewQuality")} <select id="preview-quality" ${preferences.view==="light" ? "" : "disabled"}>${Object.keys(previewQualities).map((key)=>`<option value="${key}" ${key===(preferences.previewQuality ?? "balanced") ? "selected" : ""}>${t(`quality_${key}`)}</option>`).join("")}</select></label><button type="button" id="reset-camera">${t("resetCamera")}</button></div><div class="command-group" data-command-group="palette"><span>${commandGroups.palette}</span><button type="button" id="open-versions">${t("versions")}</button><button type="button" id="open-compare">${t("compare")}</button></div><div class="command-group" data-command-group="fixtures"><span>${commandGroups.fixtures}</span></div><div class="command-group" data-command-group="export"><span>${commandGroups.export}</span><button data-export="project">Project JSON</button><button data-export="palette">Palette JSON</button><button data-export="css">CSS variables</button><button data-export="ase" title="${t("aseExportLimit")}">${t("aseExport")}</button><button data-export="patch">Patch CSV</button><button data-export="cues">Cue CSV</button></div></div><span class="ribbon-scroll-hint" aria-hidden="true"><b>DRAG ↔</b><small>SCROLL RIBBON</small></span></nav>
+    <nav class="module-nav" aria-label="${t("appModules")}"><div class="workspace-modules">${nav}</div>${commandMenusMarkup}</nav>
     <main id="workspace" class="editor-layout">
       <aside class="left-rail panel">
         <div class="left-rail-heading"><h2>${t("project")} • ${t("layers")} • ${t("tools")}</h2></div>
@@ -362,10 +372,10 @@ function render() {
     </main>
     <footer class="studio-footer"><span class="footer-ready"><i aria-hidden="true">●</i> ${t("ready").toUpperCase()} · ${esc(project.name)} / ${t("sceneHeader")} ${String(displayedSceneNumber).padStart(2,"0")} · 3D / ${t("virtualDmx")} · ${t(projectPersisted ? "projectSavedShort" : "sessionOnly")}</span><span id="status" role="status" aria-live="polite">${status || t("footerControls")}</span><span class="footer-shortcuts">${t("keyboardShortcuts")}</span></footer>`;
   if(reuseRenderer)document.querySelector("#light-canvas")?.replaceWith(previousCanvas);
-  const ribbon=document.querySelector(".command-ribbon");
+  const commandMenus=document.querySelector(".command-menu-system");
   for(const [group,ids] of [["history",["undo","redo"]],["fixtures",["add-fixture","apply-fixture-colour"]]]){
-    const host=ribbon.querySelector(`[data-command-group="${group}"]`);
-    for(const id of ids){const control=document.getElementById(id);if(control){host.append(control);control.classList.add("ribbon-command");}}
+    const host=commandMenus.querySelector(`[data-command-group="${group}"]`);
+    for(const id of ids){const control=document.getElementById(id);if(control){host.append(control);control.classList.add("command-menu-item");}}
   }
   document.querySelector(".contrast-card").insertAdjacentHTML("beforebegin", colourSpaces);
   if (project.fixtures.length) document.querySelector(".selected-preview").insertAdjacentHTML("afterend", fixtureInspectorMarkup());
@@ -374,8 +384,8 @@ function render() {
   if (activeCue) document.querySelector(".cue-track").insertAdjacentHTML("beforebegin", `<div class="cue-timing"><label>${t("timeline")}<input id="edit-cue-name" value="${esc(activeCue.name)}" /></label>${["duration","fade","delay"].map((key)=>`<label>${t(key)} (s)<input id="edit-cue-${key}" type="number" required min="0" step=".1" value="${activeCue[key] ?? 0}" /></label>`).join("")}<button id="edit-cue">${t("saveCueTiming")}</button></div>`);
   document.querySelector(".dmx-actions").insertAdjacentHTML("beforeend", `<button id="blackout" ${project.fixtures.length ? "" : "disabled"}>${t("blackout")}</button>`);
   document.querySelector(".dmx-actions").insertAdjacentHTML("beforeend", `<button id="play-sequence" ${project.cues.length ? "" : "disabled"}>▶ ${t("playCueList")}</button>`);
-  const blackoutCommand=document.querySelector("#blackout"),fixtureCommandGroup=ribbon.querySelector('[data-command-group="fixtures"]');
-  if(blackoutCommand&&fixtureCommandGroup){fixtureCommandGroup.append(blackoutCommand);blackoutCommand.classList.add("ribbon-command");}
+  const blackoutCommand=document.querySelector("#blackout"),fixtureCommandGroup=commandMenus.querySelector('[data-command-group="fixtures"]');
+  if(blackoutCommand&&fixtureCommandGroup){fixtureCommandGroup.append(blackoutCommand);blackoutCommand.classList.add("command-menu-item");}
   document.querySelector("#stop-cue").insertAdjacentHTML("beforebegin", `<button id="pause-playback" aria-pressed="${Boolean(playbackClock?.paused)}" ${playbackTimer ? "" : "disabled"}>${t(playbackClock?.paused ? "resumePlayback" : "pausePlayback")}</button>`);
   const sequenceDuration=project.cues.reduce((sum,cue)=>sum+cue.duration,0);
   const tracks=arrangeTracks(project.cues);
@@ -519,6 +529,8 @@ function render() {
   const commandGroup=(name)=>document.querySelector(`.command-group[data-command-group="${name}"]`);
   const dock=(selector,groupName,wrap=false)=>{const control=document.querySelector(selector);if(control){const group=commandGroup(groupName);group.append(wrap ? control.closest("label") : control);}};
   dock("#reset-camera","scene");
+  dock("#copy-object","history");dock("#delete-object","history");
+  if(mode==="fixture"){dock("#duplicate-fixture","history");dock("#delete-fixture","history");}
   dock(".harmony-command","palette",true);dock("#reroll","palette");dock("#add-colour","palette");
   const exportGroup=commandGroup("export"),viewportExport=document.querySelector("#export-viewport"),canvasExport=document.querySelector("#export-canvas");
   if(viewportExport){viewportExport.textContent=`↑ ${t("exportPngShort")}`;viewportExport.setAttribute("aria-label",t("exportViewport"));viewportExport.title=t("exportViewport");exportGroup.insertBefore(viewportExport,exportGroup.children[1] ?? null);}
@@ -598,6 +610,7 @@ function render() {
     savePreferences();render();
     if(result.kind==="palette" && result.id!==palette().id){const versions=document.querySelector("#palette-version");if(versions){versions.value=result.id;versions.dispatchEvent(new Event("change"));}}
   }});
+  cleanupCommandMenus=bindCommandMenus();
   if (preferences.view === "light") {
     const fixtures=currentRendererFixtures(),fixtureSignature=lightLabFixtureState(fixtures),accent=scene().materialColor;
     if(reuseRenderer){if(fixtureSignature!==rendererFixtureSignature)renderer.setFixtures(fixtures);if(accent!==rendererAccent)renderer.setAccent(accent);rendererFixtureSignature=fixtureSignature;rendererAccent=accent;}
