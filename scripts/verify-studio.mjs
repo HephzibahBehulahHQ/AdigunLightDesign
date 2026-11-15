@@ -269,6 +269,18 @@ try {
   }
   await page.locator("#sequence-loop").check();
   await page.locator("#create-cue").click();
+  const timelineLayout = await page.locator(".timeline").evaluate((panel) => {
+    const rect = (element) => { const box=element.getBoundingClientRect(); return {left:box.left,right:box.right,top:box.top,bottom:box.bottom,width:box.width,height:box.height}; };
+    const editor=panel.querySelector(".timeline-active-cue-editor"),title=panel.querySelector(":scope > .section-title"),transport=title.querySelector(".timeline-transport");
+    const cells=[...editor.children].map(rect),overlaps=[];
+    for(let i=0;i<cells.length;i++)for(let j=i+1;j<cells.length;j++)if(cells[i].width&&cells[j].width&&cells[i].height&&cells[j].height&&cells[i].left<cells[j].right-1&&cells[i].right>cells[j].left+1&&cells[i].top<cells[j].bottom-1&&cells[i].bottom>cells[j].top+1)overlaps.push([i,j]);
+    return {panel:rect(panel),editor:rect(editor),title:rect(title),transportOverflow:transport.scrollWidth>transport.clientWidth+1,overlaps};
+  });
+  assert.ok(timelineLayout.editor.top<timelineLayout.title.top,"selected-cue fields occupy the former timeline header position");
+  assert.ok(timelineLayout.editor.bottom<=timelineLayout.title.top+1,"selected-cue fields clear the moved transport controls");
+  assert.ok(timelineLayout.editor.left>=timelineLayout.panel.left&&timelineLayout.editor.right<=timelineLayout.panel.right,"selected-cue fields fit inside the timeline panel");
+  assert.equal(timelineLayout.transportOverflow,false,"timeline transport controls wrap without horizontal overflow");
+  assert.deepEqual(timelineLayout.overlaps,[],"selected-cue fields and actions do not overlap");
   await page.locator("#play-tracks").click();
   assert.equal(await page.locator("#stop-cue").isEnabled(), true, "timeline playback starts");
   assert.equal(await page.locator("#pause-playback").isEnabled(), true, "timeline pause is enabled during playback");

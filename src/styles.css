@@ -162,7 +162,7 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
   }
 }
 
-.timeline-transport { display:flex; align-items:center; flex-wrap:nowrap; gap:4px; min-width:0; max-width:100%; overflow-x:auto; white-space:nowrap; }
+.timeline-transport { display:flex; align-items:center; flex-wrap:wrap; gap:4px; min-width:0; max-width:100%; overflow:visible; white-space:normal; }
 .timeline-transport button { flex:0 0 auto; padding:4px 6px; border-radius:5px; background:var(--panel-2, #24283b); }
 .timeline-transport label { display:inline-flex; align-items:center; gap:4px; flex:0 0 auto; padding:4px 7px; border:1px solid var(--line); border-radius:5px; background:var(--panel-2, #24283b); font-size:10px; white-space:nowrap; }
 .timeline-transport input[type="checkbox"] { width:13px; height:13px; margin:0; padding:0; accent-color:var(--cyan); }
@@ -250,7 +250,7 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
   .command-group>span { position:absolute; top:0; left:0; align-self:flex-start; padding:0 4px; color:var(--cyan); font-size:10px; text-transform:uppercase; font-weight:800; }
   .command-ribbon button { height:29px; min-width:36px; padding:4px 9px; border-radius:5px; background:#182237; font-size:11px; }
   .command-ribbon button:disabled { opacity:.46; }
-  .editor-layout { grid-template-columns:clamp(210px,13.3vw,248px) minmax(0,1fr) clamp(248px,19vw,296px); grid-template-rows:34px minmax(0,1fr) minmax(128px,16dvh); width:auto; height:calc(100dvh - 176px); min-width:0; min-height:0; max-height:calc(100dvh - 176px); gap:8px; padding:2px 10px 14px; overflow:hidden; align-items:stretch; }
+  .editor-layout { grid-template-columns:clamp(210px,13.3vw,248px) minmax(0,1fr) clamp(248px,19vw,296px); grid-template-rows:34px minmax(0,1fr) minmax(260px,32dvh); width:auto; height:calc(100dvh - 176px); min-width:0; min-height:0; max-height:calc(100dvh - 176px); gap:8px; padding:2px 10px 14px; overflow:hidden; align-items:stretch; }
   .left-rail,.inspector { min-width:0; min-height:0; }
   .work-area { display:contents; }
   .left-rail { display:grid; grid-template-rows:32px min-content min-content min-content minmax(0,1fr) min-content min-content; grid-column:1; grid-row:1 / 4; overflow-x:hidden; overflow-y:auto; overscroll-behavior:contain; }
@@ -290,7 +290,7 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
   .project-heading #scene-select { width:100%; min-width:0; height:28px; min-height:28px; padding:3px 6px; font-size:10px; }
 }
 @media (min-width:1100px) and (max-height:699px) {
-  .editor-layout { grid-template-rows:30px minmax(0,1fr) minmax(104px,18dvh); gap:5px; padding:0 7px 4px; }
+  .editor-layout { grid-template-rows:30px minmax(0,1fr) minmax(180px,27dvh); gap:5px; padding:0 7px 4px; }
   .workspace-tabs { min-height:30px; }
 }
 
