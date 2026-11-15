@@ -742,6 +742,34 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
 
 .project-dialog-field select { width:100%; min-height:34px; padding:6px 8px; border:1px solid #456184; border-radius:6px; background:#0b1423; color:#e3ecfb; }
 
+/* Keep a visible moving selection cue under the pointer in every transient menu. */
+.command-menu-panel button:not(:disabled),
+.tool-popover .tool,
+.fixture-list-popover .fixture-select,
+.project-dialog-card .saved-project-entry,
+.top-menu-dialog [data-search-results] button {
+  transition:transform 120ms ease,background-color 120ms ease,border-color 120ms ease,box-shadow 120ms ease;
+}
+.command-menu-panel button:not(:disabled):hover,
+.command-menu-panel button:not(:disabled):focus-visible,
+.tool-popover .tool:hover,
+.tool-popover .tool:focus-visible,
+.fixture-list-popover .fixture-select:hover,
+.fixture-list-popover .fixture-select:focus-visible,
+.project-dialog-card .saved-project-entry:hover,
+.project-dialog-card .saved-project-entry:focus-visible,
+.top-menu-dialog [data-search-results] button:hover,
+.top-menu-dialog [data-search-results] button:focus-visible {
+  transform:translateX(3px);
+  box-shadow:inset 3px 0 0 #22d3ee,0 0 0 1px #547498;
+  border-color:#22d3ee;
+  background-color:#263752;
+}
+@media (prefers-reduced-motion:reduce) {
+  .command-menu-panel button:not(:disabled),.tool-popover .tool,.fixture-list-popover .fixture-select,
+  .project-dialog-card .saved-project-entry,.top-menu-dialog [data-search-results] button { transition:none; }
+}
+
 /* Tools floats above the docked sidebar so it never resizes the fixture list or studio. */
 .tool-section > h2 { margin:0; padding:0; }
 .tool-section-toggle { display:flex; align-items:center; justify-content:space-between; width:100%; min-height:32px; padding:5px 10px; border:0; border-radius:0; background:transparent; color:var(--text); text-align:left; cursor:pointer; }
