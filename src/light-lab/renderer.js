@@ -521,9 +521,29 @@ function roomPresetFurniture(data,type,accent){
     for(let y=.24;y<1.8;y+=.3)box(data,3.9,y,-.8,.38,.07,.14,chrome);
     box(data,3.48,1.1,-.88,.7,.82,.08,towel);box(data,-.05,.025,-1.7,2.2,.035,.9,hexVector("#B8D2D1"));
   } else if(type==="toilet"){
-    box(data,-1.1,.05,1.45,1.05,.48,1.15,hexVector("#E2E8E8"));box(data,-1.06,.08,1.38,.97,.43,1.13,hexVector("#F5F7F6"));box(data,-1.02,.5,2.3,.9,1.15,.25,hexVector("#D9E0E0"));box(data,-1.02,1.32,2.32,.9,.12,.22,metal);
-    box(data,1.7,.88,2.25,1.7,.12,.72,hexVector("#E8ECEA"));box(data,2.18,.98,2.48,.46,.08,.34,hexVector("#B6D8DC"));box(data,1.95,0,-1.4,1.15,.8,.55,soft);
-    box(data,-3.8,0,2.7,.08,2.5,.12,metal);box(data,-.2,0,2.7,.08,2.5,.12,metal);
+    const porcelain=hexVector("#F1F4F2"),ceramic=hexVector("#DCE6E5"),tile=hexVector("#9ABBC0"),chrome=hexVector("#AAB9BC"),mirror=hexVector("#9FC6CC"),warm=hexVector("#F0DEB9");
+    // Wall-hung WC with a concealed service box, dual-flush plate and sculpted bowl.
+    box(data,-1.7,0,2.78,2.35,2.5,.16,tile);
+    for(let y=.3;y<2.55;y+=.42)box(data,-1.7,y,2.68,2.35,.025,.035,ceramic);
+    box(data,-1.7,1.58,2.52,1.28,1.12,.26,ceramic);box(data,-1.7,2.13,2.37,.72,.33,.08,porcelain);
+    box(data,-1.7,1.69,2.31,.42,.27,.055,chrome);box(data,-1.81,1.69,2.275,.12,.11,.025,porcelain);box(data,-1.59,1.69,2.275,.12,.11,.025,porcelain);
+    box(data,-1.7,.23,1.52,1.12,.42,.72,porcelain);
+    data.push(...roundTableTop(-1.7,.52,1.45,.69,.1,ceramic,32));data.push(...roundTableTop(-1.7,.615,1.45,.54,.035,porcelain,32));
+    data.push(...roundTableTop(-1.7,.64,1.48,.34,.018,hexVector("#9AC7CF"),24));
+    box(data,-1.7,.73,.94,1.12,.17,.12,porcelain);
+    // Compact corner basin, chrome mixer, framed mirror and a soft LED edge.
+    box(data,3.16,.11,2.32,1.4,.82,.78,darkWood);box(data,3.16,.55,2.26,1.42,.08,.72,timber);
+    box(data,3.16,1.02,2.25,1.72,.14,.94,porcelain);box(data,3.16,1.105,2.29,1.04,.04,.58,ceramic);
+    data.push(...roundTableTop(3.16,1.13,2.29,.32,.025,ceramic,24));
+    box(data,3.15,1.19,2.66,.055,.31,.055,chrome);box(data,3.15,1.47,2.47,.055,.05,.38,chrome);
+    box(data,3.16,2.03,2.72,1.48,1.18,.09,chrome);box(data,3.16,2.03,2.65,1.31,1.02,.045,mirror);
+    box(data,2.37,2.03,2.69,.07,1.12,.1,warm);box(data,3.95,2.03,2.69,.07,1.12,.1,warm);
+    // Tissue holder, spare roll, soap dispenser, towel hook and waste bin.
+    box(data,-4.16,1.15,1.35,.1,.18,.48,chrome);box(data,-4.08,1.15,1.32,.22,.32,.32,porcelain);
+    box(data,2.26,1.42,2.38,.14,.34,.14,chrome);box(data,2.26,1.52,2.34,.12,.15,.12,hexVector("#77AFC0"));
+    box(data,4.2,1.5,.65,.16,.32,.16,chrome);box(data,4.2,1.18,.64,.44,.04,.38,warm);
+    box(data,3.4,.34,-1.48,.56,.65,.54,soft);box(data,3.4,.68,-1.48,.5,.06,.48,metal);
+    box(data,-4.25,0,2.72,.1,2.55,.16,metal);
   } else if(type==="garage"){
     const door=hexVector("#AAB5BE"),doorShadow=hexVector("#62717E"),cabinet=hexVector("#456477"),toolRed=hexVector("#C65C45");
     // Sectional vehicle door and its horizontal joints on the back wall.
@@ -629,7 +649,7 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
   const studioPropsScale=Math.min(studioPropsScaleX,studioPropsScaleZ,(height-.05)/2.8);
   const wetRoom=roomType==="bathroom"||roomType==="toilet";
   const roomPropsScaleX=wetRoom?studioPropsScaleX:studioPropsScale,roomPropsScaleZ=wetRoom?studioPropsScaleZ:studioPropsScale;
-  const roomPropsScaleY=(roomType==="kitchen"||wetRoom)?Math.min(1,(height-.05)/2.5):studioPropsScale;
+  const roomPropsScaleY=roomType==="toilet"?Math.min(1,(height-.05)\/3.24):(roomType==="kitchen"||roomType==="bathroom")?Math.min(1,(height-.05)\/2.5):studioPropsScale;
   const tileFloor=["kitchen","bathroom","toilet","swimming-pool"].includes(roomType);
   const floorBoardColour=(column,row)=>{
     if(tileFloor){

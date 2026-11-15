@@ -70,3 +70,10 @@ test("bathroom scene adds a tiled walk-in shower, lit vanity mirror, toilet and 
   assert.ok(bathroom.length>shell.length+14000,"bathroom suite and tile detail add substantial room geometry");
   assert.ok(Array.from(bathroom).every(Number.isFinite),"all bathroom geometry remains finite");
 });
+test("toilet scene adds a wall-hung WC, flush plate, compact basin and mirror",()=>{
+  const preset=roomPresets.find(room=>room.id==="toilet");
+  const shell=sceneData([0,0,0],[],{props:false},preset.room,false,preset.materials,"performance",undefined,preset.ambience,preset.id);
+  const toilet=sceneData([0,0,0],[],{},preset.room,false,preset.materials,"performance",undefined,preset.ambience,preset.id);
+  assert.ok(toilet.length>shell.length+9000,"WC, sanitaryware and wall accessories add detailed compact-room geometry");
+  assert.ok(Array.from(toilet).every(Number.isFinite),"all toilet-room geometry remains finite");
+});
