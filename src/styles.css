@@ -760,10 +760,10 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
 .project-dialog-card .saved-project-entry:focus-visible,
 .top-menu-dialog [data-search-results] button:hover,
 .top-menu-dialog [data-search-results] button:focus-visible {
-  transform:translateX(3px);
-  box-shadow:inset 3px 0 0 #22d3ee,0 0 0 1px #547498;
+  transform:translateX(5px);
+  box-shadow:inset 4px 0 0 #22d3ee,0 0 0 1px #22d3ee,0 0 12px #22d3ee26;
   border-color:#22d3ee;
-  background-color:#263752;
+  background-color:#30234d;
 }
 @media (prefers-reduced-motion:reduce) {
   .command-menu-panel button:not(:disabled),.tool-popover .tool,.fixture-list-popover .fixture-select,
