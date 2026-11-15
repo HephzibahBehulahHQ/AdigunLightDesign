@@ -97,8 +97,9 @@ try {
     if(width===1880 && height===690){
       const canvasBefore=await page.locator(".scene-preview").boundingBox();
       const dimensionsBefore=await page.evaluate(()=>[globalThis.document.documentElement.scrollWidth,globalThis.document.documentElement.scrollHeight]);
-      const scrollTop=await page.locator("#fixture-inspector-panel").evaluate(panel=>{panel.scrollTop=panel.scrollHeight;return panel.scrollTop;});
-      assert.ok(scrollTop>0,"short viewport provides independent fixture-inspector scrolling");
+      const scrollState=await page.locator("#fixture-inspector-panel").evaluate(panel=>{panel.scrollTop=panel.scrollHeight;return {scrollTop:panel.scrollTop,overflowY:globalThis.getComputedStyle(panel).overflowY,scrollHeight:panel.scrollHeight,clientHeight:panel.clientHeight};});
+      assert.ok(["auto","scroll"].includes(scrollState.overflowY),"short viewport keeps inspector content in its independent scroll lane");
+      assert.ok(scrollState.scrollTop>0||scrollState.scrollHeight<=scrollState.clientHeight+1,"short viewport scrolls only when its more compact controls need the extra room");
       assert.deepEqual(await page.locator(".scene-preview").boundingBox(),canvasBefore,"inspector scrolling leaves the central canvas stationary");
       assert.deepEqual(await page.evaluate(()=>[globalThis.document.documentElement.scrollWidth,globalThis.document.documentElement.scrollHeight]),dimensionsBefore,"inspector scrolling does not scroll the document");
       await page.locator("#fixture-inspector-panel").evaluate(panel=>panel.scrollTop=0);
@@ -429,8 +430,13 @@ try {
   assert.deepEqual(await page.locator(".scene-preview").boundingBox(), canvasBeforeSceneSettings, "opening Room settings leaves the canvas in place");
   await page.locator('[data-module="light"]').click();
   assert.equal(await page.locator("#fixture-inspector-panel").isVisible(), true, "Light Lab module selects the fixture inspector");
-  assert.equal(await page.locator(".inspector-group-fixture #apply-fixture").innerText(),"Apply fixture properties","fixture edits have their own explicit apply action");
-  assert.equal(await page.locator(".inspector-group-dmx #apply-fixture-patch").innerText(),"Apply patch","the validated patch action is grouped with DMX controls");
+  assert.equal(await page.locator(".inspector-group-fixture #apply-fixture").getAttribute("aria-label"),"Apply fixture properties","fixture apply icon retains its accessible action name");
+  assert.equal(await page.locator(".inspector-group-dmx #apply-fixture-patch").getAttribute("aria-label"),"Apply patch","the compact patch icon keeps its distinct accessible action");
+  assert.equal(await page.locator(".inspector-group-effects h3 #play-effect").getAttribute("aria-label"),"Preview effect","Effects keeps a distinct accessible preview action in its heading");
+  assert.equal(await page.locator(".inspector-group-light .inspector-icon-action").count(),0,"Light controls do not gain a duplicate or dummy Apply action");
+  assert.equal(await page.locator("#fixture-inspector-panel .fixture-profile-summary, #fixture-inspector-panel .fixture-profile-context, #fixture-inspector-panel .fixture-position-summary").count(),0,"redundant type, mode, and position readouts are removed while their editable controls remain");
+  assert.equal(await page.locator("#fixture-inspector-panel").evaluate(panel=>panel.scrollWidth<=panel.clientWidth+1),true,"compact inspector controls do not create horizontal overflow");
+  for(const action of ["#apply-fixture","#apply-fixture-patch","#play-effect"]){const button=page.locator(action),bounds=await button.boundingBox();assert.ok(bounds.width<=29&&bounds.height<=27,`${action} uses a compact icon control`);assert.ok(await button.getAttribute("title"),`${action} explains its icon on hover`);}
   assert.equal(await page.locator(".inspector-group-dmx .fixture-output-note").innerText(),"Virtual output only · CH 1–512","DMX panel states the real virtual-only channel range");
   assert.equal(await page.locator("#fixture-address").evaluate((input)=>input.closest("label").firstChild.textContent),"Start","the patch form names its starting DMX address");
   await openCommandMenu("room");
@@ -468,7 +474,7 @@ try {
   for (const selector of [".fixture-configuration-details", ".light-advanced-controls"]) {
     assert.equal(await page.locator(`#fixture-inspector-panel ${selector}`).evaluate((element) => element.open), false, `${selector} keeps secondary controls compact by default`);
   }
-  assert.match(await page.locator("#fixture-inspector-panel").innerText(), /Type\s+[\s\S]*?Mode\s+/, "fixture type and channel mode are identified from its real profile");
+  assert.doesNotMatch(await page.locator("#fixture-inspector-panel").innerText(), /(?:^|\n)Type\s|(?:^|\n)Mode\s|Position X\s|Pan\s+\d+\s+Tilt/i, "the sidebar omits redundant fixture type, mode, position, and channel readouts");
   const luxTop = await page.locator(".lux-panel.is-docked").evaluate((element) => element.getBoundingClientRect().top);
   const canvasBeforeInspectorScroll=await page.locator(".scene-preview").boundingBox();
   await page.locator("#play-effect").scrollIntoViewIfNeeded();
