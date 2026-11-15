@@ -589,6 +589,11 @@ try {
   await page.locator("#create-room-scene").click();
   await page.waitForFunction(()=>globalThis.document.querySelector(".studio-panel-title")?.innerText.includes("TOILET"));
   await page.screenshot({path:resolve("outputs/toilet-scene.png")});
+  await clickCommand("scene","#add-room-scene");
+  await page.locator("#room-template").selectOption("hallway");
+  await page.locator("#create-room-scene").click();
+  await page.waitForFunction(()=>globalThis.document.querySelector(".studio-panel-title")?.innerText.includes("HALLWAY"));
+  await page.screenshot({path:resolve("outputs/hallway-scene.png")});
   assert.deepEqual(runtimeErrors, [], "browser reports no runtime errors");
 
   console.log(JSON.stringify({ viewports: reports, tools: coreTools, shapeAndTextCreation: true, measurement: true, fixtureSelection: true, paletteSwitch: true, timelinePlayback: true, projectSaveReload: true, projectJsonImportExport: true, commandMenus: true, fixtureListScroll: true, inspectorScroll: true, canvasStayedFixed: true, runtimeErrors }, null, 2));
