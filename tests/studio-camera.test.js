@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {studioCameraMatrix,cameraAxisView,cameraPitchLimit,normalizeCameraState,multiply,viewportProjection} from "../src/light-lab/math.js";
+import {studioCameraMatrix,cameraAxisView,cameraPitchLimit,normalizeCameraState,roomFitCameraDistance,multiply,viewportProjection} from "../src/light-lab/math.js";
 import {pickScenePoint} from "../src/light-lab/picking.js";
 test("studio camera keeps positive-Z rear surfaces behind furniture while preserving screen right",()=>{
   const matrix=studioCameraMatrix({yaw:0,pitch:0,distance:11,targetHeight:.35});
@@ -24,6 +24,13 @@ test("axis presets produce finite distinct views with a bounded overhead angle",
 test("camera snapshots round-trip and reject nonfinite or out-of-range saved controls",()=>{
   const state={...cameraAxisView("x"),distance:7};assert.deepEqual(normalizeCameraState(state),state);assert.deepEqual(normalizeCameraState(null),{yaw:-.08,pitch:.1,distance:9.8});
   const bounded=normalizeCameraState({yaw:NaN,pitch:100,distance:-5});assert.equal(bounded.yaw,-.08);assert.equal(bounded.pitch,cameraPitchLimit);assert.equal(bounded.distance,4);
+});
+test("room camera fit frames small rooms while retaining the standard room distance",()=>{
+  assert.equal(roomFitCameraDistance(10,8),9.8);
+  assert.ok(Math.abs(roomFitCameraDistance(4.5,4)-5.93)<.01);
+  assert.ok(Math.abs(roomFitCameraDistance(20,16)-15.17)<.01);
+  assert.equal(roomFitCameraDistance(2,2),4);
+  assert.throws(()=>roomFitCameraDistance(NaN,4));
 });
 test('matrix multiplication rejects malformed size and nonfinite elements',()=>{
  const identity=new Float32Array([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]);

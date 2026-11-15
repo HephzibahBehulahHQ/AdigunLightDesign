@@ -1,4 +1,4 @@
-import { studioCameraMatrix,cameraAxisView,cameraPitchLimit,normalizeCameraState, hexVector, multiply, viewportProjection, viewportRay, viewportPointOnPlane } from "./math.js";
+import { studioCameraMatrix,cameraAxisView,cameraPitchLimit,normalizeCameraState,roomFitCameraDistance, hexVector, multiply, viewportProjection, viewportRay, viewportPointOnPlane } from "./math.js";
 import { viewportPng } from "../export/viewport.js";
 import { pickScenePoint,rayHitDistance,filterOccludedPoints } from "./picking.js";
 import { roomDimensions } from "../domain/room.js";
@@ -36,8 +36,8 @@ function garageFrontWheel(target,x,y,z,radius){
     triangle(centre,point(inner,a),point(inner,b),index%2?rim:rim.map(value=>value*.8));
   }
 }
-function scaleGeometryPositions(data,start,end,scale,scaleY=scale) {
-  for(let offset=start;offset<end;offset+=6){data[offset]*=scale;data[offset+1]*=scaleY;data[offset+2]*=scale;}
+function scaleGeometryPositions(data,start,end,scaleX,scaleY=scaleX,scaleZ=scaleX) {
+  for(let offset=start;offset<end;offset+=6){data[offset]*=scaleX;data[offset+1]*=scaleY;data[offset+2]*=scaleZ;}
 }
 function sofaCushionPiping(target,x,y,z,width,depth,colour) {
   const inset=.045,line=.012,left=x+inset,right=x+width-inset,front=z+inset,back=z+depth-inset;
@@ -492,9 +492,34 @@ function roomPresetFurniture(data,type,accent){
       box(data,x-.18,.62,-2.58,.44,.12,.46,soft);box(data,x-.16,.74,-2.58,.4,.34,.08,soft);
     }
   } else if(type==="bathroom"){
-    box(data,-4,0,2.95,2.5,2.25,.16,hexVector("#A8DCE5"));box(data,-4,0,2.82,.08,2.3,.12,metal);box(data,-1.5,0,2.95,.08,2.3,.12,metal);
-    box(data,1.1,0,2.35,3.2,.55,1.25,hexVector("#E5E8E7"));box(data,1.25,.56,2.5,2.9,.08,.95,hexVector("#BCE3E9"));
-    box(data,-3.8,0,-1.8,2.1,.9,.7,timber);box(data,-3.65,.9,-1.72,1.8,.12,.58,hexVector("#E6F0F0"));box(data,-2.9,1.03,-1.45,.28,.06,.3,metal);
+    const porcelain=hexVector("#E6ECEB"),mirror=hexVector("#9EC7CD"),chrome=hexVector("#AEBFC0"),tile=hexVector("#9FC4C9"),towel=hexVector("#DCE9E7"),counter=hexVector("#D7D5CC");
+    // Walk-in shower with a tiled tray, framed glass screen and wall-mounted shower set.
+    box(data,-4.35,.04,.12,2.55,.13,1.95,porcelain);
+    data.push(...surfaceGrid([-4.24,.18,.22],[2.32,0,0],[0,0,1.68],(column,row)=>((column+row)%3===0?tile:hexVector("#B8D5D8")),8,6));
+    box(data,-4.35,.15,1.86,2.55,2.35,.1,tile);
+    for(let x=-4.2;x<-1.9;x+=.38)box(data,x,.15,1.8,.018,2.35,.025,hexVector("#789FA5"));
+    for(let y=.55;y<2.5;y+=.38)box(data,-4.35,y,1.8,2.55,.018,.025,hexVector("#789FA5"));
+    box(data,-1.76,.18,.12,.055,1.8,1.9,mirror);box(data,-1.8,.12,.08,.1,.08,2,chrome);box(data,-1.8,1.95,.08,.1,.08,2,chrome);
+    box(data,-3.48,.42,1.56,.055,1.55,.055,chrome);box(data,-3.48,1.94,1.35,.48,.08,.34,chrome);box(data,-3.48,1.88,1.32,.32,.06,.24,porcelain);
+    box(data,-2.35,.72,1.62,.28,.07,.07,chrome);box(data,-2.24,.78,1.58,.055,.3,.055,chrome);
+    box(data,-2.6,1.42,1.78,.72,.43,.045,hexVector("#6C878B"));
+    for(const x of [-2.48,-2.12])box(data,x,1.48,1.72,.12,.32,.08,hexVector("#E6C18C"));
+    box(data,-3.2,.17,.19,.42,.025,.36,metal);for(let x=-3.17;x<-2.88;x+=.07)box(data,x,.19,.2,.018,.018,.32,chrome);
+    // Floating vanity with inset basin, mixer tap, framed mirror and side lights.
+    box(data,-.15,.08,.7,2.28,.78,.78,darkWood);box(data,-.08,.18,.64,2.12,.58,.055,timber);
+    for(const y of [.37,.66]){box(data,-.02,y,.57,1.95,.035,.045,chrome);box(data,.9,y,.54,.07,.045,.05,chrome);}
+    box(data,-.26,.88,.58,2.48,.12,.98,counter);box(data,.58,1,.78,.92,.08,.61,porcelain);box(data,.72,1.04,.84,.64,.025,.45,hexVector("#A9C8CA"));
+    box(data,1.02,1.08,1.17,.045,.32,.045,chrome);box(data,1.02,1.37,.98,.045,.045,.24,chrome);box(data,.65,1.04,1.18,.12,.045,.08,chrome);
+    box(data,-.1,1.22,1.82,2.34,1.18,.08,mirror);
+    for(const x of [-.18,2.16])box(data,x,1.17,1.74,.08,1.28,.14,chrome);
+    box(data,-.25,1.17,1.73,.14,1.3,.16,hexVector("#F3E4BE"));box(data,2.15,1.17,1.73,.14,1.3,.16,hexVector("#F3E4BE"));
+    // Close-coupled toilet, flush plate and a compact heated towel rail.
+    box(data,2.55,.06,.4,1.18,.48,1.1,porcelain);box(data,2.6,.49,.34,1.08,.08,1.02,hexVector("#F7F8F5"));
+    box(data,2.6,.56,1.28,1.06,1.1,.32,porcelain);box(data,2.72,.75,1.23,.82,.34,.06,mirror);
+    box(data,2.95,1.72,1.21,.38,.12,.04,chrome);
+    box(data,3.9,.08,-.8,.1,1.85,.14,chrome);box(data,4.18,.08,-.8,.1,1.85,.14,chrome);
+    for(let y=.24;y<1.8;y+=.3)box(data,3.9,y,-.8,.38,.07,.14,chrome);
+    box(data,3.48,1.1,-.88,.7,.82,.08,towel);box(data,-.05,.025,-1.7,2.2,.035,.9,hexVector("#B8D2D1"));
   } else if(type==="toilet"){
     box(data,-1.1,.05,1.45,1.05,.48,1.15,hexVector("#E2E8E8"));box(data,-1.06,.08,1.38,.97,.43,1.13,hexVector("#F5F7F6"));box(data,-1.02,.5,2.3,.9,1.15,.25,hexVector("#D9E0E0"));box(data,-1.02,1.32,2.32,.9,.12,.22,metal);
     box(data,1.7,.88,2.25,1.7,.12,.72,hexVector("#E8ECEA"));box(data,2.18,.98,2.48,.46,.08,.34,hexVector("#B6D8DC"));box(data,1.95,0,-1.4,1.15,.8,.55,soft);
@@ -600,15 +625,24 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
   const {width,height,depth}=roomDimensions(room);
   const budget=previewQuality(quality);
   const propsVisible=visibility.props!==false;
-  const studioPropsScale=Math.min(1,(width/2-.08)/4.78,(depth/2-.08)/2.95,(height-.05)/2.8);
+  const studioPropsScaleX=Math.min(1,(width/2-.08)/4.78),studioPropsScaleZ=Math.min(1,(depth/2-.08)/2.95);
+  const studioPropsScale=Math.min(studioPropsScaleX,studioPropsScaleZ,(height-.05)/2.8);
+  const wetRoom=roomType==="bathroom"||roomType==="toilet";
+  const roomPropsScaleX=wetRoom?studioPropsScaleX:studioPropsScale,roomPropsScaleZ=wetRoom?studioPropsScaleZ:studioPropsScale;
+  const roomPropsScaleY=(roomType==="kitchen"||wetRoom)?Math.min(1,(height-.05)/2.5):studioPropsScale;
+  const tileFloor=["kitchen","bathroom","toilet","swimming-pool"].includes(roomType);
   const floorBoardColour=(column,row)=>{
+    if(tileFloor){
+      const grout=column%4===0||row%4===0,shade=grout?.58:.9+((column*5+row*3)%6)*.018;
+      return floor.map(channel=>channel*shade);
+    }
     const board=Math.floor((row+(column%3))/4);
     const shade=.82+((column*7+board*3)%9)*.025;
     const x=-width/2+(column+.5)*width/budget.columns,z=-depth/2+(row+.5)*depth/budget.rows;
-    return floor.map(channel=>channel*shade*studioFloorShade(x/studioPropsScale,z/studioPropsScale,propsVisible));
+    return floor.map(channel=>channel*shade*studioFloorShade(x/roomPropsScaleX,z/roomPropsScaleZ,propsVisible));
   };
   data.push(...surfaceGrid([-width/2,0,-depth/2],[width,0,0],[0,0,depth],floorBoardColour,budget.columns,budget.rows));
-  data.push(...studioFloorGrain(width,depth,floor));
+  if(!tileFloor)data.push(...studioFloorGrain(width,depth,floor));
   const rearWallStart=data.length;
   data.push(...surfaceGrid([-width/2,0,depth/2],[width,0,0],[0,height,0],wall,budget.columns,budget.rows));
   const rearWallEnd=data.length;
@@ -626,7 +660,7 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
     data.push(...surfaceGrid([-2.36,.037,-.86],[4.72,0,0],[0,0,3.47],(column,row)=>{
       const x=(column+.5)/24*4.72-2.36;
       const z=(row+.5)/18*3.47-.86;
-      const layoutX=x/studioPropsScale,layoutZ=z/studioPropsScale;
+      const layoutX=x/studioPropsScaleX,layoutZ=z/studioPropsScaleZ;
       const sofaShadow=Math.exp(-((layoutX/1.65)**4+((layoutZ-1.62)/.65)**2));
       const tableShadow=Math.exp(-(((layoutX+.2)/.88)**2+((layoutZ-.25)/.76)**2));
       return rugColour.map(channel=>channel*(1-.3*sofaShadow-.24*tableShadow));
@@ -670,8 +704,7 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
   
   } else roomPresetFurniture(data,roomType,accent);
   const furnitureEnd=data.length;
-  const furnitureScaleY=roomType==="kitchen" ? Math.min(1,(height-.05)/2.5) : studioPropsScale;
-  scaleGeometryPositions(data,furnitureStart,furnitureEnd,studioPropsScale,furnitureScaleY);
+  scaleGeometryPositions(data,furnitureStart,furnitureEnd,roomPropsScaleX,roomPropsScaleY,roomPropsScaleZ);
   if ((roomType ?? "living-room")==="living-room") studioWallArt(data,{width,height,depth},wood);
   }
   const rigStart=data.length;
@@ -681,7 +714,7 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
   scaleGeometryPositions(data,rigStart,data.length,rigScale);
   const lights=virtualFixtureVisuals(visibility.lighting===false ? [] : fixtures,budget.fixtures);
   const surfaceLights=visibility.props!==false && visibility.lighting!==false
-    ? [...lights,...shelfLamps.map(lamp=>({...lamp,x:lamp.x*studioPropsScale,y:lamp.y*studioPropsScale,z:lamp.z*studioPropsScale,colour:[.85,.46,.16],range:.85*studioPropsScale}))]
+    ? [...lights,...shelfLamps.map(lamp=>({...lamp,x:lamp.x*roomPropsScaleX,y:lamp.y*roomPropsScaleY,z:lamp.z*roomPropsScaleZ,colour:[.85,.46,.16],range:.85*studioPropsScale}))]
     : lights;
   // Approximate the soft bounce from each fixture's floor footprint.
   const rearWallLights=lights.map(light=>({
@@ -720,7 +753,7 @@ export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = 
   gl.detachShader(program,vertexShader);gl.detachShader(program,fragmentShader);
   gl.deleteShader(vertexShader);gl.deleteShader(fragmentShader);
   if(!gl.getProgramParameter(program,gl.LINK_STATUS)) { const message=gl.getProgramInfoLog(program);gl.deleteProgram(program);throw new Error(message); }
-  const buffer=gl.createBuffer(),position=gl.getAttribLocation(program,"p"),colour=gl.getAttribLocation(program,"c"),matrix=gl.getUniformLocation(program,"m"),opacity=gl.getUniformLocation(program,"opacity");let selectedAccent=accent,virtualFixtures=fixtures,drag;let {yaw,pitch,distance}=normalizeCameraState(camera);
+  const buffer=gl.createBuffer(),position=gl.getAttribLocation(program,"p"),colour=gl.getAttribLocation(program,"c"),matrix=gl.getUniformLocation(program,"m"),opacity=gl.getUniformLocation(program,"opacity");let selectedAccent=accent,virtualFixtures=fixtures,drag;const dimensions=roomDimensions(room),fitDistance=roomFitCameraDistance(dimensions.width,dimensions.depth);let {yaw,pitch,distance}=normalizeCameraState({...camera,distance:camera?.distance ?? fitDistance});
   let geometry=null,viewProjection=null,pickOccluders=null,pickCacheFixtures=null,pickTargets=[];
   function draw() {
     const ratio=Math.min(window.devicePixelRatio||1,previewQuality(quality).pixelRatio),width=Math.max(1,canvas.clientWidth),height=Math.max(1,canvas.clientHeight);
@@ -817,7 +850,7 @@ export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = 
     if (event.key === "ArrowDown") pitch=Math.min(cameraPitchLimit,pitch+.08);
     if (event.key === "+" || event.key === "=") distance=Math.max(4,distance-.5);
     if (event.key === "-") distance=Math.min(24,distance+.5);
-    if (event.key === "Home") { ({yaw,pitch,distance}=normalizeCameraState({})); }
+    if (event.key === "Home") { ({yaw,pitch,distance}=normalizeCameraState({distance:fitDistance})); }
     draw();
   };
   canvas.addEventListener("keydown",keydown);
@@ -825,5 +858,5 @@ export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = 
   canvas.addEventListener("wheel",wheel,{passive:false});
   canvas.addEventListener("pointercancel",up);
   canvas.addEventListener("lostpointercapture",up);
-  return { supported:true, cameraState(){return {yaw,pitch,distance};}, capturePng(){return viewportPng(canvas,draw);}, setAccent(value){selectedAccent=value;geometry=null;draw();}, setFixtures(value){const selectedId=virtualFixtures.find(fixture=>fixture.selected)?.id;virtualFixtures=value.some(fixture=>Object.hasOwn(fixture,"selected")) ? value : value.map(fixture=>({...fixture,selected:fixture.id===selectedId}));geometry=null;draw();}, setView(axis){const view=cameraAxisView(axis);yaw=view.yaw;pitch=view.pitch;draw();}, reset(){({yaw,pitch,distance}=normalizeCameraState({}));draw();}, destroy(){resize.disconnect();canvas.removeEventListener("wheel",wheel);canvas.removeEventListener("keydown",keydown);canvas.removeEventListener("pointercancel",up);canvas.removeEventListener("lostpointercapture",up);canvas.removeEventListener("pointerdown",down);canvas.removeEventListener("pointermove",move);canvas.removeEventListener("pointerup",up);geometry=null;gl.deleteBuffer(buffer);gl.deleteProgram(program);} };
+  return { supported:true, cameraState(){return {yaw,pitch,distance};}, capturePng(){return viewportPng(canvas,draw);}, setAccent(value){selectedAccent=value;geometry=null;draw();}, setFixtures(value){const selectedId=virtualFixtures.find(fixture=>fixture.selected)?.id;virtualFixtures=value.some(fixture=>Object.hasOwn(fixture,"selected")) ? value : value.map(fixture=>({...fixture,selected:fixture.id===selectedId}));geometry=null;draw();}, setView(axis){const view=cameraAxisView(axis);yaw=view.yaw;pitch=view.pitch;draw();}, reset(){({yaw,pitch,distance}=normalizeCameraState({distance:fitDistance}));draw();}, destroy(){resize.disconnect();canvas.removeEventListener("wheel",wheel);canvas.removeEventListener("keydown",keydown);canvas.removeEventListener("pointercancel",up);canvas.removeEventListener("lostpointercapture",up);canvas.removeEventListener("pointerdown",down);canvas.removeEventListener("pointermove",move);canvas.removeEventListener("pointerup",up);geometry=null;gl.deleteBuffer(buffer);gl.deleteProgram(program);} };
 }

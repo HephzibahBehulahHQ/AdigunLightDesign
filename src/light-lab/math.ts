@@ -26,6 +26,10 @@ export function studioCameraMatrix({targetHeight=2.2,...options}:Partial<CameraS
   matrix[13]=-matrix[5]!*targetHeight;matrix[14]=matrix[14]!-matrix[6]!*targetHeight;return matrix;
 }
 export const cameraPitchLimit=Math.PI/2-.01;
+export function roomFitCameraDistance(width:number,depth:number){
+  if(!Number.isFinite(width)||!Number.isFinite(depth)||width<=0||depth<=0)throw new Error("Invalid room camera dimensions.");
+  return Math.max(4,Math.min(24,9.8*Math.pow(Math.max(width,depth)/10,.63)));
+}
 export function normalizeCameraState(value:unknown={}){
   const finite=(key:keyof CameraState,fallback:number)=>{const raw=(value as Partial<CameraState>|null)?.[key];return typeof raw==="number" && Number.isFinite(raw) ? raw : fallback;};
   return {yaw:finite("yaw",-.08),pitch:Math.max(-cameraPitchLimit,Math.min(cameraPitchLimit,finite("pitch",.1))),distance:Math.max(4,Math.min(24,finite("distance",9.8)))};
