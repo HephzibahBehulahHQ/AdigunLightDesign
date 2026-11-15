@@ -792,3 +792,27 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
 
 .tool-popover:not(:popover-open) { display:none; }
 .tool-popover:popover-open { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+
+/* Keep the right inspector compact while preserving readable labels and controls. */
+@media (min-width:1100px) {
+  #fixture-inspector-panel .inspector-group { margin:2px 5px; padding:3px 6px; }
+  #fixture-inspector-panel .inspector-group h3 { display:flex; align-items:center; gap:6px; min-width:0; min-height:23px; margin:0 -6px 3px; padding:2px 6px; overflow:hidden; }
+  #fixture-inspector-panel .inspector-group-title { flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:11px; font-weight:800; }
+  #fixture-inspector-panel .inspector-group > label { font-size:11px; }
+  #fixture-inspector-panel .inspector-group input:not([type="range"]),#fixture-inspector-panel .inspector-group select { box-sizing:border-box; min-height:24px; height:24px; padding:2px 5px; font-size:11px; }
+  #fixture-inspector-panel .inspector-group input[type="range"] { min-height:13px; height:13px; }
+  #fixture-inspector-panel .inspector-group .fixture-placement { margin:2px 0; padding:4px; }
+  #fixture-inspector-panel .fixture-placement .fixture-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:3px 6px; }
+  #fixture-inspector-panel .fixture-placement label { display:grid; grid-template-columns:minmax(34px,1fr) 64px; align-items:center; min-width:0; gap:3px; white-space:nowrap; font-size:10px; }
+  #fixture-inspector-panel .fixture-placement label input { width:64px; min-width:0; max-width:100%; height:23px; min-height:23px !important; padding:2px 4px; font-size:11px; }
+  #fixture-inspector-panel .inspector-group-dmx > label { grid-template-columns:minmax(0,1fr) 60px; gap:3px; font-size:10px; }
+  #fixture-inspector-panel .inspector-group-dmx > label input { width:60px; min-width:0; height:24px; min-height:24px; padding:2px 4px; }
+  #fixture-inspector-panel .inspector-group h3 > .inspector-icon-action { display:inline-grid; flex:0 0 25px; place-items:center; width:25px !important; min-width:25px; height:23px; min-height:23px; margin:0 0 0 auto !important; padding:0 !important; border:1px solid #456184; border-radius:5px; background:#1a2941; color:#e3ecfb; font-size:13px; font-weight:800; line-height:1; cursor:pointer; }
+  #fixture-inspector-panel .inspector-group h3 > .inspector-icon-action::before { content:none !important; margin:0; }
+  #fixture-inspector-panel .inspector-group h3 > .inspector-icon-action:hover,#fixture-inspector-panel .inspector-group h3 > .inspector-icon-action:focus-visible { border-color:#22d3ee; background:#263651; outline:2px solid #22d3ee; outline-offset:1px; }
+  #fixture-inspector-panel .inspector-group h3 > #apply-fixture-patch { grid-column:auto; }
+  #fixture-inspector-panel .inspector-group-effects .dmx-actions { grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:4px; }
+  #fixture-inspector-panel .inspector-group-effects .dmx-actions label { min-width:0; font-size:10px; }
+  #fixture-inspector-panel .inspector-group-effects .dmx-actions select,#fixture-inspector-panel .inspector-group-effects .dmx-actions input { width:100%; min-width:0; }
+  #fixture-inspector-panel .fixture-profile-summary,#fixture-inspector-panel .fixture-profile-context,#fixture-inspector-panel .fixture-position-summary { display:none !important; }
+}
