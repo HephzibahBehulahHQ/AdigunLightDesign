@@ -657,9 +657,59 @@ function roomPresetFurniture(data,type,accent){
     facetedSphere(data,0,3.06,-.25,.43,["#E5EAF0","#69788E","#A7B5C8","#4B5970"],18,9);
     for(const x of [-3.9,3.4])box(data,x,2.45,-.15,.28,.55,.28,accent);
   } else if(type==="clubhouse"){
-    box(data,-4.1,.95,2.8,8.2,.16,.8,timber);box(data,-4.1,0,2.82,8.2,.95,.35,darkWood);
-    for(const x of [-3,0,3]){data.push(...roundTableTop(x,.76,-1.1,.72,.07,timber));for(const dx of [-.5,.4])for(const z of [-1.55,-.65])box(data,x+dx,.05,z,.09,.7,.09,metal);}
-    for(const x of [-3.65,3.15])for(const y of [.6,1.4,2.2])box(data,x,y,2.65,.45,.12,.1,hexVector("#C77A46"));
+    const walnut=hexVector("#54382D"),barFront=hexVector("#78503A"),brass=hexVector("#D1AA66"),cream=hexVector("#E6D6B8"),green=hexVector("#456452"),glass=hexVector("#7499A5");
+    // Long timber bar with inset panels, brass foot rail and a lit stone counter.
+    box(data,-4.1,.08,2.8,8.2,.88,.68,barFront);box(data,-4.1,.18,2.43,8.2,.68,.08,walnut);
+    for(const x of [-3.3,-1.7,-.1,1.5,3.1]){
+      box(data,x,.26,2.37,1.26,.47,.045,barFront);box(data,x,.31,2.33,1.1,.35,.025,walnut);
+      box(data,x,.045,2.05,1.28,.045,.045,brass);
+    }
+    box(data,-4.25,1,2.76,8.5,.14,.82,cream);box(data,-4.2,1.08,2.32,8.4,.035,.06,brass);
+    for(const x of [-3.2,-1.6,0,1.6,3.2]){
+      box(data,x,.74,1.65,.09,.68,.09,brass);box(data,x-.36,.69,1.65,.72,.13,.72,green);box(data,x-.32,1.12,1.65,.64,.48,.12,green);
+    }
+    // Back bar cabinetry, bottle shelves, glass rack and warm shelf lighting.
+    box(data,-3.55,1.45,3.35,7.1,.12,.28,walnut);box(data,-3.55,2.22,3.35,7.1,.12,.28,walnut);
+    box(data,-3.55,1.9,3.43,.12,.9,.18,barFront);box(data,3.43,1.9,3.43,.12,.9,.18,barFront);
+    box(data,-3.35,1.54,3.28,6.7,.025,.04,brass);box(data,-3.35,2.31,3.28,6.7,.025,.04,brass);
+    const bottleColours=["#567A65","#9E7048","#5B718C","#8B5747"].map(hexVector);
+    for(const y of [1.6,2.37])for(let index=0;index<11;index++){
+      const x=-3.05+index*.61,color=bottleColours[index% bottleColours.length];
+      box(data,x,y,3.2,.2,.3,.16,color);box(data,x+.045,y+.3,3.23,.11,.16,.1,color);box(data,x+.06,y+.46,3.25,.08,.045,.06,brass);
+      box(data,x-.05,y+.1,3.105,.3,.09,.018,cream);
+    }
+    for(let x=-2.9;x<2.9;x+=.42)box(data,x,2.58,3.27,.025,.31,.03,glass);
+    for(const x of [-3.2,0,3.2])box(data,x,1.48,3.04,.78,.035,.08,hexVector("#F4D89A"));
+    // Three round social tables with upholstered chairs and central brass details.
+    for(const x of [-3,0,3]){
+      data.push(...roundTableTop(x,.78,-1.1,.76,.085,timber));
+      data.push(...roundTableTop(x,.83,-1.1,.16,.025,brass,24));
+      for(const dx of [-.58,.58])for(const z of [-1.82,-.38]){
+        box(data,x+dx,.05,z,.075,.68,.075,metal);box(data,x+dx-.25,.69,z-.22,.58,.14,.48,green);box(data,x+dx-.25,.85,z-.41,.58,.52,.1,green);
+      }
+    }
+    // Two upholstered wall banquettes leave the middle of the room open for circulation.
+    for(const z of [-2.95,-1.55]){
+      box(data,-5.9,.24,z,1.55,.46,.62,green);box(data,-5.9,.68,z-.24,1.55,.72,.14,green);
+      box(data,4.35,.24,z,1.55,.46,.62,green);box(data,4.35,.68,z-.24,1.55,.72,.14,green);
+    }
+    for(const z of [-2.95,-1.55])for(const x of [-4.1,4.1]){
+      data.push(...roundTableTop(x,.74,z,.52,.07,timber));
+      for(const dx of [-.35,.35])box(data,x+dx,.05,z-.52,.07,.66,.07,metal);
+    }
+    // Framed club crest, brass wall sconces and three shaded ceiling pendants.
+    box(data,0,2.45,4.28,2.5,1.25,.08,walnut);box(data,0,2.45,4.22,2.25,1,.04,barFront);
+    data.push(...roundTableTop(0,2.45,4.17,.38,.055,brass,24));
+    for(const x of [-4.7,4.7])for(const y of [.95,2.15]){
+      box(data,x,y,3.48,.1,.38,.12,brass);box(data,x,y,3.4,.17,.27,.2,hexVector("#F3D39A"));
+    }
+    for(const x of [-3.2,0,3.2]){
+      box(data,x,3.35,-.15,.045,.68,.045,brass);box(data,x,2.95,-.15,.42,.18,.42,brass);
+      facetedSphere(data,x,2.78,-.15,.25,["#EFD8AC","#D8B27B","#F7E8CA"],16,8);
+    }
+    box(data,4.65,.36,-3.5,.78,.66,.78,walnut);
+    const plantColours=["#47704F","#668557","#809564"].map(hexVector);
+    for(const x of [4.34,4.65,4.96])for(const z of [-3.81,-3.5,-3.19])box(data,x,.74,z,.28,.44,.28,plantColours[(Math.round(x*100)+Math.round(z*100)+800)%3]);
   }
 }
 export function sceneData(accent, fixtures, visibility={}, room,includeBeams=true,materials={},quality="balanced",stage,ambience,roomType="living-room") {

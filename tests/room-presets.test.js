@@ -85,3 +85,12 @@ test("hallway scene adds a paneled entry door, console, coat station, runner and
   assert.ok(hallway.length>shell.length+9000,"entry fittings and layered lighting details add substantial geometry");
   assert.ok(Array.from(hallway).every(Number.isFinite),"all hallway geometry remains finite");
 });
+
+
+test("clubhouse scene adds a stocked bar, social seating and warm architectural lighting",()=>{
+  const preset=roomPresets.find(room=>room.id==="clubhouse");
+  const shell=sceneData([0,0,0],[],{props:false},preset.room,false,preset.materials,"performance",undefined,preset.ambience,preset.id);
+  const clubhouse=sceneData([0,0,0],[],{},preset.room,false,preset.materials,"performance",undefined,preset.ambience,preset.id);
+  assert.ok(clubhouse.length>shell.length+18000,"bar fixtures, seating and layered architectural lights add substantial geometry");
+  assert.ok(Array.from(clubhouse).every(Number.isFinite),"all clubhouse geometry remains finite");
+});
