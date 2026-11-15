@@ -614,8 +614,6 @@ function render() {
   if(!activeCue)document.querySelector("#cue-delay").parentElement.insertAdjacentHTML("afterend", `<label>${t("fadeOut")} (s)<input id="cue-fadeOut" type="number" min="0" step="0.1" required value="0"></label>`);
   if (activeCue) document.querySelector("#edit-cue-delay").parentElement.insertAdjacentHTML("afterend", `<label>${t("fadeOut")} (s)<input id="edit-cue-fadeOut" type="number" min="0" step="0.1" required value="${activeCue.fadeOut ?? 0}"></label><small>${t("holdTime")}: ${Math.max(0,activeCue.duration-(activeCue.delay ?? 0)-activeCue.fade-(activeCue.fadeOut ?? 0)).toFixed(1)} s</small>`);
   timingDetails.className="fixture-group-editor cue-editor";
-  const timingSummary=document.createElement("h3");
-  timingSummary.textContent=t("cueSettings");timingDetails.append(timingSummary);
   const cueEditorFields=document.createElement("div");cueEditorFields.className="cue-editor-fields";timingDetails.append(cueEditorFields);
   document.querySelectorAll(".cue-timing").forEach((node)=>cueEditorFields.append(node));
   if(activeCue){
