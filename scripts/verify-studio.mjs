@@ -66,12 +66,15 @@ try {
       const lux = box(".lux-panel.is-docked");
       const inspectorScroll = (() => { const panel=doc.querySelector("#fixture-inspector-panel");return {scrollHeight:panel.scrollHeight,clientHeight:panel.clientHeight,overflowY:browser.getComputedStyle(panel).overflowY}; })();
       const footer = box("footer");
+      const leftRailContent=doc.querySelector(".left-rail"),activePalette=doc.querySelector(".left-rail .palette-panel");
       return {
         viewport: [browser.innerWidth, browser.innerHeight],
         document: [doc.documentElement.scrollWidth, doc.documentElement.scrollHeight],
         header,
         navigation,
         left,
+        leftRailContent: {scrollHeight:leftRailContent.scrollHeight,clientHeight:leftRailContent.clientHeight},
+        activePalette: {scrollHeight:activePalette.scrollHeight,clientHeight:activePalette.clientHeight},
         scene,
         dock,
         inspector,
@@ -91,6 +94,7 @@ try {
     assert.ok(report.scene.right <= report.inspector.x + 1, `canvas does not overlap inspector at ${width}×${height}`);
     assert.ok(report.scene.bottom <= report.dock.y + 1, `canvas does not overlap dock at ${width}×${height}`);
     assert.ok(report.inspectorContent.bottom <= report.lux.y + 1, `inspector scroll lane stops before docked Lux at ${width}×${height}`);
+    if(width===1754&&height===878){assert.ok(report.leftRailContent.scrollHeight<=report.leftRailContent.clientHeight+2,"all left-rail sections fit without a hidden sidebar overflow");assert.ok(report.activePalette.scrollHeight<=report.activePalette.clientHeight+2,"the full Active Palette controls fit in their dock");}
     if(width===1754 && height===878){const play=await page.locator("#play-effect").boundingBox();assert.ok(play.y+play.height<=report.inspectorContent.bottom+1,`Effects Play stays visible before docked Lux at the reference viewport (${play.y+play.height} <= ${report.inspectorContent.bottom})`);}
     assert.ok(report.inspectorScroll.scrollHeight >= report.inspectorScroll.clientHeight, `fixture inspector has a bounded scroll viewport at ${width}×${height}`);
     if(report.inspectorScroll.scrollHeight>report.inspectorScroll.clientHeight) assert.ok(["auto","scroll"].includes(report.inspectorScroll.overflowY), `inspector overflow scrolls inside its own lane at ${width}×${height}`);
@@ -183,9 +187,35 @@ try {
     assert.equal(await page.locator(`#palette-versions-menu ${selector}`).count(), 1, `${selector} remains available in the Versions subpanel`);
   }
   for (const selector of ["#seed", "#custom-spacing", "#custom-hues", "#perceptual-scale", "#temperature-strength"]) {
-    assert.equal(await page.locator(`.lower-workspace .palette-panel ${selector}`).count(), 1, `${selector} remains available in its independent palette panel`);
+    assert.equal(await page.locator(`.left-rail .palette-panel ${selector}`).count(), 1, `${selector} remains available in the docked Active Palette panel`);
     assert.equal(await page.locator(`.command-group[data-command-group="palette"] ${selector}`).count(), 0, `${selector} does not crowd the primary Palette menu`);
   }
+  assert.equal(await page.locator(".lower-workspace .palette-panel").count(),0,"the palette panel uses its dedicated left-rail dock");
+  assert.equal(await page.locator(".lower-workspace .timeline").evaluate((timeline)=>timeline.getBoundingClientRect().width>800),true,"the timeline expands across the freed lower work area");
+  const sidebarCanvas=await page.locator(".scene-preview").boundingBox();
+  await page.locator("#toggle-fixture-groups").click();
+  assert.equal(await page.locator("#fixture-groups:popover-open").count(),1,"Fixture Groups opens as a floating left-rail menu");
+  assert.equal(await page.locator("#fixture-groups [data-group-member]").count(),9,"Fixture Groups lists all nine active fixtures");
+  assert.deepEqual(await page.locator(".scene-preview").boundingBox(),sidebarCanvas,"opening Fixture Groups leaves the studio stationary");
+  await page.locator("#group-name").fill("Verification group");
+  await page.locator("#fixture-groups [data-group-member]").nth(0).check();
+  await page.locator("#fixture-groups [data-group-member]").nth(1).check();
+  await page.locator("#save-group").click();
+  await page.locator("#toggle-fixture-groups").click();
+  assert.equal(await page.locator("#fixture-groups").getByText("Verification group").count(),1,"saving a group persists and renders it in the floating menu");
+  await page.locator("#fixture-groups [data-delete-group]").click();
+  await page.locator("#toggle-fixture-groups").click();
+  const groupBounds=await page.locator("#fixture-groups").boundingBox();
+  assert.ok(groupBounds.x>=0&&groupBounds.y>=0&&groupBounds.x+groupBounds.width<=1754&&groupBounds.y+groupBounds.height<=878,"Fixture Groups stays within the visible viewport");
+  await page.mouse.move(1700,850);
+  await page.waitForTimeout(220);
+  assert.equal(await page.locator("#fixture-groups:popover-open").count(),0,"Fixture Groups closes after the pointer leaves the trigger and panel");
+  await openFixtureList();
+  await page.locator('.fixture-select[title="Moving Head RGB 2"]').click();
+  assert.equal(await page.locator("#virtual-dmx-monitor .virtual-dmx-channel").count(),10,"Virtual DMX keeps the selected fixture's live channel values visible in the left sidebar");
+  assert.deepEqual(await page.locator("#virtual-dmx-monitor .virtual-dmx-channel b").allTextContents(),["011","012","013","014","015","016","017","018","019","020"],"Virtual DMX keeps the selected fixture's one-based patched addresses");
+  assert.equal(await page.locator("#virtual-dmx-monitor .virtual-dmx-channels").evaluate((grid)=>globalThis.getComputedStyle(grid).gridTemplateColumns.split(" ").length),5,"Virtual DMX fits five channels per row");
+  assert.deepEqual(await page.locator(".scene-preview").boundingBox(),sidebarCanvas,"the docked Virtual DMX values leave the studio stationary");
 
   assert.equal(await page.locator('[data-command-group="scene"] [data-camera-axis]').count(), 3, "X/Y/Z camera views are docked in the Scene menu");
   assert.equal(await page.locator(".inspector [data-scene-editor]").count(),0,"Stage and Room settings are removed from the inspector sidebar");
@@ -424,6 +454,10 @@ try {
   assert.equal(await page.locator(".palette-panel").isVisible(), true, "2D palette view opens");
   assert.match(await page.locator('[data-module="light"]').innerText(), /3D Studio/, "module navigation clearly names the lighting workspace");
   assert.equal(await page.locator("#palette-inspector-panel").isVisible(), true, "Design selects the palette inspector");
+  for(const selector of ["#swatch-name","#swatch-hex","#apply-colour","#copy-hex","#apply-hsl","#apply-oklch","#swatch-opacity","#apply-opacity","#lock-swatch",".colour-space-card",".contrast-card"]) assert.ok(await page.locator(`#palette-inspector-panel ${selector}`).count()>0,`Palette Engine keeps ${selector} available in the compact right sidebar`);
+  assert.equal(await page.locator("#palette-inspector-panel .contrast-card dl > div").count(),4,"Palette Engine keeps all four AA/AAA contrast checks visible");
+  assert.ok(await page.locator("#palette-inspector-panel").evaluate((panel)=>panel.scrollHeight<=panel.clientHeight+2),"Palette Engine controls fit in the right sidebar without a hidden scroll region");
+  await page.screenshot({path:resolve("outputs","palette-engine-1754x878.png")});
   const canvasBeforeSceneSettings=await page.locator(".scene-preview").boundingBox();
   await openCommandMenu("room");
   assert.equal(await page.locator("#command-menu-panel-room").isVisible(), true, "Room command opens its settings without changing the active workspace");

@@ -130,7 +130,19 @@ function updateRendererFromFixtures() { const fixtures=currentRendererFixtures()
 function updateDmxFeedback(fixtures) {
   const snapshot=virtualDmxPreview(fixtures,preferences.fixtureId);
   const monitor=document.querySelector("#virtual-dmx-monitor"),summary=document.querySelector(".timeline .dmx-actions span");
-  if (monitor) monitor.textContent=`${t("universe")} ${snapshot.universe}\n${snapshot.channels.map((channel)=>`${String(channel.address).padStart(3,"0")} · ${channel.name}: ${channel.value}`).join("\n")}`;
+  if (monitor) {
+    const channels=monitor.querySelector(".virtual-dmx-channels");
+    if(channels){
+      channels.replaceChildren();
+      for(const channel of snapshot.channels){
+        const item=document.createElement("span"),address=document.createElement("b"),name=document.createElement("span"),value=document.createElement("strong");
+        item.className="virtual-dmx-channel";address.textContent=String(channel.address).padStart(3,"0");name.textContent=channel.name;value.textContent=String(channel.value);item.append(address,name,value);channels.append(item);
+      }
+      if(!snapshot.channels.length){const empty=document.createElement("span");empty.className="virtual-dmx-empty";empty.textContent=t("noFixtures");channels.append(empty);}
+    }
+    const universe=document.querySelector("#virtual-dmx-monitor header");
+    if(universe)universe.textContent=`${t("universe")} ${snapshot.universe} · ${t("simulationOnly")} · ${t("outputDisabled")}`;
+  }
   if (summary) summary.textContent=`U${snapshot.universe} · CH 1: ${snapshot.frame[0]} · ${t("outputDisabled")}`;
 }
 function previewFixtures(fixtures) {renderer?.setFixtures(fixtures);updateDmxFeedback(fixtures);}
@@ -366,7 +378,7 @@ function redo() { if (!redoStack.length) return setStatus(t("noRedo")); stopPlay
 function setStatus(value) { status = value; render(); }
 function disabled(title) { return `disabled title="${esc(title)}"`; }
 function compact(value, digits = 1) { return Number(value).toFixed(digits); }
-function colourSpaceMarkup(hex) { const rgb=hexToRgb(hex),hsl=rgbToHsl(rgb),hsv=rgbToHsv(rgb),lab=rgbToLab(rgb),oklab=rgbToOklab(rgb); return `<section class="colour-space-card" aria-label="${t("colorSpaces")}"><h3>${t("colorSpaces")}</h3><dl><div><dt>sRGB</dt><dd>${Math.round(rgb.r)}, ${Math.round(rgb.g)}, ${Math.round(rgb.b)}</dd></div><div><dt>HSL</dt><dd>${compact(hsl.h)}° · ${compact(hsl.s*100)}% · ${compact(hsl.l*100)}%</dd></div><div><dt>HSV</dt><dd>${compact(hsv.h)}° · ${compact(hsv.s*100)}% · ${compact(hsv.v*100)}%</dd></div><div><dt>CIELAB</dt><dd>${compact(lab.l)}, ${compact(lab.a)}, ${compact(lab.b)}</dd></div><div><dt>OKLab</dt><dd>${compact(oklab.l,3)}, ${compact(oklab.a,3)}, ${compact(oklab.b,3)}</dd></div></dl><small class="${isSrgbGamut(rgb)?"pass":"fail"}">${isSrgbGamut(rgb)?t("inSrgb"):t("outsideSrgb")}</small></section>`; }
+function colourSpaceMarkup(hex) { const rgb=hexToRgb(hex),hsl=rgbToHsl(rgb),hsv=rgbToHsv(rgb),lab=rgbToLab(rgb),oklab=rgbToOklab(rgb); return `<section class="colour-space-card" aria-label="${t("colorSpaces")}"><h3>${t("colorSpaces")}</h3><dl><div><dt>sRGB</dt><dd>${Math.round(rgb.r)},${Math.round(rgb.g)},${Math.round(rgb.b)}</dd></div><div><dt>HSL</dt><dd>${compact(hsl.h)}°·${compact(hsl.s*100)}%·${compact(hsl.l*100)}%</dd></div><div><dt>HSV</dt><dd>${compact(hsv.h)}°·${compact(hsv.s*100)}%·${compact(hsv.v*100)}%</dd></div><div><dt>CIELAB</dt><dd>${compact(lab.l)},${compact(lab.a)},${compact(lab.b)}</dd></div><div><dt>OKLab</dt><dd>${compact(oklab.l,3)},${compact(oklab.a,3)},${compact(oklab.b,3)}</dd></div></dl><small class="${isSrgbGamut(rgb)?"pass":"fail"}">${isSrgbGamut(rgb)?t("inSrgb"):t("outsideSrgb")}</small></section>`; }
 function fixtureLibraryMarkup() { return fixtureProfiles.map((profile)=>`<article><b>${esc(profile.model)}</b><small>${esc(profile.type)} · ${profile.modes[0].channels.length} CH</small><p>${esc(profile.validationStatus)} · ${esc(profile.provenance)}</p><button data-profile="${profile.id}">${t("addToVirtualPatch")}</button></article>`).join(""); }
 function selectedFixture() { const fixtures=sceneFixtures();return fixtures.find((fixture)=>fixture.id===preferences.fixtureId) ?? fixtures[0]; }
 function fixtureInspectorMarkup() { const fixture=selectedFixture();if(!fixture)return "";const fixtures=sceneFixtures(),patch=fixture.patchAssignment ?? {universe:1,startAddress:1}; return `<section class="fixture-inspector"><h3>${t("virtualFixture")}</h3><label>${t("fixtureLabel")}<select id="fixture-select">${fixtureOptions(fixtures,fixture.id)}</select></label><label>${t("colourName")}<input id="fixture-name" value="${esc(fixture.name)}" /></label>${fixturePlacementMarkup(fixture.transform,t("fixturePlacement"),t("fixtureDragHint"))}<div class="fixture-grid"><label>${t("universe")}<input id="fixture-universe" type="number" min="1" value="${patch.universe}" /></label><label>${t("startAddress")}<input id="fixture-address" type="number" min="1" max="512" value="${patch.startAddress}" /></label><label>${t("dimmer")}<input id="fixture-dimmer" type="number" min="0" max="255" value="${fixture.properties.dimmer ?? 0}" /></label><label>${t("beam")}<input id="fixture-beam" type="number" min="0" max="255" value="${fixture.properties.beam ?? 0}" /></label></div><button id="apply-fixture" class="wide inspector-icon-action" type="button" aria-label="${t("applyFixtureProperties")}" title="${t("applyFixtureProperties")}">✓</button></section>`; }
@@ -515,7 +527,6 @@ function render() {
   sequenceTrack.replaceWith(sequenceDetails);sequenceDetails.append(sequenceTrack);
   document.querySelector("#stop-cue").insertAdjacentHTML("beforebegin",`<button id="play-tracks" ${sceneCueList.length ? "" : "disabled"}>▶ ${t("playTracks")}</button>`);
   document.querySelector("#create-cue").insertAdjacentHTML("beforebegin", `<label>${t("captureGroup")} <select id="cue-group"><option value="">${t("allFixtures")}</option>${(project.fixtureGroups ?? []).map((group)=>`<option value="${esc(group.id)}">${esc(group.name)}</option>`).join("")}</select></label>`);
-  document.querySelector(".timeline").insertAdjacentHTML("beforeend", `<details class="fixture-group-editor"><summary>${t("fixtureGroups")}</summary><label>${t("groupName")} <input id="group-name" maxlength="120"></label><div>${activeFixtures.map((fixture)=>`<label><input type="checkbox" data-group-member value="${esc(fixture.id)}"> ${esc(fixture.name)}</label>`).join("")}</div><button id="save-group" ${activeFixtures.length ? "" : "disabled"}>${t("saveGroup")}</button>${(project.fixtureGroups ?? []).map((group)=>`<p>${esc(group.name)} · ${group.fixtureIds.filter((id)=>activeFixtures.some((fixture)=>fixture.id===id)).length} <button data-delete-group="${esc(group.id)}">${t("deleteGroup")}</button></p>`).filter((_,index)=>(project.fixtureGroups[index]?.fixtureIds ?? []).some((id)=>activeFixtures.some((fixture)=>fixture.id===id))).join("")}</details>`);
   document.querySelector(".timeline").insertAdjacentHTML("beforeend", `<div class="dmx-actions"><label><input id="sequence-loop" type="checkbox" ${preferences.loopSequence ? "checked" : ""}> ${t("loopSequence")}</label><label>${t("seekSequence")} <input id="sequence-seek" type="range" min="0" max="${sequenceDuration}" step="0.1" value="0" ${sequenceDuration ? "" : "disabled"}></label><output id="sequence-position">0 / ${sequenceDuration.toFixed(1)} s</output></div>`);
   document.querySelector(".timeline").insertAdjacentHTML("beforeend", `<div class="dmx-actions"><label>${t("virtualEffect")} <select id="effect-type"><option value="pulse">${t("pulse")}</option><option value="chase">${t("chase")}</option></select></label><label>${t("effectPeriod")} <input id="effect-period" type="number" min="0.1" max="120" step="0.1" value="2"></label><button id="play-effect" class="inspector-icon-action" type="button" aria-label="${t("previewEffect")}" title="${t("previewEffect")}" ${activeFixtures.length ? "" : "disabled"}>▶</button></div>`);
   if (activeCue) {
@@ -559,7 +570,10 @@ function render() {
     input.oninput=update;
     update();
   }
-  document.querySelector(".tool-section").insertAdjacentHTML("afterend", `<section class="fixture-list-section"><h2><button type="button" id="toggle-fixtures" class="fixture-list-toggle" aria-haspopup="true" aria-expanded="false" aria-controls="fixture-list">${t("fixtureList")} <span>${activeFixtures.length}</span><span aria-hidden="true">⌄</span></button></h2>${activeFixtures.length ? `<ul id="fixture-list" class="fixture-layer-list fixture-list-popover" aria-label="${t("layersLighting")}" popover="auto">${activeFixtures.map((fixture)=>`<li><button type="button" class="fixture-select" data-layer-fixture="${esc(fixture.id)}" aria-pressed="${fixture.id===selectedFixture()?.id}" title="${esc(fixture.name)}"><span aria-hidden="true">☼</span><span class="fixture-name">${esc(fixture.name)}</span></button><button type="button" class="fixture-delete" data-delete-fixture-row="${esc(fixture.id)}" aria-label="${esc(t("deleteFixture"))}: ${esc(fixture.name)}" title="${esc(t("deleteFixture"))}">×</button></li>`).join("")}</ul>` : `<p class="fixture-empty">${t("noFixtures")} · <button type="button" class="fixture-empty-add">＋ ${t("addWash")}</button></p>`}</section>`);
+  document.querySelector(".tool-section").insertAdjacentHTML("afterend", `<section class="fixture-list-section"><h2><button type="button" id="toggle-fixtures" class="fixture-list-toggle" aria-haspopup="true" aria-expanded="false" aria-controls="fixture-list">${t("fixtureList")} <span>${activeFixtures.length}</span><span aria-hidden="true">⌄</span></button></h2>${activeFixtures.length ? `<ul id="fixture-list" class="fixture-layer-list fixture-list-popover" aria-label="${t("layersLighting")}" popover="auto">${activeFixtures.map((fixture)=>`<li><button type="button" class="fixture-select" data-layer-fixture="${esc(fixture.id)}" aria-pressed="${fixture.id===selectedFixture()?.id}" title="${esc(fixture.name)}"><span aria-hidden="true">☼</span><span class="fixture-name">${esc(fixture.name)}</span></button><button type="button" class="fixture-delete" data-delete-fixture-row="${esc(fixture.id)}" aria-label="${esc(t("deleteFixture"))}: ${esc(fixture.name)}" title="${esc(t("deleteFixture"))}">×</button></li>`).join("")}</ul>` : `<p class="fixture-empty">${t("noFixtures")} · <button type="button" class="fixture-empty-add">＋ ${t("addWash")}</button></p>`}</section><section class="fixture-group-section"><h2><button type="button" id="toggle-fixture-groups" class="sidebar-menu-toggle" aria-haspopup="dialog" aria-expanded="false" aria-controls="fixture-groups">${t("fixtureGroups")} <span aria-hidden="true">⌄</span></button></h2><div id="fixture-groups" class="fixture-group-editor fixture-group-popover" popover="auto" role="dialog" aria-label="${t("fixtureGroups")}"></div></section><div class="palette-dock-slot"></div><section class="virtual-dmx-section"><h2><button type="button" id="toggle-virtual-dmx" class="sidebar-menu-toggle" aria-haspopup="dialog" aria-expanded="false" aria-controls="virtual-dmx-monitor">${t("virtualDmx")} <span class="dmx-output-state">· ${t("outputDisabled")}</span><span aria-hidden="true">⌄</span></button></h2><div id="virtual-dmx-monitor" class="virtual-dmx-monitor" popover="auto" role="dialog" aria-label="${t("virtualDmx")} · ${t("outputDisabled")}"><header>${t("universe")} 1 · ${t("simulationOnly")} · ${t("outputDisabled")}</header><div class="virtual-dmx-channels"></div></div></section>`);
+  const dmxButton=document.querySelector("#toggle-virtual-dmx"),dmxSection=dmxButton?.closest(".virtual-dmx-section");
+  if(dmxButton&&dmxSection){const title=document.createElement("h2");title.className="virtual-dmx-title";title.innerHTML=`${t("virtualDmx")} <span>· ${t("outputDisabled")}</span>`;dmxButton.closest("h2").replaceWith(title);const monitor=document.querySelector("#virtual-dmx-monitor");monitor.removeAttribute("popover");monitor.removeAttribute("role");monitor.classList.add("virtual-dmx-monitor-static");}
+  document.querySelector("#fixture-groups").innerHTML=`<label class="group-name-field">${t("groupName")} <input id="group-name" maxlength="120"></label><div class="fixture-group-members">${activeFixtures.map((fixture)=>`<label title="${esc(fixture.name)}"><input type="checkbox" data-group-member value="${esc(fixture.id)}"> <span>${esc(fixture.name)}</span></label>`).join("")}</div><div class="fixture-group-actions"><button id="save-group" ${activeFixtures.length ? "" : "disabled"}>${t("saveGroup")}</button><button id="new-group">${t("newGroup")}</button></div><div class="saved-fixture-groups">${(project.fixtureGroups ?? []).map((group)=>`<p><b>${esc(group.name)}</b> · ${group.fixtureIds.filter((id)=>activeFixtures.some((fixture)=>fixture.id===id)).length} <button data-edit-group="${esc(group.id)}">${t("editGroup")}</button><button data-delete-group="${esc(group.id)}">${t("deleteGroup")}</button></p>`).filter((_,index)=>(project.fixtureGroups[index]?.fixtureIds ?? []).some((id)=>activeFixtures.some((fixture)=>fixture.id===id))).join("")}</div>`;
   document.querySelector(".swatches").insertAdjacentHTML("afterend", `<p class="palette-summary">${t("seedColour")}: ${esc(preferences.seed)} · ${t("harmony")}: ${esc(preferences.harmony)} · ${palette().colors.length} ${t("summarySwatches")} · ${palette().colors.filter((colour)=>colour.locked).length} ${t("summaryLocked")}</p>`);
   document.querySelector(".export-grid")?.insertAdjacentHTML("beforeend", `<button id="export-svg">SVG</button><button id="export-pdf" aria-describedby="pdf-export-limit">${t("paletteSheetPdf")}</button><small id="pdf-export-limit">${t("pdfPaletteLimit")}</small><button id="export-cue-pdf" aria-describedby="cue-pdf-limit">${t("cueSheetPdf")}</button><small id="cue-pdf-limit">${t("cuePdfLimit")}</small><button id="export-tokens">${t("designTokens")}</button>`);
   document.querySelector(".palette-actions").insertAdjacentHTML("beforeend", `<button id="extract-image">${t("extractImage")}</button><input id="palette-image" type="file" accept="image/png,image/jpeg,image/webp" hidden />`);
@@ -567,7 +581,7 @@ function render() {
   document.querySelector("#lock-swatch").insertAdjacentHTML("afterend", `<div class="palette-actions"><button data-move-swatch="-1" ${swatchIndex===0 ? "disabled" : ""}>← ${t("earlier")}</button><button data-move-swatch="1" ${swatchIndex===palette().colors.length-1 ? "disabled" : ""}>${t("later")} →</button><button id="remove-swatch" ${palette().colors.length<2 ? "disabled" : ""}>${t("removeColor")}</button></div>`);
   document.querySelector("#apply-colour").insertAdjacentHTML("afterend", `<button id="copy-hex">${t("copy")}</button>`);
   const hsl=rgbToHsl(hexToRgb(active.hex));
-  document.querySelector("#lock-swatch").insertAdjacentHTML("beforebegin", `<section class="colour-space-card">${[["hue",hsl.h,360],["saturation",hsl.s*100,100],["lightness",hsl.l*100,100]].map(([key,value,max])=>`<label>${t(key)}<input id="color-${key}" type="number" min="0" max="${max}" step="any" value="${compact(value,2)}" /></label>`).join("")}<button id="apply-hsl" class="wide">${t("apply")} HSL</button></section>`);
+  document.querySelector("#lock-swatch").insertAdjacentHTML("beforebegin", `<section class="colour-space-card hsl-controls"><h3>HSL</h3>${[["hue",hsl.h,360,"H °"],["saturation",hsl.s*100,100,"S %"],["lightness",hsl.l*100,100,"L %"]].map(([key,value,max,label])=>`<label title="${t(key)}" aria-label="${t(key)}">${label}<input id="color-${key}" type="number" min="0" max="${max}" step="any" value="${compact(value,2)}" /></label>`).join("")}<button id="apply-hsl" class="wide">${t("apply")} HSL</button></section>`);
   document.querySelector(".export-grid")?.insertAdjacentHTML("beforeend", `<button data-raster="image/png">PNG</button><button data-raster="image/jpeg">JPEG</button>`);
   const contrastCard=document.querySelector(".contrast-card");
   contrastCard.querySelector("small").textContent=contrastBackground;
@@ -575,8 +589,8 @@ function render() {
   const contrastSuggestion=contrast.aa || (active.opacity ?? 1)<1 ? null : suggestContrast(active.hex,contrastBackground);
   if (contrastSuggestion) contrastCard.insertAdjacentHTML("beforeend", `<button id="apply-contrast" class="wide">${t("improveContrast")} ${contrastSuggestion}</button>`);
   const oklch=oklabToOklch(rgbToOklab(hexToRgb(active.hex)));
-  document.querySelector("#lock-swatch").insertAdjacentHTML("beforebegin", `<section class="colour-space-card"><h3>OKLCH</h3>${[["l",oklch.l,1,t("lightness")],["c",oklch.c,1,t("chroma")],["h",oklch.h,360,t("hue")]].map(([key,value,max,label])=>`<label>${label} (0–${max})<input id="oklch-${key}" type="number" required min="0" max="${max}" step="any" value="${compact(value,4)}" /></label>`).join("")}<button id="apply-oklch" class="wide">${t("apply")} OKLCH</button></section>`);
-  document.querySelector("#oklch-l").closest("label").firstChild.textContent="L (0–1)";
+  document.querySelector("#lock-swatch").insertAdjacentHTML("beforebegin", `<section class="colour-space-card oklch-controls"><h3>OKLCH</h3>${[["l",oklch.l,1,"L"],["c",oklch.c,1,"C"],["h",oklch.h,360,"H"]].map(([key,value,max,label])=>`<label title="${key==="l"?t("lightness"):key==="c"?t("chroma"):t("hue")} (0–${max})" aria-label="${key==="l"?t("lightness"):key==="c"?t("chroma"):t("hue")} (0–${max})">${label}<input id="oklch-${key}" type="number" required min="0" max="${max}" step="any" value="${compact(value,4)}" /></label>`).join("")}<button id="apply-oklch" class="wide">${t("apply")} OKLCH</button></section>`);
+  document.querySelector("#oklch-l").closest("label").firstChild.textContent="L";
   document.querySelector(".palette-panel").insertAdjacentHTML("beforeend", `<div id="palette-versions-menu" class="command-subpanel" hidden><div class="palette-actions"><button id="save-version">${t("saveVersion")}</button><select id="palette-version" aria-label="${t("savedVersions")}">${project.palettes.slice(1).map((item)=>`<option value="${esc(item.id)}">${esc(item.name)}</option>`).join("")}</select><button id="restore-version" ${project.palettes.length<2 ? "disabled" : ""}>${t("restoreVersion")}</button></div></div><div id="palette-compare-menu" class="command-subpanel" hidden><div id="version-comparison"></div></div>`);
 
   document.querySelector("#lock-swatch").insertAdjacentHTML("beforebegin", `<label>${t("opacity")} (%)<input id="swatch-opacity" type="number" required min="0" max="100" step="any" value="${(active.opacity ?? 1)*100}" /></label><button id="apply-opacity" class="wide">${t("setSwatchOpacity")}</button>`);
@@ -588,6 +602,7 @@ function render() {
   document.querySelector(".palette-panel").insertAdjacentHTML("beforeend", `<div class="palette-actions"><label>${t("hueSpacing")}<input id="custom-spacing" type="number" min="-360" max="360" step="any" value="30" /></label><button id="custom-hues">${t("customHues")}</button><button id="perceptual-scale">${t("perceptualScale")}</button></div>`);
   const arrangementEnd=arrangementDuration(sceneCueList);
   document.querySelector(".palette-panel").insertAdjacentHTML("beforeend", `<div class="palette-actions"><label>${t("temperatureStrength")} (%)<input id="temperature-strength" type="number" min="0" max="100" step="1" required value="20"></label><button data-temperature="warm">${t("warmPalette")}</button><button data-temperature="cool">${t("coolPalette")}</button></div>`);
+  document.querySelector(".palette-dock-slot").append(document.querySelector(".palette-panel"));
   document.querySelectorAll("[data-module]").forEach((button)=>{button.querySelector("span").innerHTML=icon(button.dataset.module);});
   document.querySelectorAll("[data-tool]").forEach((button)=>{button.querySelector("span").innerHTML=icon(button.dataset.tool);});
   document.querySelector(".language > span").innerHTML=icon("globe");
@@ -622,7 +637,6 @@ function render() {
   document.querySelectorAll(".cue-timing").forEach((node)=>timingDetails.append(node));
   document.querySelector(".timeline").append(timingDetails);
   if (preferences.view==="palette") document.querySelector(".scene-preview").innerHTML=canvasMarkup(scene().canvasObjects ?? [],preferences.objectId,t("designCanvas"))+`<div class="canvas-actions"><label>${t("shapeKind")} <select id="shape-kind"><option value="rect" ${preferences.shapeKind!=="ellipse" ? "selected" : ""}>${t("rectangle")}</option><option value="ellipse" ${preferences.shapeKind==="ellipse" ? "selected" : ""}>${t("ellipse")}</option></select></label><button id="add-canvas-shape">＋ ${t("shapes")}</button></div>`;
-  document.querySelector(".timeline").insertAdjacentHTML("beforeend", `<details class="fixture-group-editor"><summary>${t("virtualDmx")} · ${t("outputDisabled")}</summary><pre id="virtual-dmx-monitor"></pre></details>`);
   updateDmxFeedback(project.fixtures);
   for (const [index,[key,labelKey,helpKey]] of [["lighting","layersLighting","layerLightingHelp"],["palette","layersPalette","layerPaletteHelp"],["props","layersScene","layerPropsHelp"]].entries()) {
     const item=document.querySelectorAll(".layer-list li")[index],visible=scene().visibility?.[key]!==false;
@@ -1067,18 +1081,15 @@ function bind() {
     document.querySelectorAll("[data-group-member]").forEach((input)=>{input.checked=false;});
     document.querySelector("#group-name").focus();
   };
-  document.querySelector("#save-group").insertAdjacentHTML("afterend", `<button id="new-group">${t("newGroup")}</button>`);
   document.querySelector("#new-group").onclick=clearGroupEditor;
-  document.querySelectorAll("[data-delete-group]").forEach((button)=>{
-    const edit=document.createElement("button");edit.textContent=t("editGroup");
-    edit.onclick=()=>{
-      const group=project.fixtureGroups.find((item)=>item.id===button.dataset.deleteGroup);
+  document.querySelectorAll("[data-edit-group]").forEach((button)=>{
+    button.onclick=()=>{
+      const group=project.fixtureGroups.find((item)=>item.id===button.dataset.editGroup);
       document.querySelector("#save-group").dataset.groupId=group.id;
       document.querySelector("#group-name").value=group.name;
       document.querySelectorAll("[data-group-member]").forEach((input)=>{input.checked=group.fixtureIds.includes(input.value);});
       document.querySelector("#group-name").focus();
     };
-    button.insertAdjacentElement("beforebegin",edit);
   });
   document.querySelectorAll("[data-delete-group]").forEach((button)=>button.onclick=()=>{
     commitProjectChange("fixture-group-delete",(draft)=>{draft.fixtureGroups=(draft.fixtureGroups ?? []).filter((group)=>group.id!==button.dataset.deleteGroup);});render();
@@ -1199,6 +1210,24 @@ function bind() {
     for(const surface of [fixturesSection,fixturesMenu]){surface.addEventListener("pointerenter",clearFixtureLeave);surface.addEventListener("pointerleave",scheduleFixtureLeave);}
     window.addEventListener("resize",placeFixturesMenu,{passive:true});
     document.querySelectorAll("[data-layer-fixture],[data-delete-fixture-row],.fixture-empty-add").forEach(button=>button.addEventListener("click",closeFixtureMenu));
+  }
+  for(const [key,maxWidth] of [["fixture-groups",430],["virtual-dmx",430]]){
+    const trigger=document.querySelector(`#toggle-${key}`),menu=document.querySelector(key==="fixture-groups" ? "#fixture-groups" : "#virtual-dmx-monitor"),section=trigger?.closest("section");
+    if(!trigger||!menu||!section)continue;
+    const place=()=>{
+      if(!menu.matches(":popover-open"))return;
+      const box=trigger.getBoundingClientRect(),width=Math.min(maxWidth,innerWidth-16),height=Math.min(menu.scrollHeight,innerHeight-16);
+      const left=box.right+8+width<=innerWidth-8 ? box.right+8 : Math.max(8,Math.min(box.left,innerWidth-width-8));
+      const top=Math.max(8,Math.min(box.top,innerHeight-height-8));
+      Object.assign(menu.style,{left:`${left}px`,top:`${top}px`,width:`${width}px`,maxHeight:`${height}px`});
+    };
+    let leaveTimer;
+    const clear=()=>clearTimeout(leaveTimer);
+    trigger.onclick=()=>{clear();if(menu.matches(":popover-open"))menu.hidePopover();else{menu.showPopover();place();requestAnimationFrame(place);}};
+    menu.addEventListener("toggle",()=>trigger.setAttribute("aria-expanded",String(menu.matches(":popover-open"))));
+    const leave=()=>{if(!matchMedia("(hover: hover) and (pointer: fine)").matches)return;clear();leaveTimer=setTimeout(()=>{if(!section.matches(":hover")&&!menu.matches(":hover"))menu.hidePopover();},180);};
+    for(const surface of [section,menu]){surface.addEventListener("pointerenter",clear);surface.addEventListener("pointerleave",leave);}
+    window.addEventListener("resize",place,{passive:true});
   }
   document.querySelector("#new-project").onclick=createNewProject;
   document.querySelector("#undo").onclick = undo; document.querySelector("#redo").onclick = redo;
