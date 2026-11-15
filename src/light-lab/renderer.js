@@ -12,6 +12,30 @@ const fragmentSource = `precision mediump float;varying vec3 v;uniform float opa
 function compile(gl, type, source) { const value = gl.createShader(type); gl.shaderSource(value, source); gl.compileShader(value); if (!gl.getShaderParameter(value, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(value)); return value; }
 function quad(target, a, b, c, d, colour) { for (const point of [a,b,c,a,c,d]) target.push(...point, ...colour); }
 function box(target, x, y, z, w, h, d, colour) { const X=x+w,Y=y+h,Z=z+d, shade=colour.map((value)=>value*.55),mid=colour.map((value)=>value*.78); quad(target,[x,y,z],[X,y,z],[X,Y,z],[x,Y,z],colour);quad(target,[X,y,Z],[x,y,Z],[x,Y,Z],[X,Y,Z],shade);quad(target,[x,y,Z],[X,y,Z],[X,y,z],[x,y,z],mid);quad(target,[x,Y,z],[X,Y,z],[X,Y,Z],[x,Y,Z],colour);quad(target,[x,y,Z],[x,y,z],[x,Y,z],[x,Y,Z],shade);quad(target,[X,y,z],[X,y,Z],[X,Y,Z],[X,Y,z],mid); }
+function garageWheel(target,x,y,z,radius,width){
+  const tire=[.055,.065,.075],side=tire.map(value=>value*.72),hub=[.48,.56,.61],inner=radius*.52,segments=16;
+  const point=(axial,r,angle)=>[x+axial,y+Math.cos(angle)*r,z+Math.sin(angle)*r];
+  const triangle=(a,b,c,colour)=>target.push(...a,...colour,...b,...colour,...c,...colour);
+  for(let index=0;index<segments;index++){
+    const a=index*Math.PI*2/segments,b=(index+1)*Math.PI*2/segments;
+    quad(target,point(-width/2,radius,a),point(width/2,radius,a),point(width/2,radius,b),point(-width/2,radius,b),index%2?tire:side);
+    for(const axial of [-width/2,width/2]){
+      const outerA=point(axial,radius,a),outerB=point(axial,radius,b),innerA=point(axial,inner,a),innerB=point(axial,inner,b),centre=[x+axial,y,z];
+      quad(target,outerA,outerB,innerB,innerA,side);
+      triangle(centre,innerA,innerB,index%2?hub:hub.map(value=>value*.8));
+    }
+  }
+}
+function garageFrontWheel(target,x,y,z,radius){
+  const tire=[.045,.052,.061],rim=[.43,.51,.56],inner=radius*.56,segments=20,centre=[x,y,z+.008];
+  const point=(r,angle)=>[x+Math.cos(angle)*r,y+Math.sin(angle)*r,z];
+  const triangle=(a,b,c,colour)=>target.push(...a,...colour,...b,...colour,...c,...colour);
+  for(let index=0;index<segments;index++){
+    const a=index*Math.PI*2/segments,b=(index+1)*Math.PI*2/segments;
+    quad(target,point(radius,a),point(radius,b),point(inner,b),point(inner,a),index%2?tire:tire.map(value=>value*.78));
+    triangle(centre,point(inner,a),point(inner,b),index%2?rim:rim.map(value=>value*.8));
+  }
+}
 function scaleGeometryPositions(data,start,end,scale) {
   for(let offset=start;offset<end;offset+=6){data[offset]*=scale;data[offset+1]*=scale;data[offset+2]*=scale;}
 }
@@ -399,11 +423,33 @@ function roomPresetFurniture(data,type,accent){
     box(data,1.7,.88,2.25,1.7,.12,.72,hexVector("#E8ECEA"));box(data,2.18,.98,2.48,.46,.08,.34,hexVector("#B6D8DC"));box(data,1.95,0,-1.4,1.15,.8,.55,soft);
     box(data,-3.8,0,2.7,.08,2.5,.12,metal);box(data,-.2,0,2.7,.08,2.5,.12,metal);
   } else if(type==="garage"){
-    for(const x of [-4.1,3]){for(const y of [.65,1.35,2.05])box(data,x,y,2.8,1.1,.08,.65,timber);for(let j=0;j<4;j++)box(data,x+.12+j*.22,.75,2.86,.14,.48,.24,bookColours[j%4]);}
-    box(data,-4,.8,-2.5,2.1,.12,.8,timber);for(const x of [-3.8,-2.2])box(data,x,.05,-2.35,.1,.75,.1,metal);
-    box(data,-1.6,.35,-.65,3.3,.58,2.4,hexVector("#566D7C"));box(data,-1.05,.93,-.4,2.2,.62,1.85,soft);
-    for(const x of [-1.05,1.05])for(const z of [-.35,1.15])box(data,x,.12,z,.35,.55,.18,metal);
-    box(data,-.4,1.2,-.2,.9,.09,.28,hexVector("#9AB4BF"));
+    const door=hexVector("#AAB5BE"),doorShadow=hexVector("#62717E"),cabinet=hexVector("#456477"),toolRed=hexVector("#C65C45");
+    // Sectional vehicle door and its horizontal joints on the back wall.
+    box(data,-4.15,.18,2.98,5.35,2.45,.1,door);
+    box(data,-4.25,.12,2.91,.11,2.6,.16,metal);box(data,1.25,.12,2.91,.11,2.6,.16,metal);box(data,-4.25,2.66,2.91,5.61,.12,.16,metal);
+    for(let y=.58;y<2.62;y+=.39)box(data,-4.08,y,2.86,5.18,.035,.08,doorShadow);
+    for(const x of [-3.65,-2.6,-1.55,-.5,.55])box(data,x,.34,2.8,.58,.16,.035,hexVector("#D8DEE1"));
+    // Wall-mounted storage, labeled bins, and a compact workbench.
+    box(data,2.35,.16,2.45,.22,2.35,.5,metal);box(data,4.15,.16,2.45,.22,2.35,.5,metal);
+    for(const y of [.42,1.18,1.94,2.55])box(data,2.35,y,2.42,2.02,.09,.56,timber);
+    for(const x of [2.52,3.18,3.84]){box(data,x,.53,2.48,.52,.5,.44,cabinet);box(data,x,.78,2.42,.52,.045,.12,doorShadow);box(data,x,1.3,2.48,.52,.24,.44,bookColours[Math.round(x*10)%bookColours.length]);}
+    for(const x of [2.55,3.25,3.95])box(data,x,2.03,2.48,.55,.42,.44,hexVector("#B48B52"));
+    box(data,2.65,.88,1.48,1.68,.11,.68,timber);
+    for(const x of [2.75,4.15])box(data,x,.08,1.52,.09,.8,.09,metal);
+    box(data,2.72,1.08,2.06,1.55,1.05,.08,hexVector("#846B54"));
+    for(const x of [2.95,3.42,3.88])box(data,x,1.32,1.98,.12,.32,.08,toolRed);
+    box(data,3.02,.99,1.54,.48,.13,.38,toolRed);box(data,3.67,1.01,1.58,.3,.16,.29,metal);
+    // A low-profile car body with cabin glazing, lights, mirrors and four tires.
+    const body=hexVector("#536F82"),glass=hexVector("#A7C7D7"),lamp=hexVector("#F2D79A");
+    box(data,-1.05,.34,-2.18,2.1,.5,2.88,body);
+    box(data,-.82,.84,-1.75,1.64,.63,1.42,soft);
+    box(data,-.68,1.04,-1.83,1.36,.36,.06,glass);
+    box(data,-.68,1.04,-.28,1.36,.34,.06,glass);
+    for(const x of [-.85,.77])box(data,x,.99,-1.46,.08,.34,.94,glass);
+    for(const z of [-2.15,.48])for(const x of [-.75,.47])box(data,x,.58,z,.28,.13,.055,hexVector("#354653"));
+    for(const x of [-.84,.61]){box(data,x,.58,-2.2,.22,.16,.06,lamp);garageWheel(data,x,.38,-1.62,.36,.2);garageWheel(data,x,.38,-.03,.36,.2);}
+    garageFrontWheel(data,-.75,.36,-2.245,.31);garageFrontWheel(data,.75,.36,-2.245,.31);
+    box(data,-.96,.48,.62,.18,.12,.08,hexVector("#C65C45"));box(data,.78,.48,.62,.18,.12,.08,hexVector("#C65C45"));
   } else if(type==="hallway"){
     box(data,-4.2,0,2.7,1.5,2.5,.12,darkWood);box(data,-4,0,2.56,1.15,2.25,.06,timber);
     box(data,.6,.8,2.45,3,.12,.62,timber);for(const x of [.8,3])box(data,x,.05,2.5,.08,.75,.08,metal);
