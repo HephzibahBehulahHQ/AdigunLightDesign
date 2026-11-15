@@ -649,7 +649,7 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
   const studioPropsScale=Math.min(studioPropsScaleX,studioPropsScaleZ,(height-.05)/2.8);
   const wetRoom=roomType==="bathroom"||roomType==="toilet";
   const roomPropsScaleX=wetRoom?studioPropsScaleX:studioPropsScale,roomPropsScaleZ=wetRoom?studioPropsScaleZ:studioPropsScale;
-  const roomPropsScaleY=roomType==="toilet"?Math.min(1,(height-.05)\/3.24):(roomType==="kitchen"||roomType==="bathroom")?Math.min(1,(height-.05)\/2.5):studioPropsScale;
+  const roomPropsScaleY=roomType==="toilet"?Math.min(1,(height-.05)/3.24):(roomType==="kitchen"||roomType==="bathroom")?Math.min(1,(height-.05)/2.5):studioPropsScale;
   const tileFloor=["kitchen","bathroom","toilet","swimming-pool"].includes(roomType);
   const floorBoardColour=(column,row)=>{
     if(tileFloor){
