@@ -18,7 +18,7 @@ import { normalizeCameraState,roomFitCameraDistance } from "./light-lab/math.js"
 import { lightLabFixtureState,lightLabRendererConfig,shouldReuseLightLabRenderer } from "./light-lab/renderer-lifecycle.js";
 import { fixturePlacementMarkup } from "./light-lab/fixture-placement.js";
 import { blackout, createFixture, dmxFrame, fixtureProfiles, getFixtureProfile, patchFixture, updateFixture } from "./dmx/engine.js";
-import { createCue, duplicateCue, removeCue, editCue, evaluateCue, evaluateSequence, moveCue } from "./timeline/engine.js";
+import { createCue, duplicateCue, removeCue, editCue, evaluateCue, moveCue } from "./timeline/engine.js";
 import { evaluateEffect } from "./timeline/effects.js";
 import { createPlaybackClock, playbackPosition } from "./timeline/playback-clock.js";
 import { timelineLayout } from "./timeline/layout.js";
@@ -113,10 +113,10 @@ function applyPaletteToVirtualFixtures() { const rgb=hexToRgb(selected().hex),id
 function createCueSnapshot() {
   try {
     const timing={};
-    for (const key of ["duration","fade","delay","fadeOut"]) {
+    for (const [key,fallback] of [["duration",5],["fade",1],["delay",0],["fadeOut",0]]) {
       const input=document.querySelector(`#cue-${key}`);
-      if (!input.value.trim() || !input.checkValidity()) throw new Error(`${t(key)}: enter a valid value.`);
-      timing[key]=Number(input.value);
+      if (input && (!input.value.trim() || !input.checkValidity())) throw new Error(`${t(key)}: enter a valid value.`);
+      timing[key]=input ? Number(input.value) : fallback;
     }
     let cue;
     const groupId=document.querySelector("#cue-group").value;
@@ -152,7 +152,9 @@ function togglePlaybackPause() {
   if (playbackClock.paused) playbackClock.resume(performance.now());
   else playbackClock.pause(performance.now());
   const button=document.querySelector("#pause-playback");
-  button.textContent=t(playbackClock.paused ? "resumePlayback" : "pausePlayback");
+  button.textContent=playbackClock.paused ? "▶" : "Ⅱ";
+  button.title=t(playbackClock.paused ? "resumePlayback" : "pausePlayback");
+  button.setAttribute("aria-label",button.title);
   button.setAttribute("aria-pressed",String(playbackClock.paused));
 }
 function playEffect() {
@@ -169,28 +171,6 @@ function playEffect() {
   playbackTimer=setInterval(()=>{
     previewFixtures(evaluateEffect(source,settings,playbackClock.elapsed(performance.now())));
     document.querySelector("#status").textContent=`${t("virtualEffect")} · ${t(settings.type)}`;
-  },100);
-  render();
-}
-function playSequence({seek=0,paused=false}={}) {
-  const sceneCueList=sceneCues();if (!sceneCueList.length) return;
-  stopPlayback();
-  const source=structuredClone(sceneFixtures()),cues=structuredClone(sceneCueList);
-  playbackClock=createPlaybackClock(performance.now());
-  playbackClock.seek(seek,performance.now());
-  if (paused) playbackClock.pause(performance.now());
-  const duration=cues.reduce((sum,cue)=>sum+cue.duration,0);
-  preferences.view="light";
-  playbackTimer=setInterval(()=>{
-    const position=playbackPosition(playbackClock.elapsed(performance.now()),duration,Boolean(preferences.loopSequence));
-    const frame=evaluateSequence(source,cues,position.time);
-    previewFixtures(frame.fixtures);
-    const scrub=document.querySelector("#sequence-seek");
-    if (scrub && document.activeElement!==scrub) scrub.value=String(position.time);
-    document.querySelector("#sequence-position").textContent=`${position.time.toFixed(1)} / ${duration.toFixed(1)} s`;
-    document.querySelector("#arrangement-playhead").style.left=`${position.time/Math.max(30,arrangementDuration(sceneCues()))*100}%`;
-    document.querySelector("#status").textContent=`${t("playSequence")} · ${Math.min(frame.index + 1,cues.length)}/${cues.length}`;
-    if (position.complete && !playbackClock.paused) { stopPlayback(); render(); }
   },100);
   render();
 }
@@ -222,8 +202,6 @@ function playArrangement({seek=0,paused=false}={}) {
     previewFixtures(evaluateTracks(source,cues,position.time));
     document.querySelector("#arrangement-playhead").style.left=`${position.time/Math.max(30,duration)*100}%`;
     document.querySelector(".arrangement-timeline .timeline-ruler").setAttribute("aria-valuenow",String(position.time));
-    const slider=document.querySelector("#arrangement-seek");
-    if (document.activeElement!==slider) slider.value=String(position.time);
     document.querySelector("#arrangement-position").textContent=`${position.time.toFixed(1)} / ${duration.toFixed(1)} s`;
     document.querySelector("#status").textContent=`${t("playTracks")} · ${position.time.toFixed(1)} s`;
     if (position.complete && !playbackClock.paused) {stopPlayback();render();}
@@ -461,7 +439,7 @@ function render() {
     stage:`<fieldset class="scene-menu-fields" data-menu-keep-open><legend>${t("stagePlatform")}</legend><label class="scene-menu-check"><input id="stage-enabled" type="checkbox" ${stage.enabled ? "checked" : ""}> ${t("showStage")}</label>${["x","y","z","width","height","depth"].map((key)=>`<label>${["x","y","z"].includes(key) ? key.toUpperCase() : t(key)} (m)<input id="stage-${key}" type="number" step="any" required value="${stage[key]}"></label>`).join("")}<label class="scene-menu-colour">${t("selectedColour")}<input id="stage-color" type="color" value="${stage.color}"></label></fieldset><button type="button" id="apply-stage">${t("applyStageSettings")}</button>`,
     room:`<fieldset class="scene-menu-fields" data-menu-keep-open><legend>${t("roomDimensions")}</legend><p class="room-type-label">${t("roomType")}: ${esc(roomName)}</p>${["width","height","depth"].map((key)=>`<label>${t(key)} (m)<input id="room-${key}" type="number" required min="2" max="${key==="height" ? 20 : 50}" step="any" value="${room[key]}"></label>`).join("")}<label class="scene-menu-colour">${t("ambientFill")}<input id="room-ambience-color" type="color" value="${ambience.color}"></label><label class="scene-menu-range">${t("ambientLevel")} · ${Math.round(ambience.intensity*100)}%<input id="room-ambience-level" type="range" min="0" max="100" step="1" value="${Math.round(ambience.intensity*100)}"></label></fieldset><button type="button" id="apply-room">${t("applyRoomDimensions")}</button>`,
     palette:`<button type="button" data-menu-keep-open id="open-versions" aria-expanded="false">${t("versions")}</button><button type="button" data-menu-keep-open id="open-compare" aria-expanded="false">${t("compare")}</button>`,
-    fixtures:"",
+    fixtures:`<button type="button" id="add-fixture">＋ ${t("addWash")}</button><button type="button" id="apply-fixture-colour">${t("applySwatchToFixtures")}</button>`,
     export:`<button data-export="project">Project JSON</button><button data-export="palette">Palette JSON</button><button data-export="css">CSS variables</button><button data-export="ase" title="${t("aseExportLimit")}">${t("aseExport")}</button><button data-export="patch">Patch CSV</button><button data-export="cues">Cue CSV</button>`
   };
   const commandMenusMarkup=`<div class="command-menu-system" aria-label="${t("tools")}">${Object.entries(commandGroups).map(([key,label])=>`<div class="command-menu" data-command-menu="${key}"><button type="button" class="command-menu-trigger" data-command-menu-trigger="${key}" aria-haspopup="dialog" aria-expanded="false" aria-controls="command-menu-panel-${key}">${label} <span aria-hidden="true">⌄</span></button><div id="command-menu-panel-${key}" class="command-group command-menu-panel" data-command-group="${key}" popover="auto" role="dialog" aria-label="${label}"><span>${label}</span>${commandMenuContent[key]}</div></div>`).join("")}</div>`;
@@ -495,7 +473,7 @@ function render() {
         <div class="workspace-tabs panel"><strong class="studio-panel-title">${preferences.view === "light" ? `${t("sceneHeader")} ${String(displayedSceneNumber).padStart(2,"0")} / ${scene().id === "studio-room" ? t("mockupRoomTitle") : esc(scene().name)}` : `2D ${t("palette")} / ${esc(project.name)}`}</strong><small class="studio-panel-title-meta">${preferences.view === "light" ? t("viewportFixedHint") : t("palette")}</small><span></span><button id="viewport-projection" class="view-menu" ${preferences.view === "light" ? "" : disabled(t("select3d"))}>${t("perspective")}⌄</button></div>
         ${preferences.view === "light" ? `<div class="scene-preview light-canvas panel"><div class="scene-title"><b>${esc(project.name)} • ${t("rgbwPreview")}</b><small>${t("sceneView")} • ${t("rgbwPreviewSubtitle")}</small></div><canvas id="light-canvas" tabindex="0" aria-label="${t("previewLabel")}"></canvas><div class="canvas-actions"><button id="apply-scene">${t("paintSurface")}</button></div></div>` : `<div class="scene-preview panel" role="img" aria-label="${t("scenePreview")}"><div class="scene-title"><b>${t("scenePreview")}</b><small>${t("sceneNote")}</small></div><div class="beam beam-blue"></div><div class="beam beam-amber"></div><div class="beam beam-magenta"></div><div class="stage-truss"></div><div class="scene-wall"><div class="art-frame"></div><div class="couch"></div><div class="plant plant-left"></div><div class="plant plant-right"></div><div class="lamp"></div></div><div class="axis"><i>X</i><b>Y</b><em>Z</em></div></div>`}
         <div class="lower-workspace"><section class="palette-panel panel"><div class="section-title"><h2>◉ ${t("activePalette")} — ${esc(palette().name)}</h2></div><div class="swatches">${swatches}</div><div class="palette-actions"><input id="seed" value="${preferences.seed}" aria-label="Seed colour" maxlength="7" /><label class="harmony-command"><span>◇ ${t("harmonies")}</span><select id="harmony" aria-label="${t("harmony")}">${["analogous","complementary","splitComplementary","triadic","tetradic","square","monochromatic"].map((type) => `<option value="${type}" ${type === preferences.harmony ? "selected" : ""}>${type}</option>`).join("")}</select></label><button id="reroll">⟳ ${t("reroll")}</button><button id="add-colour">＋ ${t("add")}</button></div></section>
-          <section class="timeline panel" tabindex="-1"><div class="section-title"><h2>◌ ${t("timeline")}</h2></div><p>${activeFixtures.length ? `${t("universe")} 1 · ${patchedFixtures.length}/${activeFixtures.length} ${t("fixturesPatched")} · 1–${Math.max(0,...patchedFixtures.map((fixture)=>fixture.patchAssignment.startAddress+fixture.patchAssignment.channelFootprint-1))} ${t("activeChannels")}.` : t("noFixtures")}</p><div class="dmx-actions"><button id="add-fixture">＋ ${t("addWash")}</button><button id="apply-fixture-colour" ${activeFixtures.length ? "" : "disabled"}>${t("applySwatchToFixtures")}</button><button id="create-cue" ${activeFixtures.length ? "" : "disabled"}>＋ ${t("captureCue")}</button><button id="play-cue" ${sceneCueList.length ? "" : "disabled"}>▶ ${t("previewSelectedCue")}</button><button id="stop-cue" ${playbackTimer ? "" : "disabled"}>■ ${t("stop")}</button><span>CH 1: ${virtualFrame[0]} · ${t("outputDisabled")}</span></div><div class="cue-track" aria-label="${t("timeline")}">${cueBlocks}</div></section></div>
+          <section class="timeline panel" tabindex="-1"><div class="section-title"><h2>◌ ${t("timeline")}</h2></div><p class="timeline-status">${activeFixtures.length ? `${t("universe")} 1 · ${patchedFixtures.length}/${activeFixtures.length} ${t("fixturesPatched")} · 1–${Math.max(0,...patchedFixtures.map((fixture)=>fixture.patchAssignment.startAddress+fixture.patchAssignment.channelFootprint-1))} ${t("activeChannels")}.` : t("noFixtures")}</p><div class="dmx-actions"><button id="create-cue" ${activeFixtures.length ? "" : "disabled"}>＋ ${t("captureCue")}</button><button id="play-cue" ${sceneCueList.length ? "" : "disabled"}>▶ ${t("previewSelectedCue")}</button><button id="stop-cue" ${playbackTimer ? "" : "disabled"}>■ ${t("stop")}</button><span>CH 1: ${virtualFrame[0]} · ${t("outputDisabled")}</span></div><div class="cue-track" aria-label="${t("timeline")}">${cueBlocks}</div></section></div>
       </section>
       <aside class="inspector panel"><div class="section-title"><h2>◈ ${t("inspector")}</h2></div><div class="inspector-tabs"></div><div class="selected-preview" style="--selected:${active.hex}"></div><label>${t("colourName")}<input id="swatch-name" value="${esc(active.name)}" /></label><label>${t("hex")}<div class="input-row"><input id="swatch-hex" value="${active.hex}" spellcheck="false" /><button id="apply-colour">${t("applySwatchColour")}</button></div></label><button id="lock-swatch" class="wide">${active.locked ? "⌁ " + t("unlock") : "⌁ " + t("lock")}</button><section class="contrast-card"><h3>${t("contrast")}</h3><b>${contrast.ratio.toFixed(2)} : 1</b><span class="${contrast.aa ? "pass" : "fail"}">AA ${contrast.aa ? "pass" : "review"}</span><small>Against Midnight Navy #0B1220</small></section></aside>
       <aside class="lux-panel panel ${preferences.luxOpen ? "" : "is-collapsed"}"><div class="lux-heading"><div><span class="lux-icon">✦</span><h2>${t("luxTitle")} ✨</h2></div><button id="toggle-lux" class="subtle" aria-label="${preferences.luxOpen ? t("closePanel") : t("openLux")}">${preferences.luxOpen ? "×" : "✦"}</button></div>${preferences.luxOpen ? `<p class="lux-subtitle">${t("luxSubtitle")}</p><div class="lux-message"><b>${t("luxBrand")} · ${t("offline")}</b><p>${t("luxUnavailable")}</p><ul><li>${t("luxLocal")}</li><li>${t("luxNoUpload")}</li></ul></div><form id="lux-form" class="lux-input"><input id="lux-question" placeholder="${t("askLux")}" aria-label="${t("askLux")}" /><button aria-label="${t("sendLux")}">➤</button></form>` : ""}</aside>
@@ -503,28 +481,27 @@ function render() {
     <footer class="studio-footer"><span class="footer-ready"><i aria-hidden="true">●</i> ${t("ready").toUpperCase()} · ${esc(project.name)} / ${t("sceneHeader")} ${String(displayedSceneNumber).padStart(2,"0")} · 3D / ${t("virtualDmx")} · ${t(projectPersisted ? "projectSavedShort" : "sessionOnly")}</span><span id="status" role="status" aria-live="polite">${status || t("footerControls")}</span><span class="footer-shortcuts">${t("keyboardShortcuts")}</span></footer>`;
   if(reuseRenderer)document.querySelector("#light-canvas")?.replaceWith(previousCanvas);
   const commandMenus=document.querySelector(".command-menu-system");
-  for(const [group,ids] of [["history",["undo","redo"]],["fixtures",["add-fixture","apply-fixture-colour"]]]){
+  for(const [group,ids] of [["history",["undo","redo"]]]){
     const host=commandMenus.querySelector(`[data-command-group="${group}"]`);
     for(const id of ids){const control=document.getElementById(id);if(control){host.append(control);control.classList.add("command-menu-item");}}
   }
   document.querySelector(".contrast-card").insertAdjacentHTML("beforebegin", colourSpaces);
   if (activeFixtures.length) document.querySelector(".selected-preview").insertAdjacentHTML("afterend", fixtureInspectorMarkup());
   if (preferences.module === "library") { const drawer=document.createElement("section"); drawer.className="library-drawer panel"; drawer.setAttribute("aria-label",t("library")); drawer.innerHTML=`<div class="section-title"><h2>▱ ${t("library")}</h2><button id="close-library" class="subtle" aria-label="${t("close")}">×</button></div><p>${t("virtualLibraryNote")}</p><div class="fixture-library">${fixtureLibraryMarkup()}</div>`; app.insertBefore(drawer,app.querySelector("footer")); }
-  document.querySelector(".cue-track").insertAdjacentHTML("beforebegin", `<div class="cue-timing">${["duration","fade","delay"].map((key)=>`<label>${t(key)} (s)<input id="cue-${key}" type="number" required min="${key === "duration" ? ".1" : "0"}" step=".1" value="${key === "duration" ? "5" : key === "fade" ? "1" : "0"}" /></label>`).join("")}</div>`);
+  if (!activeCue) document.querySelector(".cue-track").insertAdjacentHTML("beforebegin", `<div class="cue-timing">${["duration","fade","delay"].map((key)=>`<label>${t(key)} (s)<input id="cue-${key}" type="number" required min="${key === "duration" ? ".1" : "0"}" step=".1" value="${key === "duration" ? "5" : key === "fade" ? "1" : "0"}" /></label>`).join("")}</div>`);
   if (activeCue) document.querySelector(".cue-track").insertAdjacentHTML("beforebegin", `<div class="cue-timing"><label>${t("timeline")}<input id="edit-cue-name" value="${esc(activeCue.name)}" /></label>${["duration","fade","delay"].map((key)=>`<label>${t(key)} (s)<input id="edit-cue-${key}" type="number" required min="0" step=".1" value="${activeCue[key] ?? 0}" /></label>`).join("")}<button id="edit-cue">${t("saveCueTiming")}</button></div>`);
   document.querySelector(".dmx-actions").insertAdjacentHTML("beforeend", `<button id="blackout" ${activeFixtures.length ? "" : "disabled"}>${t("blackout")}</button>`);
-  document.querySelector(".dmx-actions").insertAdjacentHTML("beforeend", `<button id="play-sequence" ${sceneCueList.length ? "" : "disabled"}>▶ ${t("playCueList")}</button>`);
   const blackoutCommand=document.querySelector("#blackout"),fixtureCommandGroup=commandMenus.querySelector('[data-command-group="fixtures"]');
   if(blackoutCommand&&fixtureCommandGroup){fixtureCommandGroup.append(blackoutCommand);blackoutCommand.classList.add("command-menu-item");}
   document.querySelector("#stop-cue").insertAdjacentHTML("beforebegin", `<button id="pause-playback" aria-pressed="${Boolean(playbackClock?.paused)}" ${playbackTimer ? "" : "disabled"}>${t(playbackClock?.paused ? "resumePlayback" : "pausePlayback")}</button>`);
-  const sequenceDuration=sceneCueList.reduce((sum,cue)=>sum+cue.duration,0);
   const tracks=arrangeTracks(sceneCueList);
   const sequenceTrack=document.querySelector(".timeline > .cue-track");
   document.querySelector(".timeline > .section-title").insertAdjacentHTML("afterend",arrangementTimelineMarkup(sceneCueList,activeCue?.id,t("noCues")));
   sequenceTrack.remove();
   document.querySelector("#stop-cue").insertAdjacentHTML("beforebegin",`<button id="play-tracks" ${sceneCueList.length ? "" : "disabled"}>▶ ${t("playTracks")}</button>`);
   document.querySelector("#create-cue").insertAdjacentHTML("beforebegin", `<label>${t("captureGroup")} <select id="cue-group"><option value="">${t("allFixtures")}</option>${(project.fixtureGroups ?? []).map((group)=>`<option value="${esc(group.id)}">${esc(group.name)}</option>`).join("")}</select></label>`);
-  document.querySelector(".timeline").insertAdjacentHTML("beforeend", `<div class="dmx-actions"><label><input id="sequence-loop" type="checkbox" ${preferences.loopSequence ? "checked" : ""}> ${t("loopSequence")}</label><label>${t("seekSequence")} <input id="sequence-seek" type="range" min="0" max="${sequenceDuration}" step="0.1" value="0" ${sequenceDuration ? "" : "disabled"}></label><output id="sequence-position">0 / ${sequenceDuration.toFixed(1)} s</output></div>`);
+  document.querySelector(".timeline > .dmx-actions").prepend(document.querySelector(".timeline-status"));
+  document.querySelector(".timeline").insertAdjacentHTML("beforeend", `<label class="timeline-loop" title="${t("loopSequence")}" aria-label="${t("loopSequence")}"><input id="sequence-loop" type="checkbox" ${preferences.loopSequence ? "checked" : ""}> ↻</label>`);
   document.querySelector(".timeline").insertAdjacentHTML("beforeend", `<div class="dmx-actions"><label>${t("virtualEffect")} <select id="effect-type"><option value="pulse">${t("pulse")}</option><option value="chase">${t("chase")}</option></select></label><label>${t("effectPeriod")} <input id="effect-period" type="number" min="0.1" max="120" step="0.1" value="2"></label><button id="play-effect" class="inspector-icon-action" type="button" aria-label="${t("previewEffect")}" title="${t("previewEffect")}" ${activeFixtures.length ? "" : "disabled"}>▶</button></div>`);
   if (activeCue) {
     const index=sceneCueList.indexOf(activeCue);
@@ -623,23 +600,24 @@ function render() {
   projectionButton.setAttribute("aria-pressed",String(preferences.projection==="orthographic"));
   projectionButton.title=`${projectionName} · ${t("switchProjection")} ${nextProjectionName}`;
   document.querySelector("#effect-type").insertAdjacentHTML("beforeend", `<option value="panTilt">${t("panTilt")}</option>`);
-  document.querySelector("#play-tracks").insertAdjacentHTML("afterend", `<label title="${t("seekTracks")}" aria-label="${t("seekTracks")}">↔ <input id="arrangement-seek" type="range" min="0" max="${arrangementEnd}" step="0.1" value="0" ${arrangementEnd ? "" : "disabled"}></label><output id="arrangement-position">0 / ${arrangementEnd.toFixed(1)} s</output>`);
+  document.querySelector(".timeline > .dmx-actions").insertAdjacentHTML("beforeend", `<output id="arrangement-position">0 / ${arrangementEnd.toFixed(1)} s</output>`);
   const timelineTransport=document.createElement("div");
   timelineTransport.className="timeline-transport";
   const loopInput=document.querySelector("#sequence-loop"),loopLabel=loopInput?.closest("label");
-  timelineTransport.append(document.querySelector("#create-cue"),document.querySelector("#play-tracks"),document.querySelector("#pause-playback"),document.querySelector("#stop-cue"),loopLabel,document.querySelector("#play-cue"),document.querySelector("#arrangement-position"));
+  timelineTransport.append(document.querySelector("#create-cue"),document.querySelector("#play-tracks"),document.querySelector("#pause-playback"),document.querySelector("#stop-cue"),loopLabel,document.querySelector("#play-cue"));
   const timelineIcons=[["#create-cue","＋","captureCue"],["#play-tracks","▶","playTracks"],["#pause-playback",playbackClock?.paused ? "▶" : "Ⅱ",playbackClock?.paused ? "resumePlayback" : "pausePlayback"],["#stop-cue","■","stop"],["#play-cue","▷","previewSelectedCue"]];
-  for(const [selector,glyph,label] of timelineIcons){const button=document.querySelector(selector);if(button){button.textContent=glyph;button.title=t(label);button.setAttribute("aria-label",t(label));}}
+  for(const [selector,glyph,label] of timelineIcons){const button=timelineTransport.querySelector(selector);if(button){button.textContent=glyph;button.title=t(label);button.setAttribute("aria-label",t(label));}}
   if(loopLabel){loopLabel.title=t("loopSequence");loopLabel.setAttribute("aria-label",t("loopSequence"));}
   document.querySelector(".timeline > .section-title").append(timelineTransport);
   const timelineBadge=document.querySelector(".timeline > .section-title .m-badge");if(timelineBadge)document.querySelector(".timeline > p").append(" ",timelineBadge);
-  const timingDetails=document.createElement("details");
-  document.querySelector("#cue-delay").parentElement.insertAdjacentHTML("afterend", `<label>${t("fadeOut")} (s)<input id="cue-fadeOut" type="number" min="0" step="0.1" required value="0"></label>`);
+  const timingDetails=document.createElement("section");
+  if(!activeCue)document.querySelector("#cue-delay").parentElement.insertAdjacentHTML("afterend", `<label>${t("fadeOut")} (s)<input id="cue-fadeOut" type="number" min="0" step="0.1" required value="0"></label>`);
   if (activeCue) document.querySelector("#edit-cue-delay").parentElement.insertAdjacentHTML("afterend", `<label>${t("fadeOut")} (s)<input id="edit-cue-fadeOut" type="number" min="0" step="0.1" required value="${activeCue.fadeOut ?? 0}"></label><small>${t("holdTime")}: ${Math.max(0,activeCue.duration-(activeCue.delay ?? 0)-activeCue.fade-(activeCue.fadeOut ?? 0)).toFixed(1)} s</small>`);
-  timingDetails.className="fixture-group-editor";
-  const timingSummary=document.createElement("summary");
+  timingDetails.className="fixture-group-editor cue-editor";
+  const timingSummary=document.createElement("h3");
   timingSummary.textContent=t("cueSettings");timingDetails.append(timingSummary);
-  document.querySelectorAll(".cue-timing").forEach((node)=>timingDetails.append(node));
+  const cueEditorFields=document.createElement("div");cueEditorFields.className="cue-editor-fields";timingDetails.append(cueEditorFields);
+  document.querySelectorAll(".cue-timing").forEach((node)=>cueEditorFields.append(node));
   document.querySelector(".timeline").append(timingDetails);
   if (preferences.view==="palette") document.querySelector(".scene-preview").innerHTML=canvasMarkup(scene().canvasObjects ?? [],preferences.objectId,t("designCanvas"))+`<div class="canvas-actions"><label>${t("shapeKind")} <select id="shape-kind"><option value="rect" ${preferences.shapeKind!=="ellipse" ? "selected" : ""}>${t("rectangle")}</option><option value="ellipse" ${preferences.shapeKind==="ellipse" ? "selected" : ""}>${t("ellipse")}</option></select></label><button id="add-canvas-shape">＋ ${t("shapes")}</button></div>`;
   updateDmxFeedback(project.fixtures);
@@ -655,6 +633,9 @@ function render() {
     const channels=activeCue.targets.flatMap((target)=>Object.keys(target.properties).map((property)=>({fixtureId:target.fixtureId,property})));
     timingDetails.insertAdjacentHTML("beforeend", `<fieldset><legend>${t("channelKeyframes")}</legend><label>${t("channel")}<select id="keyframe-channel">${channels.map((channel)=>`<option value="${esc(JSON.stringify(channel))}">${esc(project.fixtures.find((fixture)=>fixture.id===channel.fixtureId)?.name ?? channel.fixtureId)} · ${esc(channel.property)}</option>`).join("")}</select></label><label>${t("startTime")}<input id="keyframe-time" type="number" min="0" max="${activeCue.duration}" step="0.1" value="0" required></label><label>${t("channelValue")}<input id="keyframe-value" type="number" min="0" max="255" step="1" value="127" required></label><button id="save-keyframe" ${channels.length ? "" : "disabled"}>${t("saveKeyframe")}</button>${(activeCue.channelKeyframes ?? []).map((frame,index)=>`<p>${esc(frame.fixtureId)} · ${esc(frame.property)} · ${frame.time}s → ${frame.value} <button data-remove-keyframe="${index}" aria-label="${t("removeKeyframe")}">×</button></p>`).join("")}</fieldset>`);
   }
+  const cueEditorIcons=[["#edit-cue","✓","saveCueTiming"],["#schedule-cue","↥","scheduleCue"],["#duplicate-cue","⧉","duplicateCue"],["#delete-cue","×","deleteCue"],["#save-keyframe","＋","saveKeyframe"]];
+  for(const [selector,glyph,label] of cueEditorIcons){const button=timingDetails.querySelector(selector);if(button){button.textContent=glyph;button.title=t(label);button.setAttribute("aria-label",t(label));}}
+  timingDetails.querySelectorAll("[data-move-cue]").forEach((button)=>{const label=button.dataset.moveCue==="-1" ? "earlier" : "later";button.textContent=button.dataset.moveCue==="-1" ? "←" : "→";button.title=t(label);button.setAttribute("aria-label",t(label));});
   const inspector=document.querySelector(".inspector"),fixturePanel=inspector.querySelector(".fixture-inspector");
   if (fixturePanel) fixturePanel.insertAdjacentHTML("beforeend", `<div class="dmx-actions"><button id="duplicate-fixture">${t("duplicateFixture")}</button><button id="delete-fixture">${t("deleteFixture")}</button></div>`);
   const mode=(preferences.inspectorMode ?? (preferences.view==="light" ? "fixture" : "palette"))==="fixture" && fixturePanel ? "fixture" : "palette";
@@ -1054,13 +1035,10 @@ function bind() {
     commitProjectChange("cue-reorder",(draft)=>{draft.cues=replaceSceneCues(draft.cues,moveCue(sceneCues(draft.cues,preferences.sceneId,draft.scenes),cue.id,Number(button.dataset.moveCue)),preferences.sceneId,draft.scenes);});
     render();
   });
-  document.querySelector("#play-sequence").onclick=playSequence;
   document.querySelector("#pause-playback").onclick=togglePlaybackPause;
   const loopControl=document.querySelector("#sequence-loop");if(loopControl)loopControl.onchange=(event)=>{preferences.loopSequence=event.target.checked;savePreferences();};
-  document.querySelector("#sequence-seek").onchange=(event)=>playSequence({seek:Number(event.target.value),paused:true});
   document.querySelector("#play-effect").onclick=playEffect;
   document.querySelector("#play-tracks").onclick=playArrangement;
-  document.querySelector("#arrangement-seek").onchange=(event)=>playArrangement({seek:Number(event.target.value),paused:true});
   bindTimelineSeek(document.querySelector(".arrangement-timeline .timeline-ruler"),{
     span:Math.max(30,arrangementDuration(sceneCues())),duration:arrangementDuration(sceneCues()),value:playbackClock && arrangementDuration(sceneCues())>0 ? playbackPosition(playbackClock.elapsed(performance.now()),arrangementDuration(sceneCues()),Boolean(preferences.loopSequence)).time : 0,label:t("seekTracks"),
     onPreview(time){document.querySelector("#arrangement-playhead").style.left=`${time/Math.max(30,arrangementDuration(sceneCues()))*100}%`;},
