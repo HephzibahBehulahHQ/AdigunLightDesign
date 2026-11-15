@@ -618,6 +618,11 @@ function render() {
   timingSummary.textContent=t("cueSettings");timingDetails.append(timingSummary);
   const cueEditorFields=document.createElement("div");cueEditorFields.className="cue-editor-fields";timingDetails.append(cueEditorFields);
   document.querySelectorAll(".cue-timing").forEach((node)=>cueEditorFields.append(node));
+  if(activeCue){
+    const cueTiming=cueEditorFields.querySelector(".cue-timing"),scheduleRow=document.createElement("div");scheduleRow.className="cue-schedule-row";
+    for(const selector of ["#cue-track-name","#cue-start-time","#schedule-cue","[data-move-cue='-1']","[data-move-cue='1']","#duplicate-cue","#delete-cue"]){const control=cueTiming.querySelector(selector),item=control?.closest("label")??control;if(item)scheduleRow.append(item);}
+    document.querySelector(".timeline > .dmx-actions").append(scheduleRow);
+  }
   document.querySelector(".timeline").append(timingDetails);
   if (preferences.view==="palette") document.querySelector(".scene-preview").innerHTML=canvasMarkup(scene().canvasObjects ?? [],preferences.objectId,t("designCanvas"))+`<div class="canvas-actions"><label>${t("shapeKind")} <select id="shape-kind"><option value="rect" ${preferences.shapeKind!=="ellipse" ? "selected" : ""}>${t("rectangle")}</option><option value="ellipse" ${preferences.shapeKind==="ellipse" ? "selected" : ""}>${t("ellipse")}</option></select></label><button id="add-canvas-shape">＋ ${t("shapes")}</button></div>`;
   updateDmxFeedback(project.fixtures);
@@ -634,7 +639,7 @@ function render() {
     timingDetails.insertAdjacentHTML("beforeend", `<fieldset><legend>${t("channelKeyframes")}</legend><label>${t("channel")}<select id="keyframe-channel">${channels.map((channel)=>`<option value="${esc(JSON.stringify(channel))}">${esc(project.fixtures.find((fixture)=>fixture.id===channel.fixtureId)?.name ?? channel.fixtureId)} · ${esc(channel.property)}</option>`).join("")}</select></label><label>${t("startTime")}<input id="keyframe-time" type="number" min="0" max="${activeCue.duration}" step="0.1" value="0" required></label><label>${t("channelValue")}<input id="keyframe-value" type="number" min="0" max="255" step="1" value="127" required></label><button id="save-keyframe" ${channels.length ? "" : "disabled"}>${t("saveKeyframe")}</button>${(activeCue.channelKeyframes ?? []).map((frame,index)=>`<p>${esc(frame.fixtureId)} · ${esc(frame.property)} · ${frame.time}s → ${frame.value} <button data-remove-keyframe="${index}" aria-label="${t("removeKeyframe")}">×</button></p>`).join("")}</fieldset>`);
   }
   const cueEditorIcons=[["#edit-cue","✓","saveCueTiming"],["#schedule-cue","↥","scheduleCue"],["#duplicate-cue","⧉","duplicateCue"],["#delete-cue","×","deleteCue"],["#save-keyframe","＋","saveKeyframe"]];
-  for(const [selector,glyph,label] of cueEditorIcons){const button=timingDetails.querySelector(selector);if(button){button.textContent=glyph;button.title=t(label);button.setAttribute("aria-label",t(label));}}
+  for(const [selector,glyph,label] of cueEditorIcons){const button=document.querySelector(selector);if(button){button.textContent=glyph;button.title=t(label);button.setAttribute("aria-label",t(label));}}
   timingDetails.querySelectorAll("[data-move-cue]").forEach((button)=>{const label=button.dataset.moveCue==="-1" ? "earlier" : "later";button.textContent=button.dataset.moveCue==="-1" ? "←" : "→";button.title=t(label);button.setAttribute("aria-label",t(label));});
   const inspector=document.querySelector(".inspector"),fixturePanel=inspector.querySelector(".fixture-inspector");
   if (fixturePanel) fixturePanel.insertAdjacentHTML("beforeend", `<div class="dmx-actions"><button id="duplicate-fixture">${t("duplicateFixture")}</button><button id="delete-fixture">${t("deleteFixture")}</button></div>`);
