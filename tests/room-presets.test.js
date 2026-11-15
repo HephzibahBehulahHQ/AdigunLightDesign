@@ -35,6 +35,18 @@ test("room templates generate distinct 3D structures and ambient fill affects re
   const preset=roomPresets[0],low=sceneData([0,0,0],[],{},preset.room,false,preset.materials,"performance",undefined,{color:"#FF0000",intensity:0},"living-room"),high=sceneData([0,0,0],[],{},preset.room,false,preset.materials,"performance",undefined,{color:"#FF0000",intensity:1},"living-room");
   assert.notDeepEqual(high,low);
 });
+test("living-room scene includes the framed three-pane side window from the approved reference",()=>{
+  const preset=roomPresets.find(room=>room.id==="living-room");
+  const geometry=sceneData([0,0,0],[],{},preset.room,false,preset.materials,"performance",undefined,preset.ambience,preset.id);
+  const hasVertex=(expected)=>{
+    for(let offset=0;offset<geometry.length;offset+=6){
+      if(expected.every((value,axis)=>Math.abs(geometry[offset+axis]-value)<1e-5))return true;
+    }
+    return false;
+  };
+  assert.ok(hasVertex([-4.8,1.14,-1.77]),"the dark glazing occupies the left interior wall at the reference dimensions");
+  assert.ok(hasVertex([-4.755,1.14,-1.77]),"the window glazing clears the frame and has visible depth");
+});
 test("swimming pool scene adds a recessed basin, coping, entry steps and detailed water geometry",()=>{
   const preset=roomPresets.find(room=>room.id==="swimming-pool");
   const shell=sceneData([0,0,0],[],{props:false},preset.room,false,preset.materials,"performance",undefined,preset.ambience,preset.id);

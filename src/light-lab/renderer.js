@@ -797,7 +797,18 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
   } else roomPresetFurniture(data,roomType,accent);
   const furnitureEnd=data.length;
   scaleGeometryPositions(data,furnitureStart,furnitureEnd,roomPropsScaleX,roomPropsScaleY,roomPropsScaleZ);
-  if ((roomType ?? "living-room")==="living-room") studioWallArt(data,{width,height,depth},wood);
+  if ((roomType ?? "living-room")==="living-room") {
+    studioWallArt(data,{width,height,depth},wood);
+    // Add the framed three-pane side window from the approved living-room reference.
+    const frame=hexVector("#BBC9CF"),glass=hexVector("#24566B"),sill=hexVector("#60483E");
+    const windowX=-width/2+.06,span=Math.min(1.8,depth*.32),windowZ=-depth*.12,bottom=Math.min(1.05,height*.3),top=Math.min(height-.6,bottom+1.6),windowHeight=top-bottom,zStart=windowZ-span/2;
+    box(data,windowX,bottom,zStart,.12,windowHeight,span,frame);
+    box(data,windowX+.14,bottom+.09,zStart+.09,.045,windowHeight-.18,span-.18,glass);
+    for(const divider of [1/3,2/3])box(data,windowX+.19,bottom+.08,zStart+span*divider-.035,.025,windowHeight-.16,.07,frame);
+    box(data,windowX+.19,bottom+windowHeight*.53-.035,zStart+.08,.025,.07,span-.16,frame);
+    box(data,windowX+.02,bottom-.1,zStart-.08,.24,.1,span+.16,sill);
+  }
+
   }
   const rigStart=data.length;
   for (const y of [3.7,3.95]) box(data,-4,y,.4,8,.06,.06,metal);
