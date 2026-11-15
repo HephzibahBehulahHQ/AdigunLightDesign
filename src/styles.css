@@ -1021,14 +1021,21 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
   .timeline > .dmx-actions:not(:has(#effect-type)) .cue-schedule-row button { display:grid; place-items:center; flex:0 0 22px; width:22px; min-width:22px; height:20px; min-height:20px; padding:0; overflow:hidden; font-size:11px; }
   .timeline > .arrangement-timeline { flex:1 1 70px; min-height:58px; }
   .timeline > .cue-editor { display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:13px 28px 24px; flex:0 0 71px; min-height:71px; max-height:71px; gap:1px; margin:0 5px; padding:2px 4px; overflow:hidden; }
-  .timeline > .cue-editor:not(:has(> fieldset)) { grid-template-rows:13px 24px; flex-basis:42px; min-height:42px; max-height:42px; }
+  .timeline > .cue-editor:not(:has(> fieldset)) { grid-template-rows:13px 28px; flex-basis:47px; min-height:47px; max-height:47px; }
   .timeline > .cue-editor > h3 { grid-row:1; margin:0; overflow:hidden; color:var(--cyan); font-size:8px; line-height:12px; }
   .timeline > .cue-editor .cue-editor-fields { grid-row:2; display:flex; flex-direction:column; min-width:0; overflow:hidden; }
-  .timeline > .cue-editor .cue-timing { display:flex; align-items:center; flex-wrap:nowrap; min-width:0; width:100%; gap:3px; padding:0; overflow:hidden; }
-  .timeline > .cue-editor .cue-timing label { display:grid; flex:1 1 46px; min-width:36px; gap:1px; color:var(--muted); font-size:7px; line-height:9px; }
-  .timeline > .cue-editor .cue-timing input { width:100%; min-width:0; height:17px; min-height:17px; padding:1px 3px; font-size:8px; }
-  .timeline > .cue-editor .cue-timing button,.timeline > .cue-editor [data-move-cue] { display:grid; place-items:center; flex:0 0 22px; width:22px; min-width:22px; height:20px; min-height:20px; padding:0; overflow:hidden; font-size:11px; }
-  .timeline > .cue-editor .cue-timing small { flex:0 0 auto; max-width:70px; overflow:hidden; font-size:7px; }
+  .timeline > .cue-editor .cue-timing { --cue-columns:repeat(4,minmax(42px,1fr)); display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:9px 18px; align-items:center; min-width:0; width:100%; row-gap:1px; padding:0; overflow:hidden; }
+  .timeline > .cue-editor .cue-timing:has(#edit-cue-name) { --cue-columns:minmax(84px,1.8fr) minmax(58px,1.15fr) minmax(48px,.9fr) repeat(4,minmax(42px,.8fr)) minmax(58px,1fr) repeat(6,22px); }
+  .timeline > .cue-editor .cue-timing-headings,.timeline > .cue-editor .cue-timing-values { display:grid; grid-template-columns:var(--cue-columns); grid-column:1; align-items:center; width:100%; min-width:0; gap:4px; }
+  .timeline > .cue-editor .cue-timing-headings { grid-row:1; }
+  .timeline > .cue-editor .cue-timing-values { grid-row:2; }
+  .timeline > .cue-editor .cue-timing-headings label { width:100%; min-width:0; overflow:hidden; color:var(--muted); font-size:8px; line-height:9px; text-align:center; text-overflow:ellipsis; white-space:nowrap; }
+  .timeline > .cue-editor .cue-timing-values > * { justify-self:center; }
+  .timeline > .cue-editor .cue-timing-values input { width:46px; max-width:100%; min-width:0; height:16px; min-height:16px; padding:1px 3px; font-size:8px; }
+  .timeline > .cue-editor .cue-timing-values #edit-cue-name,.timeline > .cue-editor .cue-timing-values #cue-track-name { width:100%; }
+  .timeline > .cue-editor .cue-timing-values #cue-start-time { width:52px; }
+  .timeline > .cue-editor .cue-timing-values button { display:grid; place-items:center; width:22px; min-width:22px; height:17px; min-height:17px; padding:0; overflow:hidden; font-size:11px; }
+  .timeline > .cue-editor .cue-timing-values small { overflow:hidden; color:var(--muted); font-size:7px; line-height:9px; white-space:nowrap; }
   .timeline > .cue-editor > fieldset { grid-row:3; display:flex; align-items:center; flex-wrap:nowrap; min-width:0; min-height:22px; margin:0; padding:0 3px; gap:4px; overflow:hidden; border:1px solid var(--line); }
   .timeline > .cue-editor > fieldset legend { float:left; max-width:68px; overflow:hidden; padding:0 2px; font-size:7px; white-space:nowrap; }
   .timeline > .cue-editor > fieldset label { display:flex; align-items:center; flex:0 1 auto; min-width:0; gap:3px; font-size:7px; white-space:nowrap; }
