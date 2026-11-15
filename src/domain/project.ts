@@ -174,8 +174,11 @@ export function validateProject(input: unknown): ProjectValidationResult {
       if (typeof scene.materialColor !== "string" || !/^#[0-9a-f]{6}$/i.test(scene.materialColor)) errors.push("Scene material color must be a six-digit HEX value.");
       if (scene.roomType !== undefined && !isRoomPresetId(scene.roomType)) errors.push("Scene room type is unsupported.");
       if (scene.ambience !== undefined) { const ambience=asRecord(scene.ambience); if (!ambience || typeof ambience.color !== "string" || !/^#[0-9a-f]{6}$/i.test(ambience.color) || typeof ambience.intensity !== "number" || !Number.isFinite(ambience.intensity) || ambience.intensity<0 || ambience.intensity>1) errors.push("Scene ambience requires a HEX color and intensity between zero and one."); }
+      if (scene.lightingLookIndex !== undefined && (typeof scene.lightingLookIndex !== "number" || !Number.isInteger(scene.lightingLookIndex) || scene.lightingLookIndex < 0 || scene.lightingLookIndex >= 20)) errors.push("Scene lighting look index is unsupported.");
+      if (scene.lightingLookCustomized !== undefined && typeof scene.lightingLookCustomized !== "boolean") errors.push("Scene lighting look customization state must be boolean.");
     }
   }
   return {valid: errors.length === 0, errors};
 }
+
 

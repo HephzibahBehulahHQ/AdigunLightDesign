@@ -686,6 +686,22 @@ try {
   const addedRoomId=await page.locator("#scene-select").inputValue();
   assert.match(await page.locator("#scene-select option:checked").innerText(),/Kitchen/,"the selected scene is labeled with its room template");
   assert.match(await page.locator(".workspace-tabs .studio-panel-title").innerText(),/Kitchen/i,"the studio header identifies the active room in the 3D preview");
+  assert.ok(await page.locator("[data-layer-fixture]").count()>=3,"new kitchen scenes start with a usable wash and architectural strip rig");
+  assert.match(await page.locator("#cycle-lighting-look").innerText(),/01\/20/,"new rooms start on their first automatic lighting look");
+  assert.equal((await page.locator("#fixture-colour").inputValue()).toUpperCase(),"#FFA65B","the starter look applies its real channel color to the new room rig");
+  await page.locator("#cycle-lighting-look").click();
+  assert.match(await page.locator("#cycle-lighting-look").innerText(),/02\/20/,"the floating canvas control advances to the next look");
+  assert.equal((await page.locator("#fixture-colour").inputValue()).toUpperCase(),"#FFE8BB","cycling a look updates the active room fixture channels");
+  const lookToggleBounds=await page.locator("#cycle-lighting-look").boundingBox();
+  const canvasBounds=await page.locator(".scene-preview").boundingBox();
+  const paintControlsBounds=await page.locator(".canvas-actions").boundingBox();
+  assert.ok(lookToggleBounds.x>=canvasBounds.x&&lookToggleBounds.y>=canvasBounds.y&&lookToggleBounds.x+lookToggleBounds.width<=canvasBounds.x+canvasBounds.width&&lookToggleBounds.y+lookToggleBounds.height<=canvasBounds.y+canvasBounds.height,"the lighting look switch stays inside the canvas");
+  assert.ok(lookToggleBounds.x+lookToggleBounds.width<=paintControlsBounds.x||lookToggleBounds.x>=paintControlsBounds.x+paintControlsBounds.width||lookToggleBounds.y+lookToggleBounds.height<=paintControlsBounds.y||lookToggleBounds.y>=paintControlsBounds.y+paintControlsBounds.height,"the lighting look switch does not overlap canvas paint controls");
+  await clickCommand("history","#undo");
+  assert.match(await page.locator("#cycle-lighting-look").innerText(),/01\/20/,"undo restores the previous room lighting look");
+  await clickCommand("history","#redo");
+  assert.match(await page.locator("#cycle-lighting-look").innerText(),/02\/20/,"redo restores the cycled room lighting look");
+  await page.screenshot({path:resolve("outputs/kitchen-lighting-look.png")});
   await openCommandMenu("room");
   assert.match(await page.locator('#command-menu-panel-room .room-type-label').innerText(),/Kitchen/,"room settings identify the selected template");
   await clickCommand("fixtures","#add-fixture");
@@ -695,6 +711,7 @@ try {
   await page.locator("#fixture-colour").fill("#ff2030");
   await page.locator("#fixture-dimmer").fill("180");
   await page.locator("#apply-fixture").click();
+  assert.match(await page.locator("#cycle-lighting-look").innerText(),/Custom/i,"manual fixture edits identify the room lighting as customized");
   await page.locator("#scene-select").selectOption("studio-room");
   assert.notEqual((await page.locator("#fixture-colour").inputValue()).toUpperCase(),"#FF2030","changing a kitchen fixture leaves the living-room rig unchanged");
   await page.locator("#scene-select").selectOption(addedRoomId);
@@ -755,4 +772,5 @@ try {
   await browser?.close();
   await server.close();
 }
+
 
