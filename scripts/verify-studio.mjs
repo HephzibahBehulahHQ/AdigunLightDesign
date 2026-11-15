@@ -132,6 +132,20 @@ try {
   await page.locator('.module-nav [data-module="light"]').click();
   assert.equal(await page.locator("#fixture-inspector-panel").isVisible(),true,"3D Studio opens the existing lighting workspace");
   assert.equal(await page.locator(".lower-workspace .timeline").isVisible(),true,"the cue timeline stays docked in the workspace");
+  assert.equal(await page.locator(".layer-list li").count(),3,"all Lighting, Palette, and Scene layers remain present");
+  assert.equal(await page.locator(".layer-list li").evaluateAll(rows=>rows.every(row=>row.getBoundingClientRect().height>=20&&row.getBoundingClientRect().bottom<=row.parentElement.parentElement.getBoundingClientRect().bottom)),true,"the three layer controls stay fully inside their panel");
+  const paletteHueRows=await page.locator(".left-rail .palette-actions:has(#custom-spacing),.left-rail .palette-actions:has(#temperature-strength)").evaluateAll(rows=>rows.map(row=>({row:row.getBoundingClientRect().toJSON(),label:row.querySelector("label").getBoundingClientRect().toJSON(),buttons:[...row.querySelectorAll("button")].map(button=>button.getBoundingClientRect().toJSON())})));
+  assert.equal(paletteHueRows.length,2,"both Active Palette hue controls are docked in the sidebar");
+  assert.equal(paletteHueRows.every(({row,label,buttons})=>label.right<=row.right&&buttons.every(button=>button.left>=row.left&&button.right<=row.right)&&buttons.every((button,index)=>buttons.slice(index+1).every(other=>button.right<=other.left||other.right<=button.left))),true,"hue labels, fields, and buttons do not overlap or escape the sidebar");
+  const groupRowHeight=await page.locator(".fixture-group-section > h2").evaluate(node=>node.getBoundingClientRect().height),fixtureRowHeight=await page.locator(".fixture-list-section > h2").evaluate(node=>node.getBoundingClientRect().height);
+  assert.ok(Math.abs(groupRowHeight-fixtureRowHeight)<=2,"Fixture Groups is as compact as Fixture List");
+  assert.equal(await page.locator(".timeline").evaluate(panel=>panel.scrollHeight<=panel.clientHeight+1&&globalThis.getComputedStyle(panel).overflowY==="hidden"),true,"the docked timeline fits without vertical scrolling");
+  assert.equal(await page.locator(".timeline-transport button").evaluateAll(buttons=>buttons.every(button=>button.getBoundingClientRect().height>0&&button.getBoundingClientRect().right<=button.parentElement.getBoundingClientRect().right+1)),true,"timeline actions stay visible inside the transport bar");
+  const timelineControls=await page.locator("#arrangement-seek,#sequence-loop,#sequence-seek,#cue-group").evaluateAll(controls=>controls.map(control=>{const box=control.getBoundingClientRect(),panel=control.closest(".timeline")?.getBoundingClientRect();return {id:control.id,visible:box.height>0,inPanel:Boolean(panel&&box.top>=panel.top&&box.bottom<=panel.bottom+1)};}));
+  assert.equal(timelineControls.length===4&&timelineControls.every(control=>control.visible&&control.inPanel),true,`timeline controls fit without scrolling: ${JSON.stringify(timelineControls)}`);
+  assert.equal(await page.locator("#fixture-inspector-panel #effect-type,#fixture-inspector-panel #effect-period,#fixture-inspector-panel #play-effect").count(),3,"virtual effects keep their single home in the right Effects inspector group");
+  const brandBounds=await page.locator(".brand-lockup,.product-lockup,.header-project-context").evaluateAll(nodes=>nodes.map(node=>node.getBoundingClientRect().toJSON()));
+  assert.equal(brandBounds[0].right<=brandBounds[1].left&&brandBounds[1].right<=brandBounds[2].left,true,"brand, product name, and project context do not overlap");
   await page.locator('.module-nav [data-module="library"]').click();
   assert.equal(await page.locator(".library-drawer .fixture-library article").count(),3,"Fixture Library opens the three real generic profiles");
   await page.locator("#close-library").click();
@@ -149,7 +163,7 @@ try {
   assert.equal((await page.locator("#apply-scene").innerText()).trim(), "Paint surface", "the canvas action identifies its scene surface target");
   assert.equal((await page.locator("#reset-camera").innerText()).trim(), "Reset camera", "the Scene menu has the single camera reset action");
   assert.equal(await page.locator("#reset-camera-canvas").count(),0,"the duplicate canvas camera reset is removed");
-  assert.deepEqual(await page.locator('.command-group[data-command-group="scene"]').evaluate((group)=>[...group.querySelectorAll("button")].map((button)=>button.dataset.cameraAxis?.toUpperCase() ?? button.id)),["add-room-scene","X","Y","Z","reset-camera"],"Scene keeps room creation and camera commands only");
+  assert.deepEqual(await page.locator('.command-group[data-command-group="scene"]').evaluate((group)=>[...group.querySelectorAll("button")].map((button)=>button.id)),["add-room-scene","reset-camera"],"Scene keeps room creation and reset while view presets stay above the canvas");
   for (const [locale,labels] of Object.entries({de:["Bemalen:","Wände","Oberfläche färben","Kamera zurücksetzen"],yo:["Kún:","Àwọn ògiri","Kún ojú ilẹ̀","Tún kámẹ́rà bẹ̀rẹ̀"],pcm:["Paint:","Walls","Paint surface","Reset camera"]})) {
     await page.locator("#locale").selectOption(locale);
     assert.equal(await page.locator("#material-target").evaluate((select)=>select.closest("label").firstChild.textContent.trim()),labels[0],`${locale} paint label remains translated`);
@@ -217,7 +231,7 @@ try {
   assert.equal(await page.locator("#virtual-dmx-monitor .virtual-dmx-channels").evaluate((grid)=>globalThis.getComputedStyle(grid).gridTemplateColumns.split(" ").length),5,"Virtual DMX fits five channels per row");
   assert.deepEqual(await page.locator(".scene-preview").boundingBox(),sidebarCanvas,"the docked Virtual DMX values leave the studio stationary");
 
-  assert.equal(await page.locator('[data-command-group="scene"] [data-camera-axis]').count(), 3, "X/Y/Z camera views are docked in the Scene menu");
+  assert.equal(await page.locator(".workspace-tabs .viewport-view-controls [data-camera-view]").count(), 6, "six camera views are docked beside projection controls above the canvas");
   assert.equal(await page.locator(".inspector [data-scene-editor]").count(),0,"Stage and Room settings are removed from the inspector sidebar");
   const stageTrigger=page.locator('[data-command-menu-trigger="stage"]'),roomTrigger=page.locator('[data-command-menu-trigger="room"]');
   const stageTriggerBox=await stageTrigger.boundingBox(),roomTriggerBox=await roomTrigger.boundingBox(),exportTriggerBox=await page.locator('[data-command-menu-trigger="export"]').boundingBox();
@@ -244,24 +258,30 @@ try {
   assert.match((await page.locator("#export-viewport").innerText()).trim(),/PNG/,"the primary export action is visibly labeled PNG");
 
   await openCommandMenu("scene");
-  assert.deepEqual(await page.locator('[data-command-group="scene"] [data-camera-axis]').evaluateAll((buttons)=>buttons.map((button)=>button.innerText.trim())),["View X","View Y","View Z"],"camera view labels match the approved Scene menu");
-  assert.equal(await page.locator(".scene-preview .viewport-axis-controls").count(), 0, "camera controls do not cover the 3D canvas");
+  assert.deepEqual(await page.locator(".workspace-tabs .viewport-view-controls [data-camera-view]").evaluateAll(buttons=>buttons.map(button=>button.title)),["Front view","Right view","Top view","Left view","Rear view","Isometric view"],"camera view icons expose clear names on hover and focus");
+  assert.equal(await page.locator(".scene-preview .viewport-view-controls").count(), 0, "camera controls do not cover the 3D canvas");
   for (const selector of ["#viewport-projection", "#viewport-fullscreen"]) {
     assert.equal(await page.locator(`.workspace-tabs ${selector}`).count(), 1, `${selector} stays docked in the scene header`);
   }
   assert.deepEqual(await page.locator(".workspace-tabs").evaluate((row)=>[...row.querySelectorAll(":scope > button.view-menu")].map((button)=>button.id)),["viewport-projection","viewport-fullscreen"],"scene header keeps only unique projection and fullscreen actions");
   assert.equal(await page.locator('[data-command-group="scene"] #preview-quality').count(),1,"renderer quality has one clearly labeled home in the Scene menu");
   const sceneHeaderCanvas=await page.locator(".scene-preview").boundingBox();
+  const projectionToggle=page.locator("#viewport-projection");
+  await projectionToggle.click();
+  assert.equal(await projectionToggle.getAttribute("aria-pressed"),"true","projection button visibly switches to orthographic mode");
+  await projectionToggle.click();
+  assert.equal(await projectionToggle.getAttribute("aria-pressed"),"false","projection button switches back to perspective mode");
   await openCommandMenu("scene");await page.locator("#preview-quality").selectOption("performance");
   assert.equal(await page.locator("#preview-quality").inputValue(), "performance", "the single quality selector switches the renderer to its performance profile");
   await openCommandMenu("scene");await page.locator("#preview-quality").selectOption("balanced");
   assert.equal(await page.locator("#preview-quality").inputValue(), "balanced", "the same quality selector restores the balanced renderer profile");
   await clickCommand("scene","#reset-camera");
   assert.deepEqual(await page.locator(".scene-preview").boundingBox(), sceneHeaderCanvas, "Reset camera does not move the canvas");
-  for (const axis of ["x", "y", "z"]) {
-    const control = page.locator(`[data-command-group="scene"] [data-camera-axis="${axis}"]`);
-    assert.equal(await control.isEnabled(), true, `${axis.toUpperCase()} camera view is enabled with the active WebGL renderer`);
-    await clickCommand("scene",`[data-camera-axis="${axis}"]`);
+  for (const view of ["front", "right", "top", "left", "back", "iso"]) {
+    const control = page.locator(`.viewport-view-controls [data-camera-view="${view}"]`);
+    assert.equal(await control.isEnabled(), true, `${view} camera view is enabled with the active WebGL renderer`);
+    await control.click();
+    assert.equal(await control.getAttribute("aria-pressed"),"true",`${view} view shows its active selection state`);
   }
   const coreTools = ["select", "paletteBrush", "fixture", "material", "shapes", "text", "measure", "orbit"];
   for (const key of coreTools) {
@@ -586,7 +606,8 @@ try {
   for (const selector of ["#create-cue", "#play-tracks", "#pause-playback", "#stop-cue", "#sequence-loop"]) {
     assert.equal(await page.locator(`.timeline-transport ${selector}`).count(), 1, `${selector} is docked in the timeline transport`);
   }
-  await page.locator("#sequence-loop").check();
+  await page.locator("#sequence-loop").evaluate((element) => { element.closest("label").click(); });
+  assert.equal(await page.locator("#sequence-loop").isChecked(), true, "sequence looping toggles from its visible label");
   await page.locator("#create-cue").click();
   await page.locator("#play-tracks").click();
   assert.equal(await page.locator("#stop-cue").isEnabled(), true, "timeline playback starts");
