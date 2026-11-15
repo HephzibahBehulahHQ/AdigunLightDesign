@@ -14,6 +14,7 @@ import { contrastResult, hexToRgb, isSrgbGamut, normalizeHex, rgbToHex, rgbToHsl
 import { rerollUnlocked, starterPalette, updateSwatch } from "./domain/palette-store.js";
 import { localeNames, supportedLocales, translate } from "./i18n.js";
 import { createLightLabRenderer } from "./light-lab/renderer.js";
+import { normalizeCameraState,roomFitCameraDistance } from "./light-lab/math.js";
 import { lightLabFixtureState,lightLabRendererConfig,shouldReuseLightLabRenderer } from "./light-lab/renderer-lifecycle.js";
 import { fixturePlacementMarkup } from "./light-lab/fixture-placement.js";
 import { blackout, createFixture, dmxFrame, fixtureProfiles, getFixtureProfile, patchFixture, updateFixture } from "./dmx/engine.js";
@@ -75,6 +76,7 @@ let activeSavedProjectId=null;
 let luxProposal=null;
 let luxConfirmationPending=false;
 let viewportCamera=null;
+let viewportCameraRoomKey=null;
 let cleanupTopMenu=null, cleanupCommandMenus=null;
 const imageAssets=createImageAssetStore();
 const account=createAccount({publishableKey:typeof __ALD_SUPABASE_PUBLISHABLE_KEY__==="undefined" ? "" : __ALD_SUPABASE_PUBLISHABLE_KEY__});
@@ -425,6 +427,9 @@ function render() {
       : {kind:"swatch",id:selected().id,paletteId:palette().id};
   liveCanvasFeed.publish(project,{selection:liveSelection,playing:playbackTimer!==null});
   if(renderer){viewportCamera=renderer.cameraState?.() ?? viewportCamera;if(!reuseRenderer){renderer.destroy();renderer=null;rendererConfigSignature=null;rendererFixtureSignature=null;rendererAccent=null;}}
+  const currentRoom=scene().room,roomCameraKey=JSON.stringify({room:currentRoom,roomType:scene().roomType});
+  if(viewportCameraRoomKey&&viewportCameraRoomKey!==roomCameraKey){const dimensions=roomDimensions(currentRoom);viewportCamera={...normalizeCameraState(viewportCamera),distance:roomFitCameraDistance(dimensions.width,dimensions.depth)};}
+  viewportCameraRoomKey=roomCameraKey;
   document.documentElement.lang = preferences.locale;
   document.documentElement.dataset.theme = preferences.theme;
   const active = selected();

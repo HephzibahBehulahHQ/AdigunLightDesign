@@ -579,6 +579,11 @@ try {
   assert.equal(await page.locator("#room-ambience-level").inputValue(),"44","room ambient intensity is editable and persisted");
   await clickCommand("history","#undo");
   assert.equal(await page.locator("#room-ambience-color").inputValue(),defaultAmbient,"ambient settings participate in project undo");
+  await clickCommand("scene","#add-room-scene");
+  await page.locator("#room-template").selectOption("bathroom");
+  await page.locator("#create-room-scene").click();
+  await page.waitForFunction(()=>globalThis.document.querySelector(".studio-panel-title")?.innerText.includes("BATHROOM"));
+  await page.screenshot({path:resolve("outputs/bathroom-camera-fit.png")});
   assert.deepEqual(runtimeErrors, [], "browser reports no runtime errors");
 
   console.log(JSON.stringify({ viewports: reports, tools: coreTools, shapeAndTextCreation: true, measurement: true, fixtureSelection: true, paletteSwitch: true, timelinePlayback: true, projectSaveReload: true, projectJsonImportExport: true, commandMenus: true, fixtureListScroll: true, inspectorScroll: true, canvasStayedFixed: true, runtimeErrors }, null, 2));
