@@ -145,6 +145,17 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
 .lighting-look-toggle { position:absolute; z-index:8; left:12px; bottom:12px; display:flex; align-items:center; gap:5px; min-height:28px; padding:4px 9px; border:1px solid #547295; border-radius:6px; background:#0b1220eF; color:#e6efff; font-size:10px; font-weight:750; line-height:1; box-shadow:0 2px 8px #0008; }
 .lighting-look-toggle span { color:var(--cyan); font-size:13px; }
 .lighting-look-toggle:hover,.lighting-look-toggle:focus-visible { border-color:var(--cyan); background:#16263b; outline:2px solid #22d3ee55; }
+.canvas-media-controls { position:absolute; z-index:8; left:10px; bottom:10px; display:flex; align-items:center; gap:5px; max-width:calc(100% - 180px); }
+.canvas-media-controls .lighting-look-toggle { position:static; flex:0 1 auto; min-width:0; white-space:nowrap; }
+.studio-media-button { display:inline-flex; align-items:center; justify-content:center; flex:0 0 auto; min-height:28px; padding:4px 8px; border:1px solid #547295; border-radius:6px; background:#0b1220ef; color:#e6efff; font-size:10px; font-weight:750; line-height:1; white-space:nowrap; box-shadow:0 2px 8px #0008; }
+.studio-media-button:hover,.studio-media-button:focus-visible,.studio-media-button[aria-pressed="true"] { border-color:var(--cyan); background:#16263b; outline-color:#22d3ee55; }
+.studio-media-settings { width:28px; padding:4px; font-size:13px; }
+.room-music-panel { position:fixed; inset:auto; z-index:1000; width:min(230px,calc(100vw - 16px)); margin:0; padding:10px; border:1px solid #405778; border-radius:8px; background:#101a2c; color:var(--text); box-shadow:0 8px 25px #0009; }
+.room-music-panel::backdrop { background:transparent; }
+.room-music-panel label { display:grid; gap:5px; margin:0 0 8px; font-size:10px; font-weight:700; }
+.room-music-panel label:last-child { margin-bottom:0; }
+.room-music-panel select,.room-music-panel input { width:100%; min-width:0; height:28px; min-height:24px; padding:3px 6px; font-size:11px; }
+@media(max-width:760px){.canvas-media-controls{left:7px;bottom:7px;gap:3px;max-width:calc(100% - 125px)}.studio-media-button{min-height:26px;padding:4px 6px;font-size:9px}.canvas-media-controls .lighting-look-toggle{font-size:9px;padding:4px 6px}.studio-media-settings{width:26px;padding:3px}}
 
 .viewport-axis-controls { display:flex; align-items:center; gap:4px; flex:0 0 auto; }
 .viewport-axis-controls button { height:29px; min-width:36px; padding:4px 8px; border:1px solid currentColor; border-radius:5px; background:#182237; font-size:11px; font-weight:800; }
@@ -689,6 +700,14 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
 .command-menu-panel .preview-quality { display:flex; align-items:center; justify-content:space-between; gap:8px; min-height:34px; padding:3px 5px; color:var(--text); font-size:12px; }
 .command-menu-panel .preview-quality select { width:150px; min-width:0; }
 .command-menu-panel[data-command-group="stage"],.command-menu-panel[data-command-group="room"] { width:min(320px,calc(100vw - 16px)); }
+.command-menu-panel[data-command-group="guide"] { width:min(380px,calc(100vw - 16px)); max-height:min(72dvh,620px); overflow:auto; }
+.command-menu-panel[data-command-group="guide"] #guide-search { flex:0 0 auto; width:100%; min-height:32px; padding:6px 9px; border:1px solid #456184; border-radius:6px; background:#0d1728; color:var(--text); font-size:12px; }
+.guide-sections { display:grid; gap:5px; }
+.guide-section { border:1px solid #344965; border-radius:6px; background:#142138; }
+.guide-section[hidden] { display:none; }
+.guide-section summary { padding:7px 9px; color:#e4edfc; cursor:pointer; font-size:12px; font-weight:750; }
+.guide-section ul { display:grid; gap:6px; margin:0; padding:2px 10px 10px 26px; color:#bccbe0; font-size:11px; line-height:1.45; }
+.guide-section li::marker { color:var(--cyan); }
 .scene-menu-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px 8px; min-width:0; margin:0; padding:8px; border:1px solid #344965; border-radius:7px; }
 .scene-menu-fields legend { padding:0 4px; color:#22d3ee; font-size:11px; font-weight:750; }
 .scene-menu-fields label { display:grid; gap:3px; min-width:0; color:#cbd7e8; font-size:11px; line-height:1.25; }

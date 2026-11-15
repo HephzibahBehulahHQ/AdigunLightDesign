@@ -5,19 +5,19 @@ import {createRoomScene,roomPresets} from "../src/domain/room-presets.js";
 import {createProject,validateProject} from "../src/domain/project.js";
 import {applyRoomLightingLook,createRoomStarterLighting,isRoomLightingLookIndex,roomLightingLooks} from "../src/domain/room-lighting-looks.js";
 
-test("twenty lighting looks provide distinct paint, ambience and fixture channel states",()=>{
-  assert.equal(roomLightingLooks.length,20);
-  assert.equal(new Set(roomLightingLooks.map(look=>look.id)).size,20);
-  assert.equal(new Set(roomLightingLooks.map(look=>JSON.stringify([look.materials,look.materialColor,look.ambience,look.rgb,look.dimmer]))).size,20);
+test("one hundred lighting looks provide distinct paint, ambience and fixture channel states",()=>{
+  assert.equal(roomLightingLooks.length,100);
+  assert.equal(new Set(roomLightingLooks.map(look=>look.id)).size,100);
+  assert.equal(new Set(roomLightingLooks.map(look=>JSON.stringify([look.materials,look.materialColor,look.ambience,look.rgb,look.dimmer]))).size,100);
   assert.ok(roomLightingLooks.every((look,index)=>isRoomLightingLookIndex(index)&&look.rgb.length===3&&look.rgb.every(value=>Number.isInteger(value)&&value>=0&&value<=255)));
-  assert.equal(isRoomLightingLookIndex(-1),false);assert.equal(isRoomLightingLookIndex(20),false);assert.equal(isRoomLightingLookIndex(2.5),false);
+  assert.equal(isRoomLightingLookIndex(-1),false);assert.equal(isRoomLightingLookIndex(100),false);assert.equal(isRoomLightingLookIndex(2.5),false);
 });
 
 test("saved scene look metadata is validated while older scenes without it remain compatible",()=>{
   const project=createProject(),scene=createRoomScene("kitchen",{id:"kitchen"});
   project.scenes=[scene];assert.equal(validateProject(project).valid,true);
   scene.lightingLookIndex=19;scene.lightingLookCustomized=true;assert.equal(validateProject(project).valid,true);
-  scene.lightingLookIndex=20;assert.equal(validateProject(project).valid,false);
+  scene.lightingLookIndex=100;assert.equal(validateProject(project).valid,false);
   scene.lightingLookIndex=0;scene.lightingLookCustomized="yes";assert.equal(validateProject(project).valid,false);
 });
 
