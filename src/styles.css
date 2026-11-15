@@ -1029,10 +1029,10 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
   .timeline > .cue-editor .cue-timing-headings,.timeline > .cue-editor .cue-timing-values { display:grid; grid-template-columns:var(--cue-columns); align-items:center; width:100%; min-width:0; gap:4px; }
   .timeline > .cue-editor .cue-timing-headings label { width:100%; min-width:0; overflow:hidden; color:var(--muted); font-size:8px; line-height:9px; text-align:center; text-overflow:ellipsis; white-space:nowrap; }
   .timeline > .cue-editor .cue-timing-values > * { justify-self:center; }
-  .timeline > .cue-editor .cue-timing-values input { width:46px; max-width:100%; min-width:0; height:18px; min-height:18px; padding:1px 3px; font-size:8px; }
+  .timeline > .cue-editor .cue-timing-values input { width:46px; max-width:100%; min-width:0; height:16px; min-height:16px; padding:1px 3px; font-size:8px; }
   .timeline > .cue-editor .cue-timing-values #edit-cue-name,.timeline > .cue-editor .cue-timing-values #cue-track-name { width:100%; }
   .timeline > .cue-editor .cue-timing-values #cue-start-time { width:52px; }
-  .timeline > .cue-editor .cue-timing-values button { display:grid; place-items:center; width:22px; min-width:22px; height:19px; min-height:19px; padding:0; overflow:hidden; font-size:11px; }
+  .timeline > .cue-editor .cue-timing-values button { display:grid; place-items:center; width:22px; min-width:22px; height:17px; min-height:17px; padding:0; overflow:hidden; font-size:11px; }
   .timeline > .cue-editor .cue-timing-values small { overflow:hidden; color:var(--muted); font-size:7px; line-height:9px; white-space:nowrap; }
   .timeline > .cue-editor > fieldset { grid-row:3; display:flex; align-items:center; flex-wrap:nowrap; min-width:0; min-height:22px; margin:0; padding:0 3px; gap:4px; overflow:hidden; border:1px solid var(--line); }
   .timeline > .cue-editor > fieldset legend { float:left; max-width:68px; overflow:hidden; padding:0 2px; font-size:7px; white-space:nowrap; }
