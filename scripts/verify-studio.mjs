@@ -606,7 +606,8 @@ try {
   for (const selector of ["#create-cue", "#play-tracks", "#pause-playback", "#stop-cue", "#sequence-loop"]) {
     assert.equal(await page.locator(`.timeline-transport ${selector}`).count(), 1, `${selector} is docked in the timeline transport`);
   }
-  await page.locator("#sequence-loop").check();
+  await page.locator("#sequence-loop").evaluate((element) => { element.closest("label").click(); });
+  assert.equal(await page.locator("#sequence-loop").isChecked(), true, "sequence looping toggles from its visible label");
   await page.locator("#create-cue").click();
   await page.locator("#play-tracks").click();
   assert.equal(await page.locator("#stop-cue").isEnabled(), true, "timeline playback starts");
