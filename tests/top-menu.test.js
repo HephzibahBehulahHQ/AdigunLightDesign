@@ -14,8 +14,19 @@ test("top menu preserves requested order and treats anonymous or absent sessions
   for(const code of ["en","de","yo","pcm"])assert.ok(html.includes(`value="${code}"`));
 });
 test("Help opens the current project guide from main",()=>{
-  const controls=new Map(["account-menu","settings-menu","search-menu","help-menu"].map(id=>[`#${id}`,{}]));let dialog;
-  const documentRef={body:{append(node){dialog=node;}},createElement:()=>({setAttribute(){},showModal(){},querySelector(){return null;},remove(){}}),querySelector:selector=>controls.get(selector)};
+  const controls=new Map(["account-menu","settings-menu","search-menu","help-menu"].map(id=>[`#${id}`,{
+    setAttribute(){},addEventListener(){},getBoundingClientRect(){return {left:10,right:90,top:0,bottom:30};}
+  } ]));let dialog;
+  const documentRef={
+    body:{append(node){dialog=node;}},
+    createElement:()=>({
+      style:{},open:false,
+      setAttribute(){},addEventListener(){},show(){this.open=true;},close(){this.open=false;},
+      getBoundingClientRect(){return {width:320,height:240};},querySelector(){return null;},remove(){}
+    }),
+    defaultView:{AbortController,innerWidth:1024,innerHeight:768,setTimeout,clearTimeout,addEventListener(){}},
+    querySelector:selector=>controls.get(selector),querySelectorAll:()=>[],addEventListener(){}
+  };
   bindTopMenu({documentRef,project:createStudioMoodProject(),t:key=>translate("en",key),onSelect:()=>{}});
   controls.get("#help-menu").onclick();
   assert.ok(dialog.innerHTML.includes('href="https://github.com/HephzibahBehulahHQ/AdigunLightDesign/blob/main/docs/HELP.md"'));

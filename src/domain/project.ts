@@ -6,6 +6,7 @@ import {roomDimensions} from "./room.ts";
 import {validSceneMaterials} from "./scene-materials.ts";
 import {validCanvasObjects} from "./canvas.ts";
 import {stageSettings} from "./stage.ts";
+import {isRoomPresetId} from "./room-presets.js";
 import type {Cue} from "../timeline/types.ts";
 
 export const CURRENT_SCHEMA_VERSION = 1;
@@ -93,14 +94,24 @@ export function validateProject(input: unknown): ProjectValidationResult {
   }
 
   const fixtures = records(project.fixtures);
+  const scenes = records(project.scenes);
+  const projectSceneIds = new Set((scenes ?? []).flatMap((scene) => typeof scene.id === "string" ? [scene.id] : []));
+  const legacySceneId = (scenes?.find((scene) => typeof scene.id === "string")?.id as string | undefined) ?? "studio-room";
+  const fixtureSceneIds = new Map((fixtures ?? []).flatMap((fixture) => typeof fixture.id === "string" ? [[fixture.id,typeof fixture.sceneId === "string" ? fixture.sceneId : legacySceneId] as const] : []));
   const cues = records(project.cues);
   if (Array.isArray(project.cues) && cues) {
-    try { arrangeTracks(cues as unknown as Cue[]); } catch { errors.push("Cue track scheduling is invalid."); }
+    const cuesByScene = new Map<string,Cue[]>();
     const cueIds = new Set<string>();
     const fixtureIds = new Set((fixtures ?? []).map((fixture) => fixture.id));
     for (const cue of cues) {
       if (typeof cue.id !== "string" || !cue.id.trim() || cueIds.has(cue.id) || typeof cue.name !== "string" || !cue.name.trim()) errors.push("Cues require unique ids and nonempty names.");
       if (typeof cue.id === "string") cueIds.add(cue.id);
+      const explicitSceneId = cue.sceneId;
+      if (explicitSceneId !== undefined && (typeof explicitSceneId !== "string" || !projectSceneIds.has(explicitSceneId))) errors.push("Cues must reference an existing scene when a scene id is provided.");
+      const cueSceneId = typeof explicitSceneId === "string" && projectSceneIds.has(explicitSceneId) ? explicitSceneId : legacySceneId;
+      const sceneCues = cuesByScene.get(cueSceneId) ?? [];
+      sceneCues.push(cue as unknown as Cue);
+      cuesByScene.set(cueSceneId,sceneCues);
       if (!validateChannelKeyframes(cue as unknown as Cue)) errors.push("Cue channel keyframes are invalid.");
       const duration = cue.duration, fade = cue.fade, delay = cue.delay ?? 0, fadeOut = cue.fadeOut ?? 0;
       if (![duration, fade, delay, fadeOut].every((value) => typeof value === "number" && Number.isFinite(value)) || typeof duration !== "number" || typeof fade !== "number" || typeof delay !== "number" || typeof fadeOut !== "number" || duration <= 0 || fade < 0 || delay < 0 || fadeOut < 0 || delay + fade + fadeOut > duration) errors.push("Cue timing is invalid.");
@@ -109,10 +120,14 @@ export function validateProject(input: unknown): ProjectValidationResult {
       for (const targetValue of cue.targets as unknown[]) {
         const target = asRecord(targetValue);
         if (target && (!fixtureIds.has(target.fixtureId) || targetIds.has(target.fixtureId))) errors.push("Cue targets require unique existing fixture references.");
+        if (target && typeof target.fixtureId === "string" && fixtureSceneIds.has(target.fixtureId) && fixtureSceneIds.get(target.fixtureId)!==cueSceneId) errors.push("Cue targets must belong to the same scene as the cue.");
         if (target) targetIds.add(target.fixtureId);
         const properties = asRecord(target?.properties);
         if (!target || typeof target.fixtureId !== "string" || !properties || !Object.values(properties).every((value) => typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= 255)) errors.push("Cue targets require fixture ids and DMX channel values from 0 to 255.");
       }
+    }
+    for (const sceneCues of cuesByScene.values()) {
+      try { arrangeTracks(sceneCues); } catch { errors.push("Cue track scheduling is invalid."); }
     }
   }
 
@@ -121,6 +136,7 @@ export function validateProject(input: unknown): ProjectValidationResult {
     for (const fixture of fixtures) {
       if (typeof fixture.id !== "string" || !fixture.id.trim() || fixtureIds.has(fixture.id) || typeof fixture.name !== "string" || typeof fixture.profileId !== "string" || typeof fixture.modeId !== "string") errors.push("Fixtures require unique ids, names, profiles, and modes.");
       if (typeof fixture.id === "string") fixtureIds.add(fixture.id);
+      if (fixture.sceneId !== undefined && (typeof fixture.sceneId !== "string" || !projectSceneIds.has(fixture.sceneId))) errors.push("Fixtures must reference an existing scene when a scene id is provided.");
       const profile = fixtureProfiles.find((item) => item.id === fixture.profileId);
       const mode = profile?.modes.find((item) => item.id === fixture.modeId);
       if (!mode) errors.push("Fixture profile or mode is unsupported.");
@@ -144,7 +160,6 @@ export function validateProject(input: unknown): ProjectValidationResult {
     }
   }
 
-  const scenes = records(project.scenes);
   if (Array.isArray(project.scenes) && scenes) {
     const sceneIds = new Set<string>();
     for (const scene of scenes) {
@@ -157,6 +172,8 @@ export function validateProject(input: unknown): ProjectValidationResult {
       const visibility = asRecord(scene.visibility);
       if (scene.visibility !== undefined && (!visibility || !Object.entries(visibility).every(([key, value]) => ["lighting", "props", "palette"].includes(key) && typeof value === "boolean"))) errors.push("Scene visibility requires boolean layer settings.");
       if (typeof scene.materialColor !== "string" || !/^#[0-9a-f]{6}$/i.test(scene.materialColor)) errors.push("Scene material color must be a six-digit HEX value.");
+      if (scene.roomType !== undefined && !isRoomPresetId(scene.roomType)) errors.push("Scene room type is unsupported.");
+      if (scene.ambience !== undefined) { const ambience=asRecord(scene.ambience); if (!ambience || typeof ambience.color !== "string" || !/^#[0-9a-f]{6}$/i.test(ambience.color) || typeof ambience.intensity !== "number" || !Number.isFinite(ambience.intensity) || ambience.intensity<0 || ambience.intensity>1) errors.push("Scene ambience requires a HEX color and intensity between zero and one."); }
     }
   }
   return {valid: errors.length === 0, errors};

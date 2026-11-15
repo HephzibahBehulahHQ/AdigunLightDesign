@@ -4,21 +4,26 @@ import { starterPalette } from "./palette-store.js";
 import { createProject } from "./project.js";
 
 const studioRig = [
-  { red:0, green:100, blue:255, tilt:220, beam:120 },
-  { red:255, green:126, blue:26, tilt:220, beam:132 },
-  { red:255, green:0, blue:184, tilt:220, beam:145 }
+  { red:0, green:100, blue:255, pan:255, tilt:48, beam:120 },
+  { red:255, green:126, blue:26, pan:127, tilt:48, beam:132 },
+  { red:255, green:0, blue:184, pan:0, tilt:48, beam:145 }
 ];
 
 export function createStudioMoodProject() {
   const project=createProject({ name:"Studio Mood" });
   project.palettes=[{ id:"studio-modern", name:"Studio Modern", harmonyType:"analogous", colors:starterPalette }];
-  project.scenes=[{ id:"studio-room", name:"Main room", materialColor:"#C21888" }];
+  project.scenes=[{ id:"studio-room", name:"Main room", roomType:"living-room", materialColor:"#C21888" }];
   const fixtureSpecs=[
     ...studioRig.map((properties,index)=>({index:index+1,profileId:"generic-moving-head-rgbw",name:`Moving Head RGB ${index+1}`,properties})),
     ...Array.from({length:4},(_,offset)=>({index:offset+4,profileId:"generic-rgb-wash"})),
     ...Array.from({length:2},(_,offset)=>({index:offset+8,profileId:"generic-led-strip-rgb"}))
   ];
-  let fixtures=fixtureSpecs.map((spec)=>{const fixture=createFixture(spec.index,spec.profileId);return {...fixture,...(spec.name ? {name:spec.name} : {}),properties:{...fixture.properties,...spec.properties}};});
+  const fixturePositions=[
+    {x:-3,y:3.65,z:1.8},{x:0,y:3.65,z:1.8},{x:3,y:3.65,z:1.8},
+    {x:-3,y:3.45,z:2},{x:-1,y:3.45,z:2},{x:1,y:3.45,z:2},{x:3,y:3.45,z:2},
+    {x:-1,y:2.4,z:0},{x:1,y:2.4,z:0}
+  ];
+  let fixtures=fixtureSpecs.map((spec,index)=>{const fixture=createFixture(spec.index,spec.profileId);return {...fixture,...(spec.name ? {name:spec.name} : {}),transform:{...fixture.transform,...fixturePositions[index]},properties:{...fixture.properties,...spec.properties}};});
   fixtures=fixtures.reduce((patched,fixture)=>patchFixture(patched,fixture.id),fixtures);
   project.fixtures=fixtures;
   const starterTracks=[

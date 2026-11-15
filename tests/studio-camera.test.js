@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {studioCameraMatrix,cameraAxisView,cameraPitchLimit,normalizeCameraState,multiply,viewportProjection} from "../src/light-lab/math.js";
+import {studioCameraMatrix,cameraAxisView,cameraPitchLimit,normalizeCameraState,roomFitCameraDistance,multiply,viewportProjection} from "../src/light-lab/math.js";
 import {pickScenePoint} from "../src/light-lab/picking.js";
 test("studio camera keeps positive-Z rear surfaces behind furniture while preserving screen right",()=>{
   const matrix=studioCameraMatrix({yaw:0,pitch:0,distance:11,targetHeight:.35});
@@ -19,11 +19,23 @@ test("room target height places furniture below and the rig above the camera cen
 });
 test("axis presets produce finite distinct views with a bounded overhead angle",()=>{
   assert.equal(cameraAxisView("x").yaw,-Math.PI/2);assert.equal(cameraAxisView("y").pitch,cameraPitchLimit);assert.equal(cameraAxisView("z").yaw,0);
-  const matrices=["x","y","z"].map(axis=>studioCameraMatrix({...cameraAxisView(axis),distance:11}));assert.ok(matrices.every(matrix=>[...matrix].every(Number.isFinite)));assert.notDeepEqual(matrices[0],matrices[2]);assert.notDeepEqual(matrices[1],matrices[2]);assert.throws(()=>cameraAxisView("invalid"));
+  const views=["front","right","top","left","back","iso"];
+  const matrices=views.map(axis=>studioCameraMatrix({...cameraAxisView(axis),distance:11}));
+  assert.ok(matrices.every(matrix=>[...matrix].every(Number.isFinite)));
+  assert.equal(new Set(matrices.map(matrix=>[...matrix].join(","))).size,views.length,"every camera preset has a distinct orientation");
+  assert.deepEqual(cameraAxisView("front"),cameraAxisView("z"));assert.deepEqual(cameraAxisView("left"),cameraAxisView("x"));assert.deepEqual(cameraAxisView("top"),cameraAxisView("y"));
+  assert.throws(()=>cameraAxisView("invalid"));
 });
 test("camera snapshots round-trip and reject nonfinite or out-of-range saved controls",()=>{
   const state={...cameraAxisView("x"),distance:7};assert.deepEqual(normalizeCameraState(state),state);assert.deepEqual(normalizeCameraState(null),{yaw:-.08,pitch:.1,distance:9.8});
   const bounded=normalizeCameraState({yaw:NaN,pitch:100,distance:-5});assert.equal(bounded.yaw,-.08);assert.equal(bounded.pitch,cameraPitchLimit);assert.equal(bounded.distance,4);
+});
+test("room camera fit frames small rooms while retaining the standard room distance",()=>{
+  assert.equal(roomFitCameraDistance(10,8),9.8);
+  assert.ok(Math.abs(roomFitCameraDistance(4.5,4)-5.93)<.01);
+  assert.ok(Math.abs(roomFitCameraDistance(20,16)-15.17)<.01);
+  assert.equal(roomFitCameraDistance(2,2),4);
+  assert.throws(()=>roomFitCameraDistance(NaN,4));
 });
 test('matrix multiplication rejects malformed size and nonfinite elements',()=>{
  const identity=new Float32Array([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]);

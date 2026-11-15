@@ -1,0 +1,108 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { createRoomScene,roomAmbience,roomPresetOptions,roomPresets } from "../src/domain/room-presets.js";
+import { createProject,validateProject } from "../src/domain/project.js";
+import { sceneData } from "../src/light-lab/renderer.js";
+
+test("room templates create distinct valid, localized scene documents",()=>{
+  assert.equal(roomPresets.length,10);
+  assert.deepEqual(roomPresetOptions("de").map(room=>room.label).slice(0,3),["Wohnzimmer","Bibliothek","Küche"]);
+  const project=createProject();
+  project.scenes=roomPresets.map(preset=>createRoomScene(preset.id,{id:preset.id}));
+  assert.equal(validateProject(project).valid,true);
+  assert.equal(new Set(project.scenes.map(scene=>scene.roomType)).size,10);
+  assert.equal(new Set(project.scenes.map(scene=>JSON.stringify(scene.room))).size,10);
+  assert.equal(new Set(project.scenes.map(scene=>JSON.stringify(scene.ambience))).size,10);
+});
+test("room templates have separate mutable settings and validate their ambient fill",()=>{
+  const first=createRoomScene("kitchen",{id:"first"}),second=createRoomScene("kitchen",{id:"second"});
+  first.room.width=20;first.materials.wall="#123456";first.ambience.color="#52B8D8";
+  assert.equal(second.room.width,6);assert.notEqual(second.materials.wall,"#123456");
+  assert.equal(roomAmbience(second).color,"#FFF0D2");
+  const project=createProject();project.scenes=[createRoomScene("library",{id:"library"})];
+  for(const ambience of [{color:"red",intensity:.2},{color:"#FFFFFF",intensity:1.1},{color:"#FFFFFF",intensity:NaN}]){
+    project.scenes[0].ambience=ambience;
+    assert.equal(validateProject(project).valid,false);
+  }
+  project.scenes[0].roomType="unsupported";
+  assert.equal(validateProject(project).valid,false);
+  assert.throws(()=>createRoomScene("spaceship",{id:"bad"}),/supported room template/);
+});
+test("room templates generate distinct 3D structures and ambient fill affects rendered surfaces",()=>{
+  const geometries=roomPresets.map(preset=>sceneData([.1,.2,.3],[],{},preset.room,false,preset.materials,"performance",undefined,preset.ambience,preset.id));
+  assert.ok(geometries.every(data=>data.length>0&&Array.from(data).every(Number.isFinite)));
+  assert.equal(new Set(geometries.map(data=>Array.from(data).join(","))).size,roomPresets.length);
+  const preset=roomPresets[0],low=sceneData([0,0,0],[],{},preset.room,false,preset.materials,"performance",undefined,{color:"#FF0000",intensity:0},"living-room"),high=sceneData([0,0,0],[],{},preset.room,false,preset.materials,"performance",undefined,{color:"#FF0000",intensity:1},"living-room");
+  assert.notDeepEqual(high,low);
+});
+test("living-room scene includes the framed three-pane side window from the approved reference",()=>{
+  const preset=roomPresets.find(room=>room.id==="living-room");
+  const geometry=sceneData([0,0,0],[],{},preset.room,false,preset.materials,"performance",undefined,preset.ambience,preset.id);
+  const hasVertex=(expected)=>{
+    for(let offset=0;offset<geometry.length;offset+=6){
+      if(expected.every((value,axis)=>Math.abs(geometry[offset+axis]-value)<1e-5))return true;
+    }
+    return false;
+  };
+  assert.ok(hasVertex([-4.8,1.14,-1.77]),"the dark glazing occupies the left interior wall at the reference dimensions");
+  assert.ok(hasVertex([-4.755,1.14,-1.77]),"the window glazing clears the frame and has visible depth");
+});
+test("swimming pool scene adds a recessed basin, coping, entry steps and detailed water geometry",()=>{
+  const preset=roomPresets.find(room=>room.id==="swimming-pool");
+  const shell=sceneData([0,0,0],[],{props:false},preset.room,false,preset.materials,"performance",undefined,preset.ambience,preset.id);
+  const pool=sceneData([0,0,0],[],{},preset.room,false,preset.materials,"performance",undefined,preset.ambience,preset.id);
+  assert.ok(pool.length>shell.length+12000,"pool furniture and water details add substantial room geometry");
+  assert.ok(Array.from(pool).every(Number.isFinite),"all pool geometry remains finite");
+});
+test("disco party scene adds a tiled dance floor, DJ equipment and mirrored lighting feature",()=>{
+  const preset=roomPresets.find(room=>room.id==="disco-party");
+  const shell=sceneData([0,0,0],[],{props:false},preset.room,false,preset.materials,"performance",undefined,preset.ambience,preset.id);
+  const party=sceneData([0,0,0],[],{},preset.room,false,preset.materials,"performance",undefined,preset.ambience,preset.id);
+  assert.ok(party.length>shell.length+18000,"club equipment and dance-floor details add substantial room geometry");
+  assert.ok(Array.from(party).every(Number.isFinite),"all party-room geometry remains finite");
+});
+test("library scene adds stocked shelves and a complete reading table setup",()=>{
+  const preset=roomPresets.find(room=>room.id==="library");
+  const shell=sceneData([0,0,0],[],{props:false},preset.room,false,preset.materials,"performance",undefined,preset.ambience,preset.id);
+  const library=sceneData([0,0,0],[],{},preset.room,false,preset.materials,"performance",undefined,preset.ambience,preset.id);
+  assert.ok(library.length>shell.length+30000,"bookcases, stocked shelves and reading furniture add substantial room geometry");
+  assert.ok(Array.from(library).every(Number.isFinite),"all library geometry remains finite");
+});
+test("kitchen scene adds cabinetry, sink, cooktop, oven, refrigerator and prep island geometry",()=>{
+  const preset=roomPresets.find(room=>room.id==="kitchen");
+  const shell=sceneData([0,0,0],[],{props:false},preset.room,false,preset.materials,"performance",undefined,preset.ambience,preset.id);
+  const kitchen=sceneData([0,0,0],[],{},preset.room,false,preset.materials,"performance",undefined,preset.ambience,preset.id);
+  assert.ok(kitchen.length>shell.length+14000,"appliances and fitted kitchen furniture add substantial room geometry");
+  assert.ok(Array.from(kitchen).every(Number.isFinite),"all kitchen geometry remains finite");
+});
+test("bathroom scene adds a tiled walk-in shower, lit vanity mirror, toilet and towel rail",()=>{
+  const preset=roomPresets.find(room=>room.id==="bathroom");
+  const shell=sceneData([0,0,0],[],{props:false},preset.room,false,preset.materials,"performance",undefined,preset.ambience,preset.id);
+  const bathroom=sceneData([0,0,0],[],{},preset.room,false,preset.materials,"performance",undefined,preset.ambience,preset.id);
+  assert.ok(bathroom.length>shell.length+14000,"bathroom suite and tile detail add substantial room geometry");
+  assert.ok(Array.from(bathroom).every(Number.isFinite),"all bathroom geometry remains finite");
+});
+test("toilet scene adds a wall-hung WC, flush plate, compact basin and mirror",()=>{
+  const preset=roomPresets.find(room=>room.id==="toilet");
+  const shell=sceneData([0,0,0],[],{props:false},preset.room,false,preset.materials,"performance",undefined,preset.ambience,preset.id);
+  const toilet=sceneData([0,0,0],[],{},preset.room,false,preset.materials,"performance",undefined,preset.ambience,preset.id);
+  assert.ok(toilet.length>shell.length+9000,"WC, sanitaryware and wall accessories add detailed compact-room geometry");
+  assert.ok(Array.from(toilet).every(Number.isFinite),"all toilet-room geometry remains finite");
+});
+
+test("hallway scene adds a paneled entry door, console, coat station, runner and wall lights",()=>{
+  const preset=roomPresets.find(room=>room.id==="hallway");
+  const shell=sceneData([0,0,0],[],{props:false},preset.room,false,preset.materials,"performance",undefined,preset.ambience,preset.id);
+  const hallway=sceneData([0,0,0],[],{},preset.room,false,preset.materials,"performance",undefined,preset.ambience,preset.id);
+  assert.ok(hallway.length>shell.length+9000,"entry fittings and layered lighting details add substantial geometry");
+  assert.ok(Array.from(hallway).every(Number.isFinite),"all hallway geometry remains finite");
+});
+
+
+test("clubhouse scene adds a stocked bar, social seating and warm architectural lighting",()=>{
+  const preset=roomPresets.find(room=>room.id==="clubhouse");
+  const shell=sceneData([0,0,0],[],{props:false},preset.room,false,preset.materials,"performance",undefined,preset.ambience,preset.id);
+  const clubhouse=sceneData([0,0,0],[],{},preset.room,false,preset.materials,"performance",undefined,preset.ambience,preset.id);
+  assert.ok(clubhouse.length>shell.length+18000,"bar fixtures, seating and layered architectural lights add substantial geometry");
+  assert.ok(Array.from(clubhouse).every(Number.isFinite),"all clubhouse geometry remains finite");
+});
