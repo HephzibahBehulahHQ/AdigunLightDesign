@@ -36,8 +36,8 @@ function garageFrontWheel(target,x,y,z,radius){
     triangle(centre,point(inner,a),point(inner,b),index%2?rim:rim.map(value=>value*.8));
   }
 }
-function scaleGeometryPositions(data,start,end,scale) {
-  for(let offset=start;offset<end;offset+=6){data[offset]*=scale;data[offset+1]*=scale;data[offset+2]*=scale;}
+function scaleGeometryPositions(data,start,end,scale,scaleY=scale) {
+  for(let offset=start;offset<end;offset+=6){data[offset]*=scale;data[offset+1]*=scaleY;data[offset+2]*=scale;}
 }
 function sofaCushionPiping(target,x,y,z,width,depth,colour) {
   const inset=.045,line=.012,left=x+inset,right=x+width-inset,front=z+inset,back=z+depth-inset;
@@ -441,9 +441,56 @@ function roomPresetFurniture(data,type,accent){
     for(const x of [1.05,1.62])for(const z of [-.63,-.18])box(data,x,.05,z,.07,.48,.07,metal);
     box(data,1.02,.5,-.65,.68,.2,.55,soft);box(data,1.04,.7,-.65,.64,.56,.11,soft);
   } else if(type==="kitchen"){
-    for(const x of [-4,-2.7,-1.4,.0,1.4,2.8]){box(data,x,0,3,1.25,.9,.62,soft);box(data,x,.92,3,1.25,.08,.7,timber);box(data,x,1.65,3,1.25,.7,.42,soft);}
-    box(data,-1.4,.95,-1.65,3.2,.12,1.25,timber);for(const x of [-1.1,1.6])for(const z of [-1.4,-.75])box(data,x,.05,z,.1,.88,.1,metal);
-    box(data,-3.8,1.02,2.85,.72,.06,.45,metal);box(data,.6,1.03,2.8,.82,.08,.5,hexVector("#A8D8DC"));
+    const cabinet=hexVector("#8F9A98"),counter=hexVector("#D7D5CC"),steel=hexVector("#A9B7B8"),tile=hexVector("#B7D5D5"),glass=hexVector("#243B46");
+    const baseCabinetXs=[-4,-2.25,-.5,1.25];
+    // Compact L-shaped kitchen run with continuous counters and upper storage.
+    box(data,-4.08,0,2.45,7.75,.14,.82,darkWood);
+    for(const x of baseCabinetXs){
+      box(data,x,0,2.05,1.55,.88,.58,cabinet);
+      box(data,x+.025,.08,1.99,1.5,.68,.06,soft);
+      box(data,x+1.24,.1,1.91,.055,.035,.035,metal);
+    }
+    box(data,-4.08,.92,1.98,7.75,.1,.78,counter);
+    for(const x of baseCabinetXs){
+      box(data,x+.025,1.1,2.35,1.5,.68,.22,soft);
+      box(data,x+1.22,1.39,2.31,.055,.035,.04,metal);
+    }
+    for(const x of [-4,-2.25]){
+      box(data,x,1.55,2.42,1.55,.82,.42,cabinet);
+      for(const door of [0,1]){
+        box(data,x+.06+door*.76,1.62,2.34,.7,.68,.07,soft);
+        box(data,x+.67+door*.76,1.92,2.29,.045,.12,.035,metal);
+      }
+    }
+    box(data,-4.12,0,-1.52,.78,.88,3.58,cabinet);box(data,-4.16,.92,-1.58,.9,.1,3.66,counter);
+    for(const z of [-.95,-.05,.85])box(data,-3.38,.1,z,.055,.035,.035,metal);
+    // Tiled backsplash with a narrow illuminated task-light rail.
+    box(data,-3.9,1.03,2.57,7.38,.48,.045,tile);
+    for(let x=-3.8;x<3.6;x+=.42)box(data,x,1.03,2.52,.018,.48,.025,hexVector("#8FAFB2"));
+    box(data,-3.7,1.53,2.3,7,.045,.08,hexVector("#F4E3B6"));
+    // Stainless inset sink, drainboard and a raised mixer tap.
+    box(data,-1.52,1.035,1.87,.78,.035,.48,steel);
+    box(data,-1.42,1.06,1.91,.56,.024,.34,glass);
+    box(data,-.57,1.035,1.87,.34,.025,.48,steel);
+    for(let groove=0;groove<4;groove++)box(data,-.53+groove*.07,1.052,1.91,.018,.012,.38,metal);
+    box(data,-1.1,1.08,2.04,.045,.3,.045,steel);box(data,-.95,1.2,2.04,.32,.045,.045,steel);
+    box(data,-.62,1.065,1.97,.09,.055,.06,metal);
+    // Four-burner cooktop, front controls and built-in glass oven.
+    box(data,.22,1.035,1.91,.86,.035,.56,metal);
+    for(const x of [.42,.82])for(const z of [2.04,2.34])data.push(...roundTableTop(x,1.06,z,.105,.025,steel,16));
+    box(data,.3,.12,1.98,.72,.65,.12,steel);box(data,.37,.2,1.91,.58,.48,.045,glass);
+    box(data,.33,.73,1.91,.66,.07,.06,metal);for(const x of [.4,.62,.84])box(data,x,.76,1.86,.055,.055,.04,counter);
+    box(data,.48,1.73,2.25,.32,.52,.16,steel);box(data,.25,2.17,2.12,.78,.12,.5,metal);
+    // Tall refrigerator with separate freezer door and vertical pull handles.
+    box(data,2.72,0,2.02,1.02,2.45,.72,steel);box(data,2.78,.13,1.97,.9,1.62,.045,soft);
+    box(data,2.78,1.82,1.97,.9,.48,.045,cabinet);box(data,3.46,.42,1.91,.045,.56,.055,metal);box(data,3.46,1.95,1.91,.045,.26,.055,metal);
+    // Prep island with drawers and two compact breakfast stools.
+    box(data,-1.5,.08,-1.8,3,.86,1.22,timber);box(data,-1.6,.95,-1.88,3.2,.12,1.38,counter);
+    for(const x of [-1.2,-.2,.8]){box(data,x,.2,-1.16,.72,.25,.055,darkWood);box(data,x+.3,.29,-1.22,.045,.035,.035,metal);}
+    for(const x of [-1.15,.65]){
+      for(const z of [-2.55,-2.12])box(data,x,.05,z,.07,.62,.07,metal);
+      box(data,x-.18,.62,-2.58,.44,.12,.46,soft);box(data,x-.16,.74,-2.58,.4,.34,.08,soft);
+    }
   } else if(type==="bathroom"){
     box(data,-4,0,2.95,2.5,2.25,.16,hexVector("#A8DCE5"));box(data,-4,0,2.82,.08,2.3,.12,metal);box(data,-1.5,0,2.95,.08,2.3,.12,metal);
     box(data,1.1,0,2.35,3.2,.55,1.25,hexVector("#E5E8E7"));box(data,1.25,.56,2.5,2.9,.08,.95,hexVector("#BCE3E9"));
@@ -569,7 +616,7 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
   data.push(...surfaceGrid([-width/2,height,-depth/2],[width,0,0],[0,0,depth],hexVector(materials.ceiling ?? "#101726"),budget.columns,budget.rows));
   const shelfLamps=[{x:4.34,y:1.81,z:2.67},{x:4.36,y:2.51,z:2.67}];
   if (visibility.props!==false) {
-  if(!["swimming-pool","bathroom","toilet","disco-party"].includes(roomType))data.push(...acousticSlats(room,wood));
+  if(!["swimming-pool","bathroom","toilet","disco-party","kitchen"].includes(roomType))data.push(...acousticSlats(room,wood));
   const platform=stageSettings(stage);
   if(platform.enabled)box(data,platform.x,platform.y,platform.z,platform.width,platform.height,platform.depth,hexVector(platform.color));
   const furnitureStart=data.length;
@@ -623,7 +670,8 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
   
   } else roomPresetFurniture(data,roomType,accent);
   const furnitureEnd=data.length;
-  scaleGeometryPositions(data,furnitureStart,furnitureEnd,studioPropsScale);
+  const furnitureScaleY=roomType==="kitchen" ? Math.min(1,(height-.05)/2.5) : studioPropsScale;
+  scaleGeometryPositions(data,furnitureStart,furnitureEnd,studioPropsScale,furnitureScaleY);
   if ((roomType ?? "living-room")==="living-room") studioWallArt(data,{width,height,depth},wood);
   }
   const rigStart=data.length;
