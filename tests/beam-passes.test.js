@@ -1,9 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { sceneBuffers,sceneData } from "../src/light-lab/renderer.js";
-import { createStudioMoodProject } from "../src/domain/studio-mood.js";
-import { beamVolume,virtualFixtureVisuals } from "../src/light-lab/renderer.js";
+import { beamVolume,sceneBuffers,sceneData,virtualFixtureVisuals } from "../src/light-lab/renderer.js";
 import { previewQuality } from "../src/light-lab/quality.js";
+import { createStudioMoodProject } from "../src/domain/studio-mood.js";
 test("beam buffers follow opaque geometry and disappear with blackout or hidden lighting",()=>{
   const project=createStudioMoodProject(),accent=[.2,.3,.4],result=sceneBuffers(accent,project.fixtures);
   assert.deepEqual(result.data.slice(0,result.opaqueVertices*6),sceneData(accent,project.fixtures,{},undefined,false));
@@ -15,7 +14,6 @@ test("beam buffers follow opaque geometry and disappear with blackout or hidden 
   assert.equal(off.data.length,off.opaqueVertices*6);
   assert.ok(result.data.every(Number.isFinite));
 });
-
 test("linear LED strips stay out of the spotlight beam pass",()=>{
   const project=createStudioMoodProject(),strip=project.fixtures[7],moving=project.fixtures[0];
   const result=sceneBuffers([.2,.3,.4],[strip,moving]),beamStart=result.opaqueVertices*6;

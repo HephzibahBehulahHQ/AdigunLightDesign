@@ -20,7 +20,6 @@ test('selection frame encloses every aimed housing vertex with padding',()=>{
   }
  }
 });
-
 test('virtual LED strip uses a one-metre linear housing and local light spill',()=>{
  const fixture={profileId:'generic-led-strip-rgb',transform:{x:1,y:2.4,z:0},properties:{red:33,green:180,blue:240,dimmer:255}};
  const [light]=virtualFixtureVisuals([fixture]);
