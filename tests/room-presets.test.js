@@ -56,3 +56,10 @@ test("library scene adds stocked shelves and a complete reading table setup",()=
   assert.ok(library.length>shell.length+30000,"bookcases, stocked shelves and reading furniture add substantial room geometry");
   assert.ok(Array.from(library).every(Number.isFinite),"all library geometry remains finite");
 });
+test("kitchen scene adds cabinetry, sink, cooktop, oven, refrigerator and prep island geometry",()=>{
+  const preset=roomPresets.find(room=>room.id==="kitchen");
+  const shell=sceneData([0,0,0],[],{props:false},preset.room,false,preset.materials,"performance",undefined,preset.ambience,preset.id);
+  const kitchen=sceneData([0,0,0],[],{},preset.room,false,preset.materials,"performance",undefined,preset.ambience,preset.id);
+  assert.ok(kitchen.length>shell.length+14000,"appliances and fitted kitchen furniture add substantial room geometry");
+  assert.ok(Array.from(kitchen).every(Number.isFinite),"all kitchen geometry remains finite");
+});
