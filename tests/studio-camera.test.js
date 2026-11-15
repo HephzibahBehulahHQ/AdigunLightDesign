@@ -19,7 +19,12 @@ test("room target height places furniture below and the rig above the camera cen
 });
 test("axis presets produce finite distinct views with a bounded overhead angle",()=>{
   assert.equal(cameraAxisView("x").yaw,-Math.PI/2);assert.equal(cameraAxisView("y").pitch,cameraPitchLimit);assert.equal(cameraAxisView("z").yaw,0);
-  const matrices=["x","y","z"].map(axis=>studioCameraMatrix({...cameraAxisView(axis),distance:11}));assert.ok(matrices.every(matrix=>[...matrix].every(Number.isFinite)));assert.notDeepEqual(matrices[0],matrices[2]);assert.notDeepEqual(matrices[1],matrices[2]);assert.throws(()=>cameraAxisView("invalid"));
+  const views=["front","right","top","left","back","iso"];
+  const matrices=views.map(axis=>studioCameraMatrix({...cameraAxisView(axis),distance:11}));
+  assert.ok(matrices.every(matrix=>[...matrix].every(Number.isFinite)));
+  assert.equal(new Set(matrices.map(matrix=>[...matrix].join(","))).size,views.length,"every camera preset has a distinct orientation");
+  assert.deepEqual(cameraAxisView("front"),cameraAxisView("z"));assert.deepEqual(cameraAxisView("left"),cameraAxisView("x"));assert.deepEqual(cameraAxisView("top"),cameraAxisView("y"));
+  assert.throws(()=>cameraAxisView("invalid"));
 });
 test("camera snapshots round-trip and reject nonfinite or out-of-range saved controls",()=>{
   const state={...cameraAxisView("x"),distance:7};assert.deepEqual(normalizeCameraState(state),state);assert.deepEqual(normalizeCameraState(null),{yaw:-.08,pitch:.1,distance:9.8});

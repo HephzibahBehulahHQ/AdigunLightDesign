@@ -35,9 +35,12 @@ export function normalizeCameraState(value:unknown={}){
   return {yaw:finite("yaw",-.08),pitch:Math.max(-cameraPitchLimit,Math.min(cameraPitchLimit,finite("pitch",.1))),distance:Math.max(4,Math.min(24,finite("distance",9.8)))};
 }
 export function cameraAxisView(axis:string){
-  if(axis==="x")return {yaw:-Math.PI/2,pitch:0};
-  if(axis==="y")return {yaw:0,pitch:cameraPitchLimit};
-  if(axis==="z")return {yaw:0,pitch:0};
+  if(axis==="x"||axis==="left")return {yaw:-Math.PI/2,pitch:0};
+  if(axis==="right")return {yaw:Math.PI/2,pitch:0};
+  if(axis==="back")return {yaw:Math.PI,pitch:0};
+  if(axis==="y"||axis==="top")return {yaw:0,pitch:cameraPitchLimit};
+  if(axis==="z"||axis==="front")return {yaw:0,pitch:0};
+  if(axis==="iso")return {yaw:-Math.PI/4,pitch:Math.PI/6};
   throw new Error("Unsupported camera axis.");
 }
 

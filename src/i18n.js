@@ -267,6 +267,10 @@ Object.assign(messages.en,{cameraAxisViews:"Camera axis views",cameraView_x:"Vie
 Object.assign(messages.de,{cameraAxisViews:"Kamera-Achsenansichten",cameraView_x:"Ansicht entlang der X-Achse",cameraView_y:"Ansicht von oben (Y-Achse)",cameraView_z:"Vorderansicht (Z-Achse)"});
 Object.assign(messages.yo,{cameraAxisViews:"Àwọn ojú ìwòye àáké kámẹ́rà",cameraView_x:"Wo lẹ́gbẹ̀ẹ́ àáké X",cameraView_y:"Wo láti òkè (àáké Y)",cameraView_z:"Ojú ìwòye iwájú (àáké Z)"});
 Object.assign(messages.pcm,{cameraAxisViews:"Camera axis views",cameraView_x:"View along X axis",cameraView_y:"View from above (Y axis)",cameraView_z:"Front view (Z axis)"});
+Object.assign(messages.en,{cameraView_front:"Front view",cameraView_right:"Right view",cameraView_top:"Top view",cameraView_left:"Left view",cameraView_back:"Rear view",cameraView_iso:"Isometric view"});
+Object.assign(messages.de,{cameraView_front:"Vorderansicht",cameraView_right:"Rechte Ansicht",cameraView_top:"Draufsicht",cameraView_left:"Linke Ansicht",cameraView_back:"Rückansicht",cameraView_iso:"Isometrische Ansicht"});
+Object.assign(messages.yo,{cameraView_front:"Ojú ìwòye iwájú",cameraView_right:"Ojú ìwòye ọ̀tún",cameraView_top:"Ojú ìwòye òkè",cameraView_left:"Ojú ìwòye òsì",cameraView_back:"Ojú ìwòye ẹ̀yìn",cameraView_iso:"Ojú ìwòye onígun mẹ́ta"});
+Object.assign(messages.pcm,{cameraView_front:"Front view",cameraView_right:"Right view",cameraView_top:"Top view",cameraView_left:"Left view",cameraView_back:"Back view",cameraView_iso:"Isometric view"});
 Object.assign(messages.en,{roomCommand:"Room",stageCommand:"Stage"});
 Object.assign(messages.de,{roomCommand:"Raum",stageCommand:"Bühne"});
 Object.assign(messages.yo,{roomCommand:"Yàrá",stageCommand:"Ìtàgé"});

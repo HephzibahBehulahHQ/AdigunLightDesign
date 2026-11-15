@@ -188,12 +188,11 @@ function playSequence({seek=0,paused=false}={}) {
     const scrub=document.querySelector("#sequence-seek");
     if (scrub && document.activeElement!==scrub) scrub.value=String(position.time);
     document.querySelector("#sequence-position").textContent=`${position.time.toFixed(1)} / ${duration.toFixed(1)} s`;
-    document.querySelector("#timeline-playhead").style.left=`${position.time/timelineLayout(cues).span*100}%`;
+    document.querySelector("#arrangement-playhead").style.left=`${position.time/Math.max(30,arrangementDuration(sceneCues()))*100}%`;
     document.querySelector("#status").textContent=`${t("playSequence")} · ${Math.min(frame.index + 1,cues.length)}/${cues.length}`;
     if (position.complete && !playbackClock.paused) { stopPlayback(); render(); }
   },100);
   render();
-  document.querySelector("#sequence-preview-details").open=true;
 }
 function playLatestCue() {
   const sceneCueList=sceneCues(),cue=sceneCueList.find((item)=>item.id===preferences.cueId) ?? sceneCueList.at(-1);
@@ -496,7 +495,7 @@ function render() {
         <div class="workspace-tabs panel"><strong class="studio-panel-title">${preferences.view === "light" ? `${t("sceneHeader")} ${String(displayedSceneNumber).padStart(2,"0")} / ${scene().id === "studio-room" ? t("mockupRoomTitle") : esc(scene().name)}` : `2D ${t("palette")} / ${esc(project.name)}`}</strong><small class="studio-panel-title-meta">${preferences.view === "light" ? t("viewportFixedHint") : t("palette")}</small><span></span><button id="viewport-projection" class="view-menu" ${preferences.view === "light" ? "" : disabled(t("select3d"))}>${t("perspective")}⌄</button></div>
         ${preferences.view === "light" ? `<div class="scene-preview light-canvas panel"><div class="scene-title"><b>${esc(project.name)} • ${t("rgbwPreview")}</b><small>${t("sceneView")} • ${t("rgbwPreviewSubtitle")}</small></div><canvas id="light-canvas" tabindex="0" aria-label="${t("previewLabel")}"></canvas><div class="canvas-actions"><button id="apply-scene">${t("paintSurface")}</button></div></div>` : `<div class="scene-preview panel" role="img" aria-label="${t("scenePreview")}"><div class="scene-title"><b>${t("scenePreview")}</b><small>${t("sceneNote")}</small></div><div class="beam beam-blue"></div><div class="beam beam-amber"></div><div class="beam beam-magenta"></div><div class="stage-truss"></div><div class="scene-wall"><div class="art-frame"></div><div class="couch"></div><div class="plant plant-left"></div><div class="plant plant-right"></div><div class="lamp"></div></div><div class="axis"><i>X</i><b>Y</b><em>Z</em></div></div>`}
         <div class="lower-workspace"><section class="palette-panel panel"><div class="section-title"><h2>◉ ${t("activePalette")} — ${esc(palette().name)}</h2></div><div class="swatches">${swatches}</div><div class="palette-actions"><input id="seed" value="${preferences.seed}" aria-label="Seed colour" maxlength="7" /><label class="harmony-command"><span>◇ ${t("harmonies")}</span><select id="harmony" aria-label="${t("harmony")}">${["analogous","complementary","splitComplementary","triadic","tetradic","square","monochromatic"].map((type) => `<option value="${type}" ${type === preferences.harmony ? "selected" : ""}>${type}</option>`).join("")}</select></label><button id="reroll">⟳ ${t("reroll")}</button><button id="add-colour">＋ ${t("add")}</button></div></section>
-          <section class="timeline panel" tabindex="-1"><div class="section-title"><h2>◌ ${t("timeline")}</h2><span class="m-badge">M5 · ${t("simulationOnly")}</span></div><p>${activeFixtures.length ? `${t("universe")} 1 · ${patchedFixtures.length}/${activeFixtures.length} ${t("fixturesPatched")} · 1–${Math.max(0,...patchedFixtures.map((fixture)=>fixture.patchAssignment.startAddress+fixture.patchAssignment.channelFootprint-1))} ${t("activeChannels")}.` : t("noFixtures")}</p><div class="dmx-actions"><button id="add-fixture">＋ ${t("addWash")}</button><button id="apply-fixture-colour" ${activeFixtures.length ? "" : "disabled"}>${t("applySwatchToFixtures")}</button><button id="create-cue" ${activeFixtures.length ? "" : "disabled"}>＋ ${t("captureCue")}</button><button id="play-cue" ${sceneCueList.length ? "" : "disabled"}>▶ ${t("previewSelectedCue")}</button><button id="stop-cue" ${playbackTimer ? "" : "disabled"}>■ ${t("stop")}</button><span>CH 1: ${virtualFrame[0]} · ${t("outputDisabled")}</span></div><div class="cue-track" aria-label="${t("timeline")}">${cueBlocks}</div></section></div>
+          <section class="timeline panel" tabindex="-1"><div class="section-title"><h2>◌ ${t("timeline")}</h2></div><p>${activeFixtures.length ? `${t("universe")} 1 · ${patchedFixtures.length}/${activeFixtures.length} ${t("fixturesPatched")} · 1–${Math.max(0,...patchedFixtures.map((fixture)=>fixture.patchAssignment.startAddress+fixture.patchAssignment.channelFootprint-1))} ${t("activeChannels")}.` : t("noFixtures")}</p><div class="dmx-actions"><button id="add-fixture">＋ ${t("addWash")}</button><button id="apply-fixture-colour" ${activeFixtures.length ? "" : "disabled"}>${t("applySwatchToFixtures")}</button><button id="create-cue" ${activeFixtures.length ? "" : "disabled"}>＋ ${t("captureCue")}</button><button id="play-cue" ${sceneCueList.length ? "" : "disabled"}>▶ ${t("previewSelectedCue")}</button><button id="stop-cue" ${playbackTimer ? "" : "disabled"}>■ ${t("stop")}</button><span>CH 1: ${virtualFrame[0]} · ${t("outputDisabled")}</span></div><div class="cue-track" aria-label="${t("timeline")}">${cueBlocks}</div></section></div>
       </section>
       <aside class="inspector panel"><div class="section-title"><h2>◈ ${t("inspector")}</h2></div><div class="inspector-tabs"></div><div class="selected-preview" style="--selected:${active.hex}"></div><label>${t("colourName")}<input id="swatch-name" value="${esc(active.name)}" /></label><label>${t("hex")}<div class="input-row"><input id="swatch-hex" value="${active.hex}" spellcheck="false" /><button id="apply-colour">${t("applySwatchColour")}</button></div></label><button id="lock-swatch" class="wide">${active.locked ? "⌁ " + t("unlock") : "⌁ " + t("lock")}</button><section class="contrast-card"><h3>${t("contrast")}</h3><b>${contrast.ratio.toFixed(2)} : 1</b><span class="${contrast.aa ? "pass" : "fail"}">AA ${contrast.aa ? "pass" : "review"}</span><small>Against Midnight Navy #0B1220</small></section></aside>
       <aside class="lux-panel panel ${preferences.luxOpen ? "" : "is-collapsed"}"><div class="lux-heading"><div><span class="lux-icon">✦</span><h2>${t("luxTitle")} ✨</h2></div><button id="toggle-lux" class="subtle" aria-label="${preferences.luxOpen ? t("closePanel") : t("openLux")}">${preferences.luxOpen ? "×" : "✦"}</button></div>${preferences.luxOpen ? `<p class="lux-subtitle">${t("luxSubtitle")}</p><div class="lux-message"><b>${t("luxBrand")} · ${t("offline")}</b><p>${t("luxUnavailable")}</p><ul><li>${t("luxLocal")}</li><li>${t("luxNoUpload")}</li></ul></div><form id="lux-form" class="lux-input"><input id="lux-question" placeholder="${t("askLux")}" aria-label="${t("askLux")}" /><button aria-label="${t("sendLux")}">➤</button></form>` : ""}</aside>
@@ -522,9 +521,7 @@ function render() {
   const tracks=arrangeTracks(sceneCueList);
   const sequenceTrack=document.querySelector(".timeline > .cue-track");
   document.querySelector(".timeline > .section-title").insertAdjacentHTML("afterend",arrangementTimelineMarkup(sceneCueList,activeCue?.id,t("noCues")));
-  const sequenceDetails=document.createElement("details");sequenceDetails.className="fixture-group-editor";sequenceDetails.id="sequence-preview-details";
-  sequenceDetails.innerHTML=`<summary>${t("playCueList")}</summary>`;
-  sequenceTrack.replaceWith(sequenceDetails);sequenceDetails.append(sequenceTrack);
+  sequenceTrack.remove();
   document.querySelector("#stop-cue").insertAdjacentHTML("beforebegin",`<button id="play-tracks" ${sceneCueList.length ? "" : "disabled"}>▶ ${t("playTracks")}</button>`);
   document.querySelector("#create-cue").insertAdjacentHTML("beforebegin", `<label>${t("captureGroup")} <select id="cue-group"><option value="">${t("allFixtures")}</option>${(project.fixtureGroups ?? []).map((group)=>`<option value="${esc(group.id)}">${esc(group.name)}</option>`).join("")}</select></label>`);
   document.querySelector(".timeline").insertAdjacentHTML("beforeend", `<div class="dmx-actions"><label><input id="sequence-loop" type="checkbox" ${preferences.loopSequence ? "checked" : ""}> ${t("loopSequence")}</label><label>${t("seekSequence")} <input id="sequence-seek" type="range" min="0" max="${sequenceDuration}" step="0.1" value="0" ${sequenceDuration ? "" : "disabled"}></label><output id="sequence-position">0 / ${sequenceDuration.toFixed(1)} s</output></div>`);
@@ -619,15 +616,23 @@ function render() {
   const materialButton=document.querySelector("#apply-scene");
   if (materialButton) materialButton.insertAdjacentHTML("beforebegin", `<label>${t("paintColon")} <select id="material-target">${["wall","accent","floor","ceiling"].map((target)=>`<option value="${target}" ${preferences.materialTarget===target ? "selected" : ""}>${t(`surface_${target}`)}</option>`).join("")}</select></label>`);
   projectionButton.insertAdjacentHTML("afterend", `<button id="export-viewport" class="view-menu" ${preferences.view==="light" ? "" : "disabled"}>▣ ${t("exportViewport")}</button>`);
-  projectionButton.textContent=`${t(preferences.projection==="orthographic" ? "orthographic" : "perspective")} ⌄`;
+  const projectionName=t(preferences.projection==="orthographic" ? "orthographic" : "perspective");
+  const nextProjectionName=t(preferences.projection==="orthographic" ? "perspective" : "orthographic");
+  projectionButton.textContent=preferences.projection==="orthographic" ? "▤" : "◉";
   projectionButton.setAttribute("aria-label",t("switchProjection"));
+  projectionButton.setAttribute("aria-pressed",String(preferences.projection==="orthographic"));
+  projectionButton.title=`${projectionName} · ${t("switchProjection")} ${nextProjectionName}`;
   document.querySelector("#effect-type").insertAdjacentHTML("beforeend", `<option value="panTilt">${t("panTilt")}</option>`);
-  document.querySelector("#play-tracks").insertAdjacentHTML("afterend", `<label>${t("seekTracks")} <input id="arrangement-seek" type="range" min="0" max="${arrangementEnd}" step="0.1" value="0" ${arrangementEnd ? "" : "disabled"}></label><output id="arrangement-position">0 / ${arrangementEnd.toFixed(1)} s</output>`);
+  document.querySelector("#play-tracks").insertAdjacentHTML("afterend", `<label title="${t("seekTracks")}" aria-label="${t("seekTracks")}">↔ <input id="arrangement-seek" type="range" min="0" max="${arrangementEnd}" step="0.1" value="0" ${arrangementEnd ? "" : "disabled"}></label><output id="arrangement-position">0 / ${arrangementEnd.toFixed(1)} s</output>`);
   const timelineTransport=document.createElement("div");
   timelineTransport.className="timeline-transport";
-  timelineTransport.append(document.querySelector("#create-cue"),document.querySelector("#play-tracks"),document.querySelector("#pause-playback"),document.querySelector("#stop-cue"),document.querySelector("#sequence-loop").closest("label"),document.querySelector("#arrangement-position"));
+  const loopInput=document.querySelector("#sequence-loop"),loopLabel=loopInput?.closest("label");
+  timelineTransport.append(document.querySelector("#create-cue"),document.querySelector("#play-tracks"),document.querySelector("#pause-playback"),document.querySelector("#stop-cue"),loopLabel,document.querySelector("#play-cue"),document.querySelector("#arrangement-position"));
+  const timelineIcons=[["#create-cue","＋","captureCue"],["#play-tracks","▶","playTracks"],["#pause-playback",playbackClock?.paused ? "▶" : "Ⅱ",playbackClock?.paused ? "resumePlayback" : "pausePlayback"],["#stop-cue","■","stop"],["#play-cue","▷","previewSelectedCue"]];
+  for(const [selector,glyph,label] of timelineIcons){const button=document.querySelector(selector);if(button){button.textContent=glyph;button.title=t(label);button.setAttribute("aria-label",t(label));}}
+  if(loopLabel){loopLabel.title=t("loopSequence");loopLabel.setAttribute("aria-label",t("loopSequence"));}
   document.querySelector(".timeline > .section-title").append(timelineTransport);
-  document.querySelector(".timeline > p").append(" ", document.querySelector(".timeline > .section-title .m-badge"));
+  const timelineBadge=document.querySelector(".timeline > .section-title .m-badge");if(timelineBadge)document.querySelector(".timeline > p").append(" ",timelineBadge);
   const timingDetails=document.createElement("details");
   document.querySelector("#cue-delay").parentElement.insertAdjacentHTML("afterend", `<label>${t("fadeOut")} (s)<input id="cue-fadeOut" type="number" min="0" step="0.1" required value="0"></label>`);
   if (activeCue) document.querySelector("#edit-cue-delay").parentElement.insertAdjacentHTML("afterend", `<label>${t("fadeOut")} (s)<input id="edit-cue-fadeOut" type="number" min="0" step="0.1" required value="${activeCue.fadeOut ?? 0}"></label><small>${t("holdTime")}: ${Math.max(0,activeCue.duration-(activeCue.delay ?? 0)-activeCue.fade-(activeCue.fadeOut ?? 0)).toFixed(1)} s</small>`);
@@ -711,9 +716,12 @@ function render() {
   bind();
   bindFixtureSliders(document.querySelector(".inspector"),{channelLabel:t("virtualChannelValue")});
   if(preferences.view==="light"){
-    const axes=document.createElement("div");axes.className="viewport-axis-controls";axes.setAttribute("role","group");axes.setAttribute("aria-label",t("cameraAxisViews"));
-    axes.innerHTML=["x","y","z"].map(axis=>`<button type="button" class="axis-view-${axis}" data-camera-axis="${axis}" title="${t(`cameraView_${axis}`)}" aria-label="${t(`cameraView_${axis}`)}" disabled>View ${axis.toUpperCase()}</button>`).join("");
-    const sceneCommandGroup=document.querySelector('.command-group[data-command-group="scene"]');sceneCommandGroup.append(axes);const resetCameraCommand=document.querySelector("#reset-camera");if(resetCameraCommand)sceneCommandGroup.append(resetCameraCommand);axes.querySelectorAll("[data-camera-axis]").forEach(button=>button.onclick=()=>{renderer?.setView?.(button.dataset.cameraAxis);document.querySelector("#light-canvas")?.focus();});
+    const views=document.createElement("div");views.className="viewport-view-controls";views.setAttribute("role","group");views.setAttribute("aria-label",t("cameraAxisViews"));
+    const presets=[["front","⊙"],["right","▣"],["top","⬆"],["left","◧"],["back","◨"],["iso","◇"]];
+    views.innerHTML=presets.map(([view,glyph])=>`<button type="button" data-camera-view="${view}" title="${t(`cameraView_${view}`)}" aria-label="${t(`cameraView_${view}`)}" disabled>${glyph}</button>`).join("");
+    document.querySelector(".workspace-tabs").insertBefore(views,projectionButton);
+    const sceneCommandGroup=document.querySelector('.command-group[data-command-group="scene"]');const resetCameraCommand=document.querySelector("#reset-camera");if(resetCameraCommand)sceneCommandGroup.append(resetCameraCommand);
+    views.querySelectorAll("[data-camera-view]").forEach(button=>button.onclick=()=>{renderer?.setView?.(button.dataset.cameraView);views.querySelectorAll("[data-camera-view]").forEach(item=>item.setAttribute("aria-pressed",String(item===button)));document.querySelector("#light-canvas")?.focus();});
   }
   const luxPanel=document.querySelector(".lux-panel");
   luxPanel.dataset.docked="true";
@@ -737,7 +745,7 @@ function render() {
     const fixtures=currentRendererFixtures(),fixtureSignature=lightLabFixtureState(fixtures),accent=scene().materialColor;
     if(reuseRenderer){if(fixtureSignature!==rendererFixtureSignature)renderer.setFixtures(fixtures);if(accent!==rendererAccent)renderer.setAccent(accent);rendererFixtureSignature=fixtureSignature;rendererAccent=accent;}
     else {renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {camera:viewportCamera,accent,room:scene().room,roomType:scene().roomType,ambience:roomAmbience(scene()),materials:scene().materials,stage:scene().stage,quality:preferences.previewQuality,projection:preferences.projection==="orthographic" ? "orthographic" : "perspective",visibility:scene().visibility,fixtures,onSelect(id){stopPlayback();preferences.fixtureId=id;preferences.inspectorMode="fixture";savePreferences();render();},onTransform(id,transform){commitProjectChange("fixture-move",(draft)=>{draft.fixtures=updateFixture(draft.fixtures,id,{transform});});updateRendererFromFixtures();}});rendererConfigSignature=nextRendererConfig;rendererFixtureSignature=fixtureSignature;rendererAccent=accent;}
-    document.querySelectorAll("[data-camera-axis]").forEach(button=>button.disabled=!renderer.supported);
+    document.querySelectorAll("[data-camera-view]").forEach(button=>button.disabled=!renderer.supported);
     if (!renderer.supported) {
       document.querySelector(".scene-title small").title=phrase("previewFixtureCount",{shown:0,total:sceneFixtures().length}); document.querySelector(".scene-title small").setAttribute("aria-label",document.querySelector(".scene-title small").title);
       const note=document.createElement("p");
@@ -1048,7 +1056,7 @@ function bind() {
   });
   document.querySelector("#play-sequence").onclick=playSequence;
   document.querySelector("#pause-playback").onclick=togglePlaybackPause;
-  document.querySelector("#sequence-loop").onchange=(event)=>{preferences.loopSequence=event.target.checked;savePreferences();};
+  const loopControl=document.querySelector("#sequence-loop");if(loopControl)loopControl.onchange=(event)=>{preferences.loopSequence=event.target.checked;savePreferences();};
   document.querySelector("#sequence-seek").onchange=(event)=>playSequence({seek:Number(event.target.value),paused:true});
   document.querySelector("#play-effect").onclick=playEffect;
   document.querySelector("#play-tracks").onclick=playArrangement;

@@ -144,6 +144,11 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
 
 .viewport-axis-controls { display:flex; align-items:center; gap:4px; flex:0 0 auto; }
 .viewport-axis-controls button { height:29px; min-width:36px; padding:4px 8px; border:1px solid currentColor; border-radius:5px; background:#182237; font-size:11px; font-weight:800; }
+.viewport-view-controls { display:flex; align-items:center; flex:0 0 auto; gap:3px; }
+.viewport-view-controls button { display:grid; place-items:center; width:27px; height:27px; padding:0; border:1px solid #405778; border-radius:5px; background:#182237; color:#dce8fc; font-size:14px; font-weight:800; cursor:pointer; }
+.viewport-view-controls button:hover,.viewport-view-controls button:focus-visible,.viewport-view-controls button[aria-pressed="true"] { border-color:var(--cyan); background:#1e3850; color:#67e8f9; }
+.viewport-view-controls button:disabled { opacity:.45; cursor:not-allowed; }
+.workspace-tabs #viewport-projection { width:29px; min-width:29px; height:27px; padding:0; border:1px solid #405778; color:#67e8f9; font-size:14px; }
 .axis-view-x { color:#ff8b87; }
 .axis-view-y { color:#74f2a1; }
 .axis-view-z { color:#78ccff; }
@@ -928,4 +933,77 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
   #palette-inspector-panel .canvas-object-editor legend { grid-column:1/-1; font-size:10px; font-weight:800; }
   #palette-inspector-panel .canvas-object-editor label { display:grid; gap:2px; min-width:0; padding:0; font-size:9px; }
   #palette-inspector-panel .canvas-object-editor button { min-width:0; padding:4px; font-size:8px; }
+}
+
+/* Final spacing pass for the fixed desktop studio. */
+@media (min-width:1100px) {
+  .topbar { grid-template-columns:210px minmax(250px,auto) minmax(180px,1fr) auto; column-gap:8px; }
+  .topbar .brand-lockup { width:210px; height:40px; padding:0 0 11px; overflow:visible; }
+  .topbar .corporate-mark { width:188px; max-height:25px; }
+  .topbar .division { font-size:8px; line-height:9px; }
+  .topbar .product-lockup { gap:7px; }
+  .topbar .product-lockup strong { font-size:19px; letter-spacing:-.4px; }
+  .topbar .product-lockup small { font-size:9px; }
+
+  .left-rail .layer-section { flex:0 0 auto; min-height:0; overflow:visible; }
+  .left-rail .layer-section > h2 { flex:0 0 25px; min-height:25px; padding:4px 8px; }
+  .left-rail .layer-list { flex:none; padding:0 9px 5px; gap:2px; }
+  .left-rail .layer-list li { flex:0 0 22px; min-height:22px; }
+  .left-rail .layer-toggle { display:flex; align-items:center; justify-content:space-between; width:100%; height:22px; min-height:22px; padding:1px 4px; border:0; border-radius:4px; background:transparent; color:#d4dceb; font-size:10px; text-align:left; }
+  .left-rail .layer-toggle:hover,.left-rail .layer-toggle:focus-visible { background:#202c42; }
+  .left-rail .layer-section .layer-toggle-label { color:#d4dceb; }
+  .left-rail .layer-toggle-state { color:var(--cyan); }
+  .left-rail .tool-section { flex:0 0 30px; min-height:30px; }
+  .left-rail .tool-section > h2 { height:30px; min-height:30px; padding:0; }
+  .left-rail .tool-section-toggle { height:30px; min-height:30px; padding:4px 8px; font-size:10px; }
+  .left-rail .fixture-group-section { flex:0 0 30px; min-height:30px; }
+  .left-rail .fixture-group-section > h2 { height:29px; min-height:29px; padding:0; }
+  .left-rail .fixture-group-section .sidebar-menu-toggle { height:29px; min-height:29px; padding:3px 8px; }
+
+  .left-rail .palette-panel .palette-actions:has(#custom-spacing),
+  .left-rail .palette-panel .palette-actions:has(#temperature-strength) { grid-template-columns:repeat(2,minmax(0,1fr)); gap:4px; padding:4px 6px; }
+  .left-rail .palette-panel .palette-actions:has(#custom-spacing) label,
+  .left-rail .palette-panel .palette-actions:has(#temperature-strength) label { grid-column:1/-1; grid-template-columns:minmax(0,1fr) 48px; gap:5px; min-height:22px; font-size:9px; white-space:nowrap; }
+  .left-rail .palette-panel .palette-actions:has(#custom-spacing) label input,
+  .left-rail .palette-panel .palette-actions:has(#temperature-strength) label input { width:48px; height:22px; min-height:22px; }
+  .left-rail .palette-panel .palette-actions:has(#custom-spacing) button,
+  .left-rail .palette-panel .palette-actions:has(#temperature-strength) button { width:100%; min-height:22px; padding:3px 4px; font-size:8px; text-align:center; }
+
+  .editor-layout { grid-template-rows:34px minmax(0,1fr) clamp(194px,22vh,224px); }
+  .lower-workspace > .timeline { display:flex; flex-direction:column; min-height:0; overflow:hidden; }
+  .timeline > .section-title { flex:0 0 30px; min-height:30px; gap:4px; padding:2px 5px; }
+  .timeline > .section-title h2 { flex:0 0 auto; max-width:140px; font-size:10px; }
+  .timeline > p { flex:0 0 13px; min-height:13px; height:13px; padding:0 6px; overflow:hidden; font-size:8px; line-height:13px; text-overflow:ellipsis; white-space:nowrap; }
+  .timeline-transport { flex:1 1 auto; justify-content:flex-end; gap:3px; min-width:0; max-width:none; overflow:hidden; }
+  .timeline-transport button { flex:0 0 23px; width:23px; height:23px; min-height:23px; padding:0; border:1px solid #3a4e6d; font-size:11px; line-height:1; }
+  .timeline-transport label:has(#sequence-loop) { flex:0 0 24px; width:24px; height:23px; justify-content:center; gap:0; padding:0; border:1px solid #3a4e6d; font-size:0; }
+  .timeline-transport #sequence-loop { width:12px; height:12px; }
+  .timeline-transport #arrangement-position { max-width:52px; overflow:hidden; font-size:8px; }
+  .timeline > .arrangement-timeline { flex:1 1 70px; min-width:0; min-height:0; margin:0 5px; padding:0 2px; overflow:hidden; }
+  .arrangement-timeline .timeline-scale { flex:1 1 auto; min-width:0; margin:0 4px; --track-label-width:clamp(48px,12%,92px); }
+  .arrangement-timeline .timeline-ruler { height:16px; }
+  .arrangement-timeline .timeline-ruler span { font-size:8px; }
+  .arrangement-timeline .timeline-ruler span::after { top:11px; height:5px; }
+  .arrangement-timeline .scheduled-track { grid-template-columns:var(--track-label-width) minmax(0,1fr); margin:1px 0; }
+  .arrangement-timeline .scheduled-track .track-name { padding:1px 4px; font-size:8px; }
+  .arrangement-timeline .scheduled-track .timeline-lane { height:16px; }
+  .arrangement-timeline .scheduled-track .cue-block { top:1px; height:14px; padding:0 3px; font-size:8px; }
+  .timeline > .dmx-actions { flex:0 0 23px; min-height:23px; gap:4px; padding:1px 5px; overflow:hidden; font-size:8px; white-space:nowrap; }
+  .timeline > .dmx-actions button { flex:0 0 auto; min-height:20px; padding:2px 5px; font-size:8px; }
+  .timeline > .dmx-actions label { display:inline-flex; align-items:center; flex:0 0 auto; gap:3px; padding:0; font-size:8px; white-space:nowrap; }
+  .timeline #cue-group { width:70px; min-height:20px; height:20px; padding:1px 3px; font-size:8px; }
+  .timeline #arrangement-seek { width:76px; height:12px; min-height:12px; margin:0; padding:0; }
+  .timeline > .dmx-actions span { flex:0 0 auto; margin-left:auto; font-size:8px; }
+  .timeline > .dmx-actions:has(#sequence-loop) { flex-basis:22px; min-height:22px; justify-content:flex-end; gap:5px; }
+  .timeline > .dmx-actions:has(#sequence-loop) label { min-width:0; }
+  .timeline #sequence-seek { width:76px; height:12px; min-height:12px; margin:0; padding:0; }
+  .timeline #sequence-position { max-width:62px; font-size:8px; }
+  .timeline > .dmx-actions:has(#effect-type) { flex-basis:22px; min-height:22px; justify-content:flex-end; gap:5px; }
+  .timeline #effect-type,.timeline #effect-period { width:auto; min-width:50px; height:20px; min-height:20px; padding:1px 4px; font-size:8px; }
+  .timeline > .fixture-group-editor { flex:0 0 20px; height:20px; min-height:20px; margin:0 5px; overflow:hidden; font-size:8px; }
+  .timeline > .fixture-group-editor > summary { padding:2px 0; font-size:8px; }
+  .timeline > .fixture-group-editor[open] { flex:0 0 auto; height:auto; max-height:40%; overflow:auto; }
+  .timeline .fixture-group-editor .cue-timing { padding:3px; gap:3px; }
+  .timeline .fixture-group-editor .cue-timing label { font-size:8px; }
+  .timeline .fixture-group-editor .cue-timing input { height:20px; min-height:20px; padding:1px 3px; font-size:8px; }
 }
