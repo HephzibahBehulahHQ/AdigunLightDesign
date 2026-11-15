@@ -35,3 +35,10 @@ test("room templates generate distinct 3D structures and ambient fill affects re
   const preset=roomPresets[0],low=sceneData([0,0,0],[],{},preset.room,false,preset.materials,"performance",undefined,{color:"#FF0000",intensity:0},"living-room"),high=sceneData([0,0,0],[],{},preset.room,false,preset.materials,"performance",undefined,{color:"#FF0000",intensity:1},"living-room");
   assert.notDeepEqual(high,low);
 });
+test("swimming pool scene adds a recessed basin, coping, entry steps and detailed water geometry",()=>{
+  const preset=roomPresets.find(room=>room.id==="swimming-pool");
+  const shell=sceneData([0,0,0],[],{props:false},preset.room,false,preset.materials,"performance",undefined,preset.ambience,preset.id);
+  const pool=sceneData([0,0,0],[],{},preset.room,false,preset.materials,"performance",undefined,preset.ambience,preset.id);
+  assert.ok(pool.length>shell.length+12000,"pool furniture and water details add substantial room geometry");
+  assert.ok(Array.from(pool).every(Number.isFinite),"all pool geometry remains finite");
+});

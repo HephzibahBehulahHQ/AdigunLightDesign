@@ -456,10 +456,30 @@ function roomPresetFurniture(data,type,accent){
     box(data,-3.2,1.25,2.35,1.1,1.5,.07,hexVector("#8EABB3"));
     box(data,1.3,.35,-1.1,2.2,.35,.7,soft);for(const x of [1.45,3.2])box(data,x,.04,-1,.1,.3,.1,metal);
   } else if(type==="swimming-pool"){
-    box(data,-4.3,.05,-2.35,8.6,.42,4.7,hexVector("#56818E"));
-    data.push(...surfaceGrid([-4,.24,-2.05],[8,0,0],[0,0,4.1],()=>[.08,.48,.68],16,12));
-    for(const x of [-4.45,4.05])for(const z of [-1.8,1.5])box(data,x,.2,z,.07,1.6,.07,metal);
-    for(let y=.4;y<1.6;y+=.32)box(data,-4.46,y,1.5,.1,.07,.8,metal);
+    const poolTile=hexVector("#4A8390"),poolShadow=hexVector("#315968"),coping=hexVector("#D1D5CE"),copingJoint=hexVector("#84949A"),waterline=hexVector("#A8DDE0");
+    // A recessed basin with visible tiled inner walls and a pale stone surround.
+    box(data,-4.3,.02,-2.35,8.6,.1,4.7,hexVector("#173B50"));
+    box(data,-4.3,.08,-2.35,.3,.48,4.7,poolTile);box(data,4,.08,-2.35,.3,.48,4.7,poolTile);
+    box(data,-4,.08,-2.35,8,.48,.3,poolTile);box(data,-4,.08,2.05,8,.48,.3,poolTile);
+    // A continuous coping lip frames the water and catches the room lighting.
+    for(const z of [-2.52,2.19])box(data,-4.48,.5,z,8.96,.12,.34,coping);
+    for(const x of [-4.48,4.14])box(data,x,.5,-2.35,.34,.12,4.7,coping);
+    for(let x=-4.1;x<4;x+=.72){box(data,x,.58,-2.535,.025,.018,.36,copingJoint);box(data,x,.58,2.175,.025,.018,.36,copingJoint);}
+    for(let z=-2.05;z<2.1;z+=.72){box(data,-4.535,.58,z,.36,.018,.025,copingJoint);box(data,4.085,.58,z,.36,.018,.025,copingJoint);}
+    // A fine grid lets the water show soft caustic bands under coloured fixtures.
+    const waterColour=(column,row)=>{
+      const u=(column+.5)/28,v=(row+.5)/20;
+      const wave=Math.sin(u*9+Math.sin(v*5)*1.2)*.55+Math.sin(v*11-u*3)*.45;
+      const caustic=Math.pow(Math.max(0,Math.sin(u*16+Math.sin(v*4)*2)*Math.sin(v*17-u*5)),4);
+      return [.035+caustic*.045,.31+wave*.035+caustic*.1,.48+wave*.045+caustic*.13];
+    };
+    data.push(...surfaceGrid([-4,.37,-2.05],[8,0,0],[0,0,4.1],waterColour,28,20));
+    // Shallow entry treads and a stainless ladder make the pool usable at human scale.
+    for(let step=0;step<4;step++)box(data,3.05+step*.2,.15+step*.07,-.95, .22,.08,1.9,step%2?poolShadow:waterline);
+    for(const z of [-.42,.42])box(data,-4.04,.2,z,.07,1.35,.07,metal);
+    for(let y=.35;y<1.3;y+=.28)box(data,-4.02,y,-.42,.08,.065,.84,metal);
+    // Waterline tile band on the basin walls.
+    box(data,-4.01,.32,-2.02,7.98,.1,.04,waterline);box(data,-4.01,.32,1.98,7.98,.1,.04,waterline);
     for(const x of [-4,2.5]){box(data,x,.06,-3.4,1.5,.1,.8,soft);box(data,x+.12,.16,-3.3,1.25,.18,.65,hexVector("#DCE6E8"));}
   } else if(type==="disco-party"){
     box(data,-4.4,.12,2.3,8.8,.26,1.2,darkWood);box(data,-1.4,.4,2.0,2.8,1.05,.55,timber);
@@ -494,7 +514,7 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
   data.push(...surfaceGrid([-width/2,height,-depth/2],[width,0,0],[0,0,depth],hexVector(materials.ceiling ?? "#101726"),budget.columns,budget.rows));
   const shelfLamps=[{x:4.34,y:1.81,z:2.67},{x:4.36,y:2.51,z:2.67}];
   if (visibility.props!==false) {
-  data.push(...acousticSlats(room,wood));
+  if(roomType!=="swimming-pool"&&roomType!=="bathroom"&&roomType!=="toilet")data.push(...acousticSlats(room,wood));
   const platform=stageSettings(stage);
   if(platform.enabled)box(data,platform.x,platform.y,platform.z,platform.width,platform.height,platform.depth,hexVector(platform.color));
   const furnitureStart=data.length;
