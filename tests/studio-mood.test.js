@@ -19,6 +19,10 @@ test("creates the nine-fixture reference starter rig with non-overlapping patche
     "generic-led-strip-rgb","generic-led-strip-rgb"
   ]);
   assert.deepEqual(project.fixtures.slice(0,3).map((fixture)=>fixture.properties.blue),[255,26,184]);
+  assert.deepEqual(project.fixtures.slice(7).map((fixture)=>fixture.transform),[
+    {x:-1,y:2.4,z:0,rotation:0},{x:1,y:2.4,z:0,rotation:0}
+  ]);
+  assert.ok(project.fixtures.every(({transform:{x,y,z}})=>Math.abs(x)<=4.92&&y>=0&&y<=3.95&&Math.abs(z)<=3.22),"the starter lighting rig fits inside the room");
 });
 
 test("starter tracks play a 30-second virtual arrangement with a fade and colour change",()=>{

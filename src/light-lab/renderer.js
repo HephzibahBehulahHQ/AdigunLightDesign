@@ -111,8 +111,9 @@ export function virtualFixtureVisuals(fixtures = [],limit=12) {
     const tilt=Number.isFinite(properties.tilt) ? properties.tilt : 127;
     const rotation=(Number.isFinite(transform.rotation) ? transform.rotation%360 : 0)*Math.PI/180;
     const dx=(pan-127)/128*3,dz=1.35+(tilt-127)/128*3;
-    return {x,y:Number.isFinite(transform.y) ? transform.y : 3.65,z,selected:fixture.selected === true,
-      targetX:x+dx*Math.cos(rotation)+dz*Math.sin(rotation),targetZ:z+dz*Math.cos(rotation)-dx*Math.sin(rotation),
+    const isLedStrip=fixture.profileId==="generic-led-strip-rgb";
+    return {x,y:Number.isFinite(transform.y) ? transform.y : 3.65,z,selected:fixture.selected === true,profileId:fixture.profileId,
+      ...(isLedStrip ? {range:3.5} : {targetX:x+dx*Math.cos(rotation)+dz*Math.sin(rotation),targetZ:z+dz*Math.cos(rotation)-dx*Math.sin(rotation)}),
       colour:["red","green","blue"].map((name)=>Math.min(1,(channel(properties[name])+white)*dimmer)),
       spread:.55+channel(properties.beam)*.85};
   });
@@ -131,7 +132,19 @@ export function beamVolume(light, segments=16) {
   }
   return data;
 }
+function ledStripHousing(light){
+  const data=[],colour=light.colour.map(value=>Math.max(.025,value)),backing=[.035,.045,.06],x=light.x,y=light.y,z=light.z;
+  // The generic one-metre linear profile is mounted vertically like the reference room bars.
+  box(data,x-.014,y-.5,z-.006,.028,1,.012,backing);
+  box(data,x-.011,y-.47,z-.014,.022,.94,.004,[.2,.23,.27]);
+  for(let index=0;index<12;index++){
+    const segmentY=y-.43+index*.078;
+    box(data,x-.006,segmentY,z-.017,.012,.052,.003,colour);
+  }
+  return data;
+}
 export function fixtureHousing(light){
+  if(light.profileId==="generic-led-strip-rgb")return ledStripHousing(light);
   const data=[],origin=[light.x,light.y-.11,light.z];
   const direction=[(light.targetX ?? light.x)-light.x,.03-light.y,(light.targetZ ?? light.z+1.35)-light.z];
   const length=Math.hypot(...direction),axis=direction.map(v=>v/Math.max(length,.0001));
@@ -165,7 +178,7 @@ function lightGeometry(data, light,includeBeams=true,beamSegments=16) {
     for (const dx of [0,w]) for (const dz of [0,d]) box(data,x+dx,y,z+dz,.015,h+.015,.015,colour);
     for (const dx of [0,w]) for (const dy of [0,h]) box(data,x+dx,y+dy,z,.015,.015,d+.015,colour);
   }
-  if (includeBeams && light.colour.some((value)=>value>0)) data.push(...beamVolume(light,beamSegments));
+  if (includeBeams && light.profileId!=="generic-led-strip-rgb" && light.colour.some((value)=>value>0)) data.push(...beamVolume(light,beamSegments));
 }
 export function surfaceLighting(position, baseColour, lights, normal, ambience) {
   const tint=hexVector(ambience?.color ?? "#FFFFFF"),fill=Math.max(0,Math.min(.35,(ambience?.intensity ?? 0)*.35));
@@ -820,7 +833,7 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
     ? [...lights,...shelfLamps.map(lamp=>({...lamp,x:lamp.x*roomPropsScaleX,y:lamp.y*roomPropsScaleY,z:lamp.z*roomPropsScaleZ,colour:[.85,.46,.16],range:.85*studioPropsScale}))]
     : lights;
   // Approximate the soft bounce from each fixture's floor footprint.
-  const rearWallLights=lights.map(light=>({
+  const rearWallLights=lights.filter(light=>Number.isFinite(light.targetX)&&Number.isFinite(light.targetZ)).map(light=>({
     x:light.targetX,y:.65,z:light.targetZ,
     colour:light.colour.map(channel=>channel*.8),range:3.2
   }));
@@ -842,7 +855,7 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
 export function sceneBuffers(accent,fixtures,visibility={},room,materials={},quality="balanced",stage,ambience,roomType="living-room") {
   const opaque=sceneData(accent,fixtures,visibility,room,false,materials,quality,stage,ambience,roomType);
   const budget=previewQuality(quality);
-  const beams=virtualFixtureVisuals(visibility.lighting===false ? [] : fixtures,budget.fixtures).filter((light)=>light.colour.some((value)=>value>0)).flatMap((light)=>beamVolume(light,budget.beamSegments));
+  const beams=virtualFixtureVisuals(visibility.lighting===false ? [] : fixtures,budget.fixtures).filter((light)=>light.profileId!=="generic-led-strip-rgb"&&light.colour.some((value)=>value>0)).flatMap((light)=>beamVolume(light,budget.beamSegments));
   const data=new Float32Array(opaque.length+beams.length);
   data.set(opaque);data.set(beams,opaque.length);
   return {data,opaqueVertices:opaque.length/6};

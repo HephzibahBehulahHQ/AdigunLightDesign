@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {fixtureHousing,fixtureSelectionBounds} from '../src/light-lab/renderer.js';
+import {fixtureHousing,fixtureSelectionBounds,virtualFixtureVisuals} from '../src/light-lab/renderer.js';
 test('generic housing lens follows aim and retains finite closed triangle geometry',()=>{
  const light={x:1,y:3.6,z:.5,targetX:2,targetZ:2,colour:[1,.4,0]},before=structuredClone(light),data=fixtureHousing(light);
  assert.equal(data.length%18,0);assert.ok(data.every(Number.isFinite));assert.deepEqual(light,before);
@@ -19,4 +19,16 @@ test('selection frame encloses every aimed housing vertex with padding',()=>{
    assert.ok(data[offset+axis]>=min[axis]+.039);assert.ok(data[offset+axis]<=max[axis]-.039);
   }
  }
+});
+
+test('virtual LED strip uses a one-metre linear housing and local light spill',()=>{
+ const fixture={profileId:'generic-led-strip-rgb',transform:{x:1,y:2.4,z:0},properties:{red:33,green:180,blue:240,dimmer:255}};
+ const [light]=virtualFixtureVisuals([fixture]);
+ assert.equal(light.profileId,'generic-led-strip-rgb');assert.equal(light.range,3.5);
+ assert.equal('targetX' in light,false);assert.equal('targetZ' in light,false);
+ const housing=fixtureHousing(light),{min,max}=fixtureSelectionBounds(housing);
+ assert.ok(housing.length>200);assert.ok(housing.every(Number.isFinite));
+ assert.ok(max[1]-min[1]>=1);assert.ok(max[1]-min[1]<1.2);
+ assert.ok(max[0]-min[0]<.15);assert.ok(max[2]-min[2]<.15);
+ assert.ok(housing.some((value,index)=>index%6===3&&value>0.12));
 });
