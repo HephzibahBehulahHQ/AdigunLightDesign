@@ -1014,11 +1014,16 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
   .timeline > .dmx-actions:not(:has(#effect-type)) #cue-group { width:76px; }
   .timeline > .dmx-actions:not(:has(#effect-type)) span { margin-left:auto; }
   .timeline > .dmx-actions:not(:has(#effect-type)) #arrangement-position { flex:0 0 auto; max-width:90px; font-size:8px; }
+  .timeline > .dmx-actions:not(:has(#effect-type)):has(.cue-schedule-row) span { margin-left:0; }
+  .timeline > .dmx-actions:not(:has(#effect-type)) .cue-schedule-row { display:flex; align-items:center; flex:0 1 auto; min-width:0; margin-left:auto; gap:3px; overflow:hidden; }
+  .timeline > .dmx-actions:not(:has(#effect-type)) .cue-schedule-row label { display:flex; align-items:center; flex:0 1 auto; min-width:0; gap:3px; color:var(--muted); font-size:7px; line-height:10px; white-space:nowrap; }
+  .timeline > .dmx-actions:not(:has(#effect-type)) .cue-schedule-row input { flex:0 1 58px; width:58px; min-width:42px; height:17px; min-height:17px; padding:1px 3px; font-size:8px; }
+  .timeline > .dmx-actions:not(:has(#effect-type)) .cue-schedule-row button { display:grid; place-items:center; flex:0 0 22px; width:22px; min-width:22px; height:20px; min-height:20px; padding:0; overflow:hidden; font-size:11px; }
   .timeline > .arrangement-timeline { flex:1 1 70px; min-height:58px; }
-  .timeline > .cue-editor { display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:13px 24px 24px; flex:0 0 67px; min-height:67px; max-height:67px; gap:1px; margin:0 5px; padding:2px 4px; overflow:hidden; }
+  .timeline > .cue-editor { display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:13px 28px 24px; flex:0 0 71px; min-height:71px; max-height:71px; gap:1px; margin:0 5px; padding:2px 4px; overflow:hidden; }
   .timeline > .cue-editor:not(:has(> fieldset)) { grid-template-rows:13px 24px; flex-basis:42px; min-height:42px; max-height:42px; }
   .timeline > .cue-editor > h3 { grid-row:1; margin:0; overflow:hidden; color:var(--cyan); font-size:8px; line-height:12px; }
-  .timeline > .cue-editor .cue-editor-fields { grid-row:2; display:flex; min-width:0; overflow:hidden; }
+  .timeline > .cue-editor .cue-editor-fields { grid-row:2; display:flex; flex-direction:column; min-width:0; overflow:hidden; }
   .timeline > .cue-editor .cue-timing { display:flex; align-items:center; flex-wrap:nowrap; min-width:0; width:100%; gap:3px; padding:0; overflow:hidden; }
   .timeline > .cue-editor .cue-timing label { display:grid; flex:1 1 46px; min-width:36px; gap:1px; color:var(--muted); font-size:7px; line-height:9px; }
   .timeline > .cue-editor .cue-timing input { width:100%; min-width:0; height:17px; min-height:17px; padding:1px 3px; font-size:8px; }
