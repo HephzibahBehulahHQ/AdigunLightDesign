@@ -621,7 +621,16 @@ function render() {
   if(activeCue){
     const cueTiming=cueEditorFields.querySelector(".cue-timing"),scheduleRow=document.createElement("div");scheduleRow.className="cue-schedule-row";
     for(const selector of ["#cue-track-name","#cue-start-time","#schedule-cue","[data-move-cue='-1']","[data-move-cue='1']","#duplicate-cue","#delete-cue"]){const control=cueTiming.querySelector(selector),item=control?.closest("label")??control;if(item)scheduleRow.append(item);}
-    document.querySelector(".timeline > .dmx-actions").append(scheduleRow);
+    const headings=document.createElement("div"),values=document.createElement("div");headings.className="cue-timing-headings";values.className="cue-timing-values";
+    const fieldOrder=["#edit-cue-name","#cue-track-name","#cue-start-time","#edit-cue-duration","#edit-cue-fade","#edit-cue-delay","#edit-cue-fadeOut"];
+    for(const selector of fieldOrder){const input=(selector==="#cue-track-name"||selector==="#cue-start-time"?scheduleRow:cueTiming).querySelector(selector),label=input?.closest("label");if(!input||!label)continue;const name=[...label.childNodes].find(node=>node.nodeType===Node.TEXT_NODE)?.textContent.trim()??"";label.textContent=name;label.htmlFor=input.id;headings.append(label);values.append(input);}
+    const hold=cueTiming.querySelector("small");if(hold){const label=document.createElement("label");label.textContent=t("holdTime");headings.append(label);values.append(hold);}
+    for(const selector of ["#edit-cue","#schedule-cue","[data-move-cue='-1']","[data-move-cue='1']","#duplicate-cue","#delete-cue"]){const button=selector==="#edit-cue"?cueTiming.querySelector(selector):scheduleRow.querySelector(selector);if(button)values.append(button);}
+    cueTiming.replaceChildren(headings,values);
+  }else{
+    const cueTiming=cueEditorFields.querySelector(".cue-timing"),headings=document.createElement("div"),values=document.createElement("div");headings.className="cue-timing-headings";values.className="cue-timing-values";
+    for(const key of ["duration","fade","delay","fadeOut"]){const input=cueTiming.querySelector(`#cue-${key}`),label=input?.closest("label");if(!input||!label)continue;const name=[...label.childNodes].find(node=>node.nodeType===Node.TEXT_NODE)?.textContent.trim()??"";label.textContent=name;label.htmlFor=input.id;headings.append(label);values.append(input);}
+    cueTiming.replaceChildren(headings,values);
   }
   document.querySelector(".timeline").append(timingDetails);
   if (preferences.view==="palette") document.querySelector(".scene-preview").innerHTML=canvasMarkup(scene().canvasObjects ?? [],preferences.objectId,t("designCanvas"))+`<div class="canvas-actions"><label>${t("shapeKind")} <select id="shape-kind"><option value="rect" ${preferences.shapeKind!=="ellipse" ? "selected" : ""}>${t("rectangle")}</option><option value="ellipse" ${preferences.shapeKind==="ellipse" ? "selected" : ""}>${t("ellipse")}</option></select></label><button id="add-canvas-shape">＋ ${t("shapes")}</button></div>`;
