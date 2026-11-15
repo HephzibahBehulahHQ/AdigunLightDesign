@@ -624,7 +624,13 @@ function render() {
     for(const selector of fieldOrder){const input=(selector==="#cue-track-name"||selector==="#cue-start-time"?scheduleRow:cueTiming).querySelector(selector),label=input?.closest("label");if(!input||!label)continue;const name=[...label.childNodes].find(node=>node.nodeType===Node.TEXT_NODE)?.textContent.trim()??"";label.textContent=name;label.htmlFor=input.id;headings.append(label);values.append(input);}
     const hold=cueTiming.querySelector("small");if(hold){const label=document.createElement("label");label.textContent=t("holdTime");headings.append(label);values.append(hold);}
     for(const selector of ["#edit-cue","#schedule-cue","[data-move-cue='-1']","[data-move-cue='1']","#duplicate-cue","#delete-cue"]){const button=selector==="#edit-cue"?cueTiming.querySelector(selector):scheduleRow.querySelector(selector);if(button)values.append(button);}
+    for(let index=0;index<6;index++){const spacer=document.createElement("span");spacer.setAttribute("aria-hidden","true");headings.append(spacer);}
     cueTiming.replaceChildren(headings,values);
+    const timelineTitle=document.querySelector(".timeline > .section-title");
+    cueTiming.classList.add("timeline-active-cue-editor");
+    timelineTitle.replaceWith(cueTiming);
+    document.querySelector(".timeline > .dmx-actions").insertAdjacentElement("afterend",timelineTitle);
+    timingDetails.classList.add("cue-editor-fields-moved");
   }else{
     const cueTiming=cueEditorFields.querySelector(".cue-timing"),headings=document.createElement("div"),values=document.createElement("div");headings.className="cue-timing-headings";values.className="cue-timing-values";
     for(const key of ["duration","fade","delay","fadeOut"]){const input=cueTiming.querySelector(`#cue-${key}`),label=input?.closest("label");if(!input||!label)continue;const name=[...label.childNodes].find(node=>node.nodeType===Node.TEXT_NODE)?.textContent.trim()??"";label.textContent=name;label.htmlFor=input.id;headings.append(label);values.append(input);}
