@@ -83,6 +83,7 @@ export function bindCommandMenus({documentRef=document,leaveDelay=220}={}) {
     if(event.target.closest(".command-menu-panel button:not([data-menu-keep-open])"))closePanel(false);
   },{signal});
   system.addEventListener("change",event=>{
+    if(event.target.closest(".command-menu-panel [data-menu-keep-open]"))return;
     if(event.target.closest(".command-menu-panel select,.command-menu-panel input:not([type=hidden])"))closePanel(false);
   },{signal});
   documentRef.addEventListener("keydown",event=>{

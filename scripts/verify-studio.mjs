@@ -144,7 +144,7 @@ try {
   assert.equal((await page.locator("#apply-scene").innerText()).trim(), "Paint surface", "the canvas action identifies its scene surface target");
   assert.equal((await page.locator("#reset-camera").innerText()).trim(), "Reset camera", "the Scene menu has the single camera reset action");
   assert.equal(await page.locator("#reset-camera-canvas").count(),0,"the duplicate canvas camera reset is removed");
-  assert.deepEqual(await page.locator('.command-group[data-command-group="scene"]').evaluate((group)=>[...group.querySelectorAll("button")].map((button)=>button.dataset.cameraAxis?.toUpperCase() ?? button.dataset.openSceneEditor ?? button.id)),["add-room-scene","room","stage","X","Y","Z","reset-camera"],"Scene commands list room creation before room editing");
+  assert.deepEqual(await page.locator('.command-group[data-command-group="scene"]').evaluate((group)=>[...group.querySelectorAll("button")].map((button)=>button.dataset.cameraAxis?.toUpperCase() ?? button.id)),["add-room-scene","X","Y","Z","reset-camera"],"Scene keeps room creation and camera commands only");
   for (const [locale,labels] of Object.entries({de:["Bemalen:","Wände","Oberfläche färben","Kamera zurücksetzen"],yo:["Kún:","Àwọn ògiri","Kún ojú ilẹ̀","Tún kámẹ́rà bẹ̀rẹ̀"],pcm:["Paint:","Walls","Paint surface","Reset camera"]})) {
     await page.locator("#locale").selectOption(locale);
     assert.equal(await page.locator("#material-target").evaluate((select)=>select.closest("label").firstChild.textContent.trim()),labels[0],`${locale} paint label remains translated`);
@@ -159,7 +159,7 @@ try {
   await importChooser;
   assert.equal(await page.locator('.command-menu-system [data-command-group="view"]').count(), 0, "module navigation does not repeat a duplicate view group in the top-bar menu");
   assert.equal((await page.locator('[data-command-group="scene"] > span').innerText()).trim().toUpperCase(), "SCENE", "the top-bar menu labels this group with the concise Scene heading from the reference");
-  assert.deepEqual(await page.locator(".command-group > span").evaluateAll((items)=>items.map((item)=>item.textContent.trim())),["Project","History","Scene","Palette","Fixtures","Export"],"command groups follow the approved compact studio order");
+  assert.deepEqual(await page.locator(".command-group > span").evaluateAll((items)=>items.map((item)=>item.textContent.trim())),["Project","History","Scene","Palette","Fixtures","Stage","Room","Export"],"Stage and Room sit immediately beside Export in the compact top menu bar");
   assert.equal((await page.locator('.command-group[data-command-group="palette"] .harmony-command > span').innerText()).trim(), "◇ Harmonies", "palette harmony control matches the reference label");
   for (const [button,label] of [["#open-versions","Versions"],["#open-compare","Compare"]]) {
     assert.equal((await page.locator(`.command-group[data-command-group="palette"] ${button}`).innerText()).trim(),label,`${label} is a primary Palette menu action`);
@@ -186,10 +186,28 @@ try {
     assert.equal(await page.locator(`.command-group[data-command-group="palette"] ${selector}`).count(), 0, `${selector} does not crowd the primary Palette menu`);
   }
 
-  await openCommandMenu("scene");
-  assert.equal(await page.locator('[data-command-group="scene"] [data-open-scene-editor="room"]').isVisible(), true, "Scene menu opens room dimensions");
-  assert.equal(await page.locator('[data-command-group="scene"] [data-open-scene-editor="stage"]').isVisible(), true, "Scene menu opens stage settings");
   assert.equal(await page.locator('[data-command-group="scene"] [data-camera-axis]').count(), 3, "X/Y/Z camera views are docked in the Scene menu");
+  assert.equal(await page.locator(".inspector [data-scene-editor]").count(),0,"Stage and Room settings are removed from the inspector sidebar");
+  const stageTrigger=page.locator('[data-command-menu-trigger="stage"]'),roomTrigger=page.locator('[data-command-menu-trigger="room"]');
+  const stageTriggerBox=await stageTrigger.boundingBox(),roomTriggerBox=await roomTrigger.boundingBox(),exportTriggerBox=await page.locator('[data-command-menu-trigger="export"]').boundingBox();
+  assert.equal(stageTriggerBox.y,roomTriggerBox.y,"Stage and Room labels share one menu row");
+  assert.equal(roomTriggerBox.y,exportTriggerBox.y,"Room and Export labels share one menu row");
+  assert.ok(stageTriggerBox.x+stageTriggerBox.width<=roomTriggerBox.x&&roomTriggerBox.x+roomTriggerBox.width<=exportTriggerBox.x,"Stage and Room have separate, non-overlapping homes beside Export");
+  const stageCanvasBefore=await page.locator(".scene-preview").boundingBox();
+  await stageTrigger.click();
+  assert.equal(await page.locator("#stage-enabled").isVisible(),true,"Stage opens its editable platform controls in the floating top menu");
+  assert.deepEqual(await page.locator(".scene-preview").boundingBox(),stageCanvasBefore,"opening Stage leaves the studio canvas stationary");
+  const stageBounds=await page.locator("#command-menu-panel-stage").boundingBox(),stageViewport=page.viewportSize();
+  assert.ok(stageBounds.x>=0&&stageBounds.x+stageBounds.width<=stageViewport.width&&stageBounds.y>=0&&stageBounds.y+stageBounds.height<=stageViewport.height,"Stage panel stays inside the viewport");
+  await page.locator("#stage-width").fill("6.2");
+  await page.locator("#stage-width").press("Tab");
+  assert.equal(await page.locator("#command-menu-panel-stage").evaluate(panel=>panel.matches(":popover-open")),true,"editing Stage fields keeps the panel open until Apply");
+  await page.locator("#apply-stage").click();
+  assert.equal(await page.locator("#stage-width").count(),1,"applying Stage settings persists them and rerenders the editor");
+  await roomTrigger.click();
+  assert.equal(await page.locator("#room-width").isVisible(),true,"Room opens its editable dimensions and ambience controls");
+  await page.keyboard.press("Escape");
+  assert.equal(await roomTrigger.getAttribute("aria-expanded"),"false","Escape closes the Room menu");
   await openCommandMenu("export");
   assert.deepEqual(await page.locator('[data-command-group="export"] > button').evaluateAll((buttons)=>buttons.slice(0,2).map((button)=>button.id)),["export-viewport","export-canvas"],"PNG and canvas export lead the Export command group");
   assert.match((await page.locator("#export-viewport").innerText()).trim(),/PNG/,"the primary export action is visibly labeled PNG");
@@ -382,10 +400,10 @@ try {
   assert.equal(await page.locator(".design-canvas [data-canvas-object]").count(), 1, "secondary scene edits persist independently");
   await page.locator("#scene-select").selectOption(firstSceneId);
   await openFixtureList();
-  await clickCommand("scene",'[data-open-scene-editor="room"]');
+  await openCommandMenu("room");
   const firstRoomWidth=await page.locator("#room-width").inputValue();
   await page.locator("#scene-select").selectOption("acceptance-secondary-scene");
-  await clickCommand("scene",'[data-open-scene-editor="room"]');
+  await openCommandMenu("room");
   await page.locator("#room-width").fill("6.5");
   await page.locator("#apply-room").click();
   await page.locator("#scene-select").selectOption(firstSceneId);
@@ -406,20 +424,19 @@ try {
   assert.match(await page.locator('[data-module="light"]').innerText(), /3D Studio/, "module navigation clearly names the lighting workspace");
   assert.equal(await page.locator("#palette-inspector-panel").isVisible(), true, "Design selects the palette inspector");
   const canvasBeforeSceneSettings=await page.locator(".scene-preview").boundingBox();
-  await clickCommand("scene",'[data-open-scene-editor="room"]');
-  assert.equal(await page.locator(".scene-preview.light-canvas").isVisible(), true, "Room command opens its real settings in the 3D studio");
+  await openCommandMenu("room");
+  assert.equal(await page.locator("#command-menu-panel-room").isVisible(), true, "Room command opens its settings without changing the active workspace");
   assert.deepEqual(await page.locator(".scene-preview").boundingBox(), canvasBeforeSceneSettings, "opening Room settings leaves the canvas in place");
-  assert.equal(await page.locator('[data-scene-editor="room"]').evaluate((element) => element.open), true, "Room ribbon command opens the existing editable dimensions");
   await page.locator('[data-module="light"]').click();
   assert.equal(await page.locator("#fixture-inspector-panel").isVisible(), true, "Light Lab module selects the fixture inspector");
   assert.equal(await page.locator(".inspector-group-fixture #apply-fixture").innerText(),"Apply fixture properties","fixture edits have their own explicit apply action");
   assert.equal(await page.locator(".inspector-group-dmx #apply-fixture-patch").innerText(),"Apply patch","the validated patch action is grouped with DMX controls");
   assert.equal(await page.locator(".inspector-group-dmx .fixture-output-note").innerText(),"Virtual output only · CH 1–512","DMX panel states the real virtual-only channel range");
   assert.equal(await page.locator("#fixture-address").evaluate((input)=>input.closest("label").firstChild.textContent),"Start","the patch form names its starting DMX address");
-  await clickCommand("scene",'[data-open-scene-editor="room"]');
-  assert.equal(await page.locator('[data-scene-editor="room"]').evaluate((element) => element.open), true, "Room ribbon command opens the existing editable dimensions");
-  await clickCommand("scene",'[data-open-scene-editor="stage"]');
-  assert.equal(await page.locator('[data-scene-editor="stage"]').evaluate((element) => element.open), true, "Stage ribbon command opens the existing editable platform settings");
+  await openCommandMenu("room");
+  assert.equal(await page.locator("#room-width").isVisible(),true,"Room dimensions remain accessible from the dedicated top menu");
+  await openCommandMenu("stage");
+  assert.equal(await page.locator("#stage-enabled").isVisible(),true,"Stage settings remain accessible from the dedicated top menu");
   for (const group of ["fixture", "light", "dmx", "effects"]) {
     assert.equal(await page.locator(`#fixture-inspector-panel .inspector-group-${group}`).isVisible(), true, `${group} controls are visible in the unified inspector`);
   }
@@ -590,8 +607,8 @@ try {
   const addedRoomId=await page.locator("#scene-select").inputValue();
   assert.match(await page.locator("#scene-select option:checked").innerText(),/Kitchen/,"the selected scene is labeled with its room template");
   assert.match(await page.locator(".workspace-tabs .studio-panel-title").innerText(),/Kitchen/i,"the studio header identifies the active room in the 3D preview");
-  await clickCommand("scene",'[data-open-scene-editor="room"]');
-  assert.match(await page.locator('[data-scene-editor="room"] .room-type-label').innerText(),/Kitchen/,"room settings identify the selected template");
+  await openCommandMenu("room");
+  assert.match(await page.locator('#command-menu-panel-room .room-type-label').innerText(),/Kitchen/,"room settings identify the selected template");
   const defaultAmbient=await page.locator("#room-ambience-color").inputValue();
   await page.locator("#room-ambience-color").fill("#52B8D8");
   await page.locator("#room-ambience-level").fill("44");
