@@ -717,10 +717,18 @@ try {
   assert.equal(await page.locator("#play-room-tour").getAttribute("aria-pressed"),"false","the room camera walkthrough stops on the second click");
   await page.locator("#open-room-music").click();
   assert.equal(await page.locator("#room-music-panel").evaluate(panel=>panel.matches(":popover-open")),true,"music settings open as a floating canvas popover");
+  const musicPopoverBounds=await page.locator("#room-music-panel").evaluate(panel=>{const box=panel.getBoundingClientRect();return {left:box.left,top:box.top,right:box.right,bottom:box.bottom,width:globalThis.innerWidth,height:globalThis.innerHeight};});
+  assert.ok(musicPopoverBounds.left>=0&&musicPopoverBounds.top>=0&&musicPopoverBounds.right<=musicPopoverBounds.width&&musicPopoverBounds.bottom<=musicPopoverBounds.height,"music settings reposition inside the visible viewport");
   assert.equal(await page.locator("#room-music-mood option").count(),5,"music settings provide five distinct piano moods");
+  await page.locator("#room-music-panel").hover();
+  assert.equal(await page.locator("#room-music-panel").evaluate(panel=>panel.matches(":popover-open")),true,"the popover stays open while the pointer is over its controls");
+  await page.locator(".product-lockup").hover();
+  await page.waitForFunction(()=>!globalThis.document.querySelector("#room-music-panel")?.matches(":popover-open"));
+  await page.locator("#open-room-music").click();
   await page.locator("#room-music-mood").selectOption("night-piano");
   assert.equal(await page.locator("#room-music-mood").inputValue(),"night-piano","piano mood selection remains interactive");
-  await page.locator("#open-room-music").click();
+  await page.keyboard.press("Escape");
+  assert.equal(await page.locator("#room-music-panel").evaluate(panel=>panel.matches(":popover-open")),false,"Escape closes the music settings popover");
   await page.locator("#toggle-room-music").click();
   await page.waitForFunction(()=>globalThis.document.querySelector("#toggle-room-music")?.getAttribute("aria-pressed")==="true"||globalThis.document.querySelector("#status")?.textContent.includes("unavailable"));
   if(await page.locator("#toggle-room-music").getAttribute("aria-pressed")==="true"){
