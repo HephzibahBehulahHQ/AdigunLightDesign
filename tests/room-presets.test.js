@@ -42,3 +42,10 @@ test("swimming pool scene adds a recessed basin, coping, entry steps and detaile
   assert.ok(pool.length>shell.length+12000,"pool furniture and water details add substantial room geometry");
   assert.ok(Array.from(pool).every(Number.isFinite),"all pool geometry remains finite");
 });
+test("disco party scene adds a tiled dance floor, DJ equipment and mirrored lighting feature",()=>{
+  const preset=roomPresets.find(room=>room.id==="disco-party");
+  const shell=sceneData([0,0,0],[],{props:false},preset.room,false,preset.materials,"performance",undefined,preset.ambience,preset.id);
+  const party=sceneData([0,0,0],[],{},preset.room,false,preset.materials,"performance",undefined,preset.ambience,preset.id);
+  assert.ok(party.length>shell.length+18000,"club equipment and dance-floor details add substantial room geometry");
+  assert.ok(Array.from(party).every(Number.isFinite),"all party-room geometry remains finite");
+});

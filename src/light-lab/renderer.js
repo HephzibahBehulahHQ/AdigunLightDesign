@@ -403,6 +403,14 @@ export function studioWallArt(data, room, frameColour) {
   }
 }
 
+function facetedSphere(target,x,y,z,radius,colours,segments=16,rings=8){
+  const point=(latitude,longitude)=>[x+radius*Math.sin(latitude)*Math.cos(longitude),y+radius*Math.cos(latitude),z+radius*Math.sin(latitude)*Math.sin(longitude)];
+  const palette=colours.map(colour=>hexVector(colour));
+  for(let ring=0;ring<rings;ring++)for(let segment=0;segment<segments;segment++){
+    const upper=Math.PI*ring/rings,lower=Math.PI*(ring+1)/rings,left=Math.PI*2*segment/segments,right=Math.PI*2*(segment+1)/segments;
+    quad(target,point(upper,left),point(upper,right),point(lower,right),point(lower,left),palette[(ring+segment)%palette.length]);
+  }
+}
 function roomPresetFurniture(data,type,accent){
   const timber=hexVector("#65452F"),darkWood=hexVector("#3E2D27"),metal=hexVector("#26313B"),soft=hexVector("#75899B");
   const bookColours=["#B85C50","#D4AF37","#356A80","#8B6CAA"].map(hexVector);
@@ -482,11 +490,36 @@ function roomPresetFurniture(data,type,accent){
     box(data,-4.01,.32,-2.02,7.98,.1,.04,waterline);box(data,-4.01,.32,1.98,7.98,.1,.04,waterline);
     for(const x of [-4,2.5]){box(data,x,.06,-3.4,1.5,.1,.8,soft);box(data,x+.12,.16,-3.3,1.25,.18,.65,hexVector("#DCE6E8"));}
   } else if(type==="disco-party"){
-    box(data,-4.4,.12,2.3,8.8,.26,1.2,darkWood);box(data,-1.4,.4,2.0,2.8,1.05,.55,timber);
-    for(const x of [-4.5,3.35])box(data,x,.05,2.35,1.1,2.6,.55,metal);
-    for(const x of [-3,-1,1,3])box(data,x,.45,-.25,.92,.03,.92,x%2?accent:hexVector("#29D4E6"));
-    for(const x of [-4.1,3.5])box(data,x,1.15,-.1,.55,2.1,.5,metal);
-    for(const x of [-3.8,3.7])box(data,x,1.8,-.08,.22,.32,.08,accent);
+    const cyan=hexVector("#20C9D8"),magenta=hexVector("#D946EF"),violet=hexVector("#7450C8"),speaker=hexVector("#151B28"),silver=hexVector("#B8C2D2");
+    // Flush LED dance floor tiles keep the center open and read as a club floor.
+    for(let row=0;row<4;row++)for(let column=0;column<6;column++){
+      const colours=[violet,cyan,magenta,hexVector("#F2B84B")];
+      const tile=colours[(column+row*2)%colours.length];
+      const x=-3.75+column*1.5,z=-3.15+row*1.5;
+      box(data,x,.035,z,1.46,.07,1.46,tile);box(data,x+.06,.108,z+.06,1.34,.018,1.34,tile.map(value=>Math.min(1,value*1.2)));
+    }
+    // DJ booth, raised equipment deck, twin platters, mixer and control faders.
+    box(data,-1.95,.12,2.45,3.9,.84,.75,darkWood);box(data,-2.05,.96,2.35,4.1,.14,.95,timber);
+    for(const x of [-1.72,-.98,-.24,.5])box(data,x,.35,2.39,.62,.42,.06,x%2?magenta:cyan);
+    for(const x of [-1.22,.25]){
+      box(data,x-.34,1.12,2.08,.68,.06,.58,speaker);
+      data.push(...roundTableTop(x,1.2,2.23,.2,.035,silver,24));
+      data.push(...roundTableTop(x,1.225,2.23,.075,.025,speaker,20));
+    }
+    box(data,-.72,1.12,2.08,.84,.06,.58,metal);
+    for(let index=0;index<4;index++){box(data,-.55+index*.2,1.16,1.98,.045,.025,.16,index%2?cyan:magenta);box(data,-.55+index*.2,1.16,2.2,.07,.04,.07,silver);}
+    for(const x of [-4.55,3.45]){
+      box(data,x,.08,2.2,1.1,2.7,.82,speaker);box(data,x+.1,.2,2.12,.9,2.4,.08,metal);
+      for(const y of [.68,1.78]){
+        facetedSphere(data,x+.55,y,2.015,.31,["#263449","#35445B","#202B3C"],16,8);
+        facetedSphere(data,x+.55,y,2.015,.23,["#65748A","#404F64","#8A96A5"],12,6);
+      }
+      box(data,x+.16,2.48,2.08,.78,.055,.06,cyan);
+    }
+    // Faceted mirrored ball with a compact ceiling motor and support stem.
+    box(data,-.2,3.55,-.45,.4,.16,.4,metal);box(data,-.07,3.38,-.32,.14,.2,.14,silver);
+    facetedSphere(data,0,3.06,-.25,.43,["#E5EAF0","#69788E","#A7B5C8","#4B5970"],18,9);
+    for(const x of [-3.9,3.4])box(data,x,2.45,-.15,.28,.55,.28,accent);
   } else if(type==="clubhouse"){
     box(data,-4.1,.95,2.8,8.2,.16,.8,timber);box(data,-4.1,0,2.82,8.2,.95,.35,darkWood);
     for(const x of [-3,0,3]){data.push(...roundTableTop(x,.76,-1.1,.72,.07,timber));for(const dx of [-.5,.4])for(const z of [-1.55,-.65])box(data,x+dx,.05,z,.09,.7,.09,metal);}
@@ -514,7 +547,7 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
   data.push(...surfaceGrid([-width/2,height,-depth/2],[width,0,0],[0,0,depth],hexVector(materials.ceiling ?? "#101726"),budget.columns,budget.rows));
   const shelfLamps=[{x:4.34,y:1.81,z:2.67},{x:4.36,y:2.51,z:2.67}];
   if (visibility.props!==false) {
-  if(roomType!=="swimming-pool"&&roomType!=="bathroom"&&roomType!=="toilet")data.push(...acousticSlats(room,wood));
+  if(!["swimming-pool","bathroom","toilet","disco-party"].includes(roomType))data.push(...acousticSlats(room,wood));
   const platform=stageSettings(stage);
   if(platform.enabled)box(data,platform.x,platform.y,platform.z,platform.width,platform.height,platform.depth,hexVector(platform.color));
   const furnitureStart=data.length;
