@@ -723,10 +723,51 @@ function roomPresetFurniture(data,type,accent){
     box(data,4.65,.36,-3.5,.78,.66,.78,walnut);
     const plantColours=["#47704F","#668557","#809564"].map(hexVector);
     for(const x of [4.34,4.65,4.96])for(const z of [-3.81,-3.5,-3.19])box(data,x,.74,z,.28,.44,.28,plantColours[(Math.round(x*100)+Math.round(z*100)+800)%3]);
-  }
+  } else if(type==="church"){
+    const oak=hexVector("#594330"),linen=hexVector("#E9DFC9"),stone=hexVector("#B69C6E"),glass=hexVector("#647FA4");
+    box(data,0,.08,3.05,2.7,.72,.92,oak);box(data,0,.84,3.1,2.35,.12,.82,linen);box(data,0,1.06,3.65,.22,1.9,.12,oak);box(data,-.42,1.72,3.66,1.05,.15,.14,oak);
+    for(const side of [-1,1])for(const z of [-2.8,-1.35,.1,1.55]){const x=side*1.75;box(data,x,.32,z,2.15,.16,.64,oak);for(const dx of [-.95,.95])box(data,x+dx,.08,z,.09,.34,.09,oak);box(data,x,.64,z-.28,2.15,.48,.13,oak);}
+    for(const x of [-4.15,4.15])for(const y of [.95,2.05,3.15]){box(data,x,y,3.45,.15,.7,.22,stone);box(data,x,y,3.32,.08,.52,.12,glass);}
+    box(data,0,3.1,4.05,1.25,.16,.1,oak);box(data,-.08,2.4,4.05,.14,1.55,.12,oak);box(data,-.58,2.82,4.05,1.18,.14,.12,oak);
+    for(const x of [-3.7,3.7])for(const z of [-2,1.2]){box(data,x,2.5,z,.12,.58,.16,stone);box(data,x,2.5,z-.12,.1,.45,.08,linen);}
+  } else if(type==="electrical-workshop"){
+    const worktop=hexVector("#9B7956"),cabinet=hexVector("#476170"),safety=hexVector("#F0B84C"),tool=hexVector("#B95C49");
+    for(const x of [-3.5,0,3.5]){box(data,x,.9,2.55,2.55,.13,.82,worktop);for(const dx of [-1.1,1.1])box(data,x+dx,.08,2.65,.1,.85,.1,metal);box(data,x,1.9,3.45,2.55,1.35,.1,cabinet);for(let y=1.35;y<2.45;y+=.35)for(let dx=-.9;dx<=.9;dx+=.45)box(data,x+dx,y,3.34,.13,.24,.1,tool);}
+    box(data,-4.05,.1,-1.8,.75,2.1,.65,cabinet);for(const y of [.55,1.25,1.95])box(data,-3.64,y,-1.78,.04,.08,.35,safety);
+    for(const z of [-2.2,-.8,.6]){box(data,2.6,.8,z,.6,1.45,.55,metal);for(const y of [.35,.7,1.05,1.4])box(data,2.6,y,z-.3,.56,.035,.04,safety);}
+    box(data,0,1.7,-3.35,4.5,.08,.08,safety);for(const x of [-1.8,-.9,0,.9,1.8])box(data,x,1.46,-3.35,.06,.4,.06,tool);
+    for(const x of [-3,0,3]){box(data,x,2.75,1.2,.08,.42,.08,metal);box(data,x,2.96,1.2,.48,.05,.2,hexVector("#FFF0C2"));}
+  } else if(type==="airplane-cabin"){
+    const seat=hexVector("#385B78"),trim=hexVector("#91B7CC"),window=hexVector("#6BA5C2"),shell=hexVector("#C5D2D6");
+    box(data,0,2.7,3.35,5.9,.26,.16,shell);box(data,0,2.25,3.35,5.9,.1,.12,trim);
+    for(const side of [-1,1]){
+      box(data,side*2.2,1.75,0,.1,2.3,9,shell);for(const z of [-3.2,-1.3,.6,2.5]){box(data,side*2.11,1.86,z,.035,.62,.78,trim);box(data,side*2.08,1.88,z,.025,.52,.64,window);}
+      box(data,side*1.43,2.05,0,.85,.42,8.5,shell);box(data,side*1.43,1.82,-.2,.85,.09,8.3,trim);
+      for(const z of [-3,-1.2,.6,2.4,4.2]){box(data,side*.83,.52,z,.72,.52,.72,seat);box(data,side*.83,1.03,z-.28,.72,.72,.16,seat);box(data,side*.83,1.78,z-.29,.48,.24,.08,trim);box(data,side*1.26,.08,z,.07,.45,.07,metal);}
+    }
+    box(data,0,1.2,-3.45,1.05,.02,8.8,hexVector("#66727A"));box(data,0,.08,4.72,4.2,.16,.14,metal);
+    for(const x of [-1.4,0,1.4]){box(data,x,2.05,4.4,.08,.32,.08,metal);box(data,x,2.23,4.4,.42,.05,.18,hexVector("#FFF0C2"));}
+  } else if(type==="office"||type==="classroom"){
+    const desk=hexVector("#765B43"),screen=hexVector("#243C52"),chair=hexVector("#536C7D");
+    const rows=type==="classroom"?3:2;
+    for(let row=0;row<rows;row++)for(let col=0;col<3;col++){const x=-3.2+col*3.2,z=-2+row*2.2;box(data,x,.78,z,1.85,.12,.85,desk);for(const dx of [-.75,.75])for(const dz of [-.3,.3])box(data,x+dx,.08,z+dz,.07,.7,.07,metal);if(type==="office"){box(data,x,.91,z-.18,.68,.42,.06,screen);box(data,x,.99,z+.06,.1,.05,.1,hexVector("#CAD6D9"));}else{box(data,x,1.55,z+.34,1.85,.62,.08,chair);box(data,x,1.95,z+.4,1.9,.08,.12,chair);}}
+    if(type==="classroom"){box(data,0,1.65,3.55,4.6,1.2,.12,hexVector("#344E52"));box(data,0,1.65,3.46,4.4,1.02,.04,hexVector("#8AB6A5"));}
+    else{box(data,0,.08,3.25,4.8,.12,.64,desk);box(data,0,1.3,3.55,4.8,1.9,.12,screen);}
+  } else if(type==="restaurant"||type==="event-hall"){
+    const table=hexVector("#70513A"),fabric=hexVector("#6B4963"),gold=hexVector("#D5B879");
+    for(const x of [-3,0,3])for(const z of [-2,1]){data.push(...roundTableTop(x,.82,z,.8,.08,table,24));for(const dx of [-.55,.55])for(const dz of [-.48,.48]){box(data,x+dx,.08,z+dz,.08,.72,.08,metal);box(data,x+dx-.22,.72,z+dz,.5,.13,.44,fabric);box(data,x+dx-.22,.9,z+dz-.2,.5,.42,.1,fabric);}}
+    for(const x of [-3,0,3]){box(data,x,3.1,.4,.07,.68,.07,gold);box(data,x,2.66,.4,.42,.16,.42,gold);facetedSphere(data,x,2.48,.4,.25,["#FFE5B0","#E2B76D","#FFF0D2"],16,8);}
+    if(type==="event-hall"){box(data,0,.18,3.6,6.5,.25,.2,fabric);box(data,0,.8,3.55,3.2,1.15,.18,gold);}
+  } else if(type==="art-gallery"){
+    const frame=hexVector("#4A443D");for(const x of [-3.5,-1.2,1.2,3.5]){box(data,x,2.05,3.55,1.45,1.15,.08,frame);box(data,x,2.05,3.48,1.26,.96,.035,[hexVector("#D68465"),hexVector("#547D91"),hexVector("#D1B26C"),hexVector("#78916B")][Math.abs(Math.round(x))%4]);box(data,x,2.95,3.3,.08,.35,.08,metal);box(data,x,3.13,3.3,.36,.05,.18,hexVector("#FFF2CF"));}
+    box(data,0,.45,-.45,2.7,.18,1.25,hexVector("#6E7375"));
+  } else if(type==="hotel-room"){
+    const linen=hexVector("#DED4C5"),head=hexVector("#725C50"),wood=hexVector("#785B44");box(data,0,.45,1.25,3.5,.42,2.3,linen);box(data,0,.92,2.18,3.55,1.08,.18,head);for(const x of [-.84,.84])box(data,x,.72,.72,1.4,.16,1.05,linen);box(data,0,.05,3.15,3.9,.1,.55,wood);for(const x of [-1.8,1.8]){box(data,x,.88,1.2,.82,1.05,.82,wood);box(data,x,1.44,1.2,.62,.08,.62,hexVector("#FFF0CE"));}box(data,-3.55,1.35,2.65,1.4,2.45,.12,hexVector("#435563"));
+  } else if(type==="warehouse"){
+    const rack=hexVector("#4D6068");for(const x of [-3.7,0,3.7]){for(const dx of [-1,1])box(data,x+dx,.08,2.6,.12,5.2,.12,rack);for(const y of [1,2.6,4.2]){box(data,x,y,2.6,2.2,.12,.8,rack);for(let n=0;n<3;n++)box(data,x-.7+n*.7,y+.38,2.45,.58,.62,.6,[hexVector("#B96A48"),hexVector("#D4B56D"),hexVector("#607E8B")][n]);}}}
 }
 export function sceneData(accent, fixtures, visibility={}, room,includeBeams=true,materials={},quality="balanced",stage,ambience,roomType="living-room") {
-  const data=[],floor=hexVector(materials.floor ?? "#4A3431"),wall=hexVector(materials.wall ?? "#27324A"),couch=hexVector("#9C4F48"),wood=hexVector("#67442F"),metal=hexVector("#151D2D");
+  const data=[],floor=hexVector(materials.floor ?? "#4A3431"),rearWall=hexVector(materials.wallRear ?? materials.wall ?? "#27324A"),leftWall=hexVector(materials.wallLeft ?? materials.wall ?? "#27324A"),rightWall=hexVector(materials.wallRight ?? materials.wall ?? "#27324A"),couch=hexVector("#9C4F48"),wood=hexVector("#67442F"),metal=hexVector("#151D2D");
   const {width,height,depth}=roomDimensions(room);
   const budget=previewQuality(quality);
   const propsVisible=visibility.props!==false;
@@ -749,9 +790,10 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
   data.push(...surfaceGrid([-width/2,0,-depth/2],[width,0,0],[0,0,depth],floorBoardColour,budget.columns,budget.rows));
   if(!tileFloor)data.push(...studioFloorGrain(width,depth,floor));
   const rearWallStart=data.length;
-  data.push(...surfaceGrid([-width/2,0,depth/2],[width,0,0],[0,height,0],wall,budget.columns,budget.rows));
+  data.push(...surfaceGrid([-width/2,0,depth/2],[width,0,0],[0,height,0],rearWall,budget.columns,budget.rows));
   const rearWallEnd=data.length;
-  data.push(...surfaceGrid([-width/2,0,-depth/2],[0,0,depth],[0,height,0],materials.wall ? wall : hexVector("#132746"),budget.columns,budget.rows));
+  data.push(...surfaceGrid([-width/2,0,-depth/2],[0,0,depth],[0,height,0],materials.wallLeft||materials.wall ? leftWall : hexVector("#132746"),budget.columns,budget.rows));
+  data.push(...surfaceGrid([width/2,0,depth/2],[0,0,-depth],[0,height,0],materials.wallRight||materials.wall ? rightWall : hexVector("#132746"),budget.columns,budget.rows));
   data.push(...surfaceGrid([-width/2,height,-depth/2],[width,0,0],[0,0,depth],hexVector(materials.ceiling ?? "#101726"),budget.columns,budget.rows));
   const shelfLamps=[{x:4.34,y:1.81,z:2.67},{x:4.36,y:2.51,z:2.67}];
   if (visibility.props!==false) {
@@ -956,10 +998,19 @@ export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = 
     const fixture=fixtureAt(event,bounds);
     if (fixture) onSelect(fixture.id);
   };
-  resize.observe(canvas);canvas.addEventListener("pointerdown",down);canvas.addEventListener("pointermove",move);canvas.addEventListener("pointerup",up);draw();
+  let tourFrame=0;
+  function stopTour(){if(tourFrame){cancelAnimationFrame(tourFrame);tourFrame=0;}}
+  function toggleTour(){
+    if(tourFrame){stopTour();return false;}
+    const origin={yaw,pitch,distance},started=performance.now(),duration=48000;
+    const animate=(time)=>{const progress=((time-started)%duration)/duration;yaw=origin.yaw+progress*Math.PI*2;pitch=Math.max(-cameraPitchLimit,Math.min(cameraPitchLimit,origin.pitch+Math.sin(progress*Math.PI*4)*.12));distance=origin.distance*(1+.025*Math.sin(progress*Math.PI*2));draw();tourFrame=requestAnimationFrame(animate);};
+    tourFrame=requestAnimationFrame(animate);return true;
+  }
+  const pointerDown=(event)=>{stopTour();down(event);};
+  resize.observe(canvas);canvas.addEventListener("pointerdown",pointerDown);canvas.addEventListener("pointermove",move);canvas.addEventListener("pointerup",up);draw();
   const keydown=(event)=>{
     if (!["ArrowLeft","ArrowRight","ArrowUp","ArrowDown","Home","+","=","-"].includes(event.key)) return;
-    event.preventDefault();
+    event.preventDefault();stopTour();
     if (event.key === "ArrowLeft") yaw-=.08;
     if (event.key === "ArrowRight") yaw+=.08;
     if (event.key === "ArrowUp") pitch=Math.max(-cameraPitchLimit,pitch-.08);
@@ -970,9 +1021,10 @@ export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = 
     draw();
   };
   canvas.addEventListener("keydown",keydown);
-  const wheel=(event)=>{event.preventDefault();distance=Math.max(4,Math.min(24,distance+Math.sign(event.deltaY)*.5));draw();};
+  const wheel=(event)=>{event.preventDefault();stopTour();distance=Math.max(4,Math.min(24,distance+Math.sign(event.deltaY)*.5));draw();};
   canvas.addEventListener("wheel",wheel,{passive:false});
   canvas.addEventListener("pointercancel",up);
   canvas.addEventListener("lostpointercapture",up);
-  return { supported:true, cameraState(){return {yaw,pitch,distance};}, capturePng(){return viewportPng(canvas,draw);}, setAccent(value){selectedAccent=value;geometry=null;draw();}, setFixtures(value){const selectedId=virtualFixtures.find(fixture=>fixture.selected)?.id;virtualFixtures=value.some(fixture=>Object.hasOwn(fixture,"selected")) ? value : value.map(fixture=>({...fixture,selected:fixture.id===selectedId}));geometry=null;draw();}, setView(axis){const view=cameraAxisView(axis);yaw=view.yaw;pitch=view.pitch;draw();}, reset(){({yaw,pitch,distance}=normalizeCameraState({distance:fitDistance}));draw();}, destroy(){resize.disconnect();canvas.removeEventListener("wheel",wheel);canvas.removeEventListener("keydown",keydown);canvas.removeEventListener("pointercancel",up);canvas.removeEventListener("lostpointercapture",up);canvas.removeEventListener("pointerdown",down);canvas.removeEventListener("pointermove",move);canvas.removeEventListener("pointerup",up);geometry=null;gl.deleteBuffer(buffer);gl.deleteProgram(program);} };
+  return { supported:true, cameraState(){return {yaw,pitch,distance};},tourPlaying(){return Boolean(tourFrame);},toggleTour,stopTour,capturePng(){return viewportPng(canvas,draw);}, setAccent(value){selectedAccent=value;geometry=null;draw();}, setFixtures(value){const selectedId=virtualFixtures.find(fixture=>fixture.selected)?.id;virtualFixtures=value.some(fixture=>Object.hasOwn(fixture,"selected")) ? value : value.map(fixture=>({...fixture,selected:fixture.id===selectedId}));geometry=null;draw();}, setView(axis){stopTour();const view=cameraAxisView(axis);yaw=view.yaw;pitch=view.pitch;draw();}, reset(){stopTour();({yaw,pitch,distance}=normalizeCameraState({distance:fitDistance}));draw();}, destroy(){stopTour();resize.disconnect();canvas.removeEventListener("wheel",wheel);canvas.removeEventListener("keydown",keydown);canvas.removeEventListener("pointercancel",up);canvas.removeEventListener("lostpointercapture",up);canvas.removeEventListener("pointerdown",pointerDown);canvas.removeEventListener("pointermove",move);canvas.removeEventListener("pointerup",up);geometry=null;gl.deleteBuffer(buffer);gl.deleteProgram(program);} };
 }
+

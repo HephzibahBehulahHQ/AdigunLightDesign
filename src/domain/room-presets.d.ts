@@ -1,6 +1,8 @@
 export type RoomPresetId =
   | "living-room" | "library" | "kitchen" | "bathroom" | "toilet"
-  | "garage" | "hallway" | "swimming-pool" | "disco-party" | "clubhouse";
+  | "garage" | "hallway" | "swimming-pool" | "disco-party" | "clubhouse"
+  | "church" | "electrical-workshop" | "airplane-cabin" | "office" | "restaurant"
+  | "classroom" | "art-gallery" | "hotel-room" | "warehouse" | "event-hall";
 export interface RoomPreset {
   readonly id: RoomPresetId;
   readonly names: readonly [string,string,string,string];
@@ -21,3 +23,4 @@ export function createRoomScene(presetId:string,options?:{id?:string;name?:strin
 };
 export function roomAmbience(scene: {roomType?:string;ambience?:{color:string;intensity:number}}): {color:string;intensity:number};
 export function roomPresetName(id?:string,locale?:string): string;
+

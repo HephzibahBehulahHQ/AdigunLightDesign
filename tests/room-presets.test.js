@@ -5,14 +5,21 @@ import { createProject,validateProject } from "../src/domain/project.js";
 import { sceneData } from "../src/light-lab/renderer.js";
 
 test("room templates create distinct valid, localized scene documents",()=>{
-  assert.equal(roomPresets.length,10);
+  assert.equal(roomPresets.length,20);
   assert.deepEqual(roomPresetOptions("de").map(room=>room.label).slice(0,3),["Wohnzimmer","Bibliothek","Küche"]);
   const project=createProject();
   project.scenes=roomPresets.map(preset=>createRoomScene(preset.id,{id:preset.id}));
   assert.equal(validateProject(project).valid,true);
-  assert.equal(new Set(project.scenes.map(scene=>scene.roomType)).size,10);
-  assert.equal(new Set(project.scenes.map(scene=>JSON.stringify(scene.room))).size,10);
-  assert.equal(new Set(project.scenes.map(scene=>JSON.stringify(scene.ambience))).size,10);
+  assert.equal(new Set(project.scenes.map(scene=>scene.roomType)).size,20);
+  assert.equal(new Set(project.scenes.map(scene=>JSON.stringify(scene.room))).size,20);
+  assert.equal(new Set(project.scenes.map(scene=>JSON.stringify(scene.ambience))).size,20);
+});
+test("Church, Electrical workshop and Airplane cabin receive scene-specific 3D interiors",()=>{
+  for(const id of ["church","electrical-workshop","airplane-cabin"]){
+    const preset=roomPresets.find(room=>room.id===id),shell=sceneData([0,0,0],[],{props:false},preset.room,false,preset.materials,"performance",undefined,preset.ambience,preset.id),interior=sceneData([0,0,0],[],{},preset.room,false,preset.materials,"performance",undefined,preset.ambience,preset.id);
+    assert.ok(interior.length>shell.length+3000,`${id} adds real room-specific fixtures and furniture geometry`);
+    assert.ok(Array.from(interior).every(Number.isFinite),`${id} geometry remains finite`);
+  }
 });
 test("room templates have separate mutable settings and validate their ambient fill",()=>{
   const first=createRoomScene("kitchen",{id:"first"}),second=createRoomScene("kitchen",{id:"second"});
@@ -106,3 +113,4 @@ test("clubhouse scene adds a stocked bar, social seating and warm architectural 
   assert.ok(clubhouse.length>shell.length+18000,"bar fixtures, seating and layered architectural lights add substantial geometry");
   assert.ok(Array.from(clubhouse).every(Number.isFinite),"all clubhouse geometry remains finite");
 });
+
