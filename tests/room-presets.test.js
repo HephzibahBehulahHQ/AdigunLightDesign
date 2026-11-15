@@ -77,3 +77,11 @@ test("toilet scene adds a wall-hung WC, flush plate, compact basin and mirror",(
   assert.ok(toilet.length>shell.length+9000,"WC, sanitaryware and wall accessories add detailed compact-room geometry");
   assert.ok(Array.from(toilet).every(Number.isFinite),"all toilet-room geometry remains finite");
 });
+
+test("hallway scene adds a paneled entry door, console, coat station, runner and wall lights",()=>{
+  const preset=roomPresets.find(room=>room.id==="hallway");
+  const shell=sceneData([0,0,0],[],{props:false},preset.room,false,preset.materials,"performance",undefined,preset.ambience,preset.id);
+  const hallway=sceneData([0,0,0],[],{},preset.room,false,preset.materials,"performance",undefined,preset.ambience,preset.id);
+  assert.ok(hallway.length>shell.length+9000,"entry fittings and layered lighting details add substantial geometry");
+  assert.ok(Array.from(hallway).every(Number.isFinite),"all hallway geometry remains finite");
+});

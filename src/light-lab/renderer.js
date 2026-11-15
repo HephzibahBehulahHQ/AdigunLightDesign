@@ -573,10 +573,32 @@ function roomPresetFurniture(data,type,accent){
     garageFrontWheel(data,-.75,.36,-2.245,.31);garageFrontWheel(data,.75,.36,-2.245,.31);
     box(data,-.96,.48,.62,.18,.12,.08,hexVector("#C65C45"));box(data,.78,.48,.62,.18,.12,.08,hexVector("#C65C45"));
   } else if(type==="hallway"){
-    box(data,-4.2,0,2.7,1.5,2.5,.12,darkWood);box(data,-4,0,2.56,1.15,2.25,.06,timber);
-    box(data,.6,.8,2.45,3,.12,.62,timber);for(const x of [.8,3])box(data,x,.05,2.5,.08,.75,.08,metal);
-    box(data,-3.2,1.25,2.35,1.1,1.5,.07,hexVector("#8EABB3"));
-    box(data,1.3,.35,-1.1,2.2,.35,.7,soft);for(const x of [1.45,3.2])box(data,x,.04,-1,.1,.3,.1,metal);
+    const doorLeaf=hexVector("#76543F"),doorInset=hexVector("#9A7355"),runner=hexVector("#9C6D61"),brass=hexVector("#C6A46C"),linen=hexVector("#D9D2C8");
+    // Recessed front door with casing, three inset panels, lever and threshold.
+    box(data,-4.2,1.2,2.74,1.18,2.34,.12,doorLeaf);box(data,-4.2,1.24,2.66,.94,2.18,.055,doorInset);
+    for(const y of [.55,1.32])box(data,-4.2,y,2.61,.72,.58,.035,doorLeaf);
+    box(data,-4.82,1.2,2.7,.12,2.52,.18,timber);box(data,-3.58,1.2,2.7,.12,2.52,.18,timber);box(data,-4.2,2.5,2.7,1.36,.14,.18,timber);
+    box(data,-4.2,.055,2.53,1.44,.08,.4,brass);box(data,-3.72,.98,2.58,.1,.1,.035,brass);box(data,-3.66,.91,2.55,.035,.16,.035,brass);
+    // Narrow console, catch-all tray, lamp and framed mirror create a clear arrival point.
+    box(data,-2.22,.77,2.3,2.05,.1,.52,timber);for(const x of [-3.1,-1.34])box(data,x,.05,2.34,.09,.72,.09,metal);
+    box(data,-2.22,.83,2.18,1.55,.08,.045,doorInset);box(data,-2.22,.91,2.12,.78,.035,.24,brass);
+    box(data,-2.87,1.12,2.22,.19,.34,.19,metal);box(data,-2.87,1.31,2.22,.3,.12,.3,linen);
+    box(data,-2.22,1.78,2.58,1.12,1.42,.08,metal);box(data,-2.22,1.78,2.52,.98,1.28,.04,hexVector("#91A9AD"));
+    // Coat rail with hooks, coats and a lower shoe bench with cubbies.
+    box(data,.35,2.18,2.5,2.65,.09,.1,brass);
+    for(const x of [-.72,-.02,.68,1.38]){box(data,x,2.07,2.48,.055,.22,.055,brass);box(data,x,1.94,2.44,.2,.05,.14,brass);}
+    box(data,-.5,1.25,2.31,.48,.95,.08,hexVector("#354E63"));box(data,.48,1.2,2.31,.52,1.05,.08,hexVector("#8A564D"));
+    box(data,2.55,.32,2.34,1.9,.12,.56,timber);for(const x of [1.72,2.5,3.28])box(data,x,.16,2.32,.055,.3,.5,metal);
+    for(const x of [1.94,2.72])box(data,x,.08,2.31,.48,.09,.28,doorLeaf);
+    // Center runner and repeated warm wall sconces give the corridor a lighting rhythm.
+    box(data,.55,.035,-.45,1.38,.045,2.3,runner);for(const z of [-1.35,-.75,-.15,.45])box(data,.55,.064,z,1.02,.014,.025,linen);
+    for(const z of [-.9,.4,1.7]){
+      box(data,-3.26,2.22,z,.08,.4,.12,brass);box(data,-3.18,2.22,z,.12,.28,.2,hexVector("#F2D7A2"));
+      box(data,3.26,2.22,z,.08,.4,.12,brass);box(data,3.18,2.22,z,.12,.28,.2,hexVector("#F2D7A2"));
+    }
+    // A small umbrella stand and planter finish the entry without obstructing the path.
+    box(data,3.02,.28,1.72,.36,.5,.36,metal);for(const x of [2.9,3.02,3.14])box(data,x,.8,1.72,.035,.62,.035,doorLeaf);
+    box(data,3.02,.65,-1.16,.72,.52,.72,doorLeaf);for(const x of [2.76,3.02,3.28])for(const z of [-1.42,-1.16,-.9])box(data,x,1.02,z,.27,.52,.27,hexVector(["#4E7559","#5D835F","#74966B"][(Math.round(x*100)+Math.round(z*100)+600)%3]));
   } else if(type==="swimming-pool"){
     const poolTile=hexVector("#4A8390"),poolShadow=hexVector("#315968"),coping=hexVector("#D1D5CE"),copingJoint=hexVector("#84949A"),waterline=hexVector("#A8DDE0");
     // A recessed basin with visible tiled inner walls and a pale stone surround.
