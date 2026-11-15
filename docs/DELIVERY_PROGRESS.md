@@ -1,6 +1,6 @@
 # Delivery evidence and remaining gates
 
-Audit date: 12 November 2026. Scope remains the entire supplied master
+Audit date: 15 November 2026. Scope remains the entire supplied master
 specification, the latest 1672 × 941 interface reference, floating Bot,
 compact account/language menu and canonical domain requirements.
 
@@ -26,6 +26,22 @@ these estimates when stronger evidence becomes available.
 | Total | 100 | 48 | Estimated remaining work: 52%. |
 
 ## Recent verified increments
+
+On 15 November 2026, [PR #194](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/pull/194)
+made newly added fixtures respect the active room dimensions, placed LED strips
+on the rear wall, and retained independent fixture color/dimmer state by scene.
+The fixture-list popover now closes on Escape and returns focus to its trigger.
+During the rebase, the existing fixture inspector position/rotation and HTML
+escaping regression tests were preserved alongside the new room-placement tests.
+All 296 tests, lint, typecheck, project contract checks and production build
+passed locally. Browser studio acceptance passed at seven viewports with no
+document overflow, overlap or runtime errors. The rebased PR checks passed;
+merge commit `3e80fd1d0f2d5cbd10ce6001d9eb92068f93c892`, main validation run
+[43733619115](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/43733619115)
+and Pages release run
+[43733619021](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/43733619021)
+passed. The production domain returned HTTP 200 and served the locally built
+JavaScript and CSS bundle hashes.
 
 The latest viewport increment was merged on 12 November 2026:
 
