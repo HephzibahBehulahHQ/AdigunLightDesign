@@ -60,6 +60,8 @@ try {
       const navigation = box(".module-nav");
       const left = box(".left-rail");
       const scene = box(".scene-preview");
+      const mediaControls=box(".canvas-media-controls");
+      const paintControls=box(".canvas-actions");
       const dock = box(".lower-workspace");
       const inspector = box(".inspector");
       const inspectorContent = box("#fixture-inspector-panel");
@@ -76,6 +78,8 @@ try {
         leftRailContent: {scrollHeight:leftRailContent.scrollHeight,clientHeight:leftRailContent.clientHeight},
         activePalette: {scrollHeight:activePalette.scrollHeight,clientHeight:activePalette.clientHeight},
         scene,
+        mediaControls,
+        paintControls,
         dock,
         inspector,
         inspectorContent,
@@ -93,6 +97,8 @@ try {
     assert.ok(report.left.right <= report.scene.x + 1, `left rail does not overlap canvas at ${width}×${height}`);
     assert.ok(report.scene.right <= report.inspector.x + 1, `canvas does not overlap inspector at ${width}×${height}`);
     assert.ok(report.scene.bottom <= report.dock.y + 1, `canvas does not overlap dock at ${width}×${height}`);
+    assert.ok(report.mediaControls.x>=report.scene.x&&report.mediaControls.right<=report.scene.right&&report.mediaControls.bottom<=report.scene.bottom,`tour, looks and music controls stay inside the canvas at ${width}×${height}`);
+    assert.ok(report.mediaControls.right<=report.paintControls.x||report.mediaControls.bottom<=report.paintControls.y,`canvas media controls do not overlap Paint surface at ${width}×${height}`);
     assert.ok(report.inspectorContent.bottom <= report.lux.y + 1, `inspector scroll lane stops before docked Lux at ${width}×${height}`);
     if(width===1754&&height===878){assert.ok(report.leftRailContent.scrollHeight<=report.leftRailContent.clientHeight+2,"all left-rail sections fit without a hidden sidebar overflow");assert.ok(report.activePalette.scrollHeight<=report.activePalette.clientHeight+2,"the full Active Palette controls fit in their dock");}
     if(width===1754 && height===878){const play=await page.locator("#play-effect").boundingBox();assert.ok(play.y+play.height<=report.inspectorContent.bottom+1,`Effects Play stays visible before docked Lux at the reference viewport (${play.y+play.height} <= ${report.inspectorContent.bottom})`);}
@@ -120,6 +126,12 @@ try {
   }
 
   await page.setViewportSize({ width: 1754, height: 878 });
+  assert.deepEqual(await page.locator(".command-menu").evaluateAll(items=>items.map(item=>item.dataset.commandMenu)),["project","history","scene","palette","fixtures","stage","room","export","guide"],"Help & Guide sits beside Export without displacing the existing Scene menu");
+  await openCommandMenu("guide");
+  assert.equal(await page.locator("#command-menu-panel-guide .guide-section").count(),10,"Help & Guide contains the ten beginner manual sections");
+  await page.locator("#guide-search").fill("DMX");
+  assert.ok(await page.locator("#command-menu-panel-guide .guide-section:not([hidden])").count()>=1,"guide search finds DMX instructions");
+  await page.locator('[data-command-menu-trigger="guide"]').click();
   assert.equal(await page.locator(".left-rail-heading").isVisible(), true, "left rail has the compact project/layers/tools header from the reference");
   assert.equal((await page.locator(".header-project-context").innerText()).replace(/\s+/g," ").trim(),"Studio Mood • Scene 01","header context shows the active scene number as in the reference");
   assert.match(await page.locator(".tool-section > h2").innerText(),/Tools — One Click/,"the tool group uses the one-click reference label");
@@ -185,7 +197,7 @@ try {
   await importChooser;
   assert.equal(await page.locator('.command-menu-system [data-command-group="view"]').count(), 0, "module navigation does not repeat a duplicate view group in the top-bar menu");
   assert.equal((await page.locator('[data-command-group="scene"] > span').innerText()).trim().toUpperCase(), "SCENE", "the top-bar menu labels this group with the concise Scene heading from the reference");
-  assert.deepEqual(await page.locator(".command-group > span").evaluateAll((items)=>items.map((item)=>item.textContent.trim())),["Project","History","Scene","Palette","Fixtures","Stage","Room","Export"],"Stage and Room sit immediately beside Export in the compact top menu bar");
+  assert.deepEqual(await page.locator(".command-group > span").evaluateAll((items)=>items.map((item)=>item.textContent.trim())),["Project","History","Scene","Palette","Fixtures","Stage","Room","Export","Help & Guide"],"Stage and Room sit beside Export, followed by Help & Guide");
   assert.equal((await page.locator('.command-group[data-command-group="palette"] .harmony-command > span').innerText()).trim(), "◇ Harmonies", "palette harmony control matches the reference label");
   for (const [button,label] of [["#open-versions","Versions"],["#open-compare","Compare"]]) {
     assert.equal((await page.locator(`.command-group[data-command-group="palette"] ${button}`).innerText()).trim(),label,`${label} is a primary Palette menu action`);
@@ -680,6 +692,8 @@ try {
   await clickCommand("scene","#add-room-scene");
   assert.equal(await page.locator(".project-dialog").evaluate(dialog=>dialog.open),true,"Add room opens a floating template dialog");
   await page.locator("#room-template").selectOption("kitchen");
+    assert.equal(await page.locator("#room-template option").count(),20,"Scene room templates include the original rooms and ten additional scene types");
+    assert.ok(await page.locator('#room-template option[value="church"]').count()===1&&await page.locator('#room-template option[value="electrical-workshop"]').count()===1&&await page.locator('#room-template option[value="airplane-cabin"]').count()===1,"room templates include Church, Electrical workshop and Airplane cabin");
   await page.locator("#create-room-scene").click();
   assert.equal(await page.locator(".project-dialog").count(),0,"creating a room closes the modal");
   assert.equal(await page.locator("#scene-select option").count(),2,"Add room creates a second saved scene in the project");
@@ -687,20 +701,36 @@ try {
   assert.match(await page.locator("#scene-select option:checked").innerText(),/Kitchen/,"the selected scene is labeled with its room template");
   assert.match(await page.locator(".workspace-tabs .studio-panel-title").innerText(),/Kitchen/i,"the studio header identifies the active room in the 3D preview");
   assert.ok(await page.locator("[data-layer-fixture]").count()>=3,"new kitchen scenes start with a usable wash and architectural strip rig");
-  assert.match(await page.locator("#cycle-lighting-look").innerText(),/01\/20/,"new rooms start on their first automatic lighting look");
+  assert.match(await page.locator("#cycle-lighting-look").innerText(),/01\/100/,"new rooms start on their first automatic lighting look");
   assert.equal((await page.locator("#fixture-colour").inputValue()).toUpperCase(),"#FFA65B","the starter look applies its real channel color to the new room rig");
   await page.locator("#cycle-lighting-look").click();
-  assert.match(await page.locator("#cycle-lighting-look").innerText(),/02\/20/,"the floating canvas control advances to the next look");
+  assert.match(await page.locator("#cycle-lighting-look").innerText(),/02\/100/,"the floating canvas control advances to the next look");
   assert.equal((await page.locator("#fixture-colour").inputValue()).toUpperCase(),"#FFE8BB","cycling a look updates the active room fixture channels");
   const lookToggleBounds=await page.locator("#cycle-lighting-look").boundingBox();
   const canvasBounds=await page.locator(".scene-preview").boundingBox();
   const paintControlsBounds=await page.locator(".canvas-actions").boundingBox();
   assert.ok(lookToggleBounds.x>=canvasBounds.x&&lookToggleBounds.y>=canvasBounds.y&&lookToggleBounds.x+lookToggleBounds.width<=canvasBounds.x+canvasBounds.width&&lookToggleBounds.y+lookToggleBounds.height<=canvasBounds.y+canvasBounds.height,"the lighting look switch stays inside the canvas");
   assert.ok(lookToggleBounds.x+lookToggleBounds.width<=paintControlsBounds.x||lookToggleBounds.x>=paintControlsBounds.x+paintControlsBounds.width||lookToggleBounds.y+lookToggleBounds.height<=paintControlsBounds.y||lookToggleBounds.y>=paintControlsBounds.y+paintControlsBounds.height,"the lighting look switch does not overlap canvas paint controls");
+  await page.locator("#play-room-tour").click();
+  assert.equal(await page.locator("#play-room-tour").getAttribute("aria-pressed"),"true","Play tour starts the room camera walkthrough");
+  await page.locator("#play-room-tour").click();
+  assert.equal(await page.locator("#play-room-tour").getAttribute("aria-pressed"),"false","the room camera walkthrough stops on the second click");
+  await page.locator("#open-room-music").click();
+  assert.equal(await page.locator("#room-music-panel").evaluate(panel=>panel.matches(":popover-open")),true,"music settings open as a floating canvas popover");
+  assert.equal(await page.locator("#room-music-mood option").count(),5,"music settings provide five distinct piano moods");
+  await page.locator("#room-music-mood").selectOption("night-piano");
+  assert.equal(await page.locator("#room-music-mood").inputValue(),"night-piano","piano mood selection remains interactive");
+  await page.locator("#open-room-music").click();
+  await page.locator("#toggle-room-music").click();
+  await page.waitForFunction(()=>globalThis.document.querySelector("#toggle-room-music")?.getAttribute("aria-pressed")==="true"||globalThis.document.querySelector("#status")?.textContent.includes("unavailable"));
+  if(await page.locator("#toggle-room-music").getAttribute("aria-pressed")==="true"){
+    await page.locator("#toggle-room-music").click();
+    await page.waitForFunction(()=>globalThis.document.querySelector("#toggle-room-music")?.getAttribute("aria-pressed")==="false");
+  }
   await clickCommand("history","#undo");
-  assert.match(await page.locator("#cycle-lighting-look").innerText(),/01\/20/,"undo restores the previous room lighting look");
+  assert.match(await page.locator("#cycle-lighting-look").innerText(),/01\/100/,"undo restores the previous room lighting look");
   await clickCommand("history","#redo");
-  assert.match(await page.locator("#cycle-lighting-look").innerText(),/02\/20/,"redo restores the cycled room lighting look");
+  assert.match(await page.locator("#cycle-lighting-look").innerText(),/02\/100/,"redo restores the cycled room lighting look");
   await page.screenshot({path:resolve("outputs/kitchen-lighting-look.png")});
   await openCommandMenu("room");
   assert.match(await page.locator('#command-menu-panel-room .room-type-label').innerText(),/Kitchen/,"room settings identify the selected template");

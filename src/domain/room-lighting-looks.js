@@ -1,8 +1,9 @@
 import {createFixture,patchFixture} from "../dmx/engine.js";
 import {fixturePlacementForRoom} from "./fixture-placement.js";
 import {roomDimensions} from "./room.js";
+import {shiftHue,hexToRgb,rgbToHex,rgbToHsl} from "./color-engine.ts";
 
-export const roomLightingLooks=Object.freeze([
+const curatedLooks=[
   {id:"warm-welcome",name:"Warm welcome",materials:{wall:"#40313C",floor:"#563C32",ceiling:"#1A1720"},materialColor:"#E7A45B",ambience:{color:"#FFD5A8",intensity:.24},rgb:[255,166,91],dimmer:220},
   {id:"bright-daylight",name:"Bright daylight",materials:{wall:"#A5B0B1",floor:"#747A75",ceiling:"#D9DFD9"},materialColor:"#F0D27A",ambience:{color:"#FFF5DE",intensity:.3},rgb:[255,232,187],dimmer:190},
   {id:"cool-focus",name:"Cool focus",materials:{wall:"#566C7B",floor:"#394A58",ceiling:"#A5B8C2"},materialColor:"#67CFE2",ambience:{color:"#C8EEFF",intensity:.22},rgb:[126,203,255],dimmer:235},
@@ -23,7 +24,21 @@ export const roomLightingLooks=Object.freeze([
   {id:"teal-spa",name:"Teal spa",materials:{wall:"#416E70",floor:"#2E5358",ceiling:"#8EBCB8"},materialColor:"#67C6B8",ambience:{color:"#A9EEE0",intensity:.25},rgb:[72,205,185],dimmer:170},
   {id:"candlelight",name:"Candlelight",materials:{wall:"#574139",floor:"#342B29",ceiling:"#806348"},materialColor:"#D5914C",ambience:{color:"#FFC16D",intensity:.16},rgb:[255,117,38],dimmer:125},
   {id:"high-contrast",name:"High contrast",materials:{wall:"#28313D",floor:"#101722",ceiling:"#64717C"},materialColor:"#58B7E8",ambience:{color:"#D4EFFF",intensity:.32},rgb:[213,240,255],dimmer:255}
-]);
+];
+
+const lookVariants=[{id:"cool",name:"cool shift",degrees:18,lightness:.94},{id:"warm",name:"warm shift",degrees:-18,lightness:1.04},{id:"vivid",name:"vivid shift",degrees:36,lightness:1.08},{id:"soft",name:"soft shift",degrees:-36,lightness:.9}];
+function variantColour(hex,variant,index){
+  const {s,l}=rgbToHsl(hexToRgb(hex));
+  return shiftHue(hex,variant.degrees+(index%5)*3,{saturation:Math.max(.15,Math.min(.92,s*(variant.id==="vivid"?1.12:variant.id==="soft"?.84:1))),lightness:Math.max(.08,Math.min(.88,l*variant.lightness))});
+}
+function makeVariant(source,index,variant){
+  const rgbHex=rgbToHex({r:source.rgb[0],g:source.rgb[1],b:source.rgb[2]}),shifted=shiftHue(rgbHex,variant.degrees+(index%5)*3),rgb=hexToRgb(shifted);
+  const ambienceFactor=variant.id==="vivid"?1.14:variant.id==="soft"?.86:1,dimmerFactor=variant.id==="soft"?.86:variant.id==="vivid"?1.08:1;
+  const materials=Object.fromEntries(Object.entries(source.materials).map(([surface,color])=>[surface,variantColour(color,variant,index)]));
+  return {id:`${source.id}-${variant.id}`,name:`${source.name} · ${variant.name}`,materials,materialColor:variantColour(source.materialColor,variant,index),ambience:{color:variantColour(source.ambience.color,variant,index),intensity:Math.max(.12,Math.min(.36,source.ambience.intensity*ambienceFactor))},rgb:[Math.round(rgb.r),Math.round(rgb.g),Math.round(rgb.b)],dimmer:Math.max(110,Math.min(255,Math.round(source.dimmer*dimmerFactor)))};
+}
+export const ROOM_LIGHTING_LOOK_COUNT=100;
+export const roomLightingLooks=Object.freeze([...curatedLooks,...curatedLooks.flatMap((look,index)=>lookVariants.map(variant=>makeVariant(look,index,variant)))]);
 
 export function isRoomLightingLookIndex(index){return Number.isInteger(index)&&index>=0&&index<roomLightingLooks.length;}
 
@@ -51,7 +66,7 @@ export function createRoomStarterLighting(scene,allFixtures=[],lookIndex=0){
 export function applyRoomLightingLook(scene,allFixtures,lookIndex,legacySceneId){
   if(!isRoomLightingLookIndex(lookIndex))throw new Error("Choose a supported room lighting look.");
   const look=roomLightingLooks[lookIndex],sceneCopy=structuredClone(scene);
-  sceneCopy.materials={...sceneCopy.materials,...look.materials};
+  sceneCopy.materials={...sceneCopy.materials,...look.materials,wallRear:look.materials.wall,wallLeft:look.materials.wall,wallRight:look.materials.wall};
   sceneCopy.materialColor=look.materialColor;
   sceneCopy.ambience={...look.ambience};
   sceneCopy.lightingLookIndex=lookIndex;
