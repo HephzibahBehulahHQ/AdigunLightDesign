@@ -142,6 +142,10 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
 
 .floating-bot .bot-window-body { flex:1; min-height:0; display:flex; flex-direction:column; overflow:auto; padding-bottom:24px; }
 
+.lighting-look-toggle { position:absolute; z-index:8; left:12px; bottom:12px; display:flex; align-items:center; gap:5px; min-height:28px; padding:4px 9px; border:1px solid #547295; border-radius:6px; background:#0b1220eF; color:#e6efff; font-size:10px; font-weight:750; line-height:1; box-shadow:0 2px 8px #0008; }
+.lighting-look-toggle span { color:var(--cyan); font-size:13px; }
+.lighting-look-toggle:hover,.lighting-look-toggle:focus-visible { border-color:var(--cyan); background:#16263b; outline:2px solid #22d3ee55; }
+
 .viewport-axis-controls { display:flex; align-items:center; gap:4px; flex:0 0 auto; }
 .viewport-axis-controls button { height:29px; min-width:36px; padding:4px 8px; border:1px solid currentColor; border-radius:5px; background:#182237; font-size:11px; font-weight:800; }
 .viewport-view-controls { display:flex; align-items:center; flex:0 0 auto; gap:3px; }
@@ -1039,3 +1043,4 @@ footer { min-height:38px; border-top:1px solid var(--line); background:#0a0f1b; 
   .timeline > .cue-editor > fieldset p { display:inline-flex; align-items:center; flex:0 1 auto; min-width:0; max-width:145px; margin:0; padding:0; overflow:hidden; font-size:7px; line-height:10px; white-space:nowrap; }
   .timeline > .cue-editor > fieldset p button { flex:0 0 16px; width:16px; min-width:16px; height:16px; min-height:16px; }
 }
+

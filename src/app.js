@@ -26,6 +26,7 @@ import { arrangeTracks,arrangementDuration,evaluateTracks,scheduleCue } from "./
 import { setChannelKeyframe } from "./timeline/keyframes.js";
 import { roomDimensions } from "./domain/room.js";
 import { fixturePlacementForRoom } from "./domain/fixture-placement.js";
+import { applyRoomLightingLook,createRoomStarterLighting,isRoomLightingLookIndex,roomLightingLooks } from "./domain/room-lighting-looks.js";
 import { createRoomScene,roomAmbience,roomPresetName,roomPresetOptions } from "./domain/room-presets.js";
 import { duplicateFixture,deleteFixture } from "./domain/fixture-operations.ts";
 import { readBrowserStorage,writeBrowserStorage } from "./domain/browser-storage.js";
@@ -271,7 +272,7 @@ function showRoomSceneDialog() {
   const dialog=makeProjectDialog(t("addRoomScene"),'<label class="project-dialog-field">'+esc(t("chooseRoomTemplate"))+'<select id="room-template" required>'+options.map(item=>'<option value="'+esc(item.id)+'">'+esc(item.label)+'</option>').join("")+'</select></label><div class="project-dialog-actions"><button type="button" data-cancel>'+esc(t("cancel"))+'</button><button type="submit" id="create-room-scene">＋ '+esc(t("addRoomScene"))+'</button></div>');
   const form=dialog.querySelector("form");
   dialog.querySelector("[data-cancel]").onclick=()=>{dialog.close();dialog.remove();};
-  form.onsubmit=(event)=>{event.preventDefault();const presetId=dialog.querySelector("#room-template").value;const roomScene=createRoomScene(presetId,{name:roomPresetName(presetId,preferences.locale)});commitProjectChange("scene-create",(draft)=>{draft.scenes.push(roomScene);});preferences.sceneId=roomScene.id;preferences.objectId=null;preferences.view="light";savePreferences();status=t("roomSceneAdded");dialog.close();dialog.remove();render();};
+  form.onsubmit=(event)=>{event.preventDefault();const presetId=dialog.querySelector("#room-template").value;const roomScene=createRoomScene(presetId,{name:roomPresetName(presetId,preferences.locale)});commitProjectChange("scene-create",(draft)=>{const seeded=createRoomStarterLighting(roomScene,draft.fixtures,0);draft.scenes.push(seeded.scene);draft.fixtures=seeded.fixtures;});preferences.sceneId=roomScene.id;preferences.objectId=null;preferences.view="light";savePreferences();status=t("roomSceneAdded");dialog.close();dialog.remove();render();};
   dialog.addEventListener("cancel",()=>dialog.remove(),{once:true});
   dialog.showModal();
   dialog.querySelector("#room-template").focus();
@@ -363,7 +364,7 @@ function updateUnsavedStatus() {
   projectPersisted=false;
   status=t("unsavedChanges");
 }
-function commitProjectChange(label, mutate) { stopPlayback(); const next=commitTransaction({project,undoStack,redoStack},label,mutate); const validation=validateProject(next.project); if (!validation.valid) throw new Error(validation.errors.join(" ")); project=next.project;undoStack=next.undoStack;redoStack=next.redoStack;updateUnsavedStatus(); }
+function commitProjectChange(label, mutate) { stopPlayback(); const customizesLook=label.startsWith("fixture-")||label==="scene-room-settings"||label==="scene-material"||label==="palette-to-fixtures"; const next=commitTransaction({project,undoStack,redoStack},label,(draft)=>{mutate(draft);if(customizesLook){const active=draft.scenes.find(item=>item.id===preferences.sceneId);if(active&&isRoomLightingLookIndex(active.lightingLookIndex))active.lightingLookCustomized=true;}}); const validation=validateProject(next.project); if (!validation.valid) throw new Error(validation.errors.join(" ")); project=next.project;undoStack=next.undoStack;redoStack=next.redoStack;updateUnsavedStatus(); }
 function mutateColours(fn) { commitProjectChange("palette-update",(draft)=>{draft.palettes[0].colors=fn(structuredClone(draft.palettes[0].colors));}); render(); }
 function undo() { if (!undoStack.length) return setStatus(t("noUndo")); stopPlayback(); const next=undoTransaction({project,undoStack,redoStack});project=next.project;undoStack=next.undoStack;redoStack=next.redoStack;updateUnsavedStatus();status=t("statusUndo");render(); }
 function redo() { if (!redoStack.length) return setStatus(t("noRedo")); stopPlayback(); const next=redoTransaction({project,undoStack,redoStack});project=next.project;undoStack=next.undoStack;redoStack=next.redoStack;updateUnsavedStatus();status=t("statusRedo");render(); }
@@ -442,7 +443,7 @@ function render() {
   const contrastBackground=normalizeHex(preferences.contrastBackground) ?? "#0B1220";
   const contrast = contrastResult(compositeSwatch(active,contrastBackground), contrastBackground);
   const colourSpaces = colourSpaceMarkup(active.hex);
-  const room=roomDimensions(scene().room),ambience=roomAmbience(scene()),roomName=roomPresetName(scene().roomType,preferences.locale),stage=stageSettings(scene().stage);
+  const room=roomDimensions(scene().room),ambience=roomAmbience(scene()),roomName=roomPresetName(scene().roomType,preferences.locale),stage=stageSettings(scene().stage),lookIndex=isRoomLightingLookIndex(scene().lightingLookIndex)?scene().lightingLookIndex:0,lightingLook=roomLightingLooks[lookIndex],lookButtonLabel=`${t("cycleLightingLook")} ${String(lookIndex+1).padStart(2,"0")}/20 · ${lightingLook.name}${scene().lightingLookCustomized?` · ${t("custom")}`:""}`;
   const commandGroups={project:t("project"),history:t("commandHistory"),scene:t("sceneHeader"),palette:t("commandPalette"),fixtures:t("commandFixtures"),stage:t("stageCommand"),room:t("roomCommand"),export:t("commandExport")};
   const nav = [
     ["palette", "◉", "moduleDesign"], ["light", "☼", "moduleStudio"], ["library", "▱", "moduleFixtures"], ["copilot", "◌", "moduleCopilot"]
@@ -486,7 +487,7 @@ function render() {
       </aside>
       <section class="work-area">
         <div class="workspace-tabs panel"><strong class="studio-panel-title">${preferences.view === "light" ? `${t("sceneHeader")} ${String(displayedSceneNumber).padStart(2,"0")} / ${scene().id === "studio-room" ? t("mockupRoomTitle") : esc(scene().name)}` : `2D ${t("palette")} / ${esc(project.name)}`}</strong><small class="studio-panel-title-meta">${preferences.view === "light" ? t("viewportFixedHint") : t("palette")}</small><span></span><button id="viewport-projection" class="view-menu" ${preferences.view === "light" ? "" : disabled(t("select3d"))}>${t("perspective")}⌄</button></div>
-        ${preferences.view === "light" ? `<div class="scene-preview light-canvas panel"><div class="scene-title"><b>${esc(project.name)} • ${t("rgbwPreview")}</b><small>${t("sceneView")} • ${t("rgbwPreviewSubtitle")}</small></div><canvas id="light-canvas" tabindex="0" aria-label="${t("previewLabel")}"></canvas><div class="canvas-actions"><button id="apply-scene">${t("paintSurface")}</button></div></div>` : `<div class="scene-preview panel" role="img" aria-label="${t("scenePreview")}"><div class="scene-title"><b>${t("scenePreview")}</b><small>${t("sceneNote")}</small></div><div class="beam beam-blue"></div><div class="beam beam-amber"></div><div class="beam beam-magenta"></div><div class="stage-truss"></div><div class="scene-wall"><div class="art-frame"></div><div class="couch"></div><div class="plant plant-left"></div><div class="plant plant-right"></div><div class="lamp"></div></div><div class="axis"><i>X</i><b>Y</b><em>Z</em></div></div>`}
+        ${preferences.view === "light" ? `<div class="scene-preview light-canvas panel"><div class="scene-title"><b>${esc(project.name)} • ${t("rgbwPreview")}</b><small>${t("sceneView")} • ${t("rgbwPreviewSubtitle")}</small></div><canvas id="light-canvas" tabindex="0" aria-label="${t("previewLabel")}"></canvas><button id="cycle-lighting-look" class="lighting-look-toggle" type="button" title="${esc(lookButtonLabel)}" aria-label="${esc(lookButtonLabel)}"><span aria-hidden="true">◈</span>${t("lightingLook")} ${String(lookIndex+1).padStart(2,"0")}/20${scene().lightingLookCustomized?` · ${t("custom")}`:""}</button><div class="canvas-actions"><button id="apply-scene">${t("paintSurface")}</button></div></div>` : `<div class="scene-preview panel" role="img" aria-label="${t("scenePreview")}"><div class="scene-title"><b>${t("scenePreview")}</b><small>${t("sceneNote")}</small></div><div class="beam beam-blue"></div><div class="beam beam-amber"></div><div class="beam beam-magenta"></div><div class="stage-truss"></div><div class="scene-wall"><div class="art-frame"></div><div class="couch"></div><div class="plant plant-left"></div><div class="plant plant-right"></div><div class="lamp"></div></div><div class="axis"><i>X</i><b>Y</b><em>Z</em></div></div>`}
         <div class="lower-workspace"><section class="palette-panel panel"><div class="section-title"><h2>◉ ${t("activePalette")} — ${esc(palette().name)}</h2></div><div class="swatches">${swatches}</div><div class="palette-actions"><input id="seed" value="${preferences.seed}" aria-label="Seed colour" maxlength="7" /><label class="harmony-command"><span>◇ ${t("harmonies")}</span><select id="harmony" aria-label="${t("harmony")}">${["analogous","complementary","splitComplementary","triadic","tetradic","square","monochromatic"].map((type) => `<option value="${type}" ${type === preferences.harmony ? "selected" : ""}>${type}</option>`).join("")}</select></label><button id="reroll">⟳ ${t("reroll")}</button><button id="add-colour">＋ ${t("add")}</button></div></section>
           <section class="timeline panel" tabindex="-1"><div class="section-title"><h2>◌ ${t("timeline")}</h2></div><p class="timeline-status">${activeFixtures.length ? `${t("universe")} 1 · ${patchedFixtures.length}/${activeFixtures.length} ${t("fixturesPatched")} · 1–${Math.max(0,...patchedFixtures.map((fixture)=>fixture.patchAssignment.startAddress+fixture.patchAssignment.channelFootprint-1))} ${t("activeChannels")}.` : t("noFixtures")}</p><div class="dmx-actions"><button id="create-cue" ${activeFixtures.length ? "" : "disabled"}>＋ ${t("captureCue")}</button><button id="play-cue" ${sceneCueList.length ? "" : "disabled"}>▶ ${t("previewSelectedCue")}</button><button id="stop-cue" ${playbackTimer ? "" : "disabled"}>■ ${t("stop")}</button><span>CH 1: ${virtualFrame[0]} · ${t("outputDisabled")}</span></div><div class="cue-track" aria-label="${t("timeline")}">${cueBlocks}</div></section></div>
       </section>
@@ -1251,6 +1252,19 @@ function bind() {
   document.querySelector("#new-project").onclick=createNewProject;
   document.querySelector("#undo").onclick = undo; document.querySelector("#redo").onclick = redo;
   document.querySelector("#toggle-lux").onclick = () => { preferences.luxOpen = !preferences.luxOpen; savePreferences(); render(); };
+  document.querySelector("#cycle-lighting-look")?.addEventListener("click",()=>{
+    const current=scene().lightingLookIndex,next=isRoomLightingLookIndex(current)?(current+1)%roomLightingLooks.length:0;
+    try{
+      commitProjectChange("lighting-look",draft=>{
+        const sceneIndex=draft.scenes.findIndex(item=>item.id===preferences.sceneId),active=draft.scenes[sceneIndex];
+        if(!active)return;
+        const activeFixtures=sceneFixtures(draft.fixtures,active.id,draft.scenes);
+        const applied=activeFixtures.length?applyRoomLightingLook(active,draft.fixtures,next,draft.scenes[0]?.id):createRoomStarterLighting(active,draft.fixtures,next);
+        draft.scenes[sceneIndex]=applied.scene;draft.fixtures=applied.fixtures;
+      });
+      status=t("lightingLookApplied");render();
+    }catch(error){setStatus(error.message);}
+  });
   const materialTarget=document.querySelector("#material-target");if(materialTarget) materialTarget.onchange=()=>{preferences.materialTarget=materialTarget.value;savePreferences();};
   const applyScene = document.querySelector("#apply-scene"); if (applyScene) applyScene.onclick = () => { const target=materialTarget.value;commitProjectChange("scene-material",(draft)=>{editScene(draft,(active,index)=>{draft.scenes[index]=applySceneMaterial(active,target,selected().hex);});});status = `${t("apply")} ${selected().hex}`;render(); };
   const resetCamera = () => renderer?.reset();
@@ -1277,5 +1291,6 @@ window.addEventListener("keydown", (event) => { if (isEditableTarget(event.targe
 window.addEventListener("beforeunload",(event)=>{if(!projectDirty)return;event.preventDefault();event.returnValue="";});
 account.subscribe(()=>render());
 render();
+
 
 
