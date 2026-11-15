@@ -415,9 +415,31 @@ function roomPresetFurniture(data,type,accent){
   const timber=hexVector("#65452F"),darkWood=hexVector("#3E2D27"),metal=hexVector("#26313B"),soft=hexVector("#75899B");
   const bookColours=["#B85C50","#D4AF37","#356A80","#8B6CAA"].map(hexVector);
   if(type==="library"){
-    for(const x of [-4.25,-1.8,.65,3.1]){box(data,x,0,3.1,1.1,2.8,.42,darkWood);for(let y=.55;y<2.8;y+=.58)box(data,x+.04,y,3.04,1.02,.06,.5,timber);for(let j=0;j<5;j++)box(data,x+.12+j*.18,.62,3.08,.12,.34,.22,bookColours[j%4]);}
-    box(data,-1.25,.72,-.5,2.5,.12,1.1,timber);for(const x of [-1.1,1])box(data,x,.05,-.4,.1,.68,.1,metal);
-    box(data,1.25,.05,-.4,.55,.72,.55,soft);box(data,1.25,.72,-.65,.55,.55,.1,soft);
+    const shelfLevels=[.42,1.02,1.62,2.22],brass=hexVector("#C7A568"),paper=hexVector("#E8D8B7");
+    for(const x of [-4.25,-1.8,.65,3.1]){
+      // Open timber cases with a narrow back, side stiles, a plinth and usable shelves.
+      box(data,x+.04,0,3.42,1.02,2.9,.1,darkWood);
+      box(data,x,0,3.02,.09,2.9,.5,timber);box(data,x+1.01,0,3.02,.09,2.9,.5,timber);
+      box(data,x,.02,3.02,1.1,.38,.5,darkWood);
+      for(let shelf=0;shelf<5;shelf++)box(data,x+.04,.4+shelf*.6,3.02,1.02,.065,.5,timber);
+      for(let shelf=0;shelf<shelfLevels.length;shelf++)for(let book=0;book<7;book++){
+        const width=.105+(book%3)*.012,height=.34+((book*3+shelf*2)%5)*.035;
+        const bx=x+.1+book*.135,by=shelfLevels[shelf]+.07;
+        box(data,bx,by,2.91,width,height,.2,bookColours[(book+shelf)%bookColours.length]);
+        box(data,bx+.015,by+.075,2.895,width-.03,.022,.018,brass);
+        if((book+shelf)%3===0)box(data,bx+.015,by+height-.065,2.895,width-.03,.018,.018,paper);
+      }
+    }
+    // Reading table with four legs, a lit task lamp and an open book.
+    box(data,-2.5,.82,-.58,2.5,.12,1.1,timber);
+    for(const x of [-2.3,-.2])for(const z of [-.42,.38])box(data,x,.05,z,.09,.78,.09,metal);
+    box(data,-1.75,.95,-.5,.62,.045,.48,hexVector("#7A5A40"));
+    box(data,-1.7,1,-.5,.27,.025,.43,paper);box(data,-1.43,1,-.5,.27,.025,.43,hexVector("#D5C39D"));
+    box(data,-.42,.86,-.25,.22,.055,.22,metal);box(data,-.34,.9,-.25,.06,.38,.06,brass);
+    box(data,-.57,1.26,-.25,.52,.13,.34,hexVector("#F4D79A"));
+    // Upholstered reading chair, kept clear of the table legs.
+    for(const x of [1.05,1.62])for(const z of [-.63,-.18])box(data,x,.05,z,.07,.48,.07,metal);
+    box(data,1.02,.5,-.65,.68,.2,.55,soft);box(data,1.04,.7,-.65,.64,.56,.11,soft);
   } else if(type==="kitchen"){
     for(const x of [-4,-2.7,-1.4,.0,1.4,2.8]){box(data,x,0,3,1.25,.9,.62,soft);box(data,x,.92,3,1.25,.08,.7,timber);box(data,x,1.65,3,1.25,.7,.42,soft);}
     box(data,-1.4,.95,-1.65,3.2,.12,1.25,timber);for(const x of [-1.1,1.6])for(const z of [-1.4,-.75])box(data,x,.05,z,.1,.88,.1,metal);

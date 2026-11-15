@@ -49,3 +49,10 @@ test("disco party scene adds a tiled dance floor, DJ equipment and mirrored ligh
   assert.ok(party.length>shell.length+18000,"club equipment and dance-floor details add substantial room geometry");
   assert.ok(Array.from(party).every(Number.isFinite),"all party-room geometry remains finite");
 });
+test("library scene adds stocked shelves and a complete reading table setup",()=>{
+  const preset=roomPresets.find(room=>room.id==="library");
+  const shell=sceneData([0,0,0],[],{props:false},preset.room,false,preset.materials,"performance",undefined,preset.ambience,preset.id);
+  const library=sceneData([0,0,0],[],{},preset.room,false,preset.materials,"performance",undefined,preset.ambience,preset.id);
+  assert.ok(library.length>shell.length+30000,"bookcases, stocked shelves and reading furniture add substantial room geometry");
+  assert.ok(Array.from(library).every(Number.isFinite),"all library geometry remains finite");
+});
