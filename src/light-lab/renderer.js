@@ -913,14 +913,14 @@ export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = 
   if(!gl.getProgramParameter(program,gl.LINK_STATUS)) { const message=gl.getProgramInfoLog(program);gl.deleteProgram(program);throw new Error(message); }
   const buffer=gl.createBuffer(),position=gl.getAttribLocation(program,"p"),colour=gl.getAttribLocation(program,"c"),matrix=gl.getUniformLocation(program,"m"),opacity=gl.getUniformLocation(program,"opacity");let selectedAccent=accent,virtualFixtures=fixtures,drag;const dimensions=roomDimensions(room),fitDistance=roomFitCameraDistance(dimensions.width,dimensions.depth);let {yaw,pitch,distance}=normalizeCameraState({...camera,distance:camera?.distance ?? fitDistance});
   let geometry=null,viewProjection=null,pickOccluders=null,pickCacheFixtures=null,pickTargets=[];
-  function draw() {
-    const ratio=Math.min(window.devicePixelRatio||1,previewQuality(quality).pixelRatio),width=Math.max(1,canvas.clientWidth),height=Math.max(1,canvas.clientHeight);
+  function draw(targetSize=null) {
+    const ratio=Math.min(window.devicePixelRatio||1,previewQuality(quality).pixelRatio),width=Math.max(1,targetSize?.width ?? canvas.clientWidth),height=Math.max(1,targetSize?.height ?? canvas.clientHeight);
     gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
     if (!geometry) {
       geometry=sceneBuffers(hexVector(selectedAccent),virtualFixtures,visibility,room,materials,quality,stage,ambience,roomType);
       gl.bufferData(gl.ARRAY_BUFFER,geometry.data,gl.STATIC_DRAW);
     }
-    const pixelWidth=Math.max(1,Math.round(width*ratio)),pixelHeight=Math.max(1,Math.round(height*ratio));
+    const pixelWidth=targetSize ? width : Math.max(1,Math.round(width*ratio)),pixelHeight=targetSize ? height : Math.max(1,Math.round(height*ratio));
     if(canvas.width!==pixelWidth||canvas.height!==pixelHeight){canvas.width=pixelWidth;canvas.height=pixelHeight;}
     gl.viewport(0,0,canvas.width,canvas.height);gl.enable(gl.DEPTH_TEST);gl.clearColor(.025,.045,.09,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);
     gl.vertexAttribPointer(position,3,gl.FLOAT,false,24,0);gl.enableVertexAttribArray(position);gl.vertexAttribPointer(colour,3,gl.FLOAT,false,24,12);gl.enableVertexAttribArray(colour);
@@ -1025,6 +1025,5 @@ export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = 
   canvas.addEventListener("wheel",wheel,{passive:false});
   canvas.addEventListener("pointercancel",up);
   canvas.addEventListener("lostpointercapture",up);
-  return { supported:true, cameraState(){return {yaw,pitch,distance};},tourPlaying(){return Boolean(tourFrame);},toggleTour,stopTour,capturePng(){return viewportPng(canvas,draw);}, setAccent(value){selectedAccent=value;geometry=null;draw();}, setFixtures(value){const selectedId=virtualFixtures.find(fixture=>fixture.selected)?.id;virtualFixtures=value.some(fixture=>Object.hasOwn(fixture,"selected")) ? value : value.map(fixture=>({...fixture,selected:fixture.id===selectedId}));geometry=null;draw();}, setView(axis){stopTour();const view=cameraAxisView(axis);yaw=view.yaw;pitch=view.pitch;draw();}, reset(){stopTour();({yaw,pitch,distance}=normalizeCameraState({distance:fitDistance}));draw();}, destroy(){stopTour();resize.disconnect();canvas.removeEventListener("wheel",wheel);canvas.removeEventListener("keydown",keydown);canvas.removeEventListener("pointercancel",up);canvas.removeEventListener("lostpointercapture",up);canvas.removeEventListener("pointerdown",pointerDown);canvas.removeEventListener("pointermove",move);canvas.removeEventListener("pointerup",up);geometry=null;gl.deleteBuffer(buffer);gl.deleteProgram(program);} };
+  return { supported:true, cameraState(){return {yaw,pitch,distance};},tourPlaying(){return Boolean(tourFrame);},toggleTour,stopTour,capturePng(){return viewportPng(canvas,draw,{width:1920,height:1080});}, setAccent(value){selectedAccent=value;geometry=null;draw();}, setFixtures(value){const selectedId=virtualFixtures.find(fixture=>fixture.selected)?.id;virtualFixtures=value.some(fixture=>Object.hasOwn(fixture,"selected")) ? value : value.map(fixture=>({...fixture,selected:fixture.id===selectedId}));geometry=null;draw();}, setView(axis){stopTour();const view=cameraAxisView(axis);yaw=view.yaw;pitch=view.pitch;draw();}, reset(){stopTour();({yaw,pitch,distance}=normalizeCameraState({distance:fitDistance}));draw();}, destroy(){stopTour();resize.disconnect();canvas.removeEventListener("wheel",wheel);canvas.removeEventListener("keydown",keydown);canvas.removeEventListener("pointercancel",up);canvas.removeEventListener("lostpointercapture",up);canvas.removeEventListener("pointerdown",pointerDown);canvas.removeEventListener("pointermove",move);canvas.removeEventListener("pointerup",up);geometry=null;gl.deleteBuffer(buffer);gl.deleteProgram(program);} };
 }
-

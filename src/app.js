@@ -70,6 +70,13 @@ import { commitTransaction, redoTransaction, undoTransaction } from "./domain/hi
 const savedProjectsKey = "adigunlightdesign/saved-projects-v1";
 const preferencesKey = "adigunlightdesign/preferences-v1";
 const app = document.querySelector("#app");
+const studioRoute = () => {
+  const inStudio = location.hash === "#AdigunStudio";
+  document.body.classList.toggle("studio-route", inStudio);
+  if (inStudio) window.scrollTo(0, 0);
+};
+window.addEventListener("hashchange", studioRoute);
+studioRoute();
 const defaults = studioDefaults;
 const preferences = { ...defaults, ...safeParse(readBrowserStorage(preferencesKey).value) };
 preferences.seed=normalizeHex(preferences.seed) ?? defaults.seed;
@@ -474,11 +481,22 @@ function render() {
   const timeline=timelineLayout(sceneCueList);
   const cueBlocks = `<div class="timeline-scale"><div class="timeline-ruler">${timeline.ticks.map((tick)=>`<span style="left:${tick.left}%">${Number(tick.time.toFixed(1))}s</span>`).join("")}</div><div class="timeline-lane">${sceneCueList.map((cue,index) => `<button type="button" class="cue-block" data-cue="${esc(cue.id)}" aria-pressed="${cue.id===activeCue?.id}" title="${esc(cue.name)} · ${cue.duration}s" style="left:${timeline.segments[index].left}%;width:${timeline.segments[index].width}%">${esc(cue.name)} · ${cue.duration}s</button>`).join("") || `<small class="empty-cues">${t("noCues")}</small>`}</div><div id="timeline-playhead" class="timeline-playhead" aria-hidden="true"></div></div>`;
   app.innerHTML = `
+    <section id="top" class="marketing-home">
+      <header class="marketing-header"><a class="marketing-brand" href="#top" aria-label="AdigunLightDesign home"><img src="./assets/corporate/hephzibah-behulah-official.jpg" alt="Hephzibah Behulah"><span><b>Adigun<span>Light</span>Design</b><small>HB Elektroniker · Color + Light Studio</small></span></a><a class="marketing-cta" href="#AdigunStudio">Go to the Studio <span aria-hidden="true">→</span></a></header>
+      <main class="marketing-main">
+        <section class="marketing-hero"><div class="marketing-copy"><p class="marketing-eyebrow"><i></i> LIGHTING DESIGN, MADE VISIBLE</p><h1>Design color.<br><em>Shape light.</em><br>Create atmosphere.</h1><p class="marketing-lede">Plan a room, place virtual fixtures, build a palette and see your lighting ideas come together in an interactive studio.</p><div class="marketing-actions"><a class="marketing-cta marketing-cta-primary" href="#AdigunStudio">Open the studio <span aria-hidden="true">→</span></a><a class="marketing-link" href="#about-product">Discover the workspace <span aria-hidden="true">↓</span></a></div><div class="marketing-proof"><span>01 <b>DESIGN</b></span><span>02 <b>PREVISUALIZE</b></span><span>03 <b>REFINE</b></span></div></div>
+          <div class="marketing-visual" role="img" aria-label="Stylized living-room lighting concept in blue, amber and magenta"><div class="visual-glow visual-glow-blue"></div><div class="visual-glow visual-glow-amber"></div><div class="visual-frame"><div class="visual-topline"><span><i></i> ILLUSTRATIVE LIGHTING STUDY</span><b>ROOM · 01</b></div><div class="visual-room"><div class="visual-ceiling"></div><div class="visual-backwall"><span></span><span></span><span></span></div><div class="visual-sidewall"><div class="visual-window"></div></div><div class="visual-floor"></div><div class="visual-beam beam-a"></div><div class="visual-beam beam-b"></div><div class="visual-beam beam-c"></div><div class="visual-sofa"><i></i><i></i></div><div class="visual-table"></div><div class="visual-lamp"></div></div><div class="visual-caption"><span>COLOR · FORM · ATMOSPHERE</span><b><i></i> 3D STUDIO</b></div></div><div class="visual-tag tag-top">COLOR · FORM · MOOD</div><div class="visual-tag tag-bottom"><span></span> Explore light in a room</div></div></section>
+        <section id="about-product" class="marketing-intro"><p class="marketing-eyebrow">A CREATIVE WORKSPACE BY HEPHZIBAH BEHULAH</p><h2>From a first idea to a room full of feeling.</h2><p>AdigunLightDesign brings color exploration and lighting previsualization into one practical workspace. Shape a room, explore lighting looks, arrange virtual fixtures, build color harmonies and organize cues before you take a design further.</p></section>
+        <section class="marketing-capabilities" aria-label="Studio capabilities"><article><span>01 / COLOR</span><h3>Build a palette with purpose</h3><p>Explore harmonies, inspect color values and apply swatches to room surfaces and virtual fixtures.</p></article><article><span>02 / SPACE</span><h3>See light in context</h3><p>Work with room scenes, materials, fixture placement and camera views in an interactive 3D preview.</p></article><article><span>03 / CONTROL</span><h3>Arrange the lighting</h3><p>Patch virtual fixtures, shape DMX cues and review timing in the studio timeline.</p></article></section>
+        <section class="marketing-bottom"><div><p class="marketing-eyebrow">YOUR NEXT IDEA STARTS HERE</p><h2>Bring the room to life.</h2></div><a class="marketing-cta marketing-cta-primary" href="#AdigunStudio">Go to the Studio <span aria-hidden="true">→</span></a></section>
+      </main><footer class="marketing-footer"><span>HEPHZIBAH BEHULAH <i>·</i> HB ELEKTRONIKER <i>·</i> ADIGUNLIGHTDESIGN</span><span>Design Color. Shape Light. Create Atmosphere.</span></footer>
+    </section>
+    <div id="AdigunStudio" class="studio-shell">
     <header class="topbar">
-      <div class="brand-lockup" aria-label="${t("brandAlt")}">
-        <img class="corporate-mark" src="https://raw.githubusercontent.com/HephzibahBehulahHQ/hb-design-system/main/assets/corporate/hephzibah-behulah-official.jpg" alt="Hephzibah Behulah" onerror="this.hidden=true;this.nextElementSibling.hidden=false" />
+      <a class="brand-lockup" href="#top" aria-label="${t("brandAlt")} — home">
+        <img class="corporate-mark" src="./assets/corporate/hephzibah-behulah-official.jpg" alt="Hephzibah Behulah" onerror="this.hidden=true;this.nextElementSibling.hidden=false" />
         <span class="brand-fallback" hidden>HB <b>Hephzibah Behulah</b></span><span class="brand-divider"></span><span class="division">⚡ HB Elektroniker</span>
-      </div>
+      </a>
       <div class="product-lockup"><strong>Adigun <span>Light</span> Design</strong><small>COLOR + LIGHT STUDIO</small></div>
       <div class="header-project-context" aria-label="${esc(t("project"))}: ${esc(project.name)} / ${esc(t("sceneHeader"))} ${String(displayedSceneNumber).padStart(2,"0")}"><span>${esc(project.name)}</span><b aria-hidden="true">•</b><span>${t("sceneHeader")} ${String(displayedSceneNumber).padStart(2,"0")}</span></div>
       ${topMenuMarkup({t,locale:preferences.locale,saved:projectPersisted,user:account.user})}<button id="theme" type="button" hidden aria-label="${t("appearance")}"></button>
@@ -500,7 +518,7 @@ function render() {
       <aside class="inspector panel"><div class="section-title"><h2>◈ ${t("inspector")}</h2></div><div class="inspector-tabs"></div><div class="selected-preview" style="--selected:${active.hex}"></div><label>${t("colourName")}<input id="swatch-name" value="${esc(active.name)}" /></label><label>${t("hex")}<div class="input-row"><input id="swatch-hex" value="${active.hex}" spellcheck="false" /><button id="apply-colour">${t("applySwatchColour")}</button></div></label><button id="lock-swatch" class="wide">${active.locked ? "⌁ " + t("unlock") : "⌁ " + t("lock")}</button><section class="contrast-card"><h3>${t("contrast")}</h3><b>${contrast.ratio.toFixed(2)} : 1</b><span class="${contrast.aa ? "pass" : "fail"}">AA ${contrast.aa ? "pass" : "review"}</span><small>Against Midnight Navy #0B1220</small></section></aside>
       <aside class="lux-panel panel ${preferences.luxOpen ? "" : "is-collapsed"}"><div class="lux-heading"><div><span class="lux-icon">✦</span><h2>${t("luxTitle")} ✨</h2></div><button id="toggle-lux" class="subtle" aria-label="${preferences.luxOpen ? t("closePanel") : t("openLux")}">${preferences.luxOpen ? "×" : "✦"}</button></div>${preferences.luxOpen ? `<p class="lux-subtitle">${t("luxSubtitle")}</p><div class="lux-message"><b>${t("luxBrand")} · ${t("offline")}</b><p>${t("luxUnavailable")}</p><ul><li>${t("luxLocal")}</li><li>${t("luxNoUpload")}</li></ul></div><form id="lux-form" class="lux-input"><input id="lux-question" placeholder="${t("askLux")}" aria-label="${t("askLux")}" /><button aria-label="${t("sendLux")}">➤</button></form>` : ""}</aside>
     </main>
-    <footer class="studio-footer"><span class="footer-ready"><i aria-hidden="true">●</i> ${t("ready").toUpperCase()} · ${esc(project.name)} / ${t("sceneHeader")} ${String(displayedSceneNumber).padStart(2,"0")} · 3D / ${t("virtualDmx")} · ${t(projectPersisted ? "projectSavedShort" : "sessionOnly")}</span><span id="status" role="status" aria-live="polite">${status || t("footerControls")}</span><span class="footer-shortcuts">${t("keyboardShortcuts")}</span></footer>`;
+    <footer class="studio-footer"><span class="footer-ready"><i aria-hidden="true">●</i> ${t("ready").toUpperCase()} · ${esc(project.name)} / ${t("sceneHeader")} ${String(displayedSceneNumber).padStart(2,"0")} · 3D / ${t("virtualDmx")} · ${t(projectPersisted ? "projectSavedShort" : "sessionOnly")}</span><span id="status" role="status" aria-live="polite">${status || t("footerControls")}</span><span class="footer-shortcuts">${t("keyboardShortcuts")}</span></footer></div>`;
   if(reuseRenderer)document.querySelector("#light-canvas")?.replaceWith(previousCanvas);
   const commandMenus=document.querySelector(".command-menu-system");
   for(const [group,ids] of [["history",["undo","redo"]]]){
@@ -509,7 +527,7 @@ function render() {
   }
   document.querySelector(".contrast-card").insertAdjacentHTML("beforebegin", colourSpaces);
   if (activeFixtures.length) document.querySelector(".selected-preview").insertAdjacentHTML("afterend", fixtureInspectorMarkup());
-  if (preferences.module === "library") { const drawer=document.createElement("section"); drawer.className="library-drawer panel"; drawer.setAttribute("aria-label",t("library")); drawer.innerHTML=`<div class="section-title"><h2>▱ ${t("library")}</h2><button id="close-library" class="subtle" aria-label="${t("close")}">×</button></div><p>${t("virtualLibraryNote")}</p><div class="fixture-library">${fixtureLibraryMarkup()}</div>`; app.insertBefore(drawer,app.querySelector("footer")); }
+  if (preferences.module === "library") { const drawer=document.createElement("section"); drawer.className="library-drawer panel"; drawer.setAttribute("aria-label",t("library")); drawer.innerHTML=`<div class="section-title"><h2>▱ ${t("library")}</h2><button id="close-library" class="subtle" aria-label="${t("close")}">×</button></div><p>${t("virtualLibraryNote")}</p><div class="fixture-library">${fixtureLibraryMarkup()}</div>`; document.querySelector(".studio-shell").insertBefore(drawer,document.querySelector(".studio-footer")); }
   if (!activeCue) document.querySelector(".cue-track").insertAdjacentHTML("beforebegin", `<div class="cue-timing">${["duration","fade","delay"].map((key)=>`<label>${t(key)} (s)<input id="cue-${key}" type="number" required min="${key === "duration" ? ".1" : "0"}" step=".1" value="${key === "duration" ? "5" : key === "fade" ? "1" : "0"}" /></label>`).join("")}</div>`);
   if (activeCue) document.querySelector(".cue-track").insertAdjacentHTML("beforebegin", `<div class="cue-timing"><label>${t("timeline")}<input id="edit-cue-name" value="${esc(activeCue.name)}" /></label>${["duration","fade","delay"].map((key)=>`<label>${t(key)} (s)<input id="edit-cue-${key}" type="number" required min="0" step=".1" value="${activeCue[key] ?? 0}" /></label>`).join("")}<button id="edit-cue">${t("saveCueTiming")}</button></div>`);
   document.querySelector(".dmx-actions").insertAdjacentHTML("beforeend", `<button id="blackout" ${activeFixtures.length ? "" : "disabled"}>${t("blackout")}</button>`);
@@ -1310,6 +1328,5 @@ window.addEventListener("keydown", (event) => { if (isEditableTarget(event.targe
 window.addEventListener("beforeunload",(event)=>{if(!projectDirty)return;event.preventDefault();event.returnValue="";});
 account.subscribe(()=>render());
 render();
-
 
 
