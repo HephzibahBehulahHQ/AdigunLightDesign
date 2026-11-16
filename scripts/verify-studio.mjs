@@ -31,7 +31,7 @@ try {
       ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH }
       : {}),
   });
-  const context = await browser.newContext({ viewport: { width: 1754, height: 878 } });
+  const context = await browser.newContext({ viewport: { width: 1754, height: 878 },acceptDownloads:true });
   const page = await context.newPage();
   const openCommandMenu=async(key)=>{const trigger=page.locator(`[data-command-menu-trigger="${key}"]`);if(await trigger.getAttribute("aria-expanded")!=="true")await trigger.click();};
   const clickCommand=async(key,selector)=>{await openCommandMenu(key);await page.locator(selector).click();};
@@ -40,11 +40,28 @@ try {
   page.on("pageerror", (error) => runtimeErrors.push(error.message));
   await page.addInitScript(()=>localStorage.setItem("adigunlightdesign/project-v1",JSON.stringify({name:"stale working copy"})));
   await page.goto(`http://127.0.0.1:${address.port}/`, { waitUntil: "networkidle" });
+  assert.equal(await page.locator(".marketing-home").isVisible(),true,"the product landing page is the public entry point");
+  assert.equal(await page.locator(".marketing-brand img").evaluate(image=>image.complete&&image.naturalWidth>0),true,"the approved corporate logo loads from the bundled product asset");
+  assert.equal(await page.locator(".studio-shell").isVisible(),false,"the editor stays off the landing page until requested");
+  await page.setViewportSize({width:1440,height:900});
+  await page.screenshot({path:resolve("outputs/landing-page-1440x900.png"),fullPage:true});
+  await page.setViewportSize({width:1754,height:878});
+  await page.getByRole("link",{name:/Go to the Studio/}).first().click();
+  await page.waitForURL(/#AdigunStudio$/);
+  await page.locator("body.studio-route").waitFor();
+  assert.equal(await page.locator(".marketing-home").isVisible(),false,"the studio anchor replaces the landing view");
+  assert.equal(await page.locator(".studio-shell").isVisible(),true,"the existing studio opens at its anchor");
   assert.equal(await page.locator(".header-save-status").innerText(), "Unsaved project", "startup opens a fresh workspace instead of restoring the working copy");
   assert.equal(await page.locator(".studio-panel-title").innerText(),"SCENE 01 / 3D MOCKUP ROOM","the studio heading matches the approved room label");
   assert.equal(await page.locator(".scene-title b").innerText(),"STUDIO MOOD • RGBW PREVIEW","the live preview badge identifies the studio RGBW view");
   assert.equal(await page.locator(".scene-title small").innerText(),"Scene view • virtual RGBW previsualization","the preview subtitle describes the live virtual view accurately");
   assert.match(await page.locator(".footer-ready").innerText(),/^● READY · Studio Mood \/ Scene 01 · 3D \/ Virtual DMX · Unsaved project$/,"footer status matches the approved project, scene, mode, and save summary");
+  const hdDownloadReady=page.waitForEvent("download");
+  await clickCommand("export","#export-viewport");
+  const hdDownload=await hdDownloadReady,hdBytes=await readFile(await hdDownload.path());
+  assert.equal(hdBytes.readUInt32BE(16),1920,"HD viewport image width is 1920 pixels");
+  assert.equal(hdBytes.readUInt32BE(20),1080,"HD viewport image height is 1080 pixels");
+  assert.equal(hdBytes.toString("ascii",1,4),"PNG","HD viewport export is a PNG image");
 
   const reports = [];
   for (const [width, height] of viewports) {
@@ -67,7 +84,7 @@ try {
       const inspectorContent = box("#fixture-inspector-panel");
       const lux = box(".lux-panel.is-docked");
       const inspectorScroll = (() => { const panel=doc.querySelector("#fixture-inspector-panel");return {scrollHeight:panel.scrollHeight,clientHeight:panel.clientHeight,overflowY:browser.getComputedStyle(panel).overflowY}; })();
-      const footer = box("footer");
+      const footer = box(".studio-footer");
       const leftRailContent=doc.querySelector(".left-rail"),activePalette=doc.querySelector(".left-rail .palette-panel");
       return {
         viewport: [browser.innerWidth, browser.innerHeight],
@@ -794,6 +811,11 @@ try {
   const touchContext=await browser.newContext({viewport:{width:390,height:844},hasTouch:true,isMobile:true});
   const touchPage=await touchContext.newPage();
   await touchPage.goto(`http://127.0.0.1:${address.port}/`,{waitUntil:"networkidle"});
+  assert.equal(await touchPage.locator(".marketing-home").isVisible(),true,"the marketing page loads at a mobile viewport");
+  assert.equal(await touchPage.evaluate(()=>globalThis.document.documentElement.scrollWidth<=globalThis.innerWidth),true,"the mobile landing page has no horizontal overflow");
+  await touchPage.getByRole("link",{name:/Go to the Studio/}).first().tap();
+  await touchPage.locator("body.studio-route").waitFor();
+  assert.equal(await touchPage.locator(".studio-shell").isVisible(),true,"the studio CTA works on touch screens");
   const touchProject=touchPage.locator('[data-command-menu-trigger="project"]');
   await touchProject.tap();
   assert.equal(await touchPage.locator("#command-menu-panel-project").evaluate(panel=>panel.matches(":popover-open")),true,"touch tap opens the command menu");
@@ -802,7 +824,7 @@ try {
   await touchPage.locator('[data-command-menu-trigger="history"]').tap();
   assert.equal(await touchPage.locator("#command-menu-panel-project").evaluate(panel=>panel.matches(":popover-open")),false,"touching another menu closes the previous one");
   assert.equal(await touchPage.locator("#command-menu-panel-history").evaluate(panel=>panel.matches(":popover-open")),true,"touching another menu opens it");
-  await touchPage.locator("main").tap({position:{x:8,y:8}});
+  await touchPage.locator("#workspace").tap({position:{x:8,y:8}});
   assert.equal(await touchPage.locator("#command-menu-panel-history").evaluate(panel=>panel.matches(":popover-open")),false,"touch outside closes the open menu");
   await touchContext.close();
   await context.close();
@@ -810,5 +832,4 @@ try {
   await browser?.close();
   await server.close();
 }
-
 
