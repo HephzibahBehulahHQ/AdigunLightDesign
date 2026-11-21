@@ -62,3 +62,16 @@ test("an older fixtureless scene can receive the selected look and starter rig w
   assert.deepEqual(changed.fixtures.filter(fixture=>fixture.sceneId==="bathroom"),withOtherRoom);
 });
 
+test("a new room receives its full starter rig when universe 1 is occupied", () => {
+  const otherRoom = Array.from({length:128}, (_, index) => {
+    const fixture = createFixture(index + 1, "generic-led-strip-rgb");
+    return {...fixture, sceneId:"existing", patchAssignment:{fixtureId:fixture.id, universe:1, startAddress:1 + index * 4, channelFootprint:4}};
+  });
+  const room = createRoomScene("living-room", {id:"new-room"});
+  const result = createRoomStarterLighting(room, otherRoom);
+  assert.deepEqual(result.fixtures.slice(0, otherRoom.length), otherRoom);
+  assert.deepEqual(result.fixtures.slice(otherRoom.length).map(({sceneId, patchAssignment}) =>
+    [sceneId, patchAssignment.universe, patchAssignment.startAddress, patchAssignment.channelFootprint]),
+  [["new-room",2,1,6], ["new-room",2,7,6], ["new-room",2,13,6], ["new-room",2,19,4]]);
+});
+

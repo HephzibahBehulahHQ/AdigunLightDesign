@@ -1,4 +1,4 @@
-import {createFixture,patchFixture} from "../dmx/engine.js";
+import {createFixture,patchNewFixture} from "../dmx/engine.js";
 import {fixturePlacementForRoom} from "./fixture-placement.js";
 import {roomDimensions} from "./room.js";
 import {shiftHue,hexToRgb,rgbToHex,rgbToHsl} from "./color-engine.ts";
@@ -58,7 +58,7 @@ export function createRoomStarterLighting(scene,allFixtures=[],lookIndex=0){
     const created=createFixture(fixtures.length+1,profileId);
     const roomFixtures=fixtures.filter(fixture=>fixture.sceneId===scene.id);
     const placed={...created,sceneId:scene.id,transform:{...created.transform,...fixturePlacementForRoom(profileId,scene.room,roomFixtures)}};
-    fixtures=patchFixture([...fixtures,withLookChannels(placed,look)],placed.id);
+    fixtures=patchNewFixture(fixtures,withLookChannels(placed,look));
   }
   return applyRoomLightingLook(scene,fixtures,lookIndex);
 }
