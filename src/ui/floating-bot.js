@@ -27,10 +27,19 @@ export function createFloatingBot({getProjectId,getLocale,translate,getUserId=()
     for(const [key,value] of Object.entries(docked ? {left:"",top:"",width:"",height:""} : {left:`${fittedRect.x}px`,top:`${fittedRect.y}px`,width:`${fittedRect.width}px`,height:`${fittedRect.height}px`}))host.style[key]=value;
     const maximize=host.querySelector("[data-bot-maximize]");maximize.textContent=state.mode==="maximized" ? "❐" : "□";maximize.title=t(state.mode==="maximized" ? "botRestore" : "botMaximize");maximize.setAttribute("aria-label",maximize.title);
     const minimize=host.querySelector("[data-bot-minimize]");minimize.title=t(state.mode==="minimized" ? "botRestore" : "botMinimize");minimize.setAttribute("aria-label",minimize.title);
-    const button=ai();if(button){button.classList.toggle("has-bot-unread",state.unread);button.setAttribute("aria-expanded",String(state.open));button.setAttribute("aria-controls","floating-lux-window");}
+    const expanded=docked ? dockedExpanded : state.open;
+    if(docked){
+      const toggle=host.querySelector("#toggle-lux");
+      toggle.textContent=expanded ? "−" : "+";
+      toggle.title=t(expanded ? "closePanel" : "openLux");
+      toggle.setAttribute("aria-label",toggle.title);
+      toggle.setAttribute("aria-expanded",String(expanded));
+      toggle.setAttribute("aria-controls","lux-window-content");
+    }
+    const button=ai();if(button){button.classList.toggle("has-bot-unread",state.unread);button.setAttribute("aria-expanded",String(expanded));button.setAttribute("aria-controls","floating-lux-window");}
   }
   function dispatch(action,options){const result=store.dispatch(action,options);paint();if(!result.persisted && options?.persist!==false){const status=documentRef.querySelector("#status");if(status)status.textContent=t("botLayoutNotSaved");}}
-  function close(){dispatch({type:"close"});ai()?.focus();}
+  function close(){dockedExpanded=false;dispatch({type:"close"});ai()?.focus();}
   function bindPointer(element,kind){
     element.onpointerdown=event=>{
       if(event.button!==0 || drag || (kind==="move" && event.target.closest("button")) || store.state.mode==="maximized" || viewport().width<=670)return;
@@ -51,9 +60,9 @@ export function createFloatingBot({getProjectId,getLocale,translate,getUserId=()
       const header=host.querySelector(".lux-heading");header.tabIndex=0;header.title=t("botMoveHelp");
       const closeButton=host.querySelector("#toggle-lux"),docked=host.dataset.docked==="true";
       if(docked){const stateLabel=documentRef.createElement("small");stateLabel.className="lux-dock-status";stateLabel.textContent=t("offline");header.querySelector("div")?.append(stateLabel);}
-      closeButton.textContent=docked ? "+" : "×";closeButton.title=docked ? t("openLux") : t("closePanel");closeButton.setAttribute("aria-label",closeButton.title);closeButton.onclick=()=>{if(docked){dockedExpanded=!dockedExpanded;paint();closeButton.textContent=dockedExpanded ? "−" : "+";closeButton.title=t(dockedExpanded ? "closePanel" : "openLux");closeButton.setAttribute("aria-label",closeButton.title);}else close();};
+      closeButton.textContent="×";closeButton.title=t("closePanel");closeButton.setAttribute("aria-label",closeButton.title);closeButton.onclick=()=>{if(docked){dockedExpanded=!dockedExpanded;paint();}else close();};
       for(const [key,label,text] of [["minimize","botMinimize","−"],["maximize","botMaximize","□"]]){const button=documentRef.createElement("button");button.type="button";button.dataset[`bot${key[0].toUpperCase()+key.slice(1)}`]="";button.textContent=text;button.title=t(label);button.setAttribute("aria-label",button.title);button.onclick=()=>dispatch({type:key});header.insertBefore(button,closeButton);}
-      const body=documentRef.createElement("div");body.className="bot-window-body";for(const child of [...host.children])if(child!==header)body.append(child);host.append(body);
+      const body=documentRef.createElement("div");body.className="bot-window-body";body.id="lux-window-content";for(const child of [...host.children])if(child!==header)body.append(child);host.append(body);
       const handle=documentRef.createElement("button");handle.type="button";handle.className="bot-resize-handle";handle.textContent="↘";handle.title=t("botResizeHelp");handle.setAttribute("aria-label",handle.title);host.append(handle);
       bindPointer(header,"move");bindPointer(handle,"resize");
       host.onkeydown=event=>{if(event.key==="Escape"){event.preventDefault();event.stopPropagation();close();}};paint();
