@@ -23,6 +23,7 @@ test("fixture inspector exposes editable metric position and rotation fields", (
 
 test("fixture placement heading is HTML escaped", () => {
   assert.match(fixturePlacementMarkup({x:0,y:0,z:0,rotation:0},"<Placement>","<Hint>"),/<legend>&lt;Placement&gt;<\/legend><small>&lt;Hint&gt;<\/small>/);
+  assert.match(fixturePlacementMarkup({x:0,y:0,z:0,rotation:0},"Position","Move","<Drehung>"),/&lt;Drehung&gt; \(°\)/);
 });
 
 test("new room fixtures start inside each template and strips mount vertically on the rear wall",()=>{
