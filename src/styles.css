@@ -291,8 +291,7 @@ body:not(.studio-route) .studio-shell { display:none; }
   .topbar .product-lockup strong { font-size:22px; letter-spacing:-.5px; }
   .topbar .product-lockup small { font-size:10px; letter-spacing:.35px; }
   .topbar .division { font-size:12px; }
-  .top-menu-button,.top-menu .language { width:32px; height:32px; min-width:32px; flex-basis:32px; border-radius:6px; }
-  .top-menu .language select { width:32px; height:32px; }
+  .top-menu-button,.top-menu .language { border-radius:6px; }
   .utility-controls.top-menu { gap:5px; }
   .header-save-status { font-size:10px; }
   .module-nav { height:34px; min-height:34px; overflow-x:auto; overflow-y:hidden; flex-wrap:nowrap; }
@@ -705,8 +704,6 @@ body:not(.studio-route) .studio-shell { display:none; }
   .topbar { grid-template-columns:270px auto minmax(230px,1fr) 451px; }
   .header-project-context { justify-self:end; width:255px; margin-right:5px; }
   .topbar .utility-controls.top-menu { width:451px; min-width:0; gap:0; justify-content:space-between; }
-  .top-menu-button,.top-menu .language { width:40px; height:32px; min-width:40px; flex-basis:40px; }
-  .top-menu .language select { width:40px; }
   .header-save-status { width:125px; min-width:125px; justify-content:center; box-sizing:border-box; }
 }
 

@@ -11,10 +11,13 @@ the true guest/unconfigured-Auth state. Five focused tests cover order, state
 presentation, search bounds/nonmutation and locale coverage. Signed-in state is
 only exercised with synthetic test inputs, not a real session.
 
-CSS uses normal flex/grid flow with 44-pixel controls and a 12-pixel gap. Small
-screens hide save text and place the icon row on its own header row. Desktop and
-mobile rendered overlap, real tooltips/focus and authenticated status changes
-remain unverified. The findings below describe the pre-change baseline.
+CSS uses normal flex/grid flow with 44-pixel controls. Small screens hide save
+text and place the icon row on its own header row. The Chrome acceptance runner
+checks rendered target sizes, separation, viewport bounds, tooltip text, and Tab
+from Account to Language at 1754 × 878 and 390 × 844. It also verifies all four
+locale options. Real authenticated status changes still require a configured
+build and a signed-in browser session. The findings below describe the
+pre-change baseline.
 
 The latest user request extends this AdigunLightDesign goal. Its repeated
 AdigunSPs wording is example context; do not modify the AdigunSPs repository as

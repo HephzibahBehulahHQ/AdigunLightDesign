@@ -14,6 +14,27 @@ const viewports = [
   [1754, 878],
 ];
 
+async function verifyUtilityControls(page) {
+  const menu = page.locator(".topbar .top-menu");
+  const controls = menu.locator(".top-menu-button");
+  const viewport = await page.evaluate(() => globalThis.innerWidth);
+  assert.equal(await controls.count(), 5, "all five utility controls are present");
+  let previousRight = 0;
+  for (const control of await controls.all()) {
+    const bounds = await control.boundingBox();
+    assert.ok(bounds && bounds.width >= 44 && bounds.height >= 44, "each utility control has a 44px target");
+    assert.ok(bounds.x >= previousRight && bounds.x + bounds.width <= viewport, "utility controls are separate and within the viewport");
+    assert.ok(await control.getAttribute("title"), "each utility control has a tooltip");
+    previousRight = bounds.x + bounds.width;
+  }
+  const account = menu.locator("#account-menu");
+  await account.focus();
+  await page.keyboard.press("Tab");
+  const locale = menu.locator("#locale");
+  assert.equal(await locale.evaluate(select => select.ownerDocument.activeElement === select), true, "Tab reaches Language directly after Account");
+  assert.deepEqual(await locale.locator("option").evaluateAll(options => options.map(option => option.value)), ["en", "de", "yo", "pcm"]);
+}
+
 const server = await createServer({
   configFile: false,
   logLevel: "error",
@@ -49,6 +70,7 @@ try {
   await page.getByRole("link",{name:/Go to the Studio/}).first().click();
   await page.waitForURL(/#AdigunStudio$/);
   await page.locator("body.studio-route").waitFor();
+  await verifyUtilityControls(page);
   assert.equal(await page.locator(".marketing-home").isVisible(),false,"the studio anchor replaces the landing view");
   assert.equal(await page.locator(".studio-shell").isVisible(),true,"the existing studio opens at its anchor");
   assert.equal(await page.locator(".header-save-status").innerText(), "Unsaved project", "startup opens a fresh workspace instead of restoring the working copy");
@@ -816,6 +838,7 @@ try {
   await touchPage.getByRole("link",{name:/Go to the Studio/}).first().tap();
   await touchPage.locator("body.studio-route").waitFor();
   assert.equal(await touchPage.locator(".studio-shell").isVisible(),true,"the studio CTA works on touch screens");
+  await verifyUtilityControls(touchPage);
   const touchProject=touchPage.locator('[data-command-menu-trigger="project"]');
   await touchProject.tap();
   assert.equal(await touchPage.locator("#command-menu-panel-project").evaluate(panel=>panel.matches(":popover-open")),true,"touch tap opens the command menu");
