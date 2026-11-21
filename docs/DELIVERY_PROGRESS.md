@@ -103,8 +103,13 @@ Caching the static room and surface normals in a subsequent local run reduced
 Pulse p95 to 10.4 ms (Performance), 11.0 ms (Balanced), and 20.0 ms (Quality)
 on the same GPU and viewport. Each run still uploaded 32 lighting frames,
 and the stateless reference buffers still matched the original hashes.
-This is one GPU and one starter rig. Large rigs, other GPUs, and mobile
-hardware still need testing.
+A second sample imported 23 moving heads into the starter room, bringing
+the rig to 32 fixtures. At the same viewport and 2× device scale, Quality
+rendered all 32. It measured 91.6 ms p95 on public commit `1f78b81` and
+25.1 ms on a local build that skips samples clearly outside the beam cone.
+Performance and Balanced each rendered 12 fixtures as configured.
+Twelve reference buffers from the larger rig also matched byte for byte.
+Other rig layouts, GPUs and mobile hardware still need testing.
 
 ## Historical progress estimate, 15 November 2026
 
