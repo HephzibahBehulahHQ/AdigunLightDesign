@@ -1266,9 +1266,12 @@ try {
   await page.locator("#project-name").fill("Studio Acceptance");
   await page.locator("#project-name").press("Tab");
   await clickCommand("project","#save");
-  const exportPromise = page.waitForEvent("download");
-  await clickCommand("export",'[data-export="project"]');
-  const projectExport = await exportPromise;
+  assert.equal(await page.locator(".header-save-status").innerText(),"Saved locally","the active project is saved before export");
+  await openCommandMenu("export");
+  const [projectExport]=await Promise.all([
+    page.waitForEvent("download"),
+    page.locator('[data-export="project"]').click(),
+  ]);
   const exportPath = await projectExport.path();
   assert.ok(exportPath, "Project JSON export produces a file");
   const exportedProject = JSON.parse(await readFile(exportPath, "utf8"));
