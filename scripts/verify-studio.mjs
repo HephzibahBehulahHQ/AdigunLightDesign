@@ -249,8 +249,20 @@ try {
   assert.equal(await page.locator(".library-drawer .fixture-library article").count(),3,"Fixture Library opens the three real generic profiles");
   await page.locator("#close-library").click();
   await page.locator('.module-nav [data-module="copilot"]').click();
-  assert.equal(await page.locator("#floating-lux-window").isVisible(),true,"Lux navigation opens the existing assistant");
+  const assistant = page.locator("#floating-lux-window");
+  assert.equal(await page.locator("#toggle-lux").getAttribute("aria-expanded"), "true", "Lux navigation expands the existing assistant");
+  const settings = assistant.locator(".lux-service-settings > summary");
+  assert.equal(await settings.isVisible(), true, "the expanded desktop assistant exposes service settings");
+  await settings.click();
+  assert.equal(await assistant.locator('[name="endpoint"]').isVisible(), true, "service settings expose the endpoint field");
+  const consent = assistant.locator(".bot-composer .lux-consent");
+  assert.equal(await consent.evaluate(label => label.scrollWidth <= label.clientWidth + 1 && label.scrollHeight <= label.clientHeight + 1), true, "the consent disclosure wraps without clipping");
+  assert.equal(await assistant.locator(".bot-composer > button").isDisabled(), true, "an unconfigured service cannot submit a request");
   await page.locator("#toggle-lux").click();
+  assert.equal(await page.locator("#toggle-lux").getAttribute("aria-expanded"), "false");
+  assert.equal(await consent.isHidden(), true, "the collapsed assistant hides its request form");
+  const notice = assistant.locator(".lux-message");
+  assert.equal(await notice.evaluate(box => box.scrollWidth <= box.clientWidth + 1 && box.scrollHeight <= box.clientHeight + 1), true, "the collapsed availability notice is readable");
   assert.deepEqual(await page.locator(".scene-preview").boundingBox(),switcherCanvas,"workspace shortcuts leave the 3D canvas stationary");
 
   assert.equal(await page.locator(".inspector > .section-title button:disabled").count(), 0, "the contextual inspector header has no inert close control");

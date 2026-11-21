@@ -70,3 +70,9 @@ Actual browser tests are required alongside domain/handler tests.
 Add “Using the Bot window” to `docs/HELP.md` and its table of contents when
 implemented. Explain movement, resizing, window controls and reopening. Do not
 document these behaviors as available before they work.
+
+The docked studio assistant keeps its availability notice visible while
+collapsed. Expanding it reveals the full request form and service settings.
+The desktop browser suite verifies expansion state, access to the endpoint
+field, unclipped consent text, and disabled submission when the service is
+unconfigured.
