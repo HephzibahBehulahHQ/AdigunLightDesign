@@ -421,12 +421,12 @@ try {
   await landingCanvas.evaluate(async canvas=>{
     const gl=canvas.getContext("webgl");
     const extension=gl.getExtension("WEBGL_lose_context");
-    const lost=new Promise(resolve=>canvas.addEventListener("webglcontextlost",resolve,{once:true}));
-    extension.loseContext();
-    await lost;
-    const restored=new Promise(resolve=>canvas.addEventListener("webglcontextrestored",resolve,{once:true}));
-    extension.restoreContext();
-    await restored;
+    await new Promise((resolve,reject)=>{
+      const timeout=globalThis.setTimeout(()=>reject(new Error("WebGL restoration timed out")),5000);
+      canvas.addEventListener("webglcontextrestored",()=>{globalThis.clearTimeout(timeout);resolve();},{once:true});
+      canvas.addEventListener("webglcontextlost",()=>globalThis.setTimeout(()=>extension.restoreContext(),0),{once:true});
+      extension.loseContext();
+    });
   });
   assert.deepEqual(await landingCanvas.screenshot(),beforeContextLoss,"the real WebGL context restores the selected lighting and camera");
   const [samplePage] = await Promise.all([context.waitForEvent("page"), page.locator("[data-landing-open]").click()]);
