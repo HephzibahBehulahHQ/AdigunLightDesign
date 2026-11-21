@@ -52,8 +52,18 @@ export function landingMarkup() {
       <section id="studio-demos" class="marketing-section" aria-labelledby="demo-title">
         <div class="marketing-section-heading"><h2 id="demo-title">Watch the studio work.</h2><p>Captured in AdigunLightDesign using the same previews and timeline you can open in the editor.</p></div>
         <div class="marketing-demos">
-          <article><video controls muted playsinline preload="metadata" src="./demos/lighting-tour.webm" aria-label="Studio room camera tour"></video><div><h3>Orbit a lit room</h3><p>Follow the camera tour around a room with real-time virtual lighting and editable fixtures.</p></div></article>
-          <article><video controls muted playsinline preload="metadata" src="./demos/cue-playback.webm" aria-label="Studio timeline and cue playback"></video><div><h3>Play a cue sequence</h3><p>Watch the timeline advance as virtual fixture values drive the 3D preview.</p></div></article>
+          <article>
+            <video controls muted playsinline preload="metadata" src="./demos/lighting-tour.webm" aria-label="Studio room camera tour"><track kind="captions" srclang="en" label="English visual captions" src="./demos/lighting-tour.vtt"></video>
+            <div><h3>Orbit a lit room</h3><p>Follow the camera tour around a room with real-time virtual lighting and editable fixtures.</p>
+              <details class="marketing-video-description"><summary>Read the camera tour description</summary><p>In this silent recording, the Violet club preset casts purple beams across a furnished room. The camera changes angle, revealing ceiling-mounted fixtures above a sofa and round tables, with a window on one wall and tall slats on the other.</p></details>
+            </div>
+          </article>
+          <article>
+            <video controls muted playsinline preload="metadata" src="./demos/cue-playback.webm" aria-label="Studio timeline and cue playback"><track kind="captions" srclang="en" label="English visual captions" src="./demos/cue-playback.vtt"></video>
+            <div><h3>Play a cue sequence</h3><p>Watch the timeline advance as virtual fixture values drive the 3D preview.</p>
+              <details class="marketing-video-description"><summary>Read the cue playback description</summary><p>In this silent recording, the Studio Mood room sits above a timeline with three tracks: Look 1 – Fade In, Color Chase, and Ambient Fill. The playhead advances through the first cue while blue, amber, and magenta beams light the room. The virtual DMX readout sits to the left of the preview.</p></details>
+            </div>
+          </article>
         </div>
       </section>
       <section class="marketing-section marketing-workflow" aria-labelledby="workflow-title">
