@@ -59,7 +59,6 @@ export function createFloatingBot({getProjectId,getLocale,translate,getUserId=()
       documentRef.body.classList.add("has-floating-bot");
       const header=host.querySelector(".lux-heading");header.tabIndex=0;header.title=t("botMoveHelp");
       const closeButton=host.querySelector("#toggle-lux"),docked=host.dataset.docked==="true";
-      if(docked){const stateLabel=documentRef.createElement("small");stateLabel.className="lux-dock-status";stateLabel.textContent=t("offline");header.querySelector("div")?.append(stateLabel);}
       closeButton.textContent="×";closeButton.title=t("closePanel");closeButton.setAttribute("aria-label",closeButton.title);closeButton.onclick=()=>{if(docked){dockedExpanded=!dockedExpanded;paint();}else close();};
       for(const [key,label,text] of [["minimize","botMinimize","−"],["maximize","botMaximize","□"]]){const button=documentRef.createElement("button");button.type="button";button.dataset[`bot${key[0].toUpperCase()+key.slice(1)}`]="";button.textContent=text;button.title=t(label);button.setAttribute("aria-label",button.title);button.onclick=()=>dispatch({type:key});header.insertBefore(button,closeButton);}
       const body=documentRef.createElement("div");body.className="bot-window-body";body.id="lux-window-content";body.tabIndex=0;
