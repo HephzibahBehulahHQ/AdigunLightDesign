@@ -567,27 +567,38 @@ try {
   assert.ok(await page.locator("#palette-inspector-panel").evaluate((panel)=>panel.scrollHeight<=panel.clientHeight+2),"Palette Engine controls fit in the right sidebar without a hidden scroll region");
   const swatches = page.locator(".palette-panel .swatches [data-swatch]");
   const existingSwatches = await swatches.allTextContents();
-  const pngFixture = await page.evaluate(() => {
+  const imageFixtures = await page.evaluate(() => {
     const canvas = globalThis.document.createElement("canvas");
     canvas.width = 2;
     canvas.height = 2;
     const context = canvas.getContext("2d");
     context.fillStyle = "#E4128A";
     context.fillRect(0, 0, 2, 2);
-    return canvas.toDataURL("image/png").split(",")[1];
+    return [["png", "image/png"], ["jpg", "image/jpeg"], ["webp", "image/webp"]].map(([extension, mimeType]) => ({
+      extension,
+      mimeType,
+      encoded: canvas.toDataURL(mimeType, 1),
+    }));
   });
-  const imageChooser = page.waitForEvent("filechooser");
-  await page.locator("#extract-image").click();
-  await (await imageChooser).setFiles({ name: "palette-source.png", mimeType: "image/png", buffer: Buffer.from(pngFixture, "base64") });
-  await page.waitForFunction(count => globalThis.document.querySelectorAll(".palette-panel .swatches [data-swatch]").length === count + 1, existingSwatches.length);
-  const extractedSwatches = await swatches.allTextContents();
-  assert.deepEqual(extractedSwatches.slice(0, -1), existingSwatches, "image extraction preserves the existing palette");
-  assert.match(extractedSwatches.at(-1), /#E4128A/i, "the extracted swatch matches the input pixels");
-  await clickCommand("history", "#undo");
-  assert.deepEqual(await swatches.allTextContents(), existingSwatches, "Undo restores the palette before image extraction");
-  await clickCommand("history", "#redo");
-  assert.deepEqual(await swatches.allTextContents(), extractedSwatches, "Redo restores the extracted swatch");
-  await clickCommand("history", "#undo");
+  for (const { extension, mimeType, encoded } of imageFixtures) {
+    const [header, payload] = encoded.split(",");
+    assert.equal(header, `data:${mimeType};base64`, `the fixture is encoded as ${mimeType}`);
+    const [imageChooser] = await Promise.all([page.waitForEvent("filechooser"), page.locator("#extract-image").click()]);
+    await imageChooser.setFiles({ name: `palette-source.${extension}`, mimeType, buffer: Buffer.from(payload, "base64") });
+    await page.waitForFunction(count => globalThis.document.querySelectorAll(".palette-panel .swatches [data-swatch]").length === count + 1, existingSwatches.length);
+    const extractedSwatches = await swatches.allTextContents();
+    assert.deepEqual(extractedSwatches.slice(0, -1), existingSwatches, `${mimeType} extraction preserves the existing palette`);
+    const color = extractedSwatches.at(-1).match(/#([0-9a-f]{6})/i);
+    assert.ok(color, `${mimeType} extraction appends a hex swatch`);
+    const channels = Buffer.from(color[1], "hex");
+    const tolerance = extension === "png" ? 0 : 4;
+    assert.ok(channels.every((channel, index) => Math.abs(channel - [228, 18, 138][index]) <= tolerance), `${mimeType} yields the expected color within encoding tolerance`);
+    await clickCommand("history", "#undo");
+    assert.deepEqual(await swatches.allTextContents(), existingSwatches, `Undo restores the palette before ${mimeType} extraction`);
+    await clickCommand("history", "#redo");
+    assert.deepEqual(await swatches.allTextContents(), extractedSwatches, `Redo restores the ${mimeType} swatch`);
+    await clickCommand("history", "#undo");
+  }
   await page.screenshot({path:resolve("outputs","palette-engine-1754x878.png")});
   const canvasBeforeSceneSettings=await page.locator(".scene-preview").boundingBox();
   await openCommandMenu("room");
