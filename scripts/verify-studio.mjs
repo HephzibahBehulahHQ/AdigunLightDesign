@@ -1031,6 +1031,29 @@ try {
   for(const selector of ["#swatch-name","#swatch-hex","#apply-colour","#copy-hex","#apply-hsl","#apply-oklch","#swatch-opacity","#apply-opacity","#lock-swatch",".colour-space-card",".contrast-card"]) assert.ok(await page.locator(`#palette-inspector-panel ${selector}`).count()>0,`Palette Engine keeps ${selector} available in the compact right sidebar`);
   assert.equal(await page.locator("#palette-inspector-panel .contrast-card dl > div").count(),4,"Palette Engine keeps all four AA/AAA contrast checks visible");
   assert.ok(await page.locator("#palette-inspector-panel").evaluate((panel)=>panel.scrollHeight<=panel.clientHeight+2),"Palette Engine controls fit in the right sidebar without a hidden scroll region");
+  const swatchHex=page.locator("#swatch-hex");
+  const background=page.locator("#contrast-background");
+  const originalBackground=await background.inputValue();
+  const contrastRatio=page.locator(".contrast-card b");
+  const contrastLevels=page.locator(".contrast-card dl dd");
+  await background.fill("#ffffff");
+  await swatchHex.fill("#0477DB");
+  await page.locator("#apply-colour").click();
+  assert.equal(await contrastRatio.innerText(),"4.49 : 1","a ratio below 4.5 never displays as 4.50");
+  assert.equal(await contrastLevels.first().getAttribute("class"),"fail");
+  await page.locator("#apply-contrast").click();
+  assert.equal(await contrastLevels.first().getAttribute("class"),"pass","the suggested color actually crosses the AA threshold");
+  await clickCommand("history","#undo");
+  await clickCommand("history","#undo");
+  await swatchHex.fill("#000000");
+  await page.locator("#apply-colour").click();
+  await page.locator("#swatch-opacity").fill("50");
+  await page.locator("#apply-opacity").click();
+  assert.deepEqual(await contrastLevels.evaluateAll(items=>items.map(item=>item.className)),["fail","fail","pass","fail"],"translucent black on white passes large-text AA only");
+  assert.equal(await page.locator(".selected-preview").evaluate(node=>globalThis.getComputedStyle(node).backgroundColor),"rgb(128, 128, 128)","the preview shows the same composited swatch used for contrast");
+  await clickCommand("history","#undo");
+  await clickCommand("history","#undo");
+  await background.fill(originalBackground);
   const swatches = page.locator(".palette-panel .swatches [data-swatch]");
   const existingSwatches = await swatches.allTextContents();
   const imageFixtures = await page.evaluate(() => {
@@ -1243,9 +1266,12 @@ try {
   await page.locator("#project-name").fill("Studio Acceptance");
   await page.locator("#project-name").press("Tab");
   await clickCommand("project","#save");
-  const exportPromise = page.waitForEvent("download");
-  await clickCommand("export",'[data-export="project"]');
-  const projectExport = await exportPromise;
+  assert.equal(await page.locator(".header-save-status").innerText(),"Saved locally","the active project is saved before export");
+  await openCommandMenu("export");
+  const [projectExport]=await Promise.all([
+    page.waitForEvent("download"),
+    page.locator('[data-export="project"]').click(),
+  ]);
   const exportPath = await projectExport.path();
   assert.ok(exportPath, "Project JSON export produces a file");
   const exportedProject = JSON.parse(await readFile(exportPath, "utf8"));
