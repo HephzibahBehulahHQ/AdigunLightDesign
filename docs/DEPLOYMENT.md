@@ -28,7 +28,8 @@ keep its required reviewers enabled where configured.
 The build job runs typecheck, tests, the project contract check, and the static
 build before uploading dist. The deployment job uses the github-pages
 environment. The optional ALD_SUPABASE_PUBLISHABLE_KEY repository variable
-enables the browser Auth client in the build.
+enables the browser Auth client in the build. Configured builds load the SDK
+from a separate chunk. Unconfigured builds omit the SDK and retain Guest mode.
 
 The selected Supabase Auth health endpoint returned HTTP 200 on 3 November
 2026. A guest Data API probe against the product schema returned HTTP 406

@@ -93,7 +93,9 @@ let viewportCamera=null;
 let viewportCameraRoomKey=null;
 let cleanupTopMenu=null, cleanupCommandMenus=null;
 const imageAssets=createImageAssetStore();
-const account=createAccount({publishableKey:typeof __ALD_SUPABASE_PUBLISHABLE_KEY__==="undefined" ? "" : __ALD_SUPABASE_PUBLISHABLE_KEY__});
+const publishableKey = typeof __ALD_SUPABASE_PUBLISHABLE_KEY__ === "undefined" ? "" : __ALD_SUPABASE_PUBLISHABLE_KEY__;
+const clientFactory = publishableKey ? (await import("@supabase/supabase-js")).createClient : undefined;
+const account = createAccount({ publishableKey, clientFactory });
 const liveCanvasFeed=createCanvasStateFeed();
 const floatingBot=createFloatingBot({getProjectId:()=>project.id,getUserId:()=>account.user?.id ?? "guest",getLocale:()=>preferences.locale,translate});
 const liveCopilotPanel=createLiveCopilotPanel({feed:liveCanvasFeed,getLocale:()=>preferences.locale,translate,onNotify:()=>floatingBot.notify(),canAccept:()=>Boolean(account.user),onError:message=>setStatus(t(message)),onAccept:async(suggestion,isCurrent)=>{
