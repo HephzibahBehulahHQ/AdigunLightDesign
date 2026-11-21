@@ -187,15 +187,22 @@ function prepareSurfaceLighting(lights,ambience) {
     if (!Number.isFinite(light.targetX) || !Number.isFinite(light.targetZ)) return {light};
     const x=light.targetX-light.x,y=.03-light.y,z=light.targetZ-light.z;
     const length=Math.hypot(x,y,z);
-    return {light,aim:{x,y,z,length,edge:length/Math.hypot(length,light.spread)}};
+    const edge=length/Math.hypot(length,light.spread);
+    // Keep a margin around the cone edge; nearby samples use the exact falloff.
+    const cutoffSquared=(length*edge)**2*.999999;
+    return {light,aim:{x,y,z,length,edge,cutoffSquared}};
   });
   return (position,baseColour,normal,normalLength)=>{
     const result=baseColour.map((value,index)=>value*(.7-fill)+tint[index]*fill);
     for (const {light,aim} of prepared) {
       const x=position[0]-light.x,y=position[1]-light.y,z=position[2]-light.z;
+      const distanceSquared=x*x+y*y+z*z;
+      const dot=aim ? x*aim.x+y*aim.y+z*aim.z : 0;
+      if (aim && (dot<=0 || dot*dot<distanceSquared*aim.cutoffSquared)) continue;
       const distance=Math.hypot(x,y,z);
+      const cone=aim ? spotlightConeCoverage(dot/Math.max(.0001,distance*aim.length),aim.edge) : 1;
+      if (cone===0) continue;
       const below=position[1]<=light.y ? 1 : .15;
-      const cone=aim ? spotlightConeCoverage((x*aim.x+y*aim.y+z*aim.z)/Math.max(.0001,distance*aim.length),aim.edge) : 1;
       const falloff=light.range ? Math.max(0,1-distance/light.range)**2 : 1;
       const incidence=normalLength>0 && distance>0
         ? Math.abs(normal[0]*-x+normal[1]*-y+normal[2]*-z)/(normalLength*distance)
