@@ -37,6 +37,29 @@ async function verifyUtilityControls(page) {
   assert.deepEqual(await locale.locator("option").evaluateAll(options => options.map(option => option.value)), ["en", "de", "yo", "pcm"]);
 }
 
+async function verifyVirtualPulse(browser, studioUrl) {
+  const page = await browser.newPage({viewport:{width:1440,height:900}});
+  try {
+    await page.goto(studioUrl);
+    const canvas = page.locator("#light-canvas");
+    const savedLighting = await canvas.screenshot();
+    const virtualDimmer = page.locator(".virtual-dmx-channel").filter({has:page.getByText("dimmer", {exact:true})}).locator("strong");
+    const savedDimmer = await virtualDimmer.textContent();
+    await page.locator("#effect-period").fill("5");
+    await page.locator("#play-effect").click();
+    await page.waitForFunction(before => [...globalThis.document.querySelectorAll(".virtual-dmx-channel")].some(channel =>
+      channel.querySelector("span")?.textContent === "dimmer" && channel.querySelector("strong")?.textContent !== before), savedDimmer);
+    await page.locator("#pause-playback").click();
+    assert.ok(!(await canvas.screenshot()).equals(savedLighting), "a virtual pulse changes the rendered fixture lighting");
+    assert.match(await page.locator("#virtual-dmx-monitor header").textContent(), /output:\s*disabled/i);
+    await page.locator("#stop-cue").click();
+    assert.equal(await virtualDimmer.textContent(), savedDimmer, "stopping the effect restores the saved virtual DMX level");
+    assert.ok((await canvas.screenshot()).equals(savedLighting), "stopping the effect restores the saved WebGL lighting");
+  } finally {
+    await page.close();
+  }
+}
+
 async function verifyOfflineStudio(browser) {
   const previewServer = await preview({configFile:false, logLevel:"error", preview:{host:"127.0.0.1", port:0}});
   try {
@@ -1100,6 +1123,7 @@ try {
   assert.ok(applyBounds.y >= 0 && applyBounds.y + applyBounds.height <= 844, "applying a mobile fixture edit keeps its action in view");
   await touchContext.close();
   await context.close();
+  await verifyVirtualPulse(browser, `http://127.0.0.1:${address.port}/#AdigunStudio`);
   await verifyOfflineStudio(browser);
 } finally {
   await browser?.close();
