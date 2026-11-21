@@ -436,8 +436,8 @@ body:not(.studio-route) .studio-shell { display:none; }
   .inspector-group-dmx { grid-template-columns:repeat(2,minmax(0,1fr)); }
   #fixture-inspector-panel .inspector-group-dmx > label { display:grid; grid-template-columns:minmax(0,1fr) 68px; align-items:center; gap:3px; white-space:nowrap; }
   #fixture-inspector-panel .inspector-group-dmx > label input { width:68px; min-width:0; height:25px; min-height:25px; }
-  #fixture-inspector-panel .inspector-group-light > label:has(input[type="range"]) { grid-template-rows:12px 12px; align-content:start; gap:0 !important; line-height:12px; }
-  #fixture-inspector-panel .inspector-group-light > label input[type="range"] { min-height:12px; max-height:12px; height:12px; padding:0; }
+  #fixture-inspector-panel .inspector-group-light > label:has(input[type="range"]) { grid-template-rows:12px 24px; align-content:start; gap:0 !important; line-height:12px; }
+  #fixture-inspector-panel .inspector-group-light > label input[type="range"] { min-height:24px; height:24px; padding:0; }
   #fixture-inspector-panel .inspector-group-light > label input[type="color"] { height:24px; min-height:24px; }
   #fixture-inspector-panel .fixture-colour-control { display:grid; grid-template-columns:minmax(0,1fr) 52px; align-items:center; gap:5px; }
   #fixture-inspector-panel .fixture-colour-control output { color:var(--muted); font:9px/1 ui-monospace,monospace; text-align:right; }
@@ -610,6 +610,7 @@ body:not(.studio-route) .studio-shell { display:none; }
     padding:0 5px;
     line-height:11px;
   }
+  .inspector-group-light .light-advanced-controls > summary { min-height:24px; padding-block:5px; }
   .inspector-group-fixture #apply-fixture,
   .inspector-group-dmx #apply-fixture-patch {
     min-height:25px;
@@ -994,15 +995,15 @@ body:not(.studio-route) .studio-shell { display:none; }
   .timeline-transport label:has(#sequence-loop) { flex:0 0 24px; width:24px; height:23px; justify-content:center; gap:0; padding:0; border:1px solid #3a4e6d; font-size:0; }
   .timeline-transport #sequence-loop { width:12px; height:12px; }
   .timeline-transport #arrangement-position { max-width:52px; overflow:hidden; font-size:8px; }
-  .timeline > .arrangement-timeline { flex:1 1 70px; min-width:0; min-height:0; margin:0 5px; padding:0 2px; overflow:hidden; }
+  .timeline > .arrangement-timeline { flex:1 1 70px; min-width:0; min-height:0; margin:0 5px; padding:0 2px; align-items:flex-start; overflow-x:hidden; overflow-y:auto; overscroll-behavior:contain; }
   .arrangement-timeline .timeline-scale { flex:1 1 auto; min-width:0; margin:0 4px; --track-label-width:clamp(48px,12%,92px); }
   .arrangement-timeline .timeline-ruler { height:16px; }
   .arrangement-timeline .timeline-ruler span { font-size:8px; }
   .arrangement-timeline .timeline-ruler span::after { top:11px; height:5px; }
   .arrangement-timeline .scheduled-track { grid-template-columns:var(--track-label-width) minmax(0,1fr); margin:1px 0; }
   .arrangement-timeline .scheduled-track .track-name { padding:1px 4px; font-size:8px; }
-  .arrangement-timeline .scheduled-track .timeline-lane { height:16px; }
-  .arrangement-timeline .scheduled-track .cue-block { top:1px; height:14px; padding:0 3px; font-size:8px; }
+  .arrangement-timeline .scheduled-track .timeline-lane { height:24px; }
+  .arrangement-timeline .scheduled-track .cue-block { top:0; height:24px; padding:0 3px; font-size:8px; }
   .timeline > .dmx-actions { flex:0 0 23px; min-height:23px; gap:4px; padding:1px 5px; overflow:hidden; font-size:8px; white-space:nowrap; }
   .timeline > .dmx-actions button { flex:0 0 auto; min-height:20px; padding:2px 5px; font-size:8px; }
   .timeline > .dmx-actions label { display:inline-flex; align-items:center; flex:0 0 auto; gap:3px; padding:0; font-size:8px; white-space:nowrap; }
@@ -1034,16 +1035,16 @@ body:not(.studio-route) .studio-shell { display:none; }
   .timeline > .cue-editor:not(:has(> fieldset)) { grid-template-rows:28px; flex-basis:34px; min-height:34px; max-height:34px; }
   .timeline > .cue-editor .cue-editor-fields { grid-row:1; display:flex; flex-direction:column; min-width:0; overflow:hidden; }
   .timeline > .cue-editor.cue-editor-fields-moved > fieldset { height:21px; min-height:21px; max-height:21px; }
-  .timeline > .timeline-active-cue-editor { --cue-columns:minmax(84px,1.8fr) minmax(58px,1.15fr) minmax(48px,.9fr) repeat(4,minmax(42px,.8fr)) minmax(58px,1fr) repeat(6,22px); display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:9px 18px; align-items:center; min-width:0; width:auto; margin:0 5px; padding:2px 4px; row-gap:1px; overflow:hidden; }
+  .timeline > .timeline-active-cue-editor { --cue-columns:minmax(84px,1.8fr) minmax(58px,1.15fr) minmax(48px,.9fr) repeat(4,minmax(42px,.8fr)) minmax(46px,1fr) repeat(6,24px); display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:9px 24px; align-items:center; min-width:0; width:auto; margin:0 5px; padding:2px 4px; row-gap:1px; overflow:hidden; }
   .timeline > .timeline-active-cue-editor .cue-timing-headings,.timeline > .timeline-active-cue-editor .cue-timing-values { display:grid; grid-template-columns:var(--cue-columns); grid-column:1; align-items:center; width:100%; min-width:0; gap:4px; }
   .timeline > .timeline-active-cue-editor .cue-timing-headings { grid-row:1; height:9px; min-height:9px; max-height:9px; overflow:hidden; }
   .timeline > .timeline-active-cue-editor .cue-timing-values { grid-row:2; }
   .timeline > .timeline-active-cue-editor .cue-timing-headings label { width:100%; min-width:0; height:9px; min-height:9px; max-height:9px; margin:0; padding:0; overflow:hidden; color:var(--muted); font-size:8px; line-height:9px; text-align:center; text-overflow:ellipsis; white-space:nowrap; }
   .timeline > .timeline-active-cue-editor .cue-timing-values > * { justify-self:center; }
-  .timeline > .timeline-active-cue-editor .cue-timing-values input { width:46px; max-width:100%; min-width:0; height:16px; min-height:16px; padding:1px 3px; font-size:8px; }
+  .timeline > .timeline-active-cue-editor .cue-timing-values input { width:46px; max-width:100%; min-width:0; height:24px; min-height:24px; padding:1px 3px; font-size:8px; }
   .timeline > .timeline-active-cue-editor .cue-timing-values #edit-cue-name,.timeline > .timeline-active-cue-editor .cue-timing-values #cue-track-name { width:100%; }
   .timeline > .timeline-active-cue-editor .cue-timing-values #cue-start-time { width:52px; }
-  .timeline > .timeline-active-cue-editor .cue-timing-values button { display:grid; place-items:center; width:22px; min-width:22px; height:17px; min-height:17px; padding:0; overflow:hidden; font-size:11px; }
+  .timeline > .timeline-active-cue-editor .cue-timing-values button { display:grid; place-items:center; width:24px; min-width:24px; height:24px; min-height:24px; padding:0; overflow:hidden; font-size:11px; }
   .timeline > .timeline-active-cue-editor .cue-timing-values small { overflow:hidden; color:var(--muted); font-size:7px; line-height:9px; white-space:nowrap; }
   .timeline > .cue-editor > fieldset { grid-row:2; display:flex; align-items:center; flex-wrap:nowrap; min-width:0; min-height:22px; margin:0; padding:0 3px; gap:4px; overflow:hidden; border:1px solid var(--line); }
   .timeline > .cue-editor > fieldset legend { float:left; max-width:68px; overflow:hidden; padding:0 2px; font-size:7px; white-space:nowrap; }
