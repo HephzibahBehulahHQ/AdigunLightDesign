@@ -929,12 +929,13 @@ try {
   await touchPage.locator("body.studio-route").waitFor();
   assert.equal(await touchPage.locator(".studio-shell").isVisible(),true,"the studio CTA works on touch screens");
   await verifyUtilityControls(touchPage);
-  for (const width of [320, 360, 390]) {
+  for (const width of [320, 360, 390, 671, 768, 940, 941, 1024, 1099]) {
     await touchPage.setViewportSize({ width, height: 844 });
     const mobile = await touchPage.evaluate(() => {
       const doc = globalThis.document;
       const bounds = selector => doc.querySelector(selector).getBoundingClientRect();
       const shell = doc.querySelector(".studio-shell");
+      const rail = doc.querySelector(".left-rail");
       return {
         viewport: globalThis.innerWidth,
         scrollWidth: shell.scrollWidth,
@@ -945,13 +946,16 @@ try {
         footerTop: bounds(".studio-footer").top,
         toolbarRight: bounds("#viewport-fullscreen").right,
         timelineRight: bounds(".arrangement-timeline .timeline-scale").right,
+        railFits: rail.scrollWidth <= rail.clientWidth + 1,
       };
     });
     assert.equal(mobile.viewport, width, "the mobile test uses the requested viewport");
     assert.ok(mobile.scrollWidth <= width && mobile.canScroll, `the ${width}px studio scrolls vertically without spilling horizontally`);
     assert.ok(mobile.headerBottom <= mobile.navTop && mobile.inspectorBottom <= mobile.footerTop, `header and footer do not cover editor controls at ${width}px`);
     assert.ok(mobile.toolbarRight <= width && mobile.timelineRight <= width, `fullscreen and timeline controls stay reachable at ${width}px`);
+    if (width > 670) assert.equal(mobile.railFits, true, `tablet palette controls fit the left rail at ${width}px`);
   }
+  await touchPage.setViewportSize({ width: 390, height: 844 });
   const touchProject=touchPage.locator('[data-command-menu-trigger="project"]');
   await touchProject.tap();
   assert.equal(await touchPage.locator("#command-menu-panel-project").evaluate(panel=>panel.matches(":popover-open")),true,"touch tap opens the command menu");

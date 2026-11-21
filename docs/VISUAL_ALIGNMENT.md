@@ -129,8 +129,10 @@ saved project data or rendering a static placeholder.
 The desktop tool grid exposes the eight supported editing tools. AI Pin remains
 outside that grid because it is not an active editing command.
 
-At phone widths, the studio stacks its regions in a vertically scrollable
-shell. Chrome checks at 320, 360, and 390 pixels verify that navigation starts
-after the header, the footer follows the inspector, and the scene toolbar and
-timeline stay within the viewport. Desktop uses the fixed workspace layout.
+The studio shell scrolls vertically below 1100 pixels. Phones stack the
+regions and tablets retain columns. Chrome checks at 320, 360, 390, 671, 768,
+940, 941, 1024, and 1099 pixels verify that navigation starts after the
+header, the footer follows the inspector, and the scene toolbar and timeline
+stay within the viewport. Tablet checks also verify that the palette and
+virtual DMX controls fit their rail. Desktop uses the fixed workspace layout.
 
