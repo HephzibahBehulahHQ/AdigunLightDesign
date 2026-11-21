@@ -41,6 +41,17 @@ async function verifyVirtualPlayback(browser, studioUrl) {
   const page = await browser.newPage({viewport:{width:1440,height:900}});
   try {
     await page.goto(studioUrl);
+    const projectMenu = page.locator('[data-command-menu-trigger="project"]');
+    const sceneMenu = page.locator('[data-command-menu-trigger="scene"]');
+    const projectDialog = page.locator(".project-dialog");
+    const requireFocus = (control, message) => control.evaluate(element => element.ownerDocument.activeElement === element).then(focused => assert.equal(focused, true, message));
+    await projectMenu.press("ArrowDown");
+    await page.keyboard.press("ArrowDown");
+    await page.keyboard.press("Enter");
+    await projectDialog.waitFor();
+    await page.keyboard.press("Escape");
+    await projectDialog.waitFor({state:"detached"});
+    await requireFocus(projectMenu, "Escape returns focus from Open Project to the Project menu");
     const canvas = page.locator("#light-canvas");
     const readPreviewPixels = async () => {
       const screenshot = await canvas.screenshot();
@@ -73,9 +84,12 @@ async function verifyVirtualPlayback(browser, studioUrl) {
     const stoppedDifference = colorDifference(await readPreviewPixels());
     assert.ok(stoppedDifference < pulseDifference / 5, `stopping restores the saved WebGL lighting (pulse ${pulseDifference.toFixed(2)}, stopped ${stoppedDifference.toFixed(2)})`);
 
-    await page.locator('[data-command-menu-trigger="scene"]').click();
-    await page.locator("#add-room-scene").click();
-    await page.locator("#create-room-scene").click();
+    await sceneMenu.press("ArrowDown");
+    await page.keyboard.press("Enter");
+    await requireFocus(page.locator("#room-template"), "the room dialog focuses its first field");
+    await page.locator("#create-room-scene").press("Enter");
+    await projectDialog.waitFor({state:"detached"});
+    await requireFocus(sceneMenu, "creating a room returns focus to the Scene menu after rendering");
     const setDimmer = async value => {
       await page.locator("#fixture-dimmer").fill(String(value));
       await page.locator("#apply-fixture").click();
@@ -111,6 +125,16 @@ async function verifyVirtualPlayback(browser, studioUrl) {
     assert.match(await playbackReadout.textContent(), /^0?\d\.\d \/ 8\.0 s$/, "resuming at the end loops the arrangement");
     await page.locator("#stop-cue").click();
     assert.equal(await page.locator("#fixture-dimmer").inputValue(), "40", "preview does not rewrite the saved dimmer");
+    await projectMenu.press("ArrowDown");
+    await page.keyboard.press("ArrowDown");
+    await page.keyboard.press("ArrowDown");
+    await page.keyboard.press("Enter");
+    const projectName = page.locator("#saved-project-name");
+    await requireFocus(projectName, "the Save dialog focuses the project name field");
+    await projectName.fill("Keyboard acceptance");
+    await projectName.press("Enter");
+    await projectDialog.waitFor({state:"detached"});
+    await requireFocus(projectMenu, "saving returns focus to the Project menu after rendering");
   } finally {
     await page.close();
   }

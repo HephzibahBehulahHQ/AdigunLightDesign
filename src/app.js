@@ -301,30 +301,37 @@ function readSavedProjects() {
   return Array.isArray(stored.projects) ? stored.projects.filter((item)=>item?.id && validateProject(item.project).valid) : [];
 }
 function makeProjectDialog(title,content) {
+  const opener = document.activeElement;
+  const menu = opener?.closest("[data-command-menu]")?.dataset.commandMenu;
   const dialog=document.createElement("dialog");
   dialog.className="project-dialog";
   dialog.setAttribute("aria-labelledby","project-dialog-title");
   dialog.innerHTML='<form method="dialog" class="project-dialog-card"><header><h2 id="project-dialog-title">'+esc(title)+'</h2><button type="button" class="project-dialog-close" aria-label="'+esc(t("close"))+'">×</button></header>'+content+'</form>';
   document.body.append(dialog);
-  dialog.querySelector(".project-dialog-close").onclick=()=>{dialog.close();dialog.remove();};
+  dialog.querySelector(".project-dialog-close").onclick=()=>dialog.close();
+  dialog.addEventListener("close", () => {
+    dialog.remove();
+    if (document.querySelector("dialog[open]")) return;
+    const target = menu ? document.querySelector(`[data-command-menu-trigger="${menu}"]`)
+      : opener?.id ? document.getElementById(opener.id) : null;
+    (target ?? document.querySelector('[data-command-menu-trigger="project"]'))?.focus({preventScroll:true});
+  }, {once:true});
   return dialog;
 }
 function showRoomSceneDialog() {
   const options=roomPresetOptions(preferences.locale);
   const dialog=makeProjectDialog(t("addRoomScene"),'<label class="project-dialog-field">'+esc(t("chooseRoomTemplate"))+'<select id="room-template" required>'+options.map(item=>'<option value="'+esc(item.id)+'">'+esc(item.label)+'</option>').join("")+'</select></label><div class="project-dialog-actions"><button type="button" data-cancel>'+esc(t("cancel"))+'</button><button type="submit" id="create-room-scene">＋ '+esc(t("addRoomScene"))+'</button></div>');
   const form=dialog.querySelector("form");
-  dialog.querySelector("[data-cancel]").onclick=()=>{dialog.close();dialog.remove();};
-  form.onsubmit=(event)=>{event.preventDefault();const presetId=dialog.querySelector("#room-template").value;const roomScene=createRoomScene(presetId,{name:roomPresetName(presetId,preferences.locale)});commitProjectChange("scene-create",(draft)=>{const seeded=createRoomStarterLighting(roomScene,draft.fixtures,0);draft.scenes.push(seeded.scene);draft.fixtures=seeded.fixtures;});preferences.sceneId=roomScene.id;preferences.objectId=null;preferences.view="light";savePreferences();status=t("roomSceneAdded");dialog.close();dialog.remove();render();};
-  dialog.addEventListener("cancel",()=>dialog.remove(),{once:true});
+  dialog.querySelector("[data-cancel]").onclick=()=>dialog.close();
+  form.onsubmit=(event)=>{event.preventDefault();const presetId=dialog.querySelector("#room-template").value;const roomScene=createRoomScene(presetId,{name:roomPresetName(presetId,preferences.locale)});commitProjectChange("scene-create",(draft)=>{const seeded=createRoomStarterLighting(roomScene,draft.fixtures,0);draft.scenes.push(seeded.scene);draft.fixtures=seeded.fixtures;});preferences.sceneId=roomScene.id;preferences.objectId=null;preferences.view="light";savePreferences();status=t("roomSceneAdded");dialog.close();render();};
   dialog.showModal();
   dialog.querySelector("#room-template").focus();
 }
 function showSaveDialog(onSave) {
   const dialog=makeProjectDialog(t("saveProjectTitle"),'<label class="project-dialog-field">'+esc(t("projectName"))+'<input id="saved-project-name" maxlength="120" required value="'+esc(project.name)+'" /></label><div class="project-dialog-actions"><button type="button" data-cancel>'+esc(t("cancel"))+'</button><button type="submit">'+esc(t("save"))+'</button></div>');
   const form=dialog.querySelector("form"),input=dialog.querySelector("#saved-project-name");
-  dialog.querySelector("[data-cancel]").onclick=()=>{dialog.close();dialog.remove();};
-  form.onsubmit=(event)=>{event.preventDefault();const name=input.value.trim();if(!name){input.focus();return;}dialog.close();dialog.remove();onSave(name);};
-  dialog.addEventListener("close",()=>dialog.remove(),{once:true});
+  dialog.querySelector("[data-cancel]").onclick=()=>dialog.close();
+  form.onsubmit=(event)=>{event.preventDefault();const name=input.value.trim();if(!name){input.focus();return;}dialog.close();onSave(name);};
   dialog.showModal();input.focus();input.select();
 }
 function persistProject(name) {
@@ -351,12 +358,12 @@ function showSavedProjectsDialog() {
   const records=readSavedProjects();
   const entries=records.length ? records.map((record)=>'<button type="button" class="saved-project-entry" data-open-saved="'+esc(record.id)+'"><strong>'+esc(record.name)+'</strong><small>'+esc(record.updatedAt ? new Date(record.updatedAt).toLocaleString() : "")+'</small></button>').join("") : '<p class="project-dialog-empty">'+esc(t("savedProjectsEmpty"))+'</p>';
   const dialog=makeProjectDialog(t("openProject"),'<div class="saved-project-list">'+entries+'</div><div class="project-dialog-actions"><button type="button" data-import>'+esc(t("importProject"))+'</button><button type="button" data-cancel>'+esc(t("cancel"))+'</button></div>');
-  dialog.querySelector("[data-cancel]").onclick=()=>{dialog.close();dialog.remove();};
-  dialog.querySelector("[data-import]").onclick=()=>{dialog.close();dialog.remove();document.querySelector("#project-file")?.click();};
+  dialog.querySelector("[data-cancel]").onclick=()=>dialog.close();
+  dialog.querySelector("[data-import]").onclick=()=>{dialog.close();document.querySelector("#project-file")?.click();};
   dialog.querySelectorAll("[data-open-saved]").forEach((button)=>button.onclick=()=>{
     const record=records.find((item)=>item.id===button.dataset.openSaved);
     if(!record)return;
-    dialog.close();dialog.remove();
+    dialog.close();
     requestWorkspaceReplacement(()=>{
       stopPlayback();
       project=prepareEditorProject(record.project);
@@ -369,18 +376,15 @@ function showSavedProjectsDialog() {
       render();
     });
   });
-  dialog.addEventListener("close",()=>dialog.remove(),{once:true});
   dialog.showModal();
 }
 function requestWorkspaceReplacement(continueAction) {
   if(!projectDirty){continueAction();return;}
   const dialog=makeProjectDialog(t("unsavedChangesTitle"),'<p class="project-dialog-message">'+esc(t("unsavedChangesBody"))+'</p><div class="project-dialog-actions"><button type="button" data-cancel>'+esc(t("cancel"))+'</button><button type="button" data-discard>'+esc(t("discardChanges"))+'</button><button type="button" data-save>'+esc(t("saveAndContinue"))+'</button></div>');
-  const finish=(choice)=>{dialog.close();dialog.remove();if(choice==="discard"){projectDirty=false;projectPersisted=false;continueAction();}else if(choice==="save")saveProject(continueAction);};
+  const finish=(choice)=>{dialog.close();if(choice==="discard"){projectDirty=false;projectPersisted=false;continueAction();}else if(choice==="save")saveProject(continueAction);};
   dialog.querySelector("[data-cancel]").onclick=()=>finish("cancel");
   dialog.querySelector("[data-discard]").onclick=()=>finish("discard");
   dialog.querySelector("[data-save]").onclick=()=>finish("save");
-  dialog.addEventListener("cancel",(event)=>{event.preventDefault();finish("cancel");},{once:true});
-  dialog.addEventListener("close",()=>dialog.remove(),{once:true});
   dialog.showModal();
 }
 function createNewProject() {
