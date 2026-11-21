@@ -107,7 +107,14 @@ const account = createAccount({ publishableKey, clientFactory });
 const liveCanvasFeed=createCanvasStateFeed();
 const floatingBot=createFloatingBot({getProjectId:()=>project.id,getUserId:()=>account.user?.id ?? "guest",getLocale:()=>preferences.locale,translate});
 const liveCopilotPanel=createLiveCopilotPanel({feed:liveCanvasFeed,getLocale:()=>preferences.locale,translate,onNotify:()=>floatingBot.notify(),canAccept:()=>Boolean(account.user),onError:message=>setStatus(t(message)),onAccept:async(suggestion,isCurrent)=>{
-  luxProposal=await previewUnpatchedFixture({getProject:()=>project,suggestion,account,isCurrent});render();floatingBot.open();document.querySelector("#confirm-lux-action")?.focus();
+  const generation=workspaceGeneration;
+  try {
+    const proposal=await previewUnpatchedFixture({getProject:()=>project,suggestion,account,isCurrent:()=>generation===workspaceGeneration && isCurrent()});
+    if (generation!==workspaceGeneration) return;
+    luxProposal=proposal;render();floatingBot.open();document.querySelector("#confirm-lux-action")?.focus();
+  } catch (error) {
+    if (generation===workspaceGeneration) throw error;
+  }
 }});
 const luxService=createLuxServicePanel({getProject:()=>project,getLocale:()=>preferences.locale,translate,imageAssets,onPreview:(proposal)=>{luxProposal=proposal;render();},onError:(message)=>setStatus(message),onNotify:()=>floatingBot.notify()});
 let project = loadProject();
@@ -417,6 +424,9 @@ function requestWorkspaceReplacement(replace) {
   const continueAction=()=>{
     workspaceGeneration++;
     imageAssets.clear();
+    luxService.clearProject();
+    luxProposal=null;
+    luxConfirmationPending=false;
     replace();
   };
   if(!projectDirty){continueAction();return;}
@@ -915,13 +925,14 @@ function bind() {
   };
   const cancelLux=document.querySelector("#cancel-lux-action");if(cancelLux)cancelLux.onclick=()=>{luxProposal=null;render();};
   const confirmLux=document.querySelector("#confirm-lux-action");if(confirmLux)confirmLux.onclick=async()=>{
-    if(luxConfirmationPending)return;const proposal=luxProposal;luxConfirmationPending=true;confirmLux.disabled=true;
+    if(luxConfirmationPending)return;const proposal=luxProposal,generation=workspaceGeneration;luxConfirmationPending=true;confirmLux.disabled=true;
     try {
       stopPlayback();
-      const result=await confirmAuthenticatedAction({getState:()=>({project,undoStack,redoStack}),proposal,account,confirmed:true,isCurrent:()=>luxProposal===proposal});
+      const result=await confirmAuthenticatedAction({getState:()=>({project,undoStack,redoStack}),proposal,account,confirmed:true,isCurrent:()=>generation===workspaceGeneration && luxProposal===proposal});
+      if(generation!==workspaceGeneration)return;
       project=result.project;undoStack=result.undoStack;redoStack=result.redoStack;luxProposal=null;projectPersisted=false;status=t("botChangesUnsaved");
-    } catch(error) {if(luxProposal===proposal)luxProposal=null;status=t(error.message);}
-    finally{luxConfirmationPending=false;render();}
+    } catch(error) {if(generation===workspaceGeneration){if(luxProposal===proposal)luxProposal=null;status=t(error.message);}}
+    finally{if(generation===workspaceGeneration){luxConfirmationPending=false;render();}}
   };
   const shapeKind=document.querySelector("#shape-kind");if(shapeKind)shapeKind.onchange=()=>{preferences.shapeKind=shapeKind.value;savePreferences();};
   const addShape=document.querySelector("#add-canvas-shape");if(addShape)addShape.onclick=()=>document.querySelector('[data-tool="shapes"]').click();
