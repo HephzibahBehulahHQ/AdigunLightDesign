@@ -37,7 +37,7 @@ async function verifyUtilityControls(page) {
   assert.deepEqual(await locale.locator("option").evaluateAll(options => options.map(option => option.value)), ["en", "de", "yo", "pcm"]);
 }
 
-async function verifyVirtualPulse(browser, studioUrl) {
+async function verifyVirtualPlayback(browser, studioUrl) {
   const page = await browser.newPage({viewport:{width:1440,height:900}});
   try {
     await page.goto(studioUrl);
@@ -72,6 +72,45 @@ async function verifyVirtualPulse(browser, studioUrl) {
     assert.equal(await virtualDimmer.textContent(), savedDimmer, "stopping the effect restores the saved virtual DMX level");
     const stoppedDifference = colorDifference(await readPreviewPixels());
     assert.ok(stoppedDifference < pulseDifference / 5, `stopping restores the saved WebGL lighting (pulse ${pulseDifference.toFixed(2)}, stopped ${stoppedDifference.toFixed(2)})`);
+
+    await page.locator('[data-command-menu-trigger="scene"]').click();
+    await page.locator("#add-room-scene").click();
+    await page.locator("#create-room-scene").click();
+    const setDimmer = async value => {
+      await page.locator("#fixture-dimmer").fill(String(value));
+      await page.locator("#apply-fixture").click();
+      assert.equal(await virtualDimmer.textContent(), String(value));
+    };
+    await setDimmer(200);
+    await page.locator("#create-cue").click();
+    await page.locator("#edit-cue-duration").fill("8");
+    await page.locator("#edit-cue-delay").fill("1");
+    await page.locator("#edit-cue-fade").fill("2");
+    await page.locator("#edit-cue-fadeOut").fill("2");
+    await page.locator("#edit-cue").click();
+    await setDimmer(40);
+
+    const ruler = page.locator(".arrangement-timeline .timeline-ruler");
+    const playbackReadout = page.locator("#arrangement-position");
+    const waitForPosition = seconds => page.waitForFunction(expected =>
+      globalThis.document.querySelector("#arrangement-position")?.textContent === expected,
+    `${seconds.toFixed(1)} / 8.0 s`, {timeout:7000});
+    for (const [time, expectedDimmer, phase] of [[.5,40,"delay"], [2,120,"fade-in"], [4,200,"hold"], [7,120,"fade-out"]]) {
+      const {width,height} = await ruler.boundingBox();
+      await ruler.click({position:{x:time / 30 * width, y:height / 2}});
+      await waitForPosition(time);
+      assert.equal(await virtualDimmer.textContent(), String(expectedDimmer), `virtual dimmer matches the ${phase} envelope`);
+    }
+    await page.locator("#sequence-loop").evaluate(element => element.closest("label").click());
+    await ruler.press("End");
+    await waitForPosition(8);
+    assert.equal(await ruler.getAttribute("aria-valuenow"), "8", "End holds the final frame while the arrangement is paused in loop mode");
+    assert.equal(await virtualDimmer.textContent(), "40", "fade-out returns to the original nonzero dimmer value");
+    await page.locator("#pause-playback").click();
+    await page.waitForFunction(() => Number(globalThis.document.querySelector(".arrangement-timeline .timeline-ruler")?.getAttribute("aria-valuenow")) < 2);
+    assert.match(await playbackReadout.textContent(), /^0?\d\.\d \/ 8\.0 s$/, "resuming at the end loops the arrangement");
+    await page.locator("#stop-cue").click();
+    assert.equal(await page.locator("#fixture-dimmer").inputValue(), "40", "preview does not rewrite the saved dimmer");
   } finally {
     await page.close();
   }
@@ -1140,7 +1179,7 @@ try {
   assert.ok(applyBounds.y >= 0 && applyBounds.y + applyBounds.height <= 844, "applying a mobile fixture edit keeps its action in view");
   await touchContext.close();
   await context.close();
-  await verifyVirtualPulse(browser, `http://127.0.0.1:${address.port}/#AdigunStudio`);
+  await verifyVirtualPlayback(browser, `http://127.0.0.1:${address.port}/#AdigunStudio`);
   await verifyOfflineStudio(browser);
 } finally {
   await browser?.close();
