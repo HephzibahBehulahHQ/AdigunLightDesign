@@ -337,6 +337,11 @@ Object.assign(messages.de,{importPaletteJson:"Paletten-JSON importieren",palette
 Object.assign(messages.yo,{importPaletteJson:"Gbé JSON àkójọpọ̀ àwọ̀ wọlé",paletteImported:"A ti gbé àkójọpọ̀ àwọ̀ wọlé.",paletteImportFailed:"Yan fáìlì JSON àkójọpọ̀ àwọ̀ AdigunLightDesign tó tọ́, tí kò ju 5 MB lọ."});
 Object.assign(messages.pcm,{importPaletteJson:"Import palette JSON",paletteImported:"Palette don enter.",paletteImportFailed:"Choose valid AdigunLightDesign palette JSON file wey no pass 5 MB."});
 
+Object.assign(messages.en,{cueName:"Cue name"});
+Object.assign(messages.de,{cueName:"Cue-Name"});
+Object.assign(messages.yo,{cueName:"Orúkọ ìtànná"});
+Object.assign(messages.pcm,{cueName:"Cue name"});
+
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }
 
 Object.assign(messages.en,{moduleDesign:"Design",moduleStudio:"3D Studio",moduleFixtures:"Fixture Library",paintSurface:"Paint surface",applySwatchColour:"Set swatch colour",applySwatchToFixtures:"Apply swatch to fixtures",previewSelectedCue:"Preview selected cue",playCueList:"Play cue list",previewEffect:"Preview effect"});

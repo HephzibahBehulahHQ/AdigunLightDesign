@@ -1289,7 +1289,7 @@ try {
   assert.equal(openCueEditor.scrollHeight<=openCueEditor.clientHeight+1&&openCueEditor.hidden.length===0,true,`cue timing and scheduling remain visible without scrolling when a cue is selected: ${JSON.stringify(openCueEditor)}`);
   const cueRows=await page.locator(".cue-timing").evaluate(row=>{const headingRow=row.querySelector(".cue-timing-headings"),valueRow=row.querySelector(".cue-timing-values"),headings=[...headingRow.children].filter(item=>!item.hasAttribute("aria-hidden")),values=[...valueRow.children],bounds=element=>{const rect=element.getBoundingClientRect();return {left:rect.left,right:rect.right,top:rect.top,bottom:rect.bottom};},headerBox=bounds(headingRow),valueBox=bounds(valueRow),headerBounds=headings.map(bounds),valueBounds=values.slice(0,headings.length).map(bounds),allValueBounds=values.map(bounds),overlaps=items=>items.some((item,index)=>items.slice(index+1).some(other=>item.left<other.right-1&&item.right>other.left+1&&item.top<other.bottom-1&&item.bottom>other.top+1));return {labelsOnOneLine:headerBounds.every(item=>Math.abs(item.top-headerBounds[0].top)<1),valuesOnSecondLine:valueBox.top>=headerBox.bottom-1&&valueBounds.every(item=>item.top>=valueBox.top-1&&item.bottom<=valueBox.bottom+1),labelsAligned:headerBounds.every((item,index)=>Math.abs((item.left+item.right)/2-(valueBounds[index].left+valueBounds[index].right)/2)<1),overlaps:overlaps(headerBounds)||overlaps(allValueBounds),headerBox,valueBox,fields:headings.map(item=>item.textContent)};});
   assert.equal(cueRows.labelsOnOneLine&&cueRows.valuesOnSecondLine&&cueRows.labelsAligned&&!cueRows.overlaps,true,`cue timing and scheduling have aligned headings with compact values beneath and no overlap: ${JSON.stringify(cueRows)}`);
-  await page.locator("#edit-cue-name").fill("Acceptance fade");
+  await page.getByLabel("Cue name",{exact:true}).fill("Acceptance fade");
   await page.locator("#edit-cue-duration").fill("8");
   await page.locator("#edit-cue-fade").fill("1.5");
   await page.locator("#edit-cue-delay").fill("0.5");
@@ -1300,10 +1300,13 @@ try {
   await page.locator("#schedule-cue").click();
   assert.equal(await page.locator(".arrangement-timeline .track-name").filter({hasText:"Acceptance track"}).count(), 1, "the scheduled cue appears on its chosen track");
   const keyframeChannel = JSON.parse(await page.locator("#keyframe-channel").inputValue());
+  const channelName=await page.locator("#keyframe-channel option:checked").textContent();
   await page.locator("#keyframe-time").fill("2.5");
   await page.locator("#keyframe-value").fill("192");
   await page.locator("#save-keyframe").click();
-  assert.match(await page.locator('[data-remove-keyframe]').first().locator("..").textContent(), /2\.5s → 192/);
+  const keyframeRemoval=page.locator("[data-remove-keyframe]").first();
+  assert.ok((await keyframeRemoval.locator("..").textContent()).startsWith(`${channelName} · 2.5s → 192`));
+  assert.equal(await keyframeRemoval.getAttribute("aria-label"),`Remove keyframe · ${channelName} · 2.5s`);
   const ruler = page.locator('.arrangement-timeline .timeline-ruler[role="slider"]');
   await ruler.press("Home");
   await ruler.press("ArrowRight");
