@@ -94,6 +94,7 @@ if (!Object.hasOwn(previewQualities,preferences.previewQuality)) preferences.pre
 let projectPersisted=false;
 let projectDirty=false;
 let activeSavedProjectId=null;
+let paletteVersionId=null;
 let luxProposal=null;
 let luxConfirmationPending=false;
 let viewportCamera=null;
@@ -438,6 +439,7 @@ function showSavedProjectsDialog() {
 function requestWorkspaceReplacement(replace) {
   const continueAction=()=>{
     workspaceGeneration++;
+    paletteVersionId=null;
     imageAssets.clear();
     luxService.clearProject();
     luxProposal=null;
@@ -723,7 +725,7 @@ function render() {
   const oklch=oklabToOklch(rgbToOklab(hexToRgb(active.hex)));
   document.querySelector("#lock-swatch").insertAdjacentHTML("beforebegin", `<section class="colour-space-card oklch-controls"><h3>OKLCH</h3>${[["l",oklch.l,1,"L"],["c",oklch.c,1,"C"],["h",oklch.h,360,"H"]].map(([key,value,max,label])=>`<label title="${key==="l"?t("lightness"):key==="c"?t("chroma"):t("hue")} (0–${max})" aria-label="${key==="l"?t("lightness"):key==="c"?t("chroma"):t("hue")} (0–${max})">${label}<input id="oklch-${key}" type="number" required min="0" max="${max}" step="any" value="${compact(value,4)}" /></label>`).join("")}<button id="apply-oklch" class="wide">${t("apply")} OKLCH</button></section>`);
   document.querySelector("#oklch-l").closest("label").firstChild.textContent="L";
-  document.querySelector(".palette-panel").insertAdjacentHTML("beforeend", `<div id="palette-versions-menu" class="command-subpanel" hidden><div class="palette-actions"><button id="save-version">${t("saveVersion")}</button><select id="palette-version" aria-label="${t("savedVersions")}">${project.palettes.slice(1).map((item)=>`<option value="${esc(item.id)}">${esc(item.name)}</option>`).join("")}</select><button id="restore-version" ${project.palettes.length<2 ? "disabled" : ""}>${t("restoreVersion")}</button></div></div><div id="palette-compare-menu" class="command-subpanel" hidden><div id="version-comparison"></div></div>`);
+  document.querySelector(".palette-panel").insertAdjacentHTML("beforeend", `<div id="palette-versions-menu" class="command-subpanel" hidden><div class="palette-actions"><button id="save-version">${t("saveVersion")}</button><select id="palette-version" aria-label="${t("savedVersions")}">${project.palettes.slice(1).map((item)=>`<option value="${esc(item.id)}" ${item.id===paletteVersionId ? "selected" : ""}>${esc(item.name)}</option>`).join("")}</select><button id="restore-version" ${project.palettes.length<2 ? "disabled" : ""}>${t("restoreVersion")}</button></div></div><div id="palette-compare-menu" class="command-subpanel" hidden><div id="version-comparison"></div></div>`);
 
   document.querySelector("#lock-swatch").insertAdjacentHTML("beforebegin", `<label>${t("opacity")} (%)<input id="swatch-opacity" type="number" required min="0" max="100" step="any" value="${(active.opacity ?? 1)*100}" /></label><button id="apply-opacity" class="wide">${t("setSwatchOpacity")}</button>`);
   for (const button of document.querySelectorAll("[data-swatch]")) {
@@ -1071,7 +1073,10 @@ function bind() {
     const cell=(color)=>color ? `<span style="background:${swatchCssColor(color)};display:inline-block;width:12px;height:12px"></span> ${esc(color.name)} ${swatchCssColor(color)}` : "—";
     comparison.innerHTML=`<table><thead><tr><th>${t("currentVersion")}</th><th>${t("savedVersions")}</th></tr></thead><tbody>${comparePalettes(palette(),saved).map((row)=>`<tr class="${row.changed ? "is-changed" : ""}"><td>${cell(row.current)}</td><td>${cell(row.saved)}</td></tr>`).join("")}</tbody></table>`;
   };
-  document.querySelector("#palette-version").onchange=updateComparison;
+  document.querySelector("#palette-version").onchange=event=>{
+    paletteVersionId=event.target.value;
+    updateComparison();
+  };
   updateComparison();
   const togglePaletteSubpanel=(triggerSelector,panelSelector,otherTriggerSelector,otherPanelSelector)=>{
     const trigger=document.querySelector(triggerSelector),panel=document.querySelector(panelSelector),otherTrigger=document.querySelector(otherTriggerSelector),otherPanel=document.querySelector(otherPanelSelector);
@@ -1086,7 +1091,9 @@ function bind() {
   togglePaletteSubpanel("#open-versions","#palette-versions-menu","#open-compare","#palette-compare-menu");
   togglePaletteSubpanel("#open-compare","#palette-compare-menu","#open-versions","#palette-versions-menu");
   document.querySelector("#save-version").onclick=()=>{
-    commitProjectChange("palette-version-save",(draft)=>{draft.palettes.push(snapshotPalette(draft.palettes[0],`${draft.palettes[0].name} · ${draft.palettes.length}`));});
+    const snapshot=snapshotPalette(palette(),`${palette().name} · ${project.palettes.length}`);
+    commitProjectChange("palette-version-save",(draft)=>{draft.palettes.push(snapshot);});
+    paletteVersionId=snapshot.id;
     render();
   };
   document.querySelector("#restore-version").onclick=()=>{
