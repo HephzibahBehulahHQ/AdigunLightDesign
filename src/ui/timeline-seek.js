@@ -1,6 +1,6 @@
 export function bindTimelineSeek(ruler,{span,duration,value=0,label,onSeek,onPreview=()=>{}}){
   let time=Math.max(0,Math.min(duration,value)),drag=null;
-  const show=next=>{time=Math.min(duration,Math.round(Math.max(0,Math.min(duration,next))*10)/10);ruler.setAttribute("aria-valuenow",String(time));onPreview(time);};
+  const show=next=>{time=next>=duration ? duration : Math.min(duration,Math.round(Math.max(0,next)*10)/10);ruler.setAttribute("aria-valuenow",String(time));onPreview(time);};
   ruler.tabIndex=duration>0?0:-1;ruler.setAttribute("role","slider");ruler.setAttribute("aria-label",label);
   ruler.setAttribute("aria-valuemin","0");ruler.setAttribute("aria-valuemax",String(duration));ruler.setAttribute("aria-valuenow",String(time));ruler.setAttribute("aria-disabled",String(duration<=0));
   const position=event=>{const rect=ruler.getBoundingClientRect();return rect.width>0 && Number.isFinite(event.clientX)?(event.clientX-rect.left)/rect.width*span:null;};

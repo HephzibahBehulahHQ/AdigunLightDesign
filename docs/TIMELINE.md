@@ -1,5 +1,11 @@
 # Cue timeline
 
+The idle and playing virtual DMX monitor both show the active room's fixtures.
+The browser suite verifies a cue's dimmer output during delay, fade-in, hold,
+and fade-out, including a return to a nonzero source level. Seeking to End
+holds the final frame while paused, including in Loop mode. Resuming continues
+the loop. Preview leaves the saved fixture values intact.
+
 The virtual DMX monitor now consumes the same evaluated fixture snapshot as the renderer during cue, sequence, track and effect preview. It shows the selected fixture's universe, absolute channel addresses and current virtual values; Stop restores saved values when the editor rerenders. These readouts do not mutate fixture inputs or transmit hardware output. Chrome verifies that a virtual dimmer pulse changes both the displayed output and rendered scene, and that Stop restores both to the saved fixture state.
 
 Effect eligibility uses each fixture profile's active mode channels, including for legacy files with extra stored properties. Fixed wash/strip modes do not acquire motion from stale pan/tilt properties. Newly created fixtures initialize only their declared channels. These are application-authored virtual modes, not verified manufacturer profiles.

@@ -241,16 +241,22 @@ function playLatestCue() {
   },100);
   render();
 }
+function arrangementPlaybackPosition(duration) {
+  const elapsed = playbackClock.elapsed(performance.now());
+  const holdingEnd = playbackClock.paused && elapsed === duration;
+  return playbackPosition(elapsed, duration, Boolean(preferences.loopSequence) && !holdingEnd);
+}
 function playArrangement({seek=0,paused=false}={}) {
   const sceneCueList=sceneCues();if (!sceneCueList.length) return;
   stopPlayback();
   const source=structuredClone(sceneFixtures()),cues=structuredClone(sceneCueList),duration=arrangementDuration(cues);
-  playbackClock=createPlaybackClock(performance.now());preferences.view="light";
-  playbackClock.seek(seek,performance.now());
-  if (paused) playbackClock.pause(performance.now());
+  const now = performance.now();
+  playbackClock=createPlaybackClock(now);preferences.view="light";
+  playbackClock.seek(seek,now);
+  if (paused) playbackClock.pause(now);
   playbackTimer=setInterval(()=>{
     if(document.querySelector(".arrangement-timeline .timeline-ruler")?.dataset.seeking)return;
-    const position=playbackPosition(playbackClock.elapsed(performance.now()),duration,Boolean(preferences.loopSequence));
+    const position=arrangementPlaybackPosition(duration);
     previewFixtures(evaluateTracks(source,cues,position.time));
     document.querySelector("#arrangement-playhead").style.left=`${position.time/Math.max(30,duration)*100}%`;
     document.querySelector(".arrangement-timeline .timeline-ruler").setAttribute("aria-valuenow",String(position.time));
@@ -707,7 +713,7 @@ function render() {
   }
   document.querySelector(".timeline").append(timingDetails);
   if (preferences.view==="palette") document.querySelector(".scene-preview").innerHTML=canvasMarkup(scene().canvasObjects ?? [],preferences.objectId,t("designCanvas"))+`<div class="canvas-actions"><label>${t("shapeKind")} <select id="shape-kind"><option value="rect" ${preferences.shapeKind!=="ellipse" ? "selected" : ""}>${t("rectangle")}</option><option value="ellipse" ${preferences.shapeKind==="ellipse" ? "selected" : ""}>${t("ellipse")}</option></select></label><button id="add-canvas-shape">＋ ${t("shapes")}</button></div>`;
-  updateDmxFeedback(project.fixtures);
+  updateDmxFeedback(activeFixtures);
   for (const [index,[key,labelKey,helpKey]] of [["lighting","layersLighting","layerLightingHelp"],["palette","layersPalette","layerPaletteHelp"],["props","layersScene","layerPropsHelp"]].entries()) {
     const item=document.querySelectorAll(".layer-list li")[index],visible=scene().visibility?.[key]!==false;
     const label=t(labelKey),help=esc(t(helpKey));
@@ -1130,9 +1136,11 @@ function bind() {
   const loopControl=document.querySelector("#sequence-loop");if(loopControl)loopControl.onchange=(event)=>{preferences.loopSequence=event.target.checked;savePreferences();};
   document.querySelector("#play-effect").onclick=playEffect;
   document.querySelector("#play-tracks").onclick=playArrangement;
+  const scheduledDuration = arrangementDuration(sceneCues());
+  const timelineSpan = Math.max(30, scheduledDuration);
   bindTimelineSeek(document.querySelector(".arrangement-timeline .timeline-ruler"),{
-    span:Math.max(30,arrangementDuration(sceneCues())),duration:arrangementDuration(sceneCues()),value:playbackClock && arrangementDuration(sceneCues())>0 ? playbackPosition(playbackClock.elapsed(performance.now()),arrangementDuration(sceneCues()),Boolean(preferences.loopSequence)).time : 0,label:t("seekTracks"),
-    onPreview(time){document.querySelector("#arrangement-playhead").style.left=`${time/Math.max(30,arrangementDuration(sceneCues()))*100}%`;},
+    span:timelineSpan,duration:scheduledDuration,value:playbackClock && scheduledDuration>0 ? arrangementPlaybackPosition(scheduledDuration).time : 0,label:t("seekTracks"),
+    onPreview(time){document.querySelector("#arrangement-playhead").style.left=`${time/timelineSpan*100}%`;},
     onSeek(time,{keyboard}){playArrangement({seek:time,paused:true});if(keyboard)document.querySelector(".arrangement-timeline .timeline-ruler")?.focus();}
   });
   const scheduleButton=document.querySelector("#schedule-cue");
