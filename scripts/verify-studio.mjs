@@ -565,6 +565,32 @@ try {
     assert.ok(download.suggestedFilename().endsWith(extension), `export uses the ${extension} extension`);
     return readFile(await download.path());
   };
+  const sampleViewportExport = async bytes => page.evaluate(async base64 => {
+    const response = await fetch(`data:image/png;base64,${base64}`);
+    const bitmap = await globalThis.createImageBitmap(await response.blob());
+    try {
+      const sample = globalThis.document.createElement("canvas");
+      sample.width = 96;
+      sample.height = 54;
+      const context = sample.getContext("2d");
+      context.drawImage(bitmap, 0, 0, sample.width, sample.height);
+      return Array.from(context.getImageData(0, 0, sample.width, sample.height).data);
+    } finally {
+      bitmap.close();
+    }
+  }, bytes.toString("base64"));
+  const sampleCurrentViewport = async () =>
+    sampleViewportExport(await downloadExportFile("#export-viewport", ".png"));
+  const viewportPixelDifference = (before, after) =>
+    before.reduce((total, value, index) => total + Math.abs(value - after[index]), 0) / before.length;
+  const initialViewport = await sampleViewportExport(hdBytes);
+  const initialColors = new Set();
+  for (let index = 0; index < initialViewport.length; index += 4) {
+    if (initialViewport[index + 3] === 255) {
+      initialColors.add(initialViewport.slice(index, index + 3).join(","));
+    }
+  }
+  assert.ok(initialColors.size > 20, "the initial viewport PNG contains opaque rendered scene detail");
   const paletteJsonBytes = await downloadExportFile('[data-export="palette"]', ".json");
   const exportedPalette = JSON.parse(paletteJsonBytes.toString("utf8"));
   assert.equal(exportedPalette.schemaVersion, 1);
@@ -934,11 +960,17 @@ try {
   assert.equal(await page.locator("#preview-quality").inputValue(), "balanced", "the same quality selector restores the balanced renderer profile");
   await clickCommand("scene","#reset-camera");
   assert.deepEqual(await page.locator(".scene-preview").boundingBox(), sceneHeaderCanvas, "Reset camera does not move the canvas");
+  let frontViewport;
   for (const view of ["front", "right", "top", "left", "back", "iso"]) {
     const control = page.locator(`.viewport-view-controls [data-camera-view="${view}"]`);
     assert.equal(await control.isEnabled(), true, `${view} camera view is enabled with the active WebGL renderer`);
     await control.click();
     assert.equal(await control.getAttribute("aria-pressed"),"true",`${view} view shows its active selection state`);
+    if (view === "front") frontViewport = await sampleCurrentViewport();
+    if (view === "top") {
+      assert.ok(viewportPixelDifference(frontViewport, await sampleCurrentViewport()) > 1,
+        "front and top camera views produce different rendered viewport exports");
+    }
   }
   const coreTools = ["select", "paletteBrush", "fixture", "material", "shapes", "text", "measure", "orbit"];
   for (const key of coreTools) {
@@ -1498,9 +1530,12 @@ try {
   const kitchenFixtureId=await page.locator("#fixture-select").inputValue();
   const kitchenPosition=await page.evaluate(()=>["x","y","z"].map(axis=>Number(globalThis.document.querySelector(`#fixture-${axis}`).value)));
   assert.ok(Math.abs(kitchenPosition[0])<3&&kitchenPosition[1]>0&&kitchenPosition[1]<3&&Math.abs(kitchenPosition[2])<2.5,"new kitchen fixtures start inside the selected room");
+  const originalKitchenViewport = await sampleCurrentViewport();
   await page.locator("#fixture-colour").fill("#ff2030");
   await page.locator("#fixture-dimmer").fill("180");
   await page.locator("#apply-fixture").click();
+  assert.ok(viewportPixelDifference(originalKitchenViewport, await sampleCurrentViewport()) > 0.25,
+    "changing kitchen fixture color and dimmer changes the pixels in the downloaded viewport");
   assert.match(await page.locator("#cycle-lighting-look").innerText(),/Custom/i,"manual fixture edits identify the room lighting as customized");
   await page.locator("#scene-select").selectOption("studio-room");
   assert.notEqual((await page.locator("#fixture-colour").inputValue()).toUpperCase(),"#FF2030","changing a kitchen fixture leaves the living-room rig unchanged");
