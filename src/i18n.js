@@ -332,6 +332,11 @@ Object.assign(messages.de,{fixtureNameAndPosition:"Name und Position",moreLightC
 Object.assign(messages.yo,{fixtureNameAndPosition:"Orúkọ àti ipò",moreLightControls:"Àwọn ìṣàkóso ìmọ́lẹ̀ míì",validFixtureValue:"Tẹ iye tó tọ́ fún {field}."});
 Object.assign(messages.pcm,{fixtureNameAndPosition:"Name and position",moreLightControls:"More light controls",validFixtureValue:"Enter valid value for {field}."});
 
+Object.assign(messages.en,{importPaletteJson:"Import palette JSON",paletteImported:"Palette imported.",paletteImportFailed:"Choose a valid AdigunLightDesign palette JSON file of 5 MB or less."});
+Object.assign(messages.de,{importPaletteJson:"Paletten-JSON importieren",paletteImported:"Palette importiert.",paletteImportFailed:"Wähle eine gültige AdigunLightDesign-Paletten-JSON-Datei mit höchstens 5 MB."});
+Object.assign(messages.yo,{importPaletteJson:"Gbé JSON àkójọpọ̀ àwọ̀ wọlé",paletteImported:"A ti gbé àkójọpọ̀ àwọ̀ wọlé.",paletteImportFailed:"Yan fáìlì JSON àkójọpọ̀ àwọ̀ AdigunLightDesign tó tọ́, tí kò ju 5 MB lọ."});
+Object.assign(messages.pcm,{importPaletteJson:"Import palette JSON",paletteImported:"Palette don enter.",paletteImportFailed:"Choose valid AdigunLightDesign palette JSON file wey no pass 5 MB."});
+
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }
 
 Object.assign(messages.en,{moduleDesign:"Design",moduleStudio:"3D Studio",moduleFixtures:"Fixture Library",paintSurface:"Paint surface",applySwatchColour:"Set swatch colour",applySwatchToFixtures:"Apply swatch to fixtures",previewSelectedCue:"Preview selected cue",playCueList:"Play cue list",previewEffect:"Preview effect"});

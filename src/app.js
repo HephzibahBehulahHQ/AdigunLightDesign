@@ -66,6 +66,7 @@ import { canFullscreen,toggleViewportFullscreen } from "./ui/fullscreen.js";
 import { groupFixtures,saveFixtureGroup } from "./domain/fixture-groups.ts";
 import { cueCsv, designTokenJson, paletteCss, paletteJson, paletteSvg, patchCsv, projectJson, safeFileStem } from "./export/formats.js";
 import { readProjectFile } from "./domain/import-project.ts";
+import { readPaletteJson } from "./domain/import-palette.js";
 import { editorShortcut, isEditableTarget,toolShortcut,toolKeys } from "./accessibility/shortcuts.js";
 import { commitTransaction, redoTransaction, undoTransaction } from "./domain/history.js";
 
@@ -335,6 +336,23 @@ async function importNativeProject(file) {
     render();
   });
 }
+async function importPaletteFile(file) {
+  const generation=workspaceGeneration;
+  try {
+    if (file.size>5_000_000) throw new Error("Palette file exceeds 5 MB.");
+    const imported=readPaletteJson(await file.text());
+    if (generation!==workspaceGeneration) return;
+    commitProjectChange("palette-import",draft=>{
+      draft.palettes[0]={...draft.palettes[0],...imported};
+    });
+    preferences.selected=imported.colors[0].id;
+    preferences.inspectorMode="palette";
+    savePreferences();
+    setStatus(t("paletteImported"));
+  } catch {
+    if (generation===workspaceGeneration) setStatus(t("paletteImportFailed"));
+  }
+}
 async function importVirtualFixtureRig(file) {
   const generation=workspaceGeneration;
   const targetScene=scene().id;
@@ -580,7 +598,7 @@ function render() {
     scene:`<button type="button" id="add-room-scene">＋ ${t("addRoomScene")}</button><label class="preview-quality">${t("previewQuality")} <select id="preview-quality" ${preferences.view==="light" ? "" : disabled(t("select3d"))}>${Object.keys(previewQualities).map((key)=>`<option value="${key}" ${key===(preferences.previewQuality ?? "balanced") ? "selected" : ""}>${t(`quality_${key}`)}</option>`).join("")}</select></label><button type="button" id="reset-camera">${t("resetCamera")}</button>`,
     stage:`<fieldset class="scene-menu-fields" data-menu-keep-open><legend>${t("stagePlatform")}</legend><label class="scene-menu-check"><input id="stage-enabled" type="checkbox" ${stage.enabled ? "checked" : ""}> ${t("showStage")}</label>${["x","y","z","width","height","depth"].map((key)=>`<label>${["x","y","z"].includes(key) ? key.toUpperCase() : t(key)} (m)<input id="stage-${key}" type="number" step="any" required value="${stage[key]}"></label>`).join("")}<label class="scene-menu-colour">${t("selectedColour")}<input id="stage-color" type="color" value="${stage.color}"></label></fieldset><button type="button" id="apply-stage">${t("applyStageSettings")}</button>`,
     room:`<fieldset class="scene-menu-fields" data-menu-keep-open><legend>${t("roomDimensions")}</legend><p class="room-type-label">${t("roomType")}: ${esc(roomName)}</p>${["width","height","depth"].map((key)=>`<label>${t(key)} (m)<input id="room-${key}" type="number" required min="2" max="${key==="height" ? 20 : 50}" step="any" value="${room[key]}"></label>`).join("")}<label class="scene-menu-colour">${t("ambientFill")}<input id="room-ambience-color" type="color" value="${ambience.color}"></label><label class="scene-menu-range">${t("ambientLevel")} · ${Math.round(ambience.intensity*100)}%<input id="room-ambience-level" type="range" min="0" max="100" step="1" value="${Math.round(ambience.intensity*100)}"></label></fieldset><button type="button" id="apply-room">${t("applyRoomDimensions")}</button>`,
-    palette:`<button type="button" data-menu-keep-open id="open-versions" aria-expanded="false">${t("versions")}</button><button type="button" data-menu-keep-open id="open-compare" aria-expanded="false">${t("compare")}</button>`,
+    palette:`<button type="button" data-menu-keep-open id="open-versions" aria-expanded="false">${t("versions")}</button><button type="button" data-menu-keep-open id="open-compare" aria-expanded="false">${t("compare")}</button><button type="button" id="import-palette">${t("importPaletteJson")}</button>`,
     fixtures:`<button type="button" id="add-fixture">＋ ${t("addWash")}</button><button type="button" id="apply-fixture-colour">${t("applySwatchToFixtures")}</button><button type="button" id="export-fixture-rig" ${activeFixtures.length ? "" : "disabled"}>${t("commandExport")} · ${t("commandFixtures")} JSON</button><button type="button" id="import-fixture-rig">${t("importAction")} · ${t("commandFixtures")} JSON</button>`,
     export:`<button data-export="project">${t("project")} JSON</button>
       <button data-export="palette">${t("commandPalette")} JSON</button>
@@ -623,6 +641,7 @@ function render() {
     </header>
     <nav class="module-nav" aria-label="${t("appModules")}"><div class="workspace-modules">${nav}</div>${commandMenusMarkup}</nav>
     <main id="workspace" class="editor-layout">
+      <input id="palette-json-file" type="file" accept="application/json,.json" hidden />
       <input id="fixture-rig-file" type="file" accept="application/json,.json" hidden />
       <aside class="left-rail panel">
         <div class="left-rail-heading"><h2>${t("project")} • ${t("layers")} • ${t("tools")}</h2></div>
@@ -1163,6 +1182,13 @@ function bind() {
   });
   document.querySelector("#remove-swatch").onclick=()=>mutateColours((colors)=>removeSwatch(colors,selected().id));
   document.querySelectorAll("[data-move-swatch]").forEach((button)=>button.onclick=()=>mutateColours((colors)=>moveSwatch(colors,selected().id,Number(button.dataset.moveSwatch))));
+  const paletteFile=document.querySelector("#palette-json-file");
+  document.querySelector("#import-palette").onclick=()=>paletteFile.click();
+  paletteFile.onchange=()=>{
+    const [file]=paletteFile.files;
+    paletteFile.value="";
+    if (file) void importPaletteFile(file);
+  };
   document.querySelector("#extract-image").onclick=()=>document.querySelector("#palette-image").click();
   document.querySelector("#palette-image").onchange=async(event)=>{
     const [file]=event.target.files;

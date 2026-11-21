@@ -363,6 +363,9 @@ async function verifyPaletteVersions(browser,studioUrl) {
     await page.locator("#save-version").click();
     const second=await versions.inputValue();
     assert.notEqual(second,first,"saving a version selects the new snapshot");
+    await page.locator('[data-command-menu-trigger="export"]').click();
+    const [portableDownload]=await Promise.all([page.waitForEvent("download"),page.locator('[data-export="palette"]').click()]);
+    const portablePath=await portableDownload.path();
     await openVersions();
     await versions.selectOption(first);
     await page.locator("#locale").selectOption("de");
@@ -372,6 +375,17 @@ async function verifyPaletteVersions(browser,studioUrl) {
     assert.equal(await hex.inputValue(),originalHex,"Restore recovers the snapshot color");
     assert.equal(await opacity.inputValue(),originalOpacity,"Restore recovers the snapshot opacity");
     assert.equal(await harmony.inputValue(),originalHarmony,"Restore recovers the snapshot harmony");
+    await openPalette();
+    const [paletteChooser]=await Promise.all([page.waitForEvent("filechooser"),page.locator("#import-palette").click()]);
+    await paletteChooser.setFiles(portablePath);
+    await page.waitForFunction(()=>globalThis.document.querySelector("#harmony")?.value==="square");
+    assert.equal(await hex.inputValue(),"#114488","the portable palette restores the exported color");
+    assert.equal(await opacity.inputValue(),"60","the portable palette restores the exported opacity");
+    await page.locator('[data-command-menu-trigger="history"]').click();
+    await page.locator("#undo").click();
+    assert.equal(await hex.inputValue(),originalHex,"one Undo rolls back a portable palette import");
+    assert.equal(await opacity.inputValue(),originalOpacity);
+    assert.equal(await harmony.inputValue(),originalHarmony);
     await page.locator('[data-command-menu-trigger="history"]').click();
     await page.locator("#undo").click();
     assert.equal(await hex.inputValue(),"#114488","one Undo restores the edited color");
