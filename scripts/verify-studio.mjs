@@ -45,7 +45,7 @@ async function verifyOfflineStudio(browser) {
       const page = await context.newPage();
       const openMenu = name => page.locator(`[data-command-menu-trigger="${name}"]`).click();
       await page.goto(`http://127.0.0.1:${address.port}/#AdigunStudio`);
-      await page.waitForFunction(async () => (await globalThis.navigator.serviceWorker.getRegistration())?.active?.state === "activated");
+      await page.waitForFunction(() => Boolean(globalThis.navigator.serviceWorker.controller));
       await openMenu("project");
       await page.locator("#save").click();
       await page.locator("#saved-project-name").fill("Offline acceptance");

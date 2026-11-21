@@ -12,9 +12,12 @@ self.addEventListener("install", event => {
 });
 
 self.addEventListener("activate", event => {
-  event.waitUntil(caches.keys().then(names => Promise.all(names
-    .filter(name => name.startsWith(cachePrefix) && name !== cacheName)
-    .map(name => caches.delete(name)))));
+  event.waitUntil((async () => {
+    const names = await caches.keys();
+    await Promise.all(names.filter(name => name.startsWith(cachePrefix) && name !== cacheName)
+      .map(name => caches.delete(name)));
+    await self.clients.claim();
+  })());
 });
 
 self.addEventListener("fetch", event => {
