@@ -159,6 +159,12 @@ async function verifyVirtualPlayback(browser, studioUrl) {
       assert.ok((await page.locator("#fixture-select option:checked").textContent()).startsWith(name), `${name} is selected after adding it`);
       assert.equal(await page.locator("#virtual-dmx-monitor .virtual-dmx-channel").count(), footprint, `${name} is patched with its profile's channel footprint`);
     }
+    await page.locator("#close-library").click();
+    await page.locator("#fixture-universe").fill("2");
+    await page.locator("#fixture-address").fill("10");
+    await page.locator("#apply-fixture-patch").click();
+    assert.match(await page.locator(".timeline-status").textContent(), /Universe 2.*4 active channels/, "the timeline counts only channels patched in the selected universe");
+    assert.deepEqual(await page.locator("#virtual-dmx-monitor .virtual-dmx-channel b").allTextContents(), ["010", "011", "012", "013"], "the monitor follows the selected fixture into universe 2");
   } finally {
     await page.close();
   }
