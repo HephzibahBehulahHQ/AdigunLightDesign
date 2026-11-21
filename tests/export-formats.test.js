@@ -22,6 +22,15 @@ test("SVG export escapes names, normalizes colors and rejects unsafe color data"
   assert.throws(()=>paletteSvg({colors:[{hex:'url(javascript:alert(1))'}]}));
 });
 import { cueCsv, paletteJson, patchCsv, safeFileStem } from "../src/export/formats.js";
+test("keeps formula-like fixture, cue and track labels as spreadsheet text",()=>{
+  const patchAssignment={universe:1,startAddress:31,channelFootprint:6};
+  const fixtures=[{name:"=1+1",profileId:"generic",modeId:"rgb-6",patchAssignment}];
+  assert.match(patchCsv(fixtures),/"'=1\+1","generic","rgb-6","1","31","6"/);
+  const cue={name:" ＋accent",trackId:"- rehearsal",duration:5,fade:1,targets:[]};
+  assert.match(cueCsv([cue]),/"' ＋accent","5"/);
+  assert.match(cueCsv([cue]),/"'- rehearsal","0","5"$/);
+  assert.ok(cueCsv([{...cue,name:"\tLead"}]).includes("\n\"'\tLead\""));
+});
 
 test("exports a portable palette without project-only fields", () => { const exported=JSON.parse(paletteJson({id:"p",name:"Studio",harmonyType:"triadic",colors:[{hex:"#FF0000"}]})); assert.deepEqual(exported,{schemaVersion:1,id:"p",name:"Studio",harmonyType:"triadic",colors:[{hex:"#FF0000"}]}); });
 test("quotes fixture and cue CSV fields", () => { const patch=patchCsv([{name:'Wash "A"',profileId:"generic",modeId:"rgb-6",patchAssignment:{universe:1,startAddress:1,channelFootprint:6}}]); const cues=cueCsv([{name:"Intro, warm",duration:5,fade:1,delay:0,targets:[{}]}]); assert.match(patch,/"Wash ""A"""/); assert.match(cues,/"Intro, warm"/); });

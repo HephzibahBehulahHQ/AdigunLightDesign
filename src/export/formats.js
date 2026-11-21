@@ -28,7 +28,12 @@ export function paletteSvg(palette) {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img"><title>${xmlText(palette.name)}</title><rect width="100%" height="100%" fill="#0B1220"/><g fill="#F8FAFC" font-family="sans-serif"><text x="20" y="36" font-size="22">${xmlText(palette.name)}</text>${swatches}</g></svg>`;
 }
 
-const escapeCsv = (value) => `"${String(value ?? "").replaceAll('"','""')}"`;
+const formulaPrefix=/^\s*[=+@＝＋－＠\t\r\n-]/u;
+function escapeCsv(value) {
+  const raw=String(value ?? "");
+  const text=typeof value==="string" && formulaPrefix.test(raw) ? "'"+raw : raw;
+  return `"${text.replaceAll('"','""')}"`;
+}
 export function projectJson(project) { return JSON.stringify(project, null, 2); }
 export function paletteJson(palette) { return JSON.stringify({ schemaVersion:1, id:palette.id, name:palette.name, harmonyType:palette.harmonyType, colors:palette.colors }, null, 2); }
 export function paletteCss(palette) { return paletteCssVariables(palette.colors); }
