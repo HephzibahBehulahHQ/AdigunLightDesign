@@ -581,6 +581,42 @@ try {
   const jpeg = await downloadExportFile('[data-raster="image/jpeg"]', ".jpg");
   assert.equal(jpeg.subarray(0, 3).toString("hex"), "ffd8ff", "palette JPEG has the JPEG signature");
   assert.equal(jpeg.subarray(-2).toString("hex"), "ffd9", "palette JPEG has an end-of-image marker");
+  const expectedSwatches = exportedPalette.colors.map(({hex}) =>
+    hex.slice(1).match(/../g).map(channel => Number.parseInt(channel, 16)));
+  const columns = Math.min(5, expectedSwatches.length);
+  for (const [bytes, mime, tolerance] of [
+    [Buffer.from(svg), "image/svg+xml", 0],
+    [png, "image/png", 0],
+    [jpeg, "image/jpeg", 5],
+  ]) {
+    const sampledSwatches = await page.evaluate(async ({base64, mime, columns, count}) => {
+      const source = await fetch(`data:${mime};base64,${base64}`);
+      const image = new globalThis.Image();
+      const url = URL.createObjectURL(await source.blob());
+      try {
+        image.src = url;
+        await image.decode();
+        const sample = globalThis.document.createElement("canvas");
+        sample.width = image.naturalWidth;
+        sample.height = image.naturalHeight;
+        const context = sample.getContext("2d");
+        context.drawImage(image, 0, 0);
+        return Array.from({length:count}, (_, index) => {
+          const x = 100 + (index % columns) * 180;
+          const y = 115 + Math.floor(index / columns) * 150;
+          return Array.from(context.getImageData(x, y, 1, 1).data);
+        });
+      } finally {
+        URL.revokeObjectURL(url);
+      }
+    }, {base64:bytes.toString("base64"), mime, columns, count:expectedSwatches.length});
+    for (const [index, expected] of expectedSwatches.entries()) {
+      const actual = sampledSwatches[index];
+      assert.equal(actual[3], 255, `${mime} swatch ${index + 1} has an opaque center`);
+      assert.ok(expected.every((channel, offset) => Math.abs(actual[offset] - channel) <= tolerance),
+        `${mime} swatch ${index + 1} renders ${expected.join(",")}, sampled ${actual.slice(0, 3).join(",")}`);
+    }
+  }
   const pdf = await downloadExportFile("#export-pdf", ".pdf");
   assert.equal(pdf.toString("ascii", 0, 5), "%PDF-", "palette PDF has the PDF signature");
   const tokens = JSON.parse(await downloadExportFile("#export-tokens", "-tokens.json"));
