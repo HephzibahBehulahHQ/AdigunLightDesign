@@ -218,6 +218,36 @@ async function verifyVirtualPlayback(browser, studioUrl) {
       await new Promise(resolve=>globalThis.requestAnimationFrame(resolve));
     });
     assert.deepEqual(await paletteSwatches.allTextContents(),savedPalette,"a pending image import cannot modify a reopened copy of the same project");
+
+    const rigMenu=page.locator('[data-command-menu-trigger="fixtures"]');
+    const countBeforeDelay=await page.locator("#fixture-select option").count();
+    await rigMenu.click();
+    const [pendingRig]=await Promise.all([page.waitForEvent("download"),page.locator("#export-fixture-rig").click()]);
+    await page.evaluate(()=>{
+      const read=globalThis.File.prototype.text;
+      globalThis.File.prototype.text=async function(){
+        const text=await read.call(this);
+        if(this.name==="delayed-rig.json") {
+          globalThis.File.prototype.text=read;
+          await new Promise(resolve=>{globalThis.releaseRigRead=resolve;});
+        }
+        return text;
+      };
+    });
+    await rigMenu.click();
+    const [delayedRigChooser]=await Promise.all([page.waitForEvent("filechooser"),page.locator("#import-fixture-rig").click()]);
+    await delayedRigChooser.setFiles({name:"delayed-rig.json",mimeType:"application/json",buffer:await readFile(await pendingRig.path())});
+    await page.waitForFunction(()=>typeof globalThis.releaseRigRead==="function");
+    await projectMenu.click();
+    await page.locator("#open-project").click();
+    await page.getByRole("button",{name:/Keyboard acceptance/}).click();
+    await projectDialog.waitFor({state:"detached"});
+    await page.evaluate(async()=>{
+      globalThis.releaseRigRead();
+      delete globalThis.releaseRigRead;
+      await new Promise(resolve=>globalThis.requestAnimationFrame(resolve));
+    });
+    assert.equal(await page.locator("#fixture-select option").count(),countBeforeDelay,"a pending rig cannot modify a reopened copy of the same room");
     await page.locator('[data-module="library"]').click();
     const profiles = [
       ["generic-rgb-wash", "RGB Wash", 6],
