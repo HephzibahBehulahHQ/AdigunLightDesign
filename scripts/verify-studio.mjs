@@ -939,6 +939,18 @@ try {
   assert.equal(await touchPage.locator("#command-menu-panel-history").evaluate(panel=>panel.matches(":popover-open")),true,"touching another menu opens it");
   await touchPage.locator("#workspace").tap({position:{x:8,y:8}});
   assert.equal(await touchPage.locator("#command-menu-panel-history").evaluate(panel=>panel.matches(":popover-open")),false,"touch outside closes the open menu");
+  const touchAssistant = touchPage.locator("#floating-lux-window");
+  const touchToggle = touchAssistant.locator("#toggle-lux");
+  const touchNotice = touchAssistant.locator(".lux-message");
+  assert.equal(await touchNotice.evaluate(notice => notice.getBoundingClientRect().bottom <= notice.closest(".lux-panel").getBoundingClientRect().bottom), true, "collapsed assistant contains its full mobile notice");
+  await touchToggle.tap();
+  assert.equal(await touchToggle.getAttribute("aria-expanded"), "true");
+  await touchAssistant.locator(".lux-service-settings > summary").tap();
+  await touchAssistant.locator('[name="endpoint"]').tap();
+  assert.equal(await touchAssistant.locator('[name="endpoint"]').evaluate(input => input.ownerDocument.activeElement === input), true, "mobile users can reach the service endpoint field");
+  assert.equal(await touchAssistant.locator(".bot-composer .lux-consent").evaluate(label => label.scrollWidth <= label.clientWidth + 1 && label.scrollHeight <= label.clientHeight + 1), true, "mobile consent disclosure fits without clipping");
+  await touchToggle.tap();
+  assert.equal(await touchToggle.getAttribute("aria-expanded"), "false");
   await touchContext.close();
   await context.close();
 } finally {
