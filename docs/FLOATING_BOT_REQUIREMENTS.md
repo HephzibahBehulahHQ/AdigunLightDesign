@@ -75,4 +75,5 @@ The docked studio assistant keeps its availability notice visible while
 collapsed. Expanding it reveals the full request form and service settings.
 The desktop browser suite verifies expansion state, access to the endpoint
 field, unclipped consent text, and disabled submission when the service is
-unconfigured.
+unconfigured. A 390 × 844 touch test also verifies that the collapsed notice
+fits, the toggle works, and the endpoint field can receive focus.
