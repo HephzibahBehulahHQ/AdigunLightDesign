@@ -1,5 +1,5 @@
 import {previewNativeToolAction,confirmNativeToolAction} from "./action-preview.js";
-import {fixtureProfiles,fixtureFootprint,firstAvailableAddress} from "../dmx/engine.js";
+import {fixtureProfiles,fixtureFootprint,firstAvailablePatch} from "../dmx/engine.js";
 const owners=new WeakMap();
 async function registeredUser(account){
   const user=await account.requireUser();
@@ -13,10 +13,10 @@ export async function previewUnpatchedFixture({getProject,suggestion,account,isC
   const project=getProject(),fixture=project.fixtures.find(item=>item.id===suggestion.fixtureId);
   if(!fixture || fixture.patchAssignment)throw new Error("liveProposalExpired");
   const profile=fixtureProfiles.find(item=>item.id===fixture.profileId);
-  if(!profile)throw new Error("livePatchUnavailable");
-  const startAddress=firstAvailableAddress(project.fixtures,1,fixtureFootprint(profile,fixture.modeId));
-  if(startAddress===null)throw new Error("livePatchUnavailable");
-  const proposal=previewNativeToolAction(project,{type:"adigunlightdesign.tool-call",version:1,name:"patch_fixture",payload:{fixtureId:fixture.id,universe:1,startAddress}});
+  const footprint=profile ? fixtureFootprint(profile,fixture.modeId) : 0;
+  if(!footprint)throw new Error("livePatchUnavailable");
+  const patch=firstAvailablePatch(project.fixtures,footprint);
+  const proposal=previewNativeToolAction(project,{type:"adigunlightdesign.tool-call",version:1,name:"patch_fixture",payload:{fixtureId:fixture.id,...patch}});
   owners.set(proposal,user.id);return proposal;
 }
 export async function confirmAuthenticatedAction({getState,proposal,account,confirmed=false,isCurrent=()=>true}){
