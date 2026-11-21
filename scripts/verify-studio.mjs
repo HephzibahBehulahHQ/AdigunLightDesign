@@ -1107,7 +1107,7 @@ try {
     assert.equal(await page.locator("#room-template option").count(),20,"Scene room templates include the original rooms and ten additional scene types");
     assert.ok(await page.locator('#room-template option[value="church"]').count()===1&&await page.locator('#room-template option[value="electrical-workshop"]').count()===1&&await page.locator('#room-template option[value="airplane-cabin"]').count()===1,"room templates include Church, Electrical workshop and Airplane cabin");
   await page.locator("#create-room-scene").click();
-  assert.equal(await page.locator(".project-dialog").count(),0,"creating a room closes the modal");
+  await page.locator(".project-dialog").waitFor({state:"detached"});
   assert.equal(await page.locator("#scene-select option").count(),2,"Add room creates a second saved scene in the project");
   const addedRoomId=await page.locator("#scene-select").inputValue();
   assert.match(await page.locator("#scene-select option:checked").innerText(),/Kitchen/,"the selected scene is labeled with its room template");
