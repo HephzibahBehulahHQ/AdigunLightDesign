@@ -293,6 +293,7 @@ async function verifyVirtualPlayback(browser, studioUrl) {
     assert.match(await page.locator(".timeline-status").textContent(), /Universe 2.*4 active channels/, "the timeline counts only channels patched in the selected universe");
     assert.deepEqual(await page.locator("#virtual-dmx-monitor .virtual-dmx-channel b").allTextContents(), ["010", "011", "012", "013"], "the monitor follows the selected fixture into universe 2");
 
+    await page.locator(".fixture-configuration-details > summary").click();
     await page.locator("#fixture-rotation").fill("55");
     await page.locator("#fixture-dimmer").fill("93");
     await page.locator("#apply-fixture").click();
