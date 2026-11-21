@@ -95,6 +95,38 @@ async function verifyVirtualPlayback(browser, studioUrl) {
     const stoppedDifference = colorDifference(await readPreviewPixels());
     assert.ok(stoppedDifference < pulseDifference / 5, `stopping restores the saved WebGL lighting (pulse ${pulseDifference.toFixed(2)}, stopped ${stoppedDifference.toFixed(2)})`);
 
+    const effectType=page.locator("#effect-type");
+    const effectPeriod=page.locator("#effect-period");
+    const waitForChannel=(name,value)=>page.waitForFunction(([channelName,expected])=>
+      [...globalThis.document.querySelectorAll(".virtual-dmx-channel")].some(channel=>
+        channel.querySelector("span")?.textContent===channelName && channel.querySelector("strong")?.textContent===expected),
+    [name,value]);
+    await effectType.selectOption("chase");
+    await effectPeriod.fill("12");
+    await page.locator("#play-effect").click();
+    assert.equal(await effectType.inputValue(),"chase","the controls identify the running effect");
+    assert.equal(await effectPeriod.inputValue(),"12","the controls retain the chosen period");
+    await waitForChannel("dimmer","0");
+    await page.locator("#stop-cue").click();
+    assert.equal(await effectType.inputValue(),"chase","stopping retains the selected effect");
+    assert.equal(await virtualDimmer.textContent(),savedDimmer,"stopping Chase restores the saved dimmer");
+
+    await page.locator("#toggle-fixtures").click();
+    await page.locator('.fixture-select[title="Moving Head RGB 1"]').click();
+    const movingHeadDimmer=await virtualDimmer.textContent();
+    const pan=page.locator(".virtual-dmx-channel").filter({has:page.getByText("pan",{exact:true})}).locator("strong");
+    const savedPan=await pan.textContent();
+    await effectType.selectOption("panTilt");
+    await effectPeriod.fill("5");
+    await page.locator("#play-effect").click();
+    await page.waitForFunction(saved=>[...globalThis.document.querySelectorAll(".virtual-dmx-channel")].some(channel=>
+      channel.querySelector("span")?.textContent==="pan" && channel.querySelector("strong")?.textContent!==saved),savedPan);
+    const previewPan=Number(await pan.textContent());
+    assert.ok(previewPan>=64 && previewPan<=192,"Pan/Tilt stays within the virtual sweep range");
+    assert.equal(await virtualDimmer.textContent(),movingHeadDimmer,"Pan/Tilt preserves the saved dimmer");
+    await page.locator("#stop-cue").click();
+    assert.equal(await pan.textContent(),savedPan,"stopping Pan/Tilt restores the saved pan");
+
     await sceneMenu.press("ArrowDown");
     await page.keyboard.press("Enter");
     await requireFocus(page.locator("#room-template"), "the room dialog focuses its first field");
