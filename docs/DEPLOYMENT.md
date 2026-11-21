@@ -31,6 +31,15 @@ environment. The optional ALD_SUPABASE_PUBLISHABLE_KEY repository variable
 enables the browser Auth client in the build. Configured builds load the SDK
 from a separate chunk. Unconfigured builds omit the SDK and retain Guest mode.
 
+The production build generates a service worker with a release-specific cache
+for the landing and studio HTML, generated chunks, styles, and corporate logo.
+After one online visit completes installation, the studio can reopen and work
+with local projects offline. Auth and external services still require their
+network connections. The worker caches static build files only. A newer
+release activates after tabs using the previous release are closed, so the
+editor and its export chunks stay on the same version. The Pages checksum
+gate covers the service worker and nested assets.
+
 The selected Supabase Auth health endpoint returned HTTP 200 on 3 November
 2026. A guest Data API probe against the product schema returned HTTP 406
 with PGRST106. Cloud project storage requires exposing adigunlightdesign in

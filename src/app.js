@@ -1331,5 +1331,10 @@ window.addEventListener("keydown", (event) => { if (isEditableTarget(event.targe
 window.addEventListener("beforeunload",(event)=>{if(!projectDirty)return;event.preventDefault();event.returnValue="";});
 account.subscribe(()=>render());
 render();
+if (import.meta.env.PROD && "serviceWorker" in navigator) {
+  navigator.serviceWorker.register("./service-worker.js").catch(() => {
+    // Editing still works in the current tab when offline caching is unavailable.
+  });
+}
 
 

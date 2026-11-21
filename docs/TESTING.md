@@ -2,6 +2,10 @@
 
 Every milestone must run `npm test`, `npm run check` and `npm run build`.
 
+Run `npm run verify:studio` after building. Its production preview installs
+the release service worker, simulates a network disconnect, reopens a saved
+local project, and downloads a palette PDF using the cached export chunk.
+
 Run `npm run lint` for JavaScript and TypeScript correctness and `npm run typecheck` for migrated TypeScript. The incremental strict TypeScript gate currently
 checks `src/**/*.ts`, covering the playback clock, timeline layout, preview quality budgets, room dimensions, stage settings browser-storage adapters viewport picking shared camera/projection math project history the core color engine, opacity compositing, scene materials native canvas operations the virtual DMX engine, channel preview, virtual effects, cue evaluation, channel keyframes track scheduling, palette editing and temperature variants. Existing JavaScript
 modules are not silently covered by this command; full application typing remains an open release gate. Their JavaScript entry points re-export

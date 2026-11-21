@@ -3,7 +3,7 @@ import { mkdir, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { PDFDocument } from "pdf-lib";
 import { chromium } from "playwright";
-import { createServer } from "vite";
+import { createServer, preview } from "vite";
 
 const viewports = [
   [1920, 1080],
@@ -34,6 +34,39 @@ async function verifyUtilityControls(page) {
   const locale = menu.locator("#locale");
   assert.equal(await locale.evaluate(select => select.ownerDocument.activeElement === select), true, "Tab reaches Language directly after Account");
   assert.deepEqual(await locale.locator("option").evaluateAll(options => options.map(option => option.value)), ["en", "de", "yo", "pcm"]);
+}
+
+async function verifyOfflineStudio(browser) {
+  const previewServer = await preview({configFile:false, logLevel:"error", preview:{host:"127.0.0.1", port:0}});
+  try {
+    const address = previewServer.httpServer.address();
+    const context = await browser.newContext({viewport:{width:1440,height:900}, acceptDownloads:true});
+    try {
+      const page = await context.newPage();
+      const openMenu = name => page.locator(`[data-command-menu-trigger="${name}"]`).click();
+      await page.goto(`http://127.0.0.1:${address.port}/#AdigunStudio`);
+      await page.waitForFunction(async () => (await globalThis.navigator.serviceWorker.getRegistration())?.active?.state === "activated");
+      await openMenu("project");
+      await page.locator("#save").click();
+      await page.locator("#saved-project-name").fill("Offline acceptance");
+      await page.locator('.project-dialog [type="submit"]').click();
+      await context.setOffline(true);
+      await page.reload();
+      assert.ok(await page.evaluate(() => Boolean(globalThis.navigator.serviceWorker.controller)), "the production studio reopens from its installed release offline");
+      await openMenu("project");
+      await page.locator("#open-project").click();
+      await page.locator("[data-open-saved]").filter({hasText:"Offline acceptance"}).click();
+      assert.equal(await page.locator("#project-name").inputValue(), "Offline acceptance", "a local project can be reopened offline");
+      await openMenu("export");
+      const [download] = await Promise.all([page.waitForEvent("download"), page.locator("#export-pdf").click()]);
+      const pdf = await PDFDocument.load(await readFile(await download.path()));
+      assert.ok(pdf.getPageCount() > 0, "offline palette PDF uses the cached lazy export chunk");
+    } finally {
+      await context.close();
+    }
+  } finally {
+    await new Promise((resolveClose, reject) => previewServer.httpServer.close(error => error ? reject(error) : resolveClose()));
+  }
 }
 
 const server = await createServer({
@@ -989,6 +1022,7 @@ try {
   assert.ok(applyBounds.y >= 0 && applyBounds.y + applyBounds.height <= 844, "applying a mobile fixture edit keeps its action in view");
   await touchContext.close();
   await context.close();
+  await verifyOfflineStudio(browser);
 } finally {
   await browser?.close();
   await server.close();
