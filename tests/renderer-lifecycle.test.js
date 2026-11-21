@@ -11,6 +11,7 @@ function screenPoint(matrix,[x,y,z],width,height){
 test("camera movement reuses geometry; changes invalidate it and destroy removes listeners",()=>{
   const previousWindow=Object.getOwnPropertyDescriptor(globalThis,"window");
   const previousObserver=Object.getOwnPropertyDescriptor(globalThis,"ResizeObserver");
+  let resizeCanvas;
   let uploads=0,deletedBuffers=0,deletedPrograms=0,deletedShaders=0,disconnected=false;
   const events=new Map();
   const drawStates=[],uploadLengths=[],matrices=[];let depthWrites=true,blending=false;
@@ -29,14 +30,23 @@ test("camera movement reuses geometry; changes invalidate it and destroy removes
     addEventListener:(name,handler)=>events.set(name,handler),
     removeEventListener:(name,handler)=>{if(events.get(name)===handler)events.delete(name);}
   };
-  Object.defineProperty(globalThis,"window",{configurable:true,value:{devicePixelRatio:1}});
+  Object.defineProperty(globalThis,"window",{configurable:true,value:{devicePixelRatio:2}});
   Object.defineProperty(globalThis,"ResizeObserver",{configurable:true,value:class {
+    constructor(callback){resizeCanvas=callback;}
     observe(){} disconnect(){disconnected=true;}
   }});
   try {
     const fixture={id:"a",transform:{x:0,y:3.65,z:.45,rotation:0},properties:{dimmer:255,red:255,green:0,blue:0}};
     const transformed=[],selected=[];
     const renderer=createLightLabRenderer(canvas,{fixtures:[{...fixture,selected:true}],onTransform:(id,transform)=>transformed.push({id,transform}),onSelect:id=>selected.push(id)});
+    assert.equal(canvas.width,1200,"balanced preview caps the device scale at 1.5");
+    assert.equal(canvas.height,675);
+    canvas.clientWidth=640;canvas.clientHeight=360;
+    resizeCanvas([{target:canvas}]);
+    assert.equal(canvas.width,960,"a ResizeObserver redraw keeps the quality pixel ratio");
+    assert.equal(canvas.height,540);
+    canvas.clientWidth=800;canvas.clientHeight=450;
+    resizeCanvas([{target:canvas}]);
     assert.deepEqual(drawStates.slice(0,2),[{depthWrites:true,blending:false},{depthWrites:false,blending:true}]);
     assert.equal(depthWrites,true);assert.equal(blending,false);
     assert.equal(uploads,1);
