@@ -6,9 +6,9 @@ reference, the floating Bot and compact menu, and the canonical site.
 ## Release evidence as of 21 November 2026
 
 The [public editor](https://adigunlightdesign.hephzibahbehulah.com/) was verified
-through commit [`e5ad1ba`](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/commit/e5ad1ba38de2d395746bb4e690041dd8be4842b1).
-[CI](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44940075568)
-and the [Pages release with asset checksums](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44940277843)
+through commit [`b0c7635`](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/commit/b0c76353cdcc9bc103062699e2182edf7f7b6d66).
+[CI](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44949537404)
+and the [Pages release with asset checksums](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44949732266)
 passed. During the landing release (#225), Chrome verified the live 3D preview at desktop
 and phone widths, both recorded studio demos, and the editable sample carrying
 its selected look and dimmer setting into the studio.
@@ -37,6 +37,23 @@ its selected look and dimmer setting into the studio.
 | Cue PDF readability (#237) | `86b0153` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44938942369) | A real Chrome download rendered with full starter labels and visible fade-in, hold and fade-out times. |
 | Virtual effects (#238) | `68f6916` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44939586409) | Chrome verifies Pulse, Chase and Pan/Tilt on relevant virtual channels, restored saved levels, and retained effect settings. |
 | Arrangement seek (#239) | `e5ad1ba` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44940277843) | Chrome verifies matched timeline and fixture updates at seeks and a retained paused position across a language change. |
+| Palette localization (#241) | `bf03792` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44941582338) | Chrome exercises the localized harmony names and live summary in all four supported locales. |
+| Project palette harmony (#242) | `22c7844` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44942090103) | Chrome checks harmony in palette JSON, saved projects and fresh versus reopened projects. |
+| Image import isolation (#243) | `a6ef6f7` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44942568878) | Chrome delays a real image decode past reopening and verifies the saved palette stays intact. |
+| JSON import isolation (#244) | `b8ece31` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44943040678) | Native project and rig reads belong to the workspace that started them. Chrome exercises a delayed rig read. |
+| Assistant workspace state (#245) | `89de674` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44943501985) | Chrome verifies reopening clears old proposals. Unit tests cover delayed replies with retained service settings. |
+| Assistant edit save state (#246) | `14197ef` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44943992240) | Confirmed assistant edits use the same unsaved state as manual edits. Unit tests cover explicit confirmation and Undo. |
+| High-DPI 3D preview (#247) | `94ae8ce` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44944464389) | Chrome measures 1×, 1.5× and 2× backing resolution at 2× device scale. Balanced survives viewport resize. |
+| Paused preview work (#248) | `fefdb5d` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44944974762) | A local Chrome probe measured 11 geometry uploads before the change and zero after it during one second of paused playback. |
+| Assistant auto-patch (#249) | `2b68fa8` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44945457412) | Focused tests verify Universe 2, address 5 when earlier space is unavailable, with explicit confirmation. |
+| DMX range search (#250) | `e3b13c2` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44945874576) | Regression covers a fixture using the old sentinel ID. An independent scan agreed across 500 generated maps. |
+| Fixture duplication (#251) | `a7b0f45` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44946445450) | A copy gets an available universe when its source is full. Chrome verifies an edited rotation and dimmer survive rig transfer. |
+| Fixture inspector localization (#252) | `15e4456` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44946953488) | Chrome checks section and accessible field labels across all four locales. |
+| Camera tour controls (#253) | `df7a684` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44947478511) | Chrome checks reduced-motion startup, manual camera interruption, and Escape. |
+| WebGL recovery (#254) | `e267147` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44948112792) | Chrome forces context loss and verifies that the restored preview matches the prior frame. |
+| Palette contrast (#255) | `d023c1a` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44948776653) | Chrome checks a just-below-AA ratio, a correction that meets AA, and a translucent swatch against its chosen background. |
+| Palette version restore (#256) | `a349b8b` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44949235158) | Chrome restores color, opacity, and harmony after a language redraw, then verifies one-step Undo. |
+| Portable palette import (#257) | `b0c7635` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44949732266) | Chrome imports an actual downloaded palette and undoes the complete import in one step. |
 
 ## Remaining acceptance gates
 
@@ -45,6 +62,7 @@ its selected look and dimmer setting into the studio.
   different checksum. Browser layout results and actual WebGL rendering are
   recorded separately. Assistive technology and language review remain open.
 - **M2 and M5:** Browser acceptance covers palette extraction, versions,
+  contrast thresholds and suggested corrections, portable JSON round-trip,
   local save/reopen, timeline playback, and cue capture across scenes. The
   browser suite also checks cue timing, track scheduling, keyframe persistence,
   pointer and keyboard seeking, virtual effects, and representative delay,
@@ -57,8 +75,10 @@ its selected look and dimmer setting into the studio.
   catalog coverage, and physical fixture transport remain unverified.
 - **M6 and M8:** Production shows Guest mode. Signed-in cloud save/reopen,
   account isolation, and live Lux actions need configured services and real
-  test identities. Full accessibility, security, and hardware performance
-  acceptance remain open.
+  test identities. The Pages workflow reads the Supabase publishable key from
+  `ALD_SUPABASE_PUBLISHABLE_KEY`. Assistive technology, production security
+  acceptance, and frame rates on representative hardware remain open. Chrome
+  measurements cover device scale, unchanged frames and context recovery.
 
 ## Historical progress estimate, 15 November 2026
 
