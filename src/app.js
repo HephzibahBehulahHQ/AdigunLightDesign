@@ -100,6 +100,7 @@ let viewportCamera=null;
 let viewportCameraRoomKey=null;
 let cleanupTopMenu=null, cleanupCommandMenus=null;
 const imageAssets=createImageAssetStore();
+let workspaceGeneration=0;
 const publishableKey = typeof __ALD_SUPABASE_PUBLISHABLE_KEY__ === "undefined" ? "" : __ALD_SUPABASE_PUBLISHABLE_KEY__;
 const clientFactory = publishableKey ? (await import("@supabase/supabase-js")).createClient : undefined;
 const account = createAccount({ publishableKey, clientFactory });
@@ -408,7 +409,12 @@ function showSavedProjectsDialog() {
   });
   dialog.showModal();
 }
-function requestWorkspaceReplacement(continueAction) {
+function requestWorkspaceReplacement(replace) {
+  const continueAction=()=>{
+    workspaceGeneration++;
+    imageAssets.clear();
+    replace();
+  };
   if(!projectDirty){continueAction();return;}
   const dialog=makeProjectDialog(t("unsavedChangesTitle"),'<p class="project-dialog-message">'+esc(t("unsavedChangesBody"))+'</p><div class="project-dialog-actions"><button type="button" data-cancel>'+esc(t("cancel"))+'</button><button type="button" data-discard>'+esc(t("discardChanges"))+'</button><button type="button" data-save>'+esc(t("saveAndContinue"))+'</button></div>');
   const finish=(choice)=>{dialog.close();if(choice==="discard"){projectDirty=false;projectPersisted=false;continueAction();}else if(choice==="save")saveProject(continueAction);};
@@ -1120,12 +1126,17 @@ function bind() {
   document.querySelector("#palette-image").onchange=async(event)=>{
     const [file]=event.target.files;
     if (!file) return;
-    const projectId=project.id;
+    event.target.value="";
+    const generation=workspaceGeneration;
+    let decodedAsset;
     try {
-      const colors=await readImagePalette(file,{onDecoded:(asset)=>imageAssets.add(asset)});
-      if (project.id!==projectId) return;
+      const colors=await readImagePalette(file,{onDecoded:asset=>{decodedAsset=asset;}});
+      if (generation!==workspaceGeneration) return;
       mutateColours((existing)=>[...existing,...colors.map((color)=>({id:crypto.randomUUID(),name:color.hex,hex:color.hex,locked:false}))]);
-    } catch(error) { document.querySelector("#status").textContent=status=error.message; }
+      imageAssets.add(decodedAsset);
+    } catch(error) {
+      if (generation===workspaceGeneration) document.querySelector("#status").textContent=status=error.message;
+    }
   };
   const tokenButton=document.querySelector("#export-tokens");
   if (tokenButton) tokenButton.onclick=()=>{

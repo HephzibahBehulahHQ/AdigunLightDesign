@@ -187,6 +187,37 @@ async function verifyVirtualPlayback(browser, studioUrl) {
     await projectName.press("Enter");
     await projectDialog.waitFor({state:"detached"});
     await requireFocus(projectMenu, "saving returns focus to the Project menu after rendering");
+
+    const imageBytes=await page.evaluate(()=>{
+      const canvas=globalThis.document.createElement("canvas");
+      canvas.width=canvas.height=1;
+      const context=canvas.getContext("2d");
+      context.fillStyle="#E4128A";
+      context.fillRect(0,0,1,1);
+      const decode=globalThis.createImageBitmap;
+      globalThis.createImageBitmap=async(...args)=>{
+        const bitmap=await decode(...args);
+        await new Promise(resolve=>{globalThis.releasePaletteDecode=resolve;});
+        return bitmap;
+      };
+      return canvas.toDataURL("image/png").split(",")[1];
+    });
+    const paletteSwatches=page.locator(".palette-panel [data-swatch]");
+    const savedPalette=await paletteSwatches.allTextContents();
+    await projectMenu.click();
+    const [chooser]=await Promise.all([page.waitForEvent("filechooser"),page.locator("#import-image").click()]);
+    await chooser.setFiles({name:"delayed-palette.png",mimeType:"image/png",buffer:Buffer.from(imageBytes,"base64")});
+    await page.waitForFunction(()=>typeof globalThis.releasePaletteDecode==="function");
+    await projectMenu.click();
+    await page.locator("#open-project").click();
+    await page.getByRole("button",{name:/Keyboard acceptance/}).click();
+    await projectDialog.waitFor({state:"detached"});
+    await page.evaluate(async()=>{
+      globalThis.releasePaletteDecode();
+      delete globalThis.releasePaletteDecode;
+      await new Promise(resolve=>globalThis.requestAnimationFrame(resolve));
+    });
+    assert.deepEqual(await paletteSwatches.allTextContents(),savedPalette,"a pending image import cannot modify a reopened copy of the same project");
     await page.locator('[data-module="library"]').click();
     const profiles = [
       ["generic-rgb-wash", "RGB Wash", 6],
