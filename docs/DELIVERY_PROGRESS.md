@@ -1,10 +1,49 @@
 # Delivery evidence and remaining gates
 
-Audit date: 15 November 2026. Scope remains the entire supplied master
-specification, the latest 1672 × 941 interface reference, floating Bot,
-compact account/language menu and canonical domain requirements.
+Scope remains the supplied master specification, the owner-approved editor
+reference, the floating Bot and compact menu, and the canonical site.
 
-## Progress estimate
+## Release evidence as of 21 November 2026
+
+The [public release](https://adigunlightdesign.hephzibahbehulah.com/) serves
+commit [`cec9ffe`](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/commit/cec9ffe950f2bd51268a813280dee38136ef6374).
+[CI](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44929745245)
+and the [Pages release with asset checksums](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44929898285)
+passed. On the client domain, Chrome verified the live 3D preview at desktop
+and phone widths, both recorded studio demos, and the editable sample carrying
+its selected look and dimmer setting into the studio.
+
+| Merged work | Commit and release | Verified evidence |
+| --- | --- | --- |
+| Header target sizes (#212) | `bbfdf02` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44922659880) | 44 px targets, tooltip labels, and keyboard order at desktop and phone widths. |
+| Restore export actions (#213) | `7aa7a7e` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44923210919) | Real downloads for palette JSON, CSS, SVG, PNG, JPEG, and PDF. |
+| Image-to-palette (#214–215) | `d88d543` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44923646851), `28814fe` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44924117111) | PNG, JPEG, and WebP file chooser; expected extracted swatches; undo/redo. |
+| Remaining export actions (#216) | `b48fd3f` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44924580792) | Design-token JSON, experimental ASE, CSVs, cue-sheet PDF, and vector canvas SVG. |
+| Docked assistant (#217–218) | `09cce48` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44925076044), `4de1028` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44925525838) | Expanded settings, visible consent, and touch access. |
+| Responsive studio (#219–221) | `8484186` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44926066662), `870364e` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44926625272), `d6f1655` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44927093384) | Three phone, six tablet, and seven desktop widths. The phone fixture edit keeps Apply in view. |
+| Guest bundle and offline startup (#222–224) | `e02d7ef` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44927509208), `759f87c` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44928117057), `1fbab89` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44928522482) | Guest JavaScript dropped from 173 to 118 kB gzipped. Chrome verified reopening and PDF export offline, and the live site reopened after one online visit. |
+| Live landing (#225) | `cec9ffe` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44929898285) | Editable 3D sample, fixture dimming, genuine studio videos, and Export labels checked in all four locales. |
+
+## Remaining acceptance gates
+
+- **M1 and M3:** Exact editor and scene comparison needs the November 14
+  reference identified in `VISUAL_ALIGNMENT.md`. The checked-in image has a
+  different checksum. Browser layout results and actual WebGL rendering are
+  recorded separately. Assistive technology and language review remain open.
+- **M2 and M5:** Browser acceptance covers palette extraction, versions,
+  local save/reopen, timeline playback, and cue capture across scenes. The
+  browser suite also checks cue timing, track scheduling, keyframe persistence,
+  and pointer and keyboard seeking. Broader acceptance for virtual effects and
+  rendered fade output remains open.
+- **M4, M7, and M9:** Virtual patching, fixture selection, and downloads have
+  browser evidence. External ASE import, advanced interchange, licensed
+  catalog coverage, and physical fixture transport remain unverified.
+- **M6 and M8:** Production shows Guest mode. Signed-in cloud save/reopen,
+  account isolation, and live Lux actions need configured services and real
+  test identities. Full accessibility, security, and hardware performance
+  acceptance remain open.
+
+## Historical progress estimate, 15 November 2026
 
 The reported 48% is an engineering estimate, not the percentage of acceptance
 tests passed. Weights emphasize the requested visual editor and core engines.
