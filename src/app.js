@@ -199,7 +199,14 @@ function updateDmxFeedback(fixtures) {
   }
   if (summary) summary.textContent=`U${snapshot.universe} · CH 1: ${snapshot.frame[0]} · ${t("outputDisabled")}`;
 }
-function previewFixtures(fixtures) {renderer?.setFixtures(fixtures);updateDmxFeedback(fixtures);}
+let previewFixtureSignature=null;
+function previewFixtures(fixtures) {
+  const signature=lightLabFixtureState(fixtures);
+  if (signature===previewFixtureSignature) return;
+  renderer?.setFixtures(fixtures);
+  updateDmxFeedback(fixtures);
+  previewFixtureSignature=signature;
+}
 let arrangementActive=false;
 function stopPlayback(message="Cue playback stopped.") {
   if (playbackTimer) {
@@ -521,6 +528,7 @@ function applyFixturePatch() {
   } catch(error) { document.querySelector("#status").textContent=status=error.message; }
 }
 function render() {
+  previewFixtureSignature=null;
   landingPreview?.stop();
   const previousShell = document.querySelector(".studio-shell");
   const studioScrollTop = previousShell?.dataset.projectId === project.id ? previousShell.scrollTop : 0;
