@@ -36,7 +36,9 @@ its selected look and dimmer setting into the studio.
   and pointer and keyboard seeking. Broader acceptance for virtual effects and
   rendered fade output remains open.
 - **M4, M7, and M9:** Virtual patching, fixture selection, and downloads have
-  browser evidence. External ASE import, advanced interchange, licensed
+  browser evidence, including the downloadable cue PDF parsed for title and page count.
+  The ASE RGB writer has independent Swatch parser evidence. GIMP and Adobe
+  application import, advanced interchange, licensed
   catalog coverage, and physical fixture transport remain unverified.
 - **M6 and M8:** Production shows Guest mode. Signed-in cloud save/reopen,
   account isolation, and live Lux actions need configured services and real
@@ -304,7 +306,7 @@ not silently substituted with local simulation.
 3. Complete strict typing/lint and browser end-to-end gates from the master spec.
 4. Verify actual account/cloud and configured Lux flows before claiming them
    operational. Preserve registered-user authorization and project isolation.
-5. Verify cue PDF browser downloads and validate advertised interchange adapters externally.
+5. Review downloaded cue PDF content and validate interchange in the target applications.
 6. Complete accessibility, translation, performance and security acceptance.
 7. Prepare a reviewable canonical-domain release. Push each verified increment
    through a focused PR, merge and deploy it promptly, and record its checks,
