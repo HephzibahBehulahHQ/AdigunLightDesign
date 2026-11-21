@@ -574,12 +574,11 @@ try {
     await openCommandMenu("palette");
     assert.equal(await page.locator("#seed").getAttribute("aria-label"),labels.seedColour,"the seed field has a localized accessible name");
     const harmony=page.locator("#harmony");
-    await harmony.hover();
-    const beforeHarmony=await harmony.inputValue();
-    await harmony.selectOption("complementary");
-    assert.equal(await harmony.locator("option:checked").textContent(),labels.harmony_complementary);
-    assert.ok((await page.locator(".palette-summary").textContent()).includes(labels.harmony_complementary),"the summary immediately shows the localized harmony");
-    await harmony.selectOption(beforeHarmony);
+    const value=await harmony.inputValue()==="complementary" ? "triadic" : "complementary";
+    const harmonyLabel=labels[`harmony_${value}`];
+    await harmony.selectOption(value);
+    assert.equal(await harmony.locator("option:checked").textContent(),harmonyLabel);
+    assert.ok((await page.locator(".palette-summary").textContent()).includes(harmonyLabel),"the summary immediately shows the localized harmony");
     await page.keyboard.press("Escape");
     const exportLabels = {
       '[data-export="project"]': `${labels.project} JSON`,
