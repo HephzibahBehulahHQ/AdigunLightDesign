@@ -417,6 +417,18 @@ try {
   await landingTour.click();
   await landingTour.click();
   assert.equal(await landingTour.getAttribute("aria-pressed"), "false", "the landing camera tour can be stopped");
+  const beforeContextLoss=await landingCanvas.screenshot();
+  await landingCanvas.evaluate(async canvas=>{
+    const gl=canvas.getContext("webgl");
+    const extension=gl.getExtension("WEBGL_lose_context");
+    const lost=new Promise(resolve=>canvas.addEventListener("webglcontextlost",resolve,{once:true}));
+    extension.loseContext();
+    await lost;
+    const restored=new Promise(resolve=>canvas.addEventListener("webglcontextrestored",resolve,{once:true}));
+    extension.restoreContext();
+    await restored;
+  });
+  assert.deepEqual(await landingCanvas.screenshot(),beforeContextLoss,"the real WebGL context restores the selected lighting and camera");
   const [samplePage] = await Promise.all([context.waitForEvent("page"), page.locator("[data-landing-open]").click()]);
   await samplePage.locator("body.studio-route").waitFor();
   assert.equal(await samplePage.locator("#project-name").inputValue(), "Cyan modern", "the selected look opens as an editable sample");
