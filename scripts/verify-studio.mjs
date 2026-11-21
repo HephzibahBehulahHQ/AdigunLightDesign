@@ -37,6 +37,46 @@ async function verifyUtilityControls(page) {
   assert.deepEqual(await locale.locator("option").evaluateAll(options => options.map(option => option.value)), ["en", "de", "yo", "pcm"]);
 }
 
+async function verifyVirtualPulse(browser, studioUrl) {
+  const page = await browser.newPage({viewport:{width:1440,height:900}});
+  try {
+    await page.goto(studioUrl);
+    const canvas = page.locator("#light-canvas");
+    const readPreviewPixels = async () => {
+      const screenshot = await canvas.screenshot();
+      return page.evaluate(async (base64) => {
+        const response = await globalThis.fetch(`data:image/png;base64,${base64}`);
+        const bitmap = await globalThis.createImageBitmap(await response.blob());
+        const sample = globalThis.document.createElement("canvas");
+        sample.width = 96;
+        sample.height = 54;
+        const ctx = sample.getContext("2d");
+        ctx.drawImage(bitmap, 0, 0, sample.width, sample.height);
+        bitmap.close();
+        return Array.from(ctx.getImageData(0, 0, sample.width, sample.height).data);
+      }, screenshot.toString("base64"));
+    };
+    const savedLighting = await readPreviewPixels();
+    const colorDifference = pixels => pixels.reduce((total, value, index) => total + Math.abs(value - savedLighting[index]), 0) / pixels.length;
+    const virtualDimmer = page.locator(".virtual-dmx-channel").filter({has:page.getByText("dimmer", {exact:true})}).locator("strong");
+    const savedDimmer = await virtualDimmer.textContent();
+    await page.locator("#effect-period").fill("5");
+    await page.locator("#play-effect").click();
+    await page.waitForFunction(before => [...globalThis.document.querySelectorAll(".virtual-dmx-channel")].some(channel =>
+      channel.querySelector("span")?.textContent === "dimmer" && channel.querySelector("strong")?.textContent !== before), savedDimmer);
+    await page.locator("#pause-playback").click();
+    const pulseDifference = colorDifference(await readPreviewPixels());
+    assert.ok(pulseDifference > 1, `the virtual pulse changes rendered fixture lighting (${pulseDifference.toFixed(2)})`);
+    assert.match(await page.locator("#virtual-dmx-monitor header").textContent(), /output:\s*disabled/i);
+    await page.locator("#stop-cue").click();
+    assert.equal(await virtualDimmer.textContent(), savedDimmer, "stopping the effect restores the saved virtual DMX level");
+    const stoppedDifference = colorDifference(await readPreviewPixels());
+    assert.ok(stoppedDifference < pulseDifference / 5, `stopping restores the saved WebGL lighting (pulse ${pulseDifference.toFixed(2)}, stopped ${stoppedDifference.toFixed(2)})`);
+  } finally {
+    await page.close();
+  }
+}
+
 async function verifyOfflineStudio(browser) {
   const previewServer = await preview({configFile:false, logLevel:"error", preview:{host:"127.0.0.1", port:0}});
   try {
@@ -1100,6 +1140,7 @@ try {
   assert.ok(applyBounds.y >= 0 && applyBounds.y + applyBounds.height <= 844, "applying a mobile fixture edit keeps its action in view");
   await touchContext.close();
   await context.close();
+  await verifyVirtualPulse(browser, `http://127.0.0.1:${address.port}/#AdigunStudio`);
   await verifyOfflineStudio(browser);
 } finally {
   await browser?.close();

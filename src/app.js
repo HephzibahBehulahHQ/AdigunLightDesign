@@ -189,7 +189,16 @@ function updateDmxFeedback(fixtures) {
   if (summary) summary.textContent=`U${snapshot.universe} · CH 1: ${snapshot.frame[0]} · ${t("outputDisabled")}`;
 }
 function previewFixtures(fixtures) {renderer?.setFixtures(fixtures);updateDmxFeedback(fixtures);}
-function stopPlayback(message="Cue playback stopped.") { if(playbackTimer){clearInterval(playbackTimer);playbackTimer=null;} playbackClock=null; status=message; }
+function stopPlayback(message="Cue playback stopped.") {
+  if (playbackTimer) {
+    clearInterval(playbackTimer);
+    playbackTimer = null;
+    // The renderer may hold a preview frame even though the saved fixtures are unchanged.
+    rendererFixtureSignature = null;
+  }
+  playbackClock = null;
+  status = message;
+}
 function togglePlaybackPause() {
   if (!playbackClock) return;
   if (playbackClock.paused) playbackClock.resume(performance.now());
