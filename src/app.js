@@ -34,6 +34,7 @@ import { applySceneMaterial } from "./domain/scene-materials.js";
 import { studioActiveModule,studioDefaults } from "./ui/studio-preferences.js";
 import { escapeHtml as esc,fixtureOptions,swatchButton } from "./ui/html.js";
 import { virtualDmxPreview } from "./dmx/preview.js";
+import { fixtureRigJson, readFixtureRig } from "./dmx/fixture-rig.js";
 import { addCanvasObject,updateCanvasObject,duplicateCanvasObject,moveCanvasObject } from "./domain/canvas.js";
 import { canvasMarkup } from "./ui/canvas.js";
 import { canvasSvg } from "./export/canvas.js";
@@ -296,6 +297,23 @@ async function importNativeProject(file) {
     render();
   });
 }
+async function importVirtualFixtureRig(file) {
+  const targetProject = project.id;
+  const targetScene = scene().id;
+  try {
+    if (file.size > 1_000_000) throw new Error("Fixture rig JSON must be smaller than 1 MB.");
+    const specs = readFixtureRig(await file.text());
+    if (project.id !== targetProject || scene().id !== targetScene) return;
+    const fixtures = specs.map(spec => ({...spec, id:crypto.randomUUID(), sceneId:targetScene, patchAssignment:null}));
+    commitProjectChange("fixture-rig-import", draft => {
+      draft.fixtures = fixtures.reduce(patchNewFixture, draft.fixtures);
+    });
+    preferences.fixtureId = fixtures.at(-1).id;
+    preferences.inspectorMode = "fixture";
+    savePreferences();
+    setStatus(`${t("importAction")} · ${fixtures.length} ${t("fixturesPatched")}`);
+  } catch (error) { setStatus(error.message); }
+}
 function readSavedProjects() {
   const stored=safeParse(readBrowserStorage(savedProjectsKey).value);
   return Array.isArray(stored.projects) ? stored.projects.filter((item)=>item?.id && validateProject(item.project).valid) : [];
@@ -504,7 +522,7 @@ function render() {
     stage:`<fieldset class="scene-menu-fields" data-menu-keep-open><legend>${t("stagePlatform")}</legend><label class="scene-menu-check"><input id="stage-enabled" type="checkbox" ${stage.enabled ? "checked" : ""}> ${t("showStage")}</label>${["x","y","z","width","height","depth"].map((key)=>`<label>${["x","y","z"].includes(key) ? key.toUpperCase() : t(key)} (m)<input id="stage-${key}" type="number" step="any" required value="${stage[key]}"></label>`).join("")}<label class="scene-menu-colour">${t("selectedColour")}<input id="stage-color" type="color" value="${stage.color}"></label></fieldset><button type="button" id="apply-stage">${t("applyStageSettings")}</button>`,
     room:`<fieldset class="scene-menu-fields" data-menu-keep-open><legend>${t("roomDimensions")}</legend><p class="room-type-label">${t("roomType")}: ${esc(roomName)}</p>${["width","height","depth"].map((key)=>`<label>${t(key)} (m)<input id="room-${key}" type="number" required min="2" max="${key==="height" ? 20 : 50}" step="any" value="${room[key]}"></label>`).join("")}<label class="scene-menu-colour">${t("ambientFill")}<input id="room-ambience-color" type="color" value="${ambience.color}"></label><label class="scene-menu-range">${t("ambientLevel")} · ${Math.round(ambience.intensity*100)}%<input id="room-ambience-level" type="range" min="0" max="100" step="1" value="${Math.round(ambience.intensity*100)}"></label></fieldset><button type="button" id="apply-room">${t("applyRoomDimensions")}</button>`,
     palette:`<button type="button" data-menu-keep-open id="open-versions" aria-expanded="false">${t("versions")}</button><button type="button" data-menu-keep-open id="open-compare" aria-expanded="false">${t("compare")}</button>`,
-    fixtures:`<button type="button" id="add-fixture">＋ ${t("addWash")}</button><button type="button" id="apply-fixture-colour">${t("applySwatchToFixtures")}</button>`,
+    fixtures:`<button type="button" id="add-fixture">＋ ${t("addWash")}</button><button type="button" id="apply-fixture-colour">${t("applySwatchToFixtures")}</button><button type="button" id="export-fixture-rig" ${activeFixtures.length ? "" : "disabled"}>${t("commandExport")} · ${t("commandFixtures")} JSON</button><button type="button" id="import-fixture-rig">${t("importAction")} · ${t("commandFixtures")} JSON</button>`,
     export:`<button data-export="project">${t("project")} JSON</button>
       <button data-export="palette">${t("commandPalette")} JSON</button>
       <button data-export="css">${t("exportCss")}</button>
@@ -546,6 +564,7 @@ function render() {
     </header>
     <nav class="module-nav" aria-label="${t("appModules")}"><div class="workspace-modules">${nav}</div>${commandMenusMarkup}</nav>
     <main id="workspace" class="editor-layout">
+      <input id="fixture-rig-file" type="file" accept="application/json,.json" hidden />
       <aside class="left-rail panel">
         <div class="left-rail-heading"><h2>${t("project")} • ${t("layers")} • ${t("tools")}</h2></div>
         <section class="project-heading"><div><input id="project-name" value="${esc(project.name)}" aria-label="${t("project")} name" />${sceneSelectMarkup()}</div></section>
@@ -1353,6 +1372,17 @@ function bind() {
   const resetCamera = () => renderer?.reset();
   document.querySelector("#reset-camera")?.addEventListener("click",resetCamera);
   document.querySelector("#add-fixture").onclick = () => { addVirtualFixture(); render(); };
+  document.querySelector("#export-fixture-rig").onclick = () => {
+    try { downloadText(fixtureRigJson(sceneFixtures()), `${safeFileStem(scene().name)}.ald-rig.json`, "application/json"); }
+    catch (error) { setStatus(error.message); }
+  };
+  const rigFile = document.querySelector("#fixture-rig-file");
+  document.querySelector("#import-fixture-rig").onclick = () => rigFile.click();
+  rigFile.onchange = () => {
+    const [file] = rigFile.files;
+    rigFile.value = "";
+    if (file) void importVirtualFixtureRig(file);
+  };
   document.querySelector(".fixture-empty-add")?.addEventListener("click",()=>{addVirtualFixture();render();});
   const blackoutButton = document.querySelector("#blackout"); if (blackoutButton) blackoutButton.onclick = () => { activateBlackout(); render(); };
   document.querySelector("#apply-fixture-colour").onclick = () => { applyPaletteToVirtualFixtures(); render(); };

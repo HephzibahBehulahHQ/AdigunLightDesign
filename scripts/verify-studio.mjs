@@ -165,6 +165,35 @@ async function verifyVirtualPlayback(browser, studioUrl) {
     await page.locator("#apply-fixture-patch").click();
     assert.match(await page.locator(".timeline-status").textContent(), /Universe 2.*4 active channels/, "the timeline counts only channels patched in the selected universe");
     assert.deepEqual(await page.locator("#virtual-dmx-monitor .virtual-dmx-channel b").allTextContents(), ["010", "011", "012", "013"], "the monitor follows the selected fixture into universe 2");
+
+    const fixturesMenu = page.locator('[data-command-menu-trigger="fixtures"]');
+    await fixturesMenu.click();
+    const [rigDownload] = await Promise.all([page.waitForEvent("download"), page.locator("#export-fixture-rig").click()]);
+    assert.ok(rigDownload.suggestedFilename().endsWith(".ald-rig.json"));
+    const rigPath = await rigDownload.path();
+    const rig = JSON.parse(await readFile(rigPath, "utf8"));
+    const sourceRoom = await page.locator("#scene-select").inputValue();
+    const sourceIds = await page.locator("#fixture-select option").evaluateAll(options => options.map(option => option.value));
+    assert.equal(rig.fixtures.length, sourceIds.length, "the rig exports exactly the fixtures in the active room");
+    await sceneMenu.click();
+    await page.locator("#add-room-scene").click();
+    await page.locator("#room-template").selectOption("bathroom");
+    await page.locator("#create-room-scene").click();
+    const destinationFixtureIds = await page.locator("#fixture-select option").evaluateAll(options => options.map(option => option.value));
+    await fixturesMenu.click();
+    const [rigChooser] = await Promise.all([page.waitForEvent("filechooser"), page.locator("#import-fixture-rig").click()]);
+    await rigChooser.setFiles(rigPath);
+    await page.waitForFunction(expected => globalThis.document.querySelector("#fixture-select").options.length === expected,
+      destinationFixtureIds.length + rig.fixtures.length);
+    const importedIds = await page.locator("#fixture-select option").evaluateAll(options => options.map(option => option.value));
+    assert.ok(importedIds.every(id => !sourceIds.includes(id)), "import creates independent fixture identities in the destination room");
+    assert.ok(destinationFixtureIds.every(id => importedIds.includes(id)), "import preserves the destination's existing fixtures");
+    assert.match(await page.locator(".timeline-status").textContent(), /active channels/, "imported fixtures are patched in the destination room");
+    await page.locator('[data-command-menu-trigger="history"]').click();
+    await page.locator("#undo").click();
+    assert.equal(await page.locator("#fixture-select option").count(), destinationFixtureIds.length, "one Undo removes the imported rig");
+    await page.locator("#scene-select").selectOption(sourceRoom);
+    assert.deepEqual(await page.locator("#fixture-select option").evaluateAll(options => options.map(option => option.value)), sourceIds, "import and undo leave the original rig intact");
   } finally {
     await page.close();
   }
@@ -1078,7 +1107,7 @@ try {
     assert.equal(await page.locator("#room-template option").count(),20,"Scene room templates include the original rooms and ten additional scene types");
     assert.ok(await page.locator('#room-template option[value="church"]').count()===1&&await page.locator('#room-template option[value="electrical-workshop"]').count()===1&&await page.locator('#room-template option[value="airplane-cabin"]').count()===1,"room templates include Church, Electrical workshop and Airplane cabin");
   await page.locator("#create-room-scene").click();
-  assert.equal(await page.locator(".project-dialog").count(),0,"creating a room closes the modal");
+  await page.locator(".project-dialog").waitFor({state:"detached"});
   assert.equal(await page.locator("#scene-select option").count(),2,"Add room creates a second saved scene in the project");
   const addedRoomId=await page.locator("#scene-select").inputValue();
   assert.match(await page.locator("#scene-select option:checked").innerText(),/Kitchen/,"the selected scene is labeled with its room template");
