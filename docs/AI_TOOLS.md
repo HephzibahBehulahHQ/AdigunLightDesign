@@ -9,9 +9,10 @@ separate. Guests may inspect previews but cannot commit Bot changes. This
 supersedes the earlier local-action saving behavior described in baseline notes.
 
 Live unpatched-fixture offers now create an exact native patch preview in
-virtual universe 1 using the first available contiguous address range. Live
-previews bind to the verified account. Stale/canceled offers, changed accounts,
-unsupported fixes and exhausted address space reject without changing source
+the first virtual universe with a free contiguous address range, using the
+same address selection as fixture creation. Live previews bind to the verified
+account. Stale or canceled offers, changed accounts and unsupported fixes reject
+without changing source
 state. Registered identity and confirmation are checked again before applying.
 These paths have mocked Auth/domain/panel tests; live login/browser verification
 and cloud persistence remain pending.

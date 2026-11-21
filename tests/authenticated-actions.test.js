@@ -30,12 +30,20 @@ test("project edits while authentication is pending reject stale patch previews"
   const pending=previewUnpatchedFixture({getProject:()=>f.state.project,suggestion:f.suggestion,account:auth});f.state.project.name="Edited during verification";finish(owner);
   await assert.rejects(pending,/liveProposalExpired/);assert.equal(f.state.project.fixtures[2].patchAssignment,null);
 });
-test("the patch offer rejects occupied universes, already patched fixtures and unsupported fixes",async()=>{
+test("the patch offer skips full universes and rejects already patched fixtures and unsupported fixes",async()=>{
   const f=setup(),auth=account();
   await assert.rejects(previewUnpatchedFixture({getProject:()=>f.state.project,suggestion:{action:"unknown"},account:auth}),/liveUnsupportedSuggestion/);
   await assert.rejects(previewUnpatchedFixture({getProject:()=>f.state.project,suggestion:{action:"review-patch",fixtureId:f.state.project.fixtures[0].id},account:auth}),/liveProposalExpired/);
   let fixtures=Array.from({length:128},(_,index)=>createFixture(index+1,"generic-led-strip-rgb"));
   for(let index=0;index<fixtures.length;index++)fixtures=patchFixture(fixtures,fixtures[index].id,1,index*4+1);
-  const candidate=createFixture(129,"generic-led-strip-rgb");f.state.project.fixtures=[...fixtures,candidate];const before=JSON.stringify(f.state);
-  await assert.rejects(previewUnpatchedFixture({getProject:()=>f.state.project,suggestion:{action:"review-patch",fixtureId:candidate.id},account:auth}),/livePatchUnavailable/);assert.equal(JSON.stringify(f.state),before);
+  f.state.project.cues=[];
+  const occupyingSecond=createFixture(129,"generic-led-strip-rgb");
+  const candidate=createFixture(130,"generic-led-strip-rgb");
+  f.state.project.fixtures=patchFixture([...fixtures,occupyingSecond,candidate],occupyingSecond.id,2,1);
+  const before=JSON.stringify(f.state);
+  const proposal=await previewUnpatchedFixture({getProject:()=>f.state.project,suggestion:{action:"review-patch",fixtureId:candidate.id},account:auth});
+  assert.deepEqual(proposal.changes[0].after.patchAssignment,{fixtureId:candidate.id,universe:2,startAddress:5,channelFootprint:4});
+  assert.equal(JSON.stringify(f.state),before);
+  const confirmed=await confirmAuthenticatedAction({getState:()=>f.state,proposal,account:auth,confirmed:true});
+  assert.deepEqual(confirmed.project.fixtures.at(-1).patchAssignment,proposal.changes[0].after.patchAssignment);
 });
