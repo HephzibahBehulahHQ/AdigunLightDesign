@@ -33,7 +33,17 @@ export function validatePatch(candidate:FixturePatch, fixtures:readonly Fixture[
   for (const fixture of fixtures) { const existing=fixture.patchAssignment; if (!existing || fixture.id === candidate.fixtureId || existing.universe !== candidate.universe) continue; const current=patchRange(existing); if (range.start <= current.end && current.start <= range.end) errors.push(`Address overlaps ${fixture.name}.`); }
   return { valid:errors.length===0, errors };
 }
-export function firstAvailableAddress(fixtures:readonly Fixture[], universe:number, footprint:number) { for(let start=1;start+footprint-1<=512;start+=1) { if (validatePatch({fixtureId:"candidate",universe,startAddress:start,channelFootprint:footprint},fixtures).valid) return start; } return null; }
+export function firstAvailableAddress(fixtures:readonly Fixture[], universe:number, footprint:number) {
+  if (!Number.isInteger(universe) || universe<1 || !Number.isInteger(footprint) || footprint<1 || footprint>512) return null;
+  const occupied=fixtures.flatMap(({patchAssignment})=>patchAssignment?.universe===universe ? [patchRange(patchAssignment)] : []);
+  occupied.sort((left,right)=>left.start-right.start);
+  let start=1;
+  for (const range of occupied) {
+    if (range.start>=start+footprint) break;
+    start=Math.max(start,range.end+1);
+  }
+  return start+footprint-1<=512 ? start : null;
+}
 export function patchFixture(fixtures:readonly Fixture[], fixtureId:string, universe = 1, startAddress?:number):Fixture[] { const fixture=fixtures.find((item)=>item.id===fixtureId); if(!fixture) throw new Error("Fixture was not found."); const profile=getFixtureProfile(fixture.profileId),footprint=fixtureFootprint(profile,fixture.modeId),address=startAddress ?? firstAvailableAddress(fixtures,universe,footprint); if(address===null)throw new Error("Start address must be 1–512."); const patch:FixturePatch={fixtureId,universe,startAddress:address,channelFootprint:footprint}; const result=validatePatch(patch,fixtures); if(!result.valid) throw new Error(result.errors.join(" ")); return fixtures.map((item)=>item.id===fixtureId?{...item,patchAssignment:patch}:item); }
 export function firstAvailablePatch(fixtures:readonly Fixture[], footprint:number) {
   if (!Number.isInteger(footprint) || footprint < 1 || footprint > 512) throw new Error("Fixture requires a valid channel footprint.");
