@@ -264,7 +264,7 @@ function playArrangement({seek=0,paused=false}={}) {
   arrangementActive=true;
   playbackClock.seek(seek,now);
   if (paused) playbackClock.pause(now);
-  playbackTimer=setInterval(()=>{
+  const updateFrame=()=>{
     const ruler=document.querySelector(".arrangement-timeline .timeline-ruler");
     if(ruler.dataset.seeking)return;
     const position=arrangementPlaybackPosition(duration);
@@ -272,8 +272,10 @@ function playArrangement({seek=0,paused=false}={}) {
     showArrangementPosition(position.time,duration,ruler);
     document.querySelector("#status").textContent=`${t("playTracks")} · ${position.time.toFixed(1)} s`;
     if (position.complete && !playbackClock.paused) {stopPlayback();render();}
-  },100);
+  };
+  playbackTimer=setInterval(updateFrame,100);
   render();
+  updateFrame();
 }
 function downloadText(content, filename, type) { const file=new Blob([content],{type}); const link=document.createElement("a"); link.href=URL.createObjectURL(file); link.download=filename; link.click(); URL.revokeObjectURL(link.href); }
 function exportFile(kind) { if(kind==="ase"){try{downloadText(paletteAse(palette()),`${safeFileStem(palette().name)}.ase`,"application/octet-stream");status=t("aseExportLimit");}catch(error){status=error.message;}document.querySelector("#status").textContent=status;return;} const stem=safeFileStem(project.name); const exports={ project:[projectJson(project),`${stem}.ald.json`,"application/json"], palette:[paletteJson(palette()),`${stem}-palette.json`,"application/json"], css:[paletteCss(palette()),`${stem}-palette.css`,"text/css"], patch:[patchCsv(project.fixtures),`${stem}-patch.csv`,"text/csv"], cues:[cueCsv(project.cues),`${stem}-cues.csv`,"text/csv"] }; const [content,name,type]=exports[kind]; downloadText(content,name,type); status=`${name} downloaded.`; document.querySelector("#status").textContent=status; }
