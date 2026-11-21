@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { duplicateFixture,deleteFixture } from "../src/domain/fixture-operations.ts";
 import { createStudioMoodProject } from "../src/domain/studio-mood.js";
 import { validateProject } from "../src/domain/project.js";
+import { createFixture,patchFixture } from "../src/dmx/engine.js";
 import { createCue } from "../src/timeline/engine.js";
 import { commitTransaction,undoTransaction } from "../src/domain/history.js";
 test("fixture copies retain profile and values with a distinct valid patch and position",()=>{
@@ -14,6 +15,17 @@ test("fixture copies retain profile and values with a distinct valid patch and p
   const original=source.properties.red;
   copy.properties.red=(original+1)%256;assert.equal(project.fixtures[0].properties.red,original);
   assert.throws(()=>duplicateFixture(project,source.id,{id:source.id}));
+});
+test("duplicating from a full universe finds a new contiguous patch without changing the source",()=>{
+  const project=createStudioMoodProject();
+  project.cues=[];
+  let fixtures=Array.from({length:128},(_,index)=>createFixture(index+1,"generic-led-strip-rgb"));
+  for (const [index,fixture] of fixtures.entries()) fixtures=patchFixture(fixtures,fixture.id,1,index*4+1);
+  project.fixtures=fixtures;
+  const source=fixtures[0],result=duplicateFixture(project,source.id,{id:"copy"});
+  assert.deepEqual(result.fixtures.at(-1).patchAssignment,{fixtureId:"copy",universe:2,startAddress:1,channelFootprint:4});
+  assert.deepEqual(result.fixtures.slice(0,-1),project.fixtures);
+  assert.equal(validateProject(result).valid,true);
 });
 test("fixture deletion cleans groups cue targets and keyframes and undo restores all",()=>{
   const project=createStudioMoodProject(),id=project.fixtures[0].id;

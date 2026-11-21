@@ -293,6 +293,10 @@ async function verifyVirtualPlayback(browser, studioUrl) {
     assert.match(await page.locator(".timeline-status").textContent(), /Universe 2.*4 active channels/, "the timeline counts only channels patched in the selected universe");
     assert.deepEqual(await page.locator("#virtual-dmx-monitor .virtual-dmx-channel b").allTextContents(), ["010", "011", "012", "013"], "the monitor follows the selected fixture into universe 2");
 
+    await page.locator(".fixture-configuration-details > summary").click();
+    await page.locator("#fixture-rotation").fill("55");
+    await page.locator("#fixture-dimmer").fill("93");
+    await page.locator("#apply-fixture").click();
     const fixturesMenu = page.locator('[data-command-menu-trigger="fixtures"]');
     await fixturesMenu.click();
     const [rigDownload] = await Promise.all([page.waitForEvent("download"), page.locator("#export-fixture-rig").click()]);
@@ -302,6 +306,8 @@ async function verifyVirtualPlayback(browser, studioUrl) {
     const sourceRoom = await page.locator("#scene-select").inputValue();
     const sourceIds = await page.locator("#fixture-select option").evaluateAll(options => options.map(option => option.value));
     assert.equal(rig.fixtures.length, sourceIds.length, "the rig exports exactly the fixtures in the active room");
+    assert.equal(rig.fixtures.at(-1).transform.rotation,55,"the portable rig contains the edited orientation");
+    assert.equal(rig.fixtures.at(-1).properties.dimmer,93,"the portable rig contains the edited channel level");
     await sceneMenu.click();
     await page.locator("#add-room-scene").click();
     await page.locator("#room-template").selectOption("bathroom");
@@ -315,6 +321,8 @@ async function verifyVirtualPlayback(browser, studioUrl) {
     const importedIds = await page.locator("#fixture-select option").evaluateAll(options => options.map(option => option.value));
     assert.ok(importedIds.every(id => !sourceIds.includes(id)), "import creates independent fixture identities in the destination room");
     assert.ok(destinationFixtureIds.every(id => importedIds.includes(id)), "import preserves the destination's existing fixtures");
+    assert.equal(await page.locator("#fixture-rotation").inputValue(),"55","the imported fixture retains its orientation");
+    assert.equal(await page.locator("#fixture-dimmer").inputValue(),"93","the imported fixture retains its channel level");
     assert.match(await page.locator(".timeline-status").textContent(), /active channels/, "imported fixtures are patched in the destination room");
     await page.locator('[data-command-menu-trigger="history"]').click();
     await page.locator("#undo").click();
