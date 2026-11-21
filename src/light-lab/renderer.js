@@ -935,7 +935,7 @@ export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = 
       gl.depthMask(true);gl.disable(gl.BLEND);gl.uniform1f(opacity,1);
     }
   }
-  const resize=new ResizeObserver(draw);
+  const resize=new ResizeObserver(()=>draw());
   const fixtureAt=(event,bounds)=>{
     if(!viewProjection || visibility.lighting===false)return null;
     if(pickCacheFixtures!==virtualFixtures){
