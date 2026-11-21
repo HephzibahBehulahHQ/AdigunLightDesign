@@ -1,9 +1,9 @@
 import {createCloudProjectStore} from "./projects.js";
-import {createClient} from "@supabase/supabase-js";
 export const sharedSupabaseUrl="https://fqcbfnktdvqojyezxeis.supabase.co";
 
-export function createAccount({publishableKey="",clientFactory=createClient}={}){
+export function createAccount({publishableKey="",clientFactory}={}){
   if(publishableKey && !/^sb_publishable_[A-Za-z0-9_-]+$/.test(publishableKey))throw new Error("A frontend publishable key is required.");
+  if(publishableKey && typeof clientFactory!=="function")throw new Error("An Auth client factory is required.");
   const listeners=new Set();let user=null,generation=0,disposed=false,pending=null;
   const client=publishableKey ? clientFactory(sharedSupabaseUrl,publishableKey,{auth:{persistSession:false,autoRefreshToken:true,detectSessionInUrl:false}}) : null;
   const emit=()=>{for(const listener of listeners)listener(user ? {...user} : null);};
