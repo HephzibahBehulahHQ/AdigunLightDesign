@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { mkdir, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import { PDFDocument } from "pdf-lib";
 import { chromium } from "playwright";
 import { createServer } from "vite";
 
@@ -85,33 +86,45 @@ try {
   assert.equal(hdBytes.readUInt32BE(20),1080,"HD viewport image height is 1080 pixels");
   assert.equal(hdBytes.toString("ascii",1,4),"PNG","HD viewport export is a PNG image");
 
-  const downloadPaletteFile = async (selector, extension) => {
+  const downloadExportFile = async (selector, extension) => {
     await openCommandMenu("export");
     const [download] = await Promise.all([
       page.waitForEvent("download", { timeout: 15000 }),
       page.locator(selector).click(),
     ]);
-    assert.ok(download.suggestedFilename().endsWith(extension), `palette export uses the ${extension} extension`);
+    assert.ok(download.suggestedFilename().endsWith(extension), `export uses the ${extension} extension`);
     return readFile(await download.path());
   };
-  const paletteJsonBytes = await downloadPaletteFile('[data-export="palette"]', ".json");
+  const paletteJsonBytes = await downloadExportFile('[data-export="palette"]', ".json");
   const exportedPalette = JSON.parse(paletteJsonBytes.toString("utf8"));
   assert.equal(exportedPalette.schemaVersion, 1);
   assert.ok(exportedPalette.colors.length > 0, "palette JSON contains swatches");
   const firstColor = exportedPalette.colors[0].hex.toUpperCase();
-  const css = await downloadPaletteFile('[data-export="css"]', ".css");
+  const css = await downloadExportFile('[data-export="css"]', ".css");
   assert.ok(css.toString("utf8").toUpperCase().includes(firstColor), "CSS contains the active palette color");
-  const svg = (await downloadPaletteFile("#export-svg", ".svg")).toString("utf8");
+  const svg = (await downloadExportFile("#export-svg", ".svg")).toString("utf8");
   assert.match(svg, /<svg\b/);
   assert.ok(svg.toUpperCase().includes(firstColor), "SVG contains the active palette color");
-  const png = await downloadPaletteFile('[data-raster="image/png"]', ".png");
+  const png = await downloadExportFile('[data-raster="image/png"]', ".png");
   assert.equal(png.subarray(0, 8).toString("hex"), "89504e470d0a1a0a", "palette PNG has the PNG signature");
   assert.ok(png.readUInt32BE(16) > 0 && png.readUInt32BE(20) > 0, "palette PNG has nonzero dimensions");
-  const jpeg = await downloadPaletteFile('[data-raster="image/jpeg"]', ".jpg");
+  const jpeg = await downloadExportFile('[data-raster="image/jpeg"]', ".jpg");
   assert.equal(jpeg.subarray(0, 3).toString("hex"), "ffd8ff", "palette JPEG has the JPEG signature");
   assert.equal(jpeg.subarray(-2).toString("hex"), "ffd9", "palette JPEG has an end-of-image marker");
-  const pdf = await downloadPaletteFile("#export-pdf", ".pdf");
+  const pdf = await downloadExportFile("#export-pdf", ".pdf");
   assert.equal(pdf.toString("ascii", 0, 5), "%PDF-", "palette PDF has the PDF signature");
+  const tokens = JSON.parse(await downloadExportFile("#export-tokens", "-tokens.json"));
+  assert.equal(tokens.format, "adigunlightdesign.design-tokens");
+  assert.deepEqual(Object.values(tokens.color).map(token => token.sourceId), exportedPalette.colors.map(color => color.id), "design tokens retain active swatch order and IDs");
+  const ase = await downloadExportFile('[data-export="ase"]', ".ase");
+  assert.equal(ase.toString("ascii", 0, 4), "ASEF", "experimental ASE has the ASE signature");
+  const patchCsv = (await downloadExportFile('[data-export="patch"]', "-patch.csv")).toString("utf8");
+  assert.match(patchCsv, /^Fixture,Profile,Mode,Universe,Start address,Footprint\r?\n"Moving Head RGB 1"/);
+  const cueCsv = (await downloadExportFile('[data-export="cues"]', "-cues.csv")).toString("utf8");
+  assert.match(cueCsv, /^Cue,Duration seconds,.*Track end seconds\r?\n"Look 1 - Fade In"/);
+  const cuePdf = await PDFDocument.load(await downloadExportFile("#export-cue-pdf", "-cues.pdf"));
+  assert.equal(cuePdf.getTitle(), "AdigunLightDesign cue sheet");
+  assert.equal(cuePdf.getPageCount(), 1, "the starter timeline fits on one cue-sheet page");
 
   const reports = [];
   for (const [width, height] of viewports) {
@@ -484,6 +497,9 @@ try {
   await textEditor.fill("Editable label");
   await page.locator("#apply-object").click();
   assert.equal(await page.locator(".design-canvas text").textContent(), "Editable label", "Apply object changes updates the text shown on the canvas");
+  const canvasSvg = (await downloadExportFile("#export-canvas", "-canvas.svg")).toString("utf8");
+  assert.match(canvasSvg, /<text\b[^>]*>Editable label<\/text>/, "canvas SVG includes the edited text as vector text");
+  assert.doesNotMatch(canvasSvg, /data-canvas-object/, "canvas SVG omits editor interaction attributes");
   const firstSceneId=await page.locator("#scene-select").inputValue();
   await page.locator("#create-cue").click();
   const firstSceneCues=page.locator(".timeline > .cue-track .cue-block"),firstSceneCueCount=await firstSceneCues.count();
