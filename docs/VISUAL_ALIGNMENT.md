@@ -135,4 +135,7 @@ regions and tablets retain columns. Chrome checks at 320, 360, 390, 671, 768,
 header, the footer follows the inspector, and the scene toolbar and timeline
 stay within the viewport. Tablet checks also verify that the palette and
 virtual DMX controls fit their rail. Desktop uses the fixed workspace layout.
+The scrollable shell keeps its vertical position when the current project
+rerenders. The phone test applies a fixture dimmer edit and verifies that the
+new value persists and the Apply control stays in view.
 

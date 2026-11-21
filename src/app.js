@@ -431,6 +431,8 @@ function applyFixturePatch() {
   } catch(error) { document.querySelector("#status").textContent=status=error.message; }
 }
 function render() {
+  const previousShell = document.querySelector(".studio-shell");
+  const studioScrollTop = previousShell?.dataset.projectId === project.id ? previousShell.scrollTop : 0;
   preferences.luxOpen=true; // Floating-window state controls visibility; keep its content mounted.
   cleanupTopMenu?.();
   cleanupCommandMenus?.();
@@ -491,7 +493,7 @@ function render() {
         <section class="marketing-bottom"><div><p class="marketing-eyebrow">YOUR NEXT IDEA STARTS HERE</p><h2>Bring the room to life.</h2></div><a class="marketing-cta marketing-cta-primary" href="#AdigunStudio">Go to the Studio <span aria-hidden="true">→</span></a></section>
       </main><footer class="marketing-footer"><span>HEPHZIBAH BEHULAH <i>·</i> HB ELEKTRONIKER <i>·</i> ADIGUNLIGHTDESIGN</span><span>Design Color. Shape Light. Create Atmosphere.</span></footer>
     </section>
-    <div id="AdigunStudio" class="studio-shell">
+    <div id="AdigunStudio" class="studio-shell" data-project-id="${esc(project.id)}">
     <header class="topbar">
       <a class="brand-lockup" href="#top" aria-label="${t("brandAlt")} — home">
         <img class="corporate-mark" src="./assets/corporate/hephzibah-behulah-official.jpg" alt="Hephzibah Behulah" onerror="this.hidden=true;this.nextElementSibling.hidden=false" />
@@ -795,6 +797,7 @@ function render() {
       document.querySelector("#export-viewport").disabled=true;
     }
   }
+  if (studioScrollTop > 0) document.querySelector(".studio-shell").scrollTop = studioScrollTop;
 }
 
 function bind() {
