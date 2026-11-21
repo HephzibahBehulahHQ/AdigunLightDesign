@@ -39,6 +39,8 @@ export function editCue(cue:Cue, changes:CueOptions) {
   const options={...cue,...changes};
   if (typeof options.name !== "string" || !options.name.trim()) throw new Error("Cue name must not be empty.");
   const revised=createCue([], {...options,name:options.name.trim()});
+  const lastKeyframe=(cue.channelKeyframes ?? []).reduce((latest,frame)=>Math.max(latest,frame.time),0);
+  if (revised.duration<lastKeyframe) throw new Error("cueDurationBeforeKeyframe",{cause:lastKeyframe});
   return {...cue,...revised,targets:structuredClone(cue.targets)};
 }
 
