@@ -49,6 +49,14 @@ async function verifyUtilityControls(page) {
 
 async function verifyVirtualPlayback(browser, studioUrl) {
   const page = await browser.newPage({viewport:{width:1440,height:900}});
+  await page.addInitScript(()=>{
+    globalThis.fixtureUploads=0;
+    const upload=globalThis.WebGLRenderingContext.prototype.bufferData;
+    globalThis.WebGLRenderingContext.prototype.bufferData=function(...args){
+      globalThis.fixtureUploads++;
+      return upload.apply(this,args);
+    };
+  });
   try {
     await page.goto(studioUrl);
     await verifyAccessibility(page, "desktop studio");
@@ -88,6 +96,13 @@ async function verifyVirtualPlayback(browser, studioUrl) {
       channel.querySelector("span")?.textContent === "dimmer" && channel.querySelector("strong")?.textContent !== before), savedDimmer);
     await page.locator("#pause-playback").click();
     const pulseDifference = colorDifference(await readPreviewPixels());
+    const pausedUploads=await page.evaluate(async()=>{
+      await new Promise(resolve=>globalThis.setTimeout(resolve,250));
+      const before=globalThis.fixtureUploads;
+      await new Promise(resolve=>globalThis.setTimeout(resolve,350));
+      return globalThis.fixtureUploads-before;
+    });
+    assert.equal(pausedUploads,0,"a stable paused frame makes no geometry uploads");
     assert.ok(pulseDifference > 1, `the virtual pulse changes rendered fixture lighting (${pulseDifference.toFixed(2)})`);
     assert.match(await page.locator("#virtual-dmx-monitor header").textContent(), /output:\s*disabled/i);
     await page.locator("#stop-cue").click();
