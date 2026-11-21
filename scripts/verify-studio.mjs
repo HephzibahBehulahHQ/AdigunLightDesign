@@ -392,6 +392,7 @@ try {
   const runtimeErrors = [];
   page.on("pageerror", (error) => runtimeErrors.push(error.message));
   await page.addInitScript(()=>localStorage.setItem("adigunlightdesign/project-v1",JSON.stringify({name:"stale working copy"})));
+  await page.emulateMedia({reducedMotion:"reduce"});
   await page.goto(`http://127.0.0.1:${address.port}/`, { waitUntil: "networkidle" });
   assert.equal(await page.locator(".marketing-home").isVisible(),true,"the product landing page is the public entry point");
   assert.equal(await page.locator(".marketing-brand img").evaluate(image=>image.complete&&image.naturalWidth>0),true,"the approved corporate logo loads from the bundled product asset");
@@ -405,8 +406,15 @@ try {
   await page.locator("#landing-intensity").fill("50");
   assert.notDeepEqual(await landingCanvas.screenshot(), cyanPreview, "dimming the fixtures changes the rendered light");
   const landingTour = page.locator("[data-landing-tour]");
+  assert.equal(await landingTour.getAttribute("aria-pressed"),"false","the camera tour is idle with reduced motion enabled");
+  assert.equal(await page.locator(".marketing-demos video").evaluateAll(videos=>videos.every(video=>video.paused && !video.autoplay)),true,"the real demos await user playback");
+  await page.emulateMedia({reducedMotion:"no-preference"});
   await landingTour.click();
   assert.equal(await landingTour.getAttribute("aria-pressed"), "true", "the landing camera tour runs");
+  await landingCanvas.press("ArrowLeft");
+  assert.equal(await landingTour.getAttribute("aria-pressed"),"false","manual camera movement stops the tour and updates its control");
+  assert.equal(await landingTour.innerText(),"Play camera tour");
+  await landingTour.click();
   await landingTour.click();
   assert.equal(await landingTour.getAttribute("aria-pressed"), "false", "the landing camera tour can be stopped");
   const [samplePage] = await Promise.all([context.waitForEvent("page"), page.locator("[data-landing-open]").click()]);
@@ -1290,6 +1298,9 @@ try {
   assert.ok(lookToggleBounds.x+lookToggleBounds.width<=paintControlsBounds.x||lookToggleBounds.x>=paintControlsBounds.x+paintControlsBounds.width||lookToggleBounds.y+lookToggleBounds.height<=paintControlsBounds.y||lookToggleBounds.y>=paintControlsBounds.y+paintControlsBounds.height,"the lighting look switch does not overlap canvas paint controls");
   await page.locator("#play-room-tour").click();
   assert.equal(await page.locator("#play-room-tour").getAttribute("aria-pressed"),"true","Play tour starts the room camera walkthrough");
+  await page.locator("#light-canvas").press("Escape");
+  assert.equal(await page.locator("#play-room-tour").getAttribute("aria-pressed"),"false","Escape stops the tour from the studio canvas");
+  await page.locator("#play-room-tour").click();
   await page.locator("#play-room-tour").click();
   assert.equal(await page.locator("#play-room-tour").getAttribute("aria-pressed"),"false","the room camera walkthrough stops on the second click");
   await page.locator("#open-room-music").click();

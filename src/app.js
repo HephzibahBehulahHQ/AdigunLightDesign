@@ -143,6 +143,14 @@ function loadProject() {
   return sample ?? createStudioMoodProject();
 }
 function t(key) { return translate(preferences.locale, key); }
+function updateRoomTourButton(playing) {
+  const button=document.querySelector("#play-room-tour");
+  if (!button) return;
+  const label=t(playing ? "stopRoomTour" : "playRoomTour");
+  button.setAttribute("aria-pressed",String(playing));
+  button.setAttribute("aria-label",label);
+  button.innerHTML=`<span aria-hidden="true">${playing?"■":"▶"}</span> ${label}`;
+}
 function phrase(key, values = {}) { return t(key).replace(/\{(\w+)\}/g, (_, name) => values[name] ?? ""); }
 const paletteHarmonies=["analogous","complementary","splitComplementary","triadic","tetradic","square","monochromatic"];
 function palette() { return project.palettes[0]; }
@@ -891,7 +899,7 @@ function render() {
   if (preferences.view === "light") {
     const fixtures=currentRendererFixtures(),fixtureSignature=lightLabFixtureState(fixtures),accent=scene().materialColor;
     if(reuseRenderer){if(fixtureSignature!==rendererFixtureSignature)renderer.setFixtures(fixtures);if(accent!==rendererAccent)renderer.setAccent(accent);rendererFixtureSignature=fixtureSignature;rendererAccent=accent;}
-    else {renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {camera:viewportCamera,accent,room:scene().room,roomType:scene().roomType,ambience:roomAmbience(scene()),materials:scene().materials,stage:scene().stage,quality:preferences.previewQuality,projection:preferences.projection==="orthographic" ? "orthographic" : "perspective",visibility:scene().visibility,fixtures,onSelect(id){stopPlayback();preferences.fixtureId=id;preferences.inspectorMode="fixture";savePreferences();render();},onTransform(id,transform){commitProjectChange("fixture-move",(draft)=>{draft.fixtures=updateFixture(draft.fixtures,id,{transform});});updateRendererFromFixtures();}});rendererConfigSignature=nextRendererConfig;rendererFixtureSignature=fixtureSignature;rendererAccent=accent;}
+    else {renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {camera:viewportCamera,accent,room:scene().room,roomType:scene().roomType,ambience:roomAmbience(scene()),materials:scene().materials,stage:scene().stage,quality:preferences.previewQuality,projection:preferences.projection==="orthographic" ? "orthographic" : "perspective",visibility:scene().visibility,fixtures,onTourChange:updateRoomTourButton,onSelect(id){stopPlayback();preferences.fixtureId=id;preferences.inspectorMode="fixture";savePreferences();render();},onTransform(id,transform){commitProjectChange("fixture-move",(draft)=>{draft.fixtures=updateFixture(draft.fixtures,id,{transform});});updateRendererFromFixtures();}});rendererConfigSignature=nextRendererConfig;rendererFixtureSignature=fixtureSignature;rendererAccent=accent;}
     document.querySelectorAll("[data-camera-view]").forEach(button=>button.disabled=!renderer.supported);
     if (!renderer.supported) {
       document.querySelector(".scene-title small").title=phrase("previewFixtureCount",{shown:0,total:sceneFixtures().length}); document.querySelector(".scene-title small").setAttribute("aria-label",document.querySelector(".scene-title small").title);
@@ -1422,9 +1430,9 @@ function bind() {
       status=t("lightingLookApplied");render();
     }catch(error){setStatus(error.message);}
   });
-  document.querySelector("#play-room-tour")?.addEventListener("click",(event)=>{
+  document.querySelector("#play-room-tour")?.addEventListener("click",()=>{
     if(!renderer?.toggleTour){setStatus(t("roomTourUnavailable"));return;}
-    const playing=renderer.toggleTour();event.currentTarget.setAttribute("aria-pressed",String(playing));event.currentTarget.setAttribute("aria-label",playing?t("stopRoomTour"):t("playRoomTour"));event.currentTarget.innerHTML=`<span aria-hidden="true">${playing?"■":"▶"}</span> ${playing?t("stopRoomTour"):t("playRoomTour")}`;
+    const playing=renderer.toggleTour();
     setStatus(playing?t("roomTourStarted"):t("roomTourStopped"));
   });
   const musicButton=document.querySelector("#toggle-room-music");if(musicButton)musicButton.onclick=async()=>{

@@ -96,18 +96,22 @@ export function bindLanding(root) {
   let renderer;
   let baseFixtures;
 
+  function showTourState(running) {
+    tour.textContent=running ? "Stop camera tour" : "Play camera tour";
+    tour.setAttribute("aria-pressed",String(running));
+  }
+
   function stop() {
     renderer?.destroy();
     renderer = null;
-    tour.setAttribute("aria-pressed", "false");
-    tour.textContent = "Play camera tour";
+    showTourState(false);
   }
 
   function show() {
     if (renderer) return;
     const { scenes: [scene], fixtures } = createLandingSample(selected);
     baseFixtures = fixtures;
-    renderer = createLightLabRenderer(canvas, { accent:scene.materialColor, fixtures:scaleFixtureDimmers(fixtures, intensity.valueAsNumber), ambience:scene.ambience, materials:scene.materials });
+    renderer = createLightLabRenderer(canvas, { accent:scene.materialColor, fixtures:scaleFixtureDimmers(fixtures, intensity.valueAsNumber), ambience:scene.ambience, materials:scene.materials, onTourChange:showTourState });
     fallback.hidden = renderer.supported;
     canvas.hidden = !renderer.supported;
     tour.disabled = !renderer.supported;
@@ -129,10 +133,6 @@ export function bindLanding(root) {
     open.href = studioLink(selected, level);
     renderer?.setFixtures(scaleFixtureDimmers(baseFixtures, level));
   };
-  tour.onclick = () => {
-    const running = Boolean(renderer?.toggleTour());
-    tour.textContent = running ? "Stop camera tour" : "Play camera tour";
-    tour.setAttribute("aria-pressed", String(running));
-  };
+  tour.onclick = () => renderer?.toggleTour();
   return { show, stop };
 }
