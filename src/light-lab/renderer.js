@@ -903,7 +903,7 @@ export function sceneBuffers(accent,fixtures,visibility={},room,materials={},qua
   return {data,opaqueVertices:opaque.length/6};
 }
 
-export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = [], visibility = {}, room, roomType="living-room", ambience, materials={}, stage, quality="balanced", projection = "perspective", camera={}, onSelect=()=>{},onTransform=()=>{} } = {}) {
+export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = [], visibility = {}, room, roomType="living-room", ambience, materials={}, stage, quality="balanced", projection = "perspective", camera={}, onSelect=()=>{},onTransform=()=>{}, onTourChange=()=>{} } = {}) {
   const gl = canvas.getContext("webgl", { antialias:true, alpha:false });
   if (!gl) return { supported:false, destroy(){}, reset(){}, setAccent(){}, setFixtures(){} };
   const program=gl.createProgram(),vertexShader=compile(gl,gl.VERTEX_SHADER,vertexSource),fragmentShader=compile(gl,gl.FRAGMENT_SHADER,fragmentSource);
@@ -999,16 +999,17 @@ export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = 
     if (fixture) onSelect(fixture.id);
   };
   let tourFrame=0;
-  function stopTour(){if(tourFrame){cancelAnimationFrame(tourFrame);tourFrame=0;}}
+  function stopTour(){if(tourFrame){cancelAnimationFrame(tourFrame);tourFrame=0;onTourChange(false);}}
   function toggleTour(){
     if(tourFrame){stopTour();return false;}
     const origin={yaw,pitch,distance},started=performance.now(),duration=48000;
     const animate=(time)=>{const progress=((time-started)%duration)/duration;yaw=origin.yaw+progress*Math.PI*2;pitch=Math.max(-cameraPitchLimit,Math.min(cameraPitchLimit,origin.pitch+Math.sin(progress*Math.PI*4)*.12));distance=origin.distance*(1+.025*Math.sin(progress*Math.PI*2));draw();tourFrame=requestAnimationFrame(animate);};
-    tourFrame=requestAnimationFrame(animate);return true;
+    tourFrame=requestAnimationFrame(animate);onTourChange(true);return true;
   }
   const pointerDown=(event)=>{stopTour();down(event);};
   resize.observe(canvas);canvas.addEventListener("pointerdown",pointerDown);canvas.addEventListener("pointermove",move);canvas.addEventListener("pointerup",up);draw();
   const keydown=(event)=>{
+    if (event.key==="Escape" && tourFrame) {event.preventDefault();stopTour();return;}
     if (!["ArrowLeft","ArrowRight","ArrowUp","ArrowDown","Home","+","=","-"].includes(event.key)) return;
     event.preventDefault();stopTour();
     if (event.key === "ArrowLeft") yaw-=.08;
