@@ -906,14 +906,21 @@ export function sceneBuffers(accent,fixtures,visibility={},room,materials={},qua
 export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = [], visibility = {}, room, roomType="living-room", ambience, materials={}, stage, quality="balanced", projection = "perspective", camera={}, onSelect=()=>{},onTransform=()=>{}, onTourChange=()=>{} } = {}) {
   const gl = canvas.getContext("webgl", { antialias:true, alpha:false });
   if (!gl) return { supported:false, destroy(){}, reset(){}, setAccent(){}, setFixtures(){} };
-  const program=gl.createProgram(),vertexShader=compile(gl,gl.VERTEX_SHADER,vertexSource),fragmentShader=compile(gl,gl.FRAGMENT_SHADER,fragmentSource);
-  gl.attachShader(program,vertexShader);gl.attachShader(program,fragmentShader);gl.linkProgram(program);
-  gl.detachShader(program,vertexShader);gl.detachShader(program,fragmentShader);
-  gl.deleteShader(vertexShader);gl.deleteShader(fragmentShader);
-  if(!gl.getProgramParameter(program,gl.LINK_STATUS)) { const message=gl.getProgramInfoLog(program);gl.deleteProgram(program);throw new Error(message); }
-  const buffer=gl.createBuffer(),position=gl.getAttribLocation(program,"p"),colour=gl.getAttribLocation(program,"c"),matrix=gl.getUniformLocation(program,"m"),opacity=gl.getUniformLocation(program,"opacity");let selectedAccent=accent,virtualFixtures=fixtures,drag;const dimensions=roomDimensions(room),fitDistance=roomFitCameraDistance(dimensions.width,dimensions.depth);let {yaw,pitch,distance}=normalizeCameraState({...camera,distance:camera?.distance ?? fitDistance});
+  function createResources() {
+    const program=gl.createProgram(),vertexShader=compile(gl,gl.VERTEX_SHADER,vertexSource),fragmentShader=compile(gl,gl.FRAGMENT_SHADER,fragmentSource);
+    gl.attachShader(program,vertexShader);gl.attachShader(program,fragmentShader);gl.linkProgram(program);
+    gl.detachShader(program,vertexShader);gl.detachShader(program,fragmentShader);
+    gl.deleteShader(vertexShader);gl.deleteShader(fragmentShader);
+    if(!gl.getProgramParameter(program,gl.LINK_STATUS)) { const message=gl.getProgramInfoLog(program);gl.deleteProgram(program);throw new Error(message); }
+    const buffer=gl.createBuffer(),position=gl.getAttribLocation(program,"p"),colour=gl.getAttribLocation(program,"c"),matrix=gl.getUniformLocation(program,"m"),opacity=gl.getUniformLocation(program,"opacity")
+    return {program,buffer,position,colour,matrix,opacity};
+  }
+  let resources=createResources(),contextLost=false;
+  let selectedAccent=accent,virtualFixtures=fixtures,drag;const dimensions=roomDimensions(room),fitDistance=roomFitCameraDistance(dimensions.width,dimensions.depth);let {yaw,pitch,distance}=normalizeCameraState({...camera,distance:camera?.distance ?? fitDistance});
   let geometry=null,viewProjection=null,pickOccluders=null,pickCacheFixtures=null,pickTargets=[];
   function draw(targetSize=null) {
+    if (contextLost || gl.isContextLost()) return;
+    const {program,buffer,position,colour,matrix,opacity}=resources;
     const ratio=Math.min(window.devicePixelRatio||1,previewQuality(quality).pixelRatio),width=Math.max(1,targetSize?.width ?? canvas.clientWidth),height=Math.max(1,targetSize?.height ?? canvas.clientHeight);
     gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
     if (!geometry) {
@@ -1001,11 +1008,26 @@ export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = 
   let tourFrame=0;
   function stopTour(){if(tourFrame){cancelAnimationFrame(tourFrame);tourFrame=0;onTourChange(false);}}
   function toggleTour(){
+    if (contextLost) return false;
     if(tourFrame){stopTour();return false;}
     const origin={yaw,pitch,distance},started=performance.now(),duration=48000;
     const animate=(time)=>{const progress=((time-started)%duration)/duration;yaw=origin.yaw+progress*Math.PI*2;pitch=Math.max(-cameraPitchLimit,Math.min(cameraPitchLimit,origin.pitch+Math.sin(progress*Math.PI*4)*.12));distance=origin.distance*(1+.025*Math.sin(progress*Math.PI*2));draw();tourFrame=requestAnimationFrame(animate);};
     tourFrame=requestAnimationFrame(animate);onTourChange(true);return true;
   }
+  const contextLostListener=(event)=>{
+    event.preventDefault();
+    contextLost=true;
+    stopTour();
+    viewProjection=null;
+    geometry=null;
+  };
+  const contextRestoredListener=()=>{
+    resources=createResources();
+    contextLost=false;
+    draw();
+  };
+  canvas.addEventListener("webglcontextlost",contextLostListener);
+  canvas.addEventListener("webglcontextrestored",contextRestoredListener);
   const pointerDown=(event)=>{stopTour();down(event);};
   resize.observe(canvas);canvas.addEventListener("pointerdown",pointerDown);canvas.addEventListener("pointermove",move);canvas.addEventListener("pointerup",up);draw();
   const keydown=(event)=>{
@@ -1026,5 +1048,5 @@ export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = 
   canvas.addEventListener("wheel",wheel,{passive:false});
   canvas.addEventListener("pointercancel",up);
   canvas.addEventListener("lostpointercapture",up);
-  return { supported:true, cameraState(){return {yaw,pitch,distance};},tourPlaying(){return Boolean(tourFrame);},toggleTour,stopTour,capturePng(){return viewportPng(canvas,draw,{width:1920,height:1080});}, setAccent(value){selectedAccent=value;geometry=null;draw();}, setFixtures(value){const selectedId=virtualFixtures.find(fixture=>fixture.selected)?.id;virtualFixtures=value.some(fixture=>Object.hasOwn(fixture,"selected")) ? value : value.map(fixture=>({...fixture,selected:fixture.id===selectedId}));geometry=null;draw();}, setView(axis){stopTour();const view=cameraAxisView(axis);yaw=view.yaw;pitch=view.pitch;draw();}, reset(){stopTour();({yaw,pitch,distance}=normalizeCameraState({distance:fitDistance}));draw();}, destroy(){stopTour();resize.disconnect();canvas.removeEventListener("wheel",wheel);canvas.removeEventListener("keydown",keydown);canvas.removeEventListener("pointercancel",up);canvas.removeEventListener("lostpointercapture",up);canvas.removeEventListener("pointerdown",pointerDown);canvas.removeEventListener("pointermove",move);canvas.removeEventListener("pointerup",up);geometry=null;gl.deleteBuffer(buffer);gl.deleteProgram(program);} };
+  return { supported:true, cameraState(){return {yaw,pitch,distance};},tourPlaying(){return Boolean(tourFrame);},toggleTour,stopTour,async capturePng(){if(contextLost || gl.isContextLost())throw new Error("The 3D preview is recovering. Try exporting again after it returns.");return viewportPng(canvas,draw,{width:1920,height:1080});}, setAccent(value){selectedAccent=value;geometry=null;draw();}, setFixtures(value){const selectedId=virtualFixtures.find(fixture=>fixture.selected)?.id;virtualFixtures=value.some(fixture=>Object.hasOwn(fixture,"selected")) ? value : value.map(fixture=>({...fixture,selected:fixture.id===selectedId}));geometry=null;draw();}, setView(axis){stopTour();const view=cameraAxisView(axis);yaw=view.yaw;pitch=view.pitch;draw();}, reset(){stopTour();({yaw,pitch,distance}=normalizeCameraState({distance:fitDistance}));draw();}, destroy(){stopTour();resize.disconnect();canvas.removeEventListener("webglcontextlost",contextLostListener);canvas.removeEventListener("webglcontextrestored",contextRestoredListener);canvas.removeEventListener("wheel",wheel);canvas.removeEventListener("keydown",keydown);canvas.removeEventListener("pointercancel",up);canvas.removeEventListener("lostpointercapture",up);canvas.removeEventListener("pointerdown",pointerDown);canvas.removeEventListener("pointermove",move);canvas.removeEventListener("pointerup",up);geometry=null;gl.deleteBuffer(resources.buffer);gl.deleteProgram(resources.program);} };
 }
