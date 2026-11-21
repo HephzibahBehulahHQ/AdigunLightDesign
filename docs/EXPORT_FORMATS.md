@@ -59,8 +59,12 @@ verification.
 
 ## PDF palette sheets
 
-PDF palette export uses pinned pdf-lib 1.17.1 and the existing browser PNG palette renderer, with ten swatches per A4 page and page/range numbering. It preserves RGB appearance and browser-rendered Unicode/opacity as raster artwork. Names longer than 12 grapheme clusters and palette headings longer than 28 grapheme clusters are shortened in the sheet; native JSON retains full names. PDF text inside artwork is not searchable or editable, fonts are not embedded, and this is not an ICC/CMYK print proof. Adapter tests cover page count, metadata, source preservation and encoding failure; visual acceptance remains open. Implementation reference: [pdf-lib PDFDocument API](https://pdf-lib.js.org/docs/api/classes/pdfdocument).
+PDF palette export uses pinned pdf-lib 1.17.1 and the existing browser PNG palette renderer, with ten swatches per A4 page and page/range numbering. It preserves RGB appearance and browser-rendered Unicode/opacity as raster artwork. Names longer than 12 grapheme clusters and palette headings longer than 28 grapheme clusters are shortened in the sheet; native JSON retains full names. PDF text inside artwork is not searchable or editable, fonts are not embedded, and this is not an ICC/CMYK print proof. Adapter tests cover page count, metadata, source preservation and encoding failure. Implementation reference: [pdf-lib PDFDocument API](https://pdf-lib.js.org/docs/api/classes/pdfdocument).
 
-A synthetic raster sample was embedded, opened by independent pypdf and rendered with PDFium; the inspected A4 output had a readable brand heading, palette artwork and page footer. This validates PDF assembly/layout with supplied pixels, not the browser's SVG-to-PNG encoding or real download flow.
+The Chrome acceptance run verifies the downloaded starter sheet’s palette title
+and page count and saves the PDF under `outputs/` for inspection. An independent
+pypdf check confirmed the title, one page and the printed range of 1–5 out of
+5 swatches. A 120 DPI Poppler render showed legible headings, labels, HEX values
+and footer. All five sampled swatch centers matched the source RGB exactly.
 
 PDF label shortening uses Unicode grapheme segmentation, preserving combining Yoruba accents and joined emoji rather than cutting inside a visible character. This path requires browser support for Intl.Segmenter. Automated tests cover decomposed accents and joined emoji; visual font coverage remains browser-dependent.
