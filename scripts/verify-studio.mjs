@@ -591,12 +591,12 @@ try {
   ]) {
     const sampledSwatches = await page.evaluate(async ({base64, mime, columns, count}) => {
       const source = await fetch(`data:${mime};base64,${base64}`);
-      const image = new Image();
+      const image = new globalThis.Image();
       const url = URL.createObjectURL(await source.blob());
       try {
         image.src = url;
         await image.decode();
-        const sample = document.createElement("canvas");
+        const sample = globalThis.document.createElement("canvas");
         sample.width = image.naturalWidth;
         sample.height = image.naturalHeight;
         const context = sample.getContext("2d");
