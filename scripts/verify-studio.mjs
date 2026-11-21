@@ -111,6 +111,9 @@ async function verifyVirtualPlayback(browser, studioUrl) {
     assert.equal(await effectType.inputValue(),"chase","stopping retains the selected effect");
     assert.equal(await virtualDimmer.textContent(),savedDimmer,"stopping Chase restores the saved dimmer");
 
+    await page.locator("#toggle-fixtures").click();
+    await page.locator('.fixture-select[title="Moving Head RGB 1"]').click();
+    const movingHeadDimmer=await virtualDimmer.textContent();
     const pan=page.locator(".virtual-dmx-channel").filter({has:page.getByText("pan",{exact:true})}).locator("strong");
     const savedPan=await pan.textContent();
     await effectType.selectOption("panTilt");
@@ -120,7 +123,7 @@ async function verifyVirtualPlayback(browser, studioUrl) {
       channel.querySelector("span")?.textContent==="pan" && channel.querySelector("strong")?.textContent!==saved),savedPan);
     const previewPan=Number(await pan.textContent());
     assert.ok(previewPan>=64 && previewPan<=192,"Pan/Tilt stays within the virtual sweep range");
-    assert.equal(await virtualDimmer.textContent(),savedDimmer,"Pan/Tilt preserves the saved dimmer");
+    assert.equal(await virtualDimmer.textContent(),movingHeadDimmer,"Pan/Tilt preserves the saved dimmer");
     await page.locator("#stop-cue").click();
     assert.equal(await pan.textContent(),savedPan,"stopping Pan/Tilt restores the saved pan");
 
