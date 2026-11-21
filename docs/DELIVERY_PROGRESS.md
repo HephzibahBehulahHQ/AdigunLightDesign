@@ -5,11 +5,11 @@ reference, the floating Bot and compact menu, and the canonical site.
 
 ## Release evidence as of 21 November 2026
 
-The [public release](https://adigunlightdesign.hephzibahbehulah.com/) serves
-commit [`cec9ffe`](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/commit/cec9ffe950f2bd51268a813280dee38136ef6374).
-[CI](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44929745245)
-and the [Pages release with asset checksums](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44929898285)
-passed. On the client domain, Chrome verified the live 3D preview at desktop
+The [public editor](https://adigunlightdesign.hephzibahbehulah.com/) was verified
+through commit [`e5ad1ba`](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/commit/e5ad1ba38de2d395746bb4e690041dd8be4842b1).
+[CI](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44940075568)
+and the [Pages release with asset checksums](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44940277843)
+passed. During the landing release (#225), Chrome verified the live 3D preview at desktop
 and phone widths, both recorded studio demos, and the editable sample carrying
 its selected look and dimmer setting into the studio.
 
@@ -23,6 +23,20 @@ its selected look and dimmer setting into the studio.
 | Responsive studio (#219–221) | `8484186` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44926066662), `870364e` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44926625272), `d6f1655` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44927093384) | Three phone, six tablet, and seven desktop widths. The phone fixture edit keeps Apply in view. |
 | Guest bundle and offline startup (#222–224) | `e02d7ef` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44927509208), `759f87c` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44928117057), `1fbab89` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44928522482) | Guest JavaScript dropped from 173 to 118 kB gzipped. Chrome verified reopening and PDF export offline, and the live site reopened after one online visit. |
 | Live landing (#225) | `cec9ffe` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44929898285) | Editable 3D sample, fixture dimming, genuine studio videos, and Export labels checked in all four locales. |
+| Timeline editing (#226) | `c9c8372` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44930577136) | Chrome checks cue timing, keyframe persistence, and pointer and keyboard seeking. |
+| Stop playback (#227) | `e3ca9c7` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44931806517) | Chrome verifies restoration of saved WebGL lighting after Stop. |
+| Paused final frame (#228) | `38acdf2` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44932549816) | The paused End seek holds the final frame with looping enabled. The monitor reflects the active room. |
+| Project dialog focus (#229) | `b54f1f3` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44933112177) | Chrome verifies keyboard focus returns to the originating menu after dialog close. |
+| Accessibility checks (#230) | `8155cda` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44934455168) | Chrome axe scans cover four landing and studio configurations across desktop and mobile. |
+| Studio demo alternatives (#231) | `a52a448` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44935058188) | The real studio recordings include captions and text descriptions. |
+| Fixture auto-patching (#232) | `47bd87a` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44935748863) | New fixtures use the first virtual universe with enough free contiguous addresses. |
+| Room starter patching (#233) | `0064679` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44936339247) | Room starter fixtures follow the same multi-universe patching rules. |
+| Portable virtual rigs (#234) | `5e7be9f` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44937265166) | Browser import preserves names, transforms, profiles and levels. Imported rigs get fresh IDs and conflict-free patches, and support a single Undo. |
+| Assistant service state (#235) | `dcf0214` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44937843684) | Browser configuration and disconnection update the status and retain expanded settings. A live provider is a separate gate. |
+| Independent ASE reader (#236) | `1016779` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44938418180) | Swatch decoded two RGB exports with exact ordered values and Unicode names. |
+| Cue PDF readability (#237) | `86b0153` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44938942369) | A real Chrome download rendered with full starter labels and visible fade-in, hold and fade-out times. |
+| Virtual effects (#238) | `68f6916` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44939586409) | Chrome verifies Pulse, Chase and Pan/Tilt on relevant virtual channels, restored saved levels, and retained effect settings. |
+| Arrangement seek (#239) | `e5ad1ba` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44940277843) | Chrome verifies matched timeline and fixture updates at seeks and a retained paused position across a language change. |
 
 ## Remaining acceptance gates
 
@@ -33,10 +47,11 @@ its selected look and dimmer setting into the studio.
 - **M2 and M5:** Browser acceptance covers palette extraction, versions,
   local save/reopen, timeline playback, and cue capture across scenes. The
   browser suite also checks cue timing, track scheduling, keyframe persistence,
-  and pointer and keyboard seeking. Broader acceptance for virtual effects and
-  rendered fade output remains open.
+  pointer and keyboard seeking, virtual effects, and representative delay,
+  fade-in, hold and fade-out values. Further rendered fade review remains open.
 - **M4, M7, and M9:** Virtual patching, fixture selection, and downloads have
-  browser evidence, including the downloadable cue PDF parsed for title and page count.
+  browser evidence, including a real cue PDF download checked for title and
+  page count and a rendered review of the starter sheet.
   The ASE RGB writer has independent Swatch parser evidence. GIMP and Adobe
   application import, advanced interchange, licensed
   catalog coverage, and physical fixture transport remain unverified.
@@ -306,7 +321,7 @@ not silently substituted with local simulation.
 3. Complete strict typing/lint and browser end-to-end gates from the master spec.
 4. Verify actual account/cloud and configured Lux flows before claiming them
    operational. Preserve registered-user authorization and project isolation.
-5. Review downloaded cue PDF content and validate interchange in the target applications.
+5. Review longer cue PDF layouts and validate interchange in the target applications.
 6. Complete accessibility, translation, performance and security acceptance.
 7. Prepare a reviewable canonical-domain release. Push each verified increment
    through a focused PR, merge and deploy it promptly, and record its checks,
