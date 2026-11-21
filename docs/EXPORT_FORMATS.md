@@ -1,5 +1,13 @@
 # Export formats
 
+The studio Export menu exposes the palette SVG, PNG, JPEG, PDF and design-token
+downloads alongside the existing JSON and CSS commands. The browser acceptance
+runner downloads palette JSON, CSS, SVG, PNG, JPEG and PDF through this menu.
+It checks the JSON schema version and swatches, a shared color in CSS and SVG,
+PNG signature and dimensions, JPEG boundary markers, and the PDF signature.
+Visual output quality and external application compatibility require separate
+verification.
+
 Canvas SVG exports saved rectangle/text artwork as a standalone 800 × 450 SVG with a transparent background. It preserves object stacking order and strips editor selection decorations and interaction attributes. Text remains editable SVG text and uses the viewer's default font; fonts are not embedded. Structure, escaping and invalid-data rejection have tests. Browser downloads, font matching and external-editor compatibility remain unverified.
 
 Viewport PNG redraws the actual WebGL canvas and requests PNG encoding in the same task. It captures the current camera, visible scene and current lighting preview at the viewport's backing resolution. It excludes HTML overlays and editor panels. The control is disabled outside 3D or when WebGL is unavailable. Mocked tests cover redraw order and encoding failures; actual browser pixels and downloads remain unverified. This is not an offline photorealistic renderer.

@@ -85,6 +85,34 @@ try {
   assert.equal(hdBytes.readUInt32BE(20),1080,"HD viewport image height is 1080 pixels");
   assert.equal(hdBytes.toString("ascii",1,4),"PNG","HD viewport export is a PNG image");
 
+  const downloadPaletteFile = async (selector, extension) => {
+    await openCommandMenu("export");
+    const [download] = await Promise.all([
+      page.waitForEvent("download", { timeout: 15000 }),
+      page.locator(selector).click(),
+    ]);
+    assert.ok(download.suggestedFilename().endsWith(extension), `palette export uses the ${extension} extension`);
+    return readFile(await download.path());
+  };
+  const paletteJsonBytes = await downloadPaletteFile('[data-export="palette"]', ".json");
+  const exportedPalette = JSON.parse(paletteJsonBytes.toString("utf8"));
+  assert.equal(exportedPalette.schemaVersion, 1);
+  assert.ok(exportedPalette.colors.length > 0, "palette JSON contains swatches");
+  const firstColor = exportedPalette.colors[0].hex.toUpperCase();
+  const css = await downloadPaletteFile('[data-export="css"]', ".css");
+  assert.ok(css.toString("utf8").toUpperCase().includes(firstColor), "CSS contains the active palette color");
+  const svg = (await downloadPaletteFile("#export-svg", ".svg")).toString("utf8");
+  assert.match(svg, /<svg\b/);
+  assert.ok(svg.toUpperCase().includes(firstColor), "SVG contains the active palette color");
+  const png = await downloadPaletteFile('[data-raster="image/png"]', ".png");
+  assert.equal(png.subarray(0, 8).toString("hex"), "89504e470d0a1a0a", "palette PNG has the PNG signature");
+  assert.ok(png.readUInt32BE(16) > 0 && png.readUInt32BE(20) > 0, "palette PNG has nonzero dimensions");
+  const jpeg = await downloadPaletteFile('[data-raster="image/jpeg"]', ".jpg");
+  assert.equal(jpeg.subarray(0, 3).toString("hex"), "ffd8ff", "palette JPEG has the JPEG signature");
+  assert.equal(jpeg.subarray(-2).toString("hex"), "ffd9", "palette JPEG has an end-of-image marker");
+  const pdf = await downloadPaletteFile("#export-pdf", ".pdf");
+  assert.equal(pdf.toString("ascii", 0, 5), "%PDF-", "palette PDF has the PDF signature");
+
   const reports = [];
   for (const [width, height] of viewports) {
     await page.setViewportSize({ width, height });
