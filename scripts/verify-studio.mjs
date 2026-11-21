@@ -88,6 +88,10 @@ async function verifyVirtualPlayback(browser, studioUrl) {
       channel.querySelector("span")?.textContent === "dimmer" && channel.querySelector("strong")?.textContent !== before), savedDimmer);
     await page.locator("#pause-playback").click();
     const pulseDifference = colorDifference(await readPreviewPixels());
+    const effectRuler=page.locator(".arrangement-timeline .timeline-ruler");
+    await page.locator("#locale").selectOption("de");
+    assert.equal(await effectRuler.getAttribute("aria-valuenow"),"0","effect playback leaves the arrangement ruler at zero after rendering");
+    await page.locator("#locale").selectOption("en");
     assert.ok(pulseDifference > 1, `the virtual pulse changes rendered fixture lighting (${pulseDifference.toFixed(2)})`);
     assert.match(await page.locator("#virtual-dmx-monitor header").textContent(), /output:\s*disabled/i);
     await page.locator("#stop-cue").click();
@@ -158,6 +162,11 @@ async function verifyVirtualPlayback(browser, studioUrl) {
       await waitForPosition(time);
       assert.equal(await virtualDimmer.textContent(), String(expectedDimmer), `virtual dimmer matches the ${phase} envelope`);
     }
+    await page.locator("#locale").selectOption("de");
+    assert.equal(await ruler.getAttribute("aria-valuenow"),"7","redrawing preserves the paused arrangement position");
+    assert.equal(await playbackReadout.textContent(),"7.0 / 8.0 s","the redrawn readout agrees with the ruler");
+    assert.ok(parseFloat(await page.locator("#arrangement-playhead").evaluate(element=>element.style.left))>23,"the redrawn marker matches the paused position");
+    await page.locator("#locale").selectOption("en");
     await page.locator("#sequence-loop").evaluate(element => element.closest("label").click());
     await ruler.press("End");
     await waitForPosition(8);

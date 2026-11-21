@@ -190,6 +190,7 @@ function updateDmxFeedback(fixtures) {
   if (summary) summary.textContent=`U${snapshot.universe} · CH 1: ${snapshot.frame[0]} · ${t("outputDisabled")}`;
 }
 function previewFixtures(fixtures) {renderer?.setFixtures(fixtures);updateDmxFeedback(fixtures);}
+let arrangementActive=false;
 function stopPlayback(message="Cue playback stopped.") {
   if (playbackTimer) {
     clearInterval(playbackTimer);
@@ -198,6 +199,7 @@ function stopPlayback(message="Cue playback stopped.") {
     rendererFixtureSignature = null;
   }
   playbackClock = null;
+  arrangementActive=false;
   status = message;
 }
 function togglePlaybackPause() {
@@ -248,21 +250,26 @@ function arrangementPlaybackPosition(duration) {
   const holdingEnd = playbackClock.paused && elapsed === duration;
   return playbackPosition(elapsed, duration, Boolean(preferences.loopSequence) && !holdingEnd);
 }
+function showArrangementPosition(time,duration,ruler) {
+  document.querySelector("#arrangement-playhead").style.left=`${time/Math.max(30,duration)*100}%`;
+  ruler.setAttribute("aria-valuenow",String(time));
+  document.querySelector("#arrangement-position").textContent=`${time.toFixed(1)} / ${duration.toFixed(1)} s`;
+}
 function playArrangement({seek=0,paused=false}={}) {
   const sceneCueList=sceneCues();if (!sceneCueList.length) return;
   stopPlayback();
   const source=structuredClone(sceneFixtures()),cues=structuredClone(sceneCueList),duration=arrangementDuration(cues);
   const now = performance.now();
   playbackClock=createPlaybackClock(now);preferences.view="light";
+  arrangementActive=true;
   playbackClock.seek(seek,now);
   if (paused) playbackClock.pause(now);
   playbackTimer=setInterval(()=>{
-    if(document.querySelector(".arrangement-timeline .timeline-ruler")?.dataset.seeking)return;
+    const ruler=document.querySelector(".arrangement-timeline .timeline-ruler");
+    if(ruler.dataset.seeking)return;
     const position=arrangementPlaybackPosition(duration);
     previewFixtures(evaluateTracks(source,cues,position.time));
-    document.querySelector("#arrangement-playhead").style.left=`${position.time/Math.max(30,duration)*100}%`;
-    document.querySelector(".arrangement-timeline .timeline-ruler").setAttribute("aria-valuenow",String(position.time));
-    document.querySelector("#arrangement-position").textContent=`${position.time.toFixed(1)} / ${duration.toFixed(1)} s`;
+    showArrangementPosition(position.time,duration,ruler);
     document.querySelector("#status").textContent=`${t("playTracks")} · ${position.time.toFixed(1)} s`;
     if (position.complete && !playbackClock.paused) {stopPlayback();render();}
   },100);
@@ -1169,8 +1176,11 @@ function bind() {
   document.querySelector("#play-tracks").onclick=playArrangement;
   const scheduledDuration = arrangementDuration(sceneCues());
   const timelineSpan = Math.max(30, scheduledDuration);
-  bindTimelineSeek(document.querySelector(".arrangement-timeline .timeline-ruler"),{
-    span:timelineSpan,duration:scheduledDuration,value:playbackClock && scheduledDuration>0 ? arrangementPlaybackPosition(scheduledDuration).time : 0,label:t("seekTracks"),
+  const ruler=document.querySelector(".arrangement-timeline .timeline-ruler");
+  const position=arrangementActive && scheduledDuration>0 ? arrangementPlaybackPosition(scheduledDuration).time : 0;
+  showArrangementPosition(position,scheduledDuration,ruler);
+  bindTimelineSeek(ruler,{
+    span:timelineSpan,duration:scheduledDuration,value:position,label:t("seekTracks"),
     onPreview(time){document.querySelector("#arrangement-playhead").style.left=`${time/timelineSpan*100}%`;},
     onSeek(time,{keyboard}){playArrangement({seek:time,paused:true});if(keyboard)document.querySelector(".arrangement-timeline .timeline-ruler")?.focus();}
   });
