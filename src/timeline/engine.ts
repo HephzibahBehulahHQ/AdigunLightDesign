@@ -10,14 +10,21 @@ export function duplicateCue(cues:readonly Cue[],cueId:string,{id=crypto.randomU
   if (typeof id!=="string" || !id.trim() || cues.some((cue)=>cue.id===id)) throw new Error("Cue identity must be unique.");
   const copy=structuredClone(cues[index]!);
   copy.id=id;
-  if (cues.some((cue)=>cue.startTime!==undefined && (cue.trackId ?? "Main")===(copy.trackId ?? "Main"))) {
+  const trackId=copy.trackId ?? "Main";
+  const onTrack=(cue:Cue)=>(cue.trackId ?? "Main")===trackId;
+  let insertion=index+1;
+  if (cues.some(cue=>onTrack(cue) && cue.startTime!==undefined)) {
     let end=0;
-    for (const cue of cues.filter((item)=>(item.trackId ?? "Main")===(copy.trackId ?? "Main"))) end=Math.max(end,(cue.startTime ?? end)+cue.duration);
+    for (const [trackIndex,cue] of cues.entries()) {
+      if (!onTrack(cue)) continue;
+      end=Math.max(end,(cue.startTime ?? end)+cue.duration);
+      if (cue.startTime===undefined && trackIndex>=insertion) insertion=trackIndex+1;
+    }
     copy.startTime=end;
   }
   copy.name=name ?? `${copy.name} (copy)`;
   if (typeof copy.name!=="string" || !copy.name.trim()) throw new Error("Cue name must not be empty.");
-  return [...cues.slice(0,index+1),copy,...cues.slice(index+1)];
+  return [...cues.slice(0,insertion),copy,...cues.slice(insertion)];
 }
 
 export function removeCue(cues:readonly Cue[],cueId:string) {

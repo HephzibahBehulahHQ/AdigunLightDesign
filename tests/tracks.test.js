@@ -31,6 +31,20 @@ test("same-track overlaps reject while legacy cues and scheduled copies remain v
   assert.equal(copied[2].startTime,4);
   assert.doesNotThrow(()=>arrangeTracks(copied));
 });
+test("a scheduled copy never shifts later cues with automatic start times",()=>{
+  const cues=[
+    cue("first","a",100,"Main",0),
+    cue("other","b",200,"Fill",0),
+    cue("automatic","a",150,undefined,undefined),
+    cue("later","a",200,"Main",8),
+  ];
+  const snapshot=structuredClone(cues);
+  const copied=duplicateCue(cues,"first",{id:"copy"});
+  const main=arrangeTracks(copied).find(track=>track.id==="Main");
+  assert.deepEqual(main.entries.map(({cue,start})=>[cue.id,start]),[["first",0],["automatic",4],["later",8],["copy",12]]);
+  assert.deepEqual(copied.filter(cue=>cue.id!=="copy"),snapshot);
+  assert.deepEqual(cues,snapshot);
+});
 test("native project validation retains valid scheduling and rejects imported overlap",()=>{
   const project=createStudioMoodProject(),id=project.fixtures[0].id;
   project.cues=[cue("one",id,100,"Key",0),cue("two",id,200,"Key",4)];

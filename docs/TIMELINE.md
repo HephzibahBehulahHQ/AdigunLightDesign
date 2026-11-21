@@ -22,7 +22,7 @@ Fixture groups store named sets of existing fixture IDs in the optional `fixture
 
 The sequence lane uses cumulative start times and duration-proportional blocks, with a seconds ruler and a moving sequence playhead. It displays a minimum 30-second span and expands for longer sequences. The separate scheduled-track lanes show simultaneous cues. Layout arithmetic is tested; rendered visual fidelity is unverified.
 
-Duplicate cue inserts an independent copy immediately after the selected cue in stored order and selects it. For explicitly timed tracks, the copy is scheduled after the track's final cue to avoid overlap. Delete cue removes the selection and selects the nearest remaining cue. Both stop previews and use document undo/redo; deleting the final cue is supported. Captured targets and keyframes remain independent between copies.
+Duplicate cue selects an independent copy. The copy normally follows its source in stored order. On an explicitly timed track, it starts after the final cue. If an automatically timed cue follows the source on that track, the copy is stored after those automatic cues to preserve their start times. Delete cue removes the selection and selects the nearest remaining cue. Both stop previews and use document undo/redo; deleting the final cue is supported. Captured targets and keyframes remain independent between copies.
 
 The sequence transport includes a persistent loop preference and a keyboard-accessible seek slider. Committing a seek starts a paused sequence preview at that position; Resume continues from there. Looping restarts from the captured source scene on each cycle. These controls apply to the full stored cue sequence. Seeking does not edit project data. Browser interaction remains unverified.
 
