@@ -665,6 +665,10 @@ try {
   for (const locale of supportedLocales) {
     await page.locator("#locale").selectOption(locale);
     const labels = messages[locale];
+    assert.equal(await page.locator(".fixture-configuration-details > summary").textContent(),labels.fixtureNameAndPosition);
+    assert.equal(await page.locator(".light-advanced-controls > summary").textContent(),labels.moreLightControls);
+    assert.equal(await page.getByLabel(labels.fixtureName,{exact:true}).count(),1,"fixture naming has a localized label");
+    assert.equal(await page.getByLabel(`${labels.fixtureRotation} (°)`,{exact:true}).count(),1,"fixture rotation has a localized label and unit");
     await openCommandMenu("palette");
     assert.equal(await page.locator("#seed").getAttribute("aria-label"),labels.seedColour,"the seed field has a localized accessible name");
     const harmony=page.locator("#harmony");

@@ -483,13 +483,13 @@ function compact(value, digits = 1) { return Number(value).toFixed(digits); }
 function colourSpaceMarkup(hex) { const rgb=hexToRgb(hex),hsl=rgbToHsl(rgb),hsv=rgbToHsv(rgb),lab=rgbToLab(rgb),oklab=rgbToOklab(rgb); return `<section class="colour-space-card" aria-label="${t("colorSpaces")}"><h3>${t("colorSpaces")}</h3><dl><div><dt>sRGB</dt><dd>${Math.round(rgb.r)},${Math.round(rgb.g)},${Math.round(rgb.b)}</dd></div><div><dt>HSL</dt><dd>${compact(hsl.h)}°·${compact(hsl.s*100)}%·${compact(hsl.l*100)}%</dd></div><div><dt>HSV</dt><dd>${compact(hsv.h)}°·${compact(hsv.s*100)}%·${compact(hsv.v*100)}%</dd></div><div><dt>CIELAB</dt><dd>${compact(lab.l)},${compact(lab.a)},${compact(lab.b)}</dd></div><div><dt>OKLab</dt><dd>${compact(oklab.l,3)},${compact(oklab.a,3)},${compact(oklab.b,3)}</dd></div></dl><small class="${isSrgbGamut(rgb)?"pass":"fail"}">${isSrgbGamut(rgb)?t("inSrgb"):t("outsideSrgb")}</small></section>`; }
 function fixtureLibraryMarkup() { return fixtureProfiles.map((profile)=>`<article><b>${esc(profile.model)}</b><small>${esc(profile.type)} · ${profile.modes[0].channels.length} CH</small><p>${esc(profile.validationStatus)} · ${esc(profile.provenance)}</p><button data-profile="${profile.id}">${t("addToVirtualPatch")}</button></article>`).join(""); }
 function selectedFixture() { const fixtures=sceneFixtures();return fixtures.find((fixture)=>fixture.id===preferences.fixtureId) ?? fixtures[0]; }
-function fixtureInspectorMarkup() { const fixture=selectedFixture();if(!fixture)return "";const fixtures=sceneFixtures(),patch=fixture.patchAssignment ?? {universe:1,startAddress:1}; return `<section class="fixture-inspector"><h3>${t("virtualFixture")}</h3><label>${t("fixtureLabel")}<select id="fixture-select">${fixtureOptions(fixtures,fixture.id)}</select></label><label>${t("colourName")}<input id="fixture-name" value="${esc(fixture.name)}" /></label>${fixturePlacementMarkup(fixture.transform,t("fixturePlacement"),t("fixtureDragHint"))}<div class="fixture-grid"><label>${t("universe")}<input id="fixture-universe" type="number" min="1" value="${patch.universe}" /></label><label>${t("startAddress")}<input id="fixture-address" type="number" min="1" max="512" value="${patch.startAddress}" /></label><label>${t("dimmer")}<input id="fixture-dimmer" type="number" min="0" max="255" value="${fixture.properties.dimmer ?? 0}" /></label><label>${t("beam")}<input id="fixture-beam" type="number" min="0" max="255" value="${fixture.properties.beam ?? 0}" /></label></div><button id="apply-fixture" class="wide inspector-icon-action" type="button" aria-label="${t("applyFixtureProperties")}" title="${t("applyFixtureProperties")}">✓</button></section>`; }
+function fixtureInspectorMarkup() { const fixture=selectedFixture();if(!fixture)return "";const fixtures=sceneFixtures(),patch=fixture.patchAssignment ?? {universe:1,startAddress:1}; return `<section class="fixture-inspector"><h3>${t("virtualFixture")}</h3><label>${t("fixtureLabel")}<select id="fixture-select">${fixtureOptions(fixtures,fixture.id)}</select></label><label>${t("fixtureName")}<input id="fixture-name" value="${esc(fixture.name)}" /></label>${fixturePlacementMarkup(fixture.transform,t("fixturePlacement"),t("fixtureDragHint"),t("fixtureRotation"))}<div class="fixture-grid"><label>${t("universe")}<input id="fixture-universe" type="number" min="1" value="${patch.universe}" /></label><label>${t("startAddress")}<input id="fixture-address" type="number" min="1" max="512" value="${patch.startAddress}" /></label><label>${t("dimmer")}<input id="fixture-dimmer" type="number" min="0" max="255" value="${fixture.properties.dimmer ?? 0}" /></label><label>${t("beam")}<input id="fixture-beam" type="number" min="0" max="255" value="${fixture.properties.beam ?? 0}" /></label></div><button id="apply-fixture" class="wide inspector-icon-action" type="button" aria-label="${t("applyFixtureProperties")}" title="${t("applyFixtureProperties")}">✓</button></section>`; }
 function applyFixtureInspector() {
   const fixture=selectedFixture();
   if (!fixture) return;
   const value=(id)=>{
     const input=document.querySelector(id);
-    if (!input.value.trim() || !input.checkValidity()) throw new Error(`${input.closest("label").textContent.trim()}: enter a valid value.`);
+    if (!input.value.trim() || !input.checkValidity()) throw new Error(phrase("validFixtureValue",{field:input.closest("label").textContent.trim()}));
     return Number(input.value);
   };
   try {
@@ -838,7 +838,7 @@ function render() {
     for (const node of [...fixturePanel.children]) if(node!==apply && node!==actions && node!==selectedFixtureField)bodies.fixture.append(node);
     const nameLabel=bodies.fixture.querySelector("#fixture-name")?.closest("label");
     const configuration=document.createElement("details");configuration.className="fixture-configuration-details";
-    const configurationSummary=document.createElement("summary");configurationSummary.textContent="Name and position";configuration.append(configurationSummary);
+    const configurationSummary=document.createElement("summary");configurationSummary.textContent=t("fixtureNameAndPosition");configuration.append(configurationSummary);
     if(nameLabel)configuration.append(nameLabel);
     const placement=bodies.fixture.querySelector(".fixture-placement");
     if(placement){
@@ -847,7 +847,7 @@ function render() {
       nameLabel.replaceWith(configuration);
     }
     const advancedLight=document.createElement("details");advancedLight.className="light-advanced-controls";
-    const advancedTitle=document.createElement("summary");advancedTitle.textContent="More light controls";advancedLight.append(advancedTitle);
+    const advancedTitle=document.createElement("summary");advancedTitle.textContent=t("moreLightControls");advancedLight.append(advancedTitle);
     for(const id of ["fixture-beam","fixture-white","fixture-pan","fixture-tilt"]){const input=bodies.light.querySelector(`#${id}`);if(input)advancedLight.append(input.closest("label"));}
     bodies.light.append(advancedLight);
     const effectControls=document.querySelector("#effect-type").closest(".dmx-actions"),effectAction=effectControls.querySelector("#play-effect");

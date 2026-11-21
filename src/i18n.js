@@ -327,6 +327,11 @@ Object.assign(messages.de,{harmony_analogous:"Analog",harmony_complementary:"Kom
 Object.assign(messages.yo,{harmony_analogous:"Àwọn àwọ̀ tó sún mọ́ra",harmony_complementary:"Àwọ̀ méjì tó dojú kọ ara wọn",harmony_splitComplementary:"Àwọ̀ kan àti méjì lẹ́gbẹ̀ẹ́ òdìkejì rẹ̀",harmony_triadic:"Àwọ̀ mẹ́ta tó jìnnà déédéé",harmony_tetradic:"Àwọ̀ mẹ́rin ní méjì-méjì",harmony_square:"Àwọ̀ mẹ́rin tó jìnnà déédéé",harmony_monochromatic:"Oríṣìíríṣìí ìpele àwọ̀ kan"});
 Object.assign(messages.pcm,{harmony_analogous:"Colours wey near each other",harmony_complementary:"Two opposite colours",harmony_splitComplementary:"One colour plus two near im opposite",harmony_triadic:"Three colours wey space equal",harmony_tetradic:"Two pairs of opposite colours",harmony_square:"Four colours wey space equal",harmony_monochromatic:"Different shades of one colour"});
 
+Object.assign(messages.en,{fixtureNameAndPosition:"Name and position",moreLightControls:"More light controls",validFixtureValue:"Enter a valid value for {field}."});
+Object.assign(messages.de,{fixtureNameAndPosition:"Name und Position",moreLightControls:"Weitere Lichtregler",validFixtureValue:"Gib für {field} einen gültigen Wert ein."});
+Object.assign(messages.yo,{fixtureNameAndPosition:"Orúkọ àti ipò",moreLightControls:"Àwọn ìṣàkóso ìmọ́lẹ̀ míì",validFixtureValue:"Tẹ iye tó tọ́ fún {field}."});
+Object.assign(messages.pcm,{fixtureNameAndPosition:"Name and position",moreLightControls:"More light controls",validFixtureValue:"Enter valid value for {field}."});
+
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }
 
 Object.assign(messages.en,{moduleDesign:"Design",moduleStudio:"3D Studio",moduleFixtures:"Fixture Library",paintSurface:"Paint surface",applySwatchColour:"Set swatch colour",applySwatchToFixtures:"Apply swatch to fixtures",previewSelectedCue:"Preview selected cue",playCueList:"Play cue list",previewEffect:"Preview effect"});
