@@ -38,7 +38,12 @@ with local projects offline. Auth and external services still require their
 network connections. The worker caches static build files only. A newer
 release activates after tabs using the previous release are closed, so the
 editor and its export chunks stay on the same version. The Pages checksum
-gate covers the service worker and nested assets.
+gate covers the service worker, nested assets, and the two landing-page demo
+videos. Videos are delivered on demand and excluded from the offline cache.
+
+The landing preview runs the studio WebGL renderer and applies real room looks
+and fixture dimmers. Editing a look opens a fresh project in a separate tab.
+The silent WebM demos are recordings of the studio camera tour and cue playback.
 
 The selected Supabase Auth health endpoint returned HTTP 200 on 3 November
 2026. A guest Data API probe against the product schema returned HTTP 406

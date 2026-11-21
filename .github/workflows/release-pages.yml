@@ -36,7 +36,7 @@ jobs:
         id: release-digests
         working-directory: dist
         run: |
-          manifest=$(find index.html service-worker.js assets -type f -print0 | sort -z | xargs -0 sha256sum | base64 -w 0)
+          manifest=$(find index.html service-worker.js assets demos -type f -print0 | sort -z | xargs -0 sha256sum | base64 -w 0)
           printf 'manifest=%s\n' "$manifest" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-pages-artifact@v3
         with:

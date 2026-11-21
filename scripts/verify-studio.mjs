@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { mkdir, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { PDFDocument } from "pdf-lib";
+import { messages, supportedLocales } from "../src/i18n.js";
 import { chromium } from "playwright";
 import { createServer, preview } from "vite";
 
@@ -98,6 +99,34 @@ try {
   assert.equal(await page.locator(".marketing-home").isVisible(),true,"the product landing page is the public entry point");
   assert.equal(await page.locator(".marketing-brand img").evaluate(image=>image.complete&&image.naturalWidth>0),true,"the approved corporate logo loads from the bundled product asset");
   assert.equal(await page.locator(".studio-shell").isVisible(),false,"the editor stays off the landing page until requested");
+  const landingCanvas = page.locator(".marketing-viewport canvas");
+  const defaultPreview = await landingCanvas.screenshot();
+  await page.locator('[data-landing-look="cyan-modern"]').click();
+  assert.equal(await page.locator('[data-landing-look="cyan-modern"]').getAttribute("aria-pressed"), "true");
+  const cyanPreview = await landingCanvas.screenshot();
+  assert.notDeepEqual(cyanPreview, defaultPreview, "selecting a look changes the actual rendered scene");
+  await page.locator("#landing-intensity").fill("50");
+  assert.notDeepEqual(await landingCanvas.screenshot(), cyanPreview, "dimming the fixtures changes the rendered light");
+  const landingTour = page.locator("[data-landing-tour]");
+  await landingTour.click();
+  assert.equal(await landingTour.getAttribute("aria-pressed"), "true", "the landing camera tour runs");
+  await landingTour.click();
+  assert.equal(await landingTour.getAttribute("aria-pressed"), "false", "the landing camera tour can be stopped");
+  const [samplePage] = await Promise.all([context.waitForEvent("page"), page.locator("[data-landing-open]").click()]);
+  await samplePage.locator("body.studio-route").waitFor();
+  assert.equal(await samplePage.locator("#project-name").inputValue(), "Cyan modern", "the selected look opens as an editable sample");
+  assert.match(await samplePage.locator("#cycle-lighting-look").getAttribute("title"), /Cyan modern/);
+  assert.equal(await samplePage.locator("#fixture-dimmer").inputValue(), "105", "the sample carries the preview fixture intensity into the editable project");
+  await samplePage.close();
+  const demos = page.locator(".marketing-demos video");
+  assert.equal(await demos.count(), 2);
+  for (const video of await demos.all()) {
+    await video.evaluate(async element => { await element.play(); });
+    const start = await video.evaluate(element => element.currentTime);
+    await page.waitForFunction(({src, start}) => [...globalThis.document.querySelectorAll("video")].some(element =>
+      element.getAttribute("src") === src && element.currentTime > start + .1), {src:await video.getAttribute("src"), start});
+    await video.evaluate(element => { element.pause(); element.currentTime = 0; });
+  }
   await page.setViewportSize({width:1440,height:900});
   await page.screenshot({path:resolve("outputs/landing-page-1440x900.png"),fullPage:true});
   await page.setViewportSize({width:1754,height:878});
@@ -314,6 +343,25 @@ try {
     assert.equal((await page.locator("#material-target option:checked").innerText()).trim(),labels[1],`${locale} paint target remains translated`);
     assert.equal((await page.locator("#apply-scene").innerText()).trim(),labels[2],`${locale} Apply colour remains translated`);
     assert.equal((await page.locator("#reset-camera").innerText()).trim(),labels[3],`${locale} camera reset remains translated`);
+  }
+  await page.locator("#locale").selectOption("en");
+  for (const locale of supportedLocales) {
+    await page.locator("#locale").selectOption(locale);
+    const labels = messages[locale];
+    const exportLabels = {
+      '[data-export="project"]': `${labels.project} JSON`,
+      '[data-export="palette"]': `${labels.commandPalette} JSON`,
+      '[data-export="css"]': labels.exportCss,
+      "#export-svg": `${labels.commandPalette} SVG`,
+      '[data-raster="image/png"]': `${labels.commandPalette} PNG`,
+      '[data-raster="image/jpeg"]': `${labels.commandPalette} JPEG`,
+      '[data-export="patch"]': `${labels.commandFixtures} CSV`,
+      '[data-export="cues"]': `${labels.timeline} CSV`,
+    };
+    assert.equal(await page.locator("html").getAttribute("lang"), locale, "the document exposes the selected locale");
+    for (const [selector, label] of Object.entries(exportLabels)) {
+      assert.equal(await page.locator(`#command-menu-panel-export ${selector}`).textContent(), label, `${selector} matches the ${locale} interface`);
+    }
   }
   await page.locator("#locale").selectOption("en");
   assert.deepEqual(await page.locator('[data-command-group="project"]').evaluate((group)=>[...group.querySelectorAll("button")].map((button)=>button.id)),["new-project","open-project","save","import-project","import-image"],"project commands match New, Open, Save, Import order");

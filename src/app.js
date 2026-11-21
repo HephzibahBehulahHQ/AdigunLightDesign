@@ -39,6 +39,7 @@ import { canvasMarkup } from "./ui/canvas.js";
 import { canvasSvg } from "./export/canvas.js";
 import { bindCanvasDrag } from "./ui/canvas-drag.js";
 import { bindTimelineSeek } from "./ui/timeline-seek.js";
+import { bindLanding, createLandingSample, landingMarkup } from "./ui/landing.js";
 import { previewNativeToolAction } from "./ai/action-preview.js";
 import { icon } from "./ui/icons.js";
 import { previewQuality,previewQualities } from "./light-lab/quality.js";
@@ -70,10 +71,15 @@ import { commitTransaction, redoTransaction, undoTransaction } from "./domain/hi
 const savedProjectsKey = "adigunlightdesign/saved-projects-v1";
 const preferencesKey = "adigunlightdesign/preferences-v1";
 const app = document.querySelector("#app");
+let landingPreview;
 const studioRoute = () => {
   const inStudio = location.hash === "#AdigunStudio";
   document.body.classList.toggle("studio-route", inStudio);
-  if (inStudio) window.scrollTo(0, 0);
+  if (inStudio) {
+    landingPreview?.stop();
+    app.querySelectorAll(".marketing-home video").forEach(video => video.pause());
+    window.scrollTo(0, 0);
+  } else landingPreview?.show();
 };
 window.addEventListener("hashchange", studioRoute);
 studioRoute();
@@ -118,7 +124,14 @@ function loadProject() {
   projectPersisted=false;
   projectDirty=false;
   activeSavedProjectId=null;
-  return createStudioMoodProject();
+  const params = new URLSearchParams(location.search);
+  const sample = createLandingSample(params.get("look"), Number(params.get("level") ?? 100));
+  if (sample) {
+    preferences.view = "light";
+    preferences.module = "canvas";
+    preferences.inspectorMode = "fixture";
+  }
+  return sample ?? createStudioMoodProject();
 }
 function t(key) { return translate(preferences.locale, key); }
 function phrase(key, values = {}) { return t(key).replace(/\{(\w+)\}/g, (_, name) => values[name] ?? ""); }
@@ -433,6 +446,7 @@ function applyFixturePatch() {
   } catch(error) { document.querySelector("#status").textContent=status=error.message; }
 }
 function render() {
+  landingPreview?.stop();
   const previousShell = document.querySelector(".studio-shell");
   const studioScrollTop = previousShell?.dataset.projectId === project.id ? previousShell.scrollTop : 0;
   preferences.luxOpen=true; // Floating-window state controls visibility; keep its content mounted.
@@ -472,7 +486,20 @@ function render() {
     room:`<fieldset class="scene-menu-fields" data-menu-keep-open><legend>${t("roomDimensions")}</legend><p class="room-type-label">${t("roomType")}: ${esc(roomName)}</p>${["width","height","depth"].map((key)=>`<label>${t(key)} (m)<input id="room-${key}" type="number" required min="2" max="${key==="height" ? 20 : 50}" step="any" value="${room[key]}"></label>`).join("")}<label class="scene-menu-colour">${t("ambientFill")}<input id="room-ambience-color" type="color" value="${ambience.color}"></label><label class="scene-menu-range">${t("ambientLevel")} · ${Math.round(ambience.intensity*100)}%<input id="room-ambience-level" type="range" min="0" max="100" step="1" value="${Math.round(ambience.intensity*100)}"></label></fieldset><button type="button" id="apply-room">${t("applyRoomDimensions")}</button>`,
     palette:`<button type="button" data-menu-keep-open id="open-versions" aria-expanded="false">${t("versions")}</button><button type="button" data-menu-keep-open id="open-compare" aria-expanded="false">${t("compare")}</button>`,
     fixtures:`<button type="button" id="add-fixture">＋ ${t("addWash")}</button><button type="button" id="apply-fixture-colour">${t("applySwatchToFixtures")}</button>`,
-    export:`<button data-export="project">Project JSON</button><button data-export="palette">Palette JSON</button><button data-export="css">CSS variables</button><button id="export-svg">Palette SVG</button><button data-raster="image/png">Palette PNG</button><button data-raster="image/jpeg">Palette JPEG</button><button id="export-pdf" aria-describedby="pdf-export-limit">${t("paletteSheetPdf")}</button><small id="pdf-export-limit">${t("pdfPaletteLimit")}</small><button id="export-tokens">${t("designTokens")}</button><button data-export="ase" title="${t("aseExportLimit")}">${t("aseExport")}</button><button data-export="patch">Patch CSV</button><button data-export="cues">Cue CSV</button><button id="export-cue-pdf" aria-describedby="cue-pdf-limit">${t("cueSheetPdf")}</button><small id="cue-pdf-limit">${t("cuePdfLimit")}</small>`,
+    export:`<button data-export="project">${t("project")} JSON</button>
+      <button data-export="palette">${t("commandPalette")} JSON</button>
+      <button data-export="css">${t("exportCss")}</button>
+      <button id="export-svg">${t("commandPalette")} SVG</button>
+      <button data-raster="image/png">${t("commandPalette")} PNG</button>
+      <button data-raster="image/jpeg">${t("commandPalette")} JPEG</button>
+      <button id="export-pdf" aria-describedby="pdf-export-limit">${t("paletteSheetPdf")}</button>
+      <small id="pdf-export-limit">${t("pdfPaletteLimit")}</small>
+      <button id="export-tokens">${t("designTokens")}</button>
+      <button data-export="ase" title="${t("aseExportLimit")}">${t("aseExport")}</button>
+      <button data-export="patch">${t("commandFixtures")} CSV</button>
+      <button data-export="cues">${t("timeline")} CSV</button>
+      <button id="export-cue-pdf" aria-describedby="cue-pdf-limit">${t("cueSheetPdf")}</button>
+      <small id="cue-pdf-limit">${t("cuePdfLimit")}</small>`,
     guide:`<input id="guide-search" type="search" placeholder="${t("guideSearchPlaceholder")}" aria-label="${t("guideSearchPlaceholder")}" data-menu-keep-open><div class="guide-sections">${helpGuideMarkup(preferences.locale,t)}</div>`
   };
   const commandMenusMarkup=`<div class="command-menu-system" aria-label="${t("tools")}">${Object.entries(commandGroups).map(([key,label])=>`<div class="command-menu" data-command-menu="${key}"><button type="button" class="command-menu-trigger" data-command-menu-trigger="${key}" aria-haspopup="dialog" aria-expanded="false" aria-controls="command-menu-panel-${key}">${label} <span aria-hidden="true">⌄</span></button><div id="command-menu-panel-${key}" class="command-group command-menu-panel" data-command-group="${key}" popover="auto" role="dialog" aria-label="${label}"><span>${label}</span>${commandMenuContent[key]}</div></div>`).join("")}</div>`;
@@ -485,16 +512,7 @@ function render() {
   const timeline=timelineLayout(sceneCueList);
   const cueBlocks = `<div class="timeline-scale"><div class="timeline-ruler">${timeline.ticks.map((tick)=>`<span style="left:${tick.left}%">${Number(tick.time.toFixed(1))}s</span>`).join("")}</div><div class="timeline-lane">${sceneCueList.map((cue,index) => `<button type="button" class="cue-block" data-cue="${esc(cue.id)}" aria-pressed="${cue.id===activeCue?.id}" title="${esc(cue.name)} · ${cue.duration}s" style="left:${timeline.segments[index].left}%;width:${timeline.segments[index].width}%">${esc(cue.name)} · ${cue.duration}s</button>`).join("") || `<small class="empty-cues">${t("noCues")}</small>`}</div><div id="timeline-playhead" class="timeline-playhead" aria-hidden="true"></div></div>`;
   app.innerHTML = `
-    <section id="top" class="marketing-home">
-      <header class="marketing-header"><a class="marketing-brand" href="#top" aria-label="AdigunLightDesign home"><img src="./assets/corporate/hephzibah-behulah-official.jpg" alt="Hephzibah Behulah"><span><b>Adigun<span>Light</span>Design</b><small>HB Elektroniker · Color + Light Studio</small></span></a><a class="marketing-cta" href="#AdigunStudio">Go to the Studio <span aria-hidden="true">→</span></a></header>
-      <main class="marketing-main">
-        <section class="marketing-hero"><div class="marketing-copy"><p class="marketing-eyebrow"><i></i> LIGHTING DESIGN, MADE VISIBLE</p><h1>Design color.<br><em>Shape light.</em><br>Create atmosphere.</h1><p class="marketing-lede">Plan a room, place virtual fixtures, build a palette and see your lighting ideas come together in an interactive studio.</p><div class="marketing-actions"><a class="marketing-cta marketing-cta-primary" href="#AdigunStudio">Open the studio <span aria-hidden="true">→</span></a><a class="marketing-link" href="#about-product">Discover the workspace <span aria-hidden="true">↓</span></a></div><div class="marketing-proof"><span>01 <b>DESIGN</b></span><span>02 <b>PREVISUALIZE</b></span><span>03 <b>REFINE</b></span></div></div>
-          <div class="marketing-visual" role="img" aria-label="Stylized living-room lighting concept in blue, amber and magenta"><div class="visual-glow visual-glow-blue"></div><div class="visual-glow visual-glow-amber"></div><div class="visual-frame"><div class="visual-topline"><span><i></i> ILLUSTRATIVE LIGHTING STUDY</span><b>ROOM · 01</b></div><div class="visual-room"><div class="visual-ceiling"></div><div class="visual-backwall"><span></span><span></span><span></span></div><div class="visual-sidewall"><div class="visual-window"></div></div><div class="visual-floor"></div><div class="visual-beam beam-a"></div><div class="visual-beam beam-b"></div><div class="visual-beam beam-c"></div><div class="visual-sofa"><i></i><i></i></div><div class="visual-table"></div><div class="visual-lamp"></div></div><div class="visual-caption"><span>COLOR · FORM · ATMOSPHERE</span><b><i></i> 3D STUDIO</b></div></div><div class="visual-tag tag-top">COLOR · FORM · MOOD</div><div class="visual-tag tag-bottom"><span></span> Explore light in a room</div></div></section>
-        <section id="about-product" class="marketing-intro"><p class="marketing-eyebrow">A CREATIVE WORKSPACE BY HEPHZIBAH BEHULAH</p><h2>From a first idea to a room full of feeling.</h2><p>AdigunLightDesign brings color exploration and lighting previsualization into one practical workspace. Shape a room, explore lighting looks, arrange virtual fixtures, build color harmonies and organize cues before you take a design further.</p></section>
-        <section class="marketing-capabilities" aria-label="Studio capabilities"><article><span>01 / COLOR</span><h3>Build a palette with purpose</h3><p>Explore harmonies, inspect color values and apply swatches to room surfaces and virtual fixtures.</p></article><article><span>02 / SPACE</span><h3>See light in context</h3><p>Work with room scenes, materials, fixture placement and camera views in an interactive 3D preview.</p></article><article><span>03 / CONTROL</span><h3>Arrange the lighting</h3><p>Patch virtual fixtures, shape DMX cues and review timing in the studio timeline.</p></article></section>
-        <section class="marketing-bottom"><div><p class="marketing-eyebrow">YOUR NEXT IDEA STARTS HERE</p><h2>Bring the room to life.</h2></div><a class="marketing-cta marketing-cta-primary" href="#AdigunStudio">Go to the Studio <span aria-hidden="true">→</span></a></section>
-      </main><footer class="marketing-footer"><span>HEPHZIBAH BEHULAH <i>·</i> HB ELEKTRONIKER <i>·</i> ADIGUNLIGHTDESIGN</span><span>Design Color. Shape Light. Create Atmosphere.</span></footer>
-    </section>
+    ${landingMarkup()}
     <div id="AdigunStudio" class="studio-shell" data-project-id="${esc(project.id)}">
     <header class="topbar">
       <a class="brand-lockup" href="#top" aria-label="${t("brandAlt")} — home">
@@ -800,6 +818,8 @@ function render() {
     }
   }
   if (studioScrollTop > 0) document.querySelector(".studio-shell").scrollTop = studioScrollTop;
+  landingPreview = bindLanding(app.querySelector(".marketing-home"));
+  if (!document.body.classList.contains("studio-route")) landingPreview.show();
 }
 
 function bind() {
