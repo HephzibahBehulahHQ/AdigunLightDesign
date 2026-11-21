@@ -10,4 +10,11 @@ The timeline reports the selected fixture's universe and the number of channels
 patched in that universe in the current room. Chrome checks adding all three
 library profiles and repatching into universe 2.
 
+The Fixtures menu transfers virtual rigs as `.ald-rig.json`. Export includes
+the active room's fixture names, supported profiles and modes, transforms, and
+channel values. Import appends them to the selected room as one undoable edit,
+with fresh IDs and conflict-free addresses. Coordinates are preserved, so a rig
+imported into a differently sized room may need repositioning. Files support
+up to 256 fixtures and do not transfer cues, groups, or original patch addresses.
+
 The profile is application-defined and marked virtual; it is not a manufacturer, GDTF or hardware-validated record. The virtual frame never opens a network socket, controls hardware or implies Art-Net/sACN support. A future output bridge must be separately activated and show a visible live-output state and emergency-disable path.
