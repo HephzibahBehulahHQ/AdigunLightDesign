@@ -9,7 +9,13 @@ and external application compatibility require separate verification.
 
 Canvas SVG exports saved rectangle/text artwork as a standalone 800 × 450 SVG with a transparent background. It preserves object stacking order and strips editor selection decorations and interaction attributes. Text remains editable SVG text and uses the viewer's default font; fonts are not embedded. Structure, escaping and invalid-data rejection have tests. Font matching and external-editor compatibility remain unverified.
 
-Viewport PNG redraws the actual WebGL canvas and requests PNG encoding in the same task. It captures the current camera, visible scene and current lighting preview at the viewport's backing resolution. It excludes HTML overlays and editor panels. The control is disabled outside 3D or when WebGL is unavailable. Mocked tests cover redraw order and encoding failures; actual browser pixels and downloads remain unverified. This is not an offline photorealistic renderer.
+Viewport PNG redraws the actual WebGL canvas and encodes a 1920 × 1080 image of
+the current camera, visible scene and lighting. It excludes HTML overlays and
+editor panels. The control is disabled outside 3D or when WebGL is unavailable.
+Mocked tests cover redraw order and encoding failures. Chrome acceptance decodes
+the actual PNG downloads and checks opaque scene detail, distinct front and top
+views, and a visible response to a fixture color and dimmer edit in the kitchen.
+The export uses the studio’s artistic previsualization renderer.
 
 Cue CSV retains stored sequence order and its cumulative start/end columns. Additional columns report fade-out, computed hold, track name and scheduled track start/end. Sequence times and scheduled times are intentionally separate: cues on different tracks may run simultaneously. Optional legacy timing defaults remain represented. Track names and cue names use CSV escaping; this is an informational report, not a console show-file format.
 
