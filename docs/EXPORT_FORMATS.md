@@ -15,6 +15,8 @@ Cue CSV retains stored sequence order and its cumulative start/end columns. Addi
 
 Design-token JSON uses the application-owned format `adigunlightdesign.design-tokens`, schema version 1. It contains the palette name and a `color` object with ordered `swatch_1`, `swatch_2`, … entries. Each entry records `type: "color"`, normalized six-digit HEX `value`, original `name` and `sourceId`. Index keys preserve duplicate names without collisions. This is not a claim of DTCG, Figma or Adobe compatibility; token import and external-tool validation remain unimplemented.
 
+Portable palette JSON can be imported through the Palette menu. Import preserves the palette name, harmony, swatch order, IDs, colours, locks and opacity. It applies to the active palette in one undoable edit and retains that palette’s project identity.
+
 Implemented local exports are native project JSON, portable palette JSON, CSS custom properties, SVG palette sheets, fixture-patch CSV and cue-list CSV. SVG generation validates HEX colors, escapes user text and supports 1–256 swatches. Rendered SVG appearance remains unverified. Native project JSON may be re-imported after JSON, schema-version, required-field, MIME and 5 MB size validation. CSV quotes field values for spreadsheet import.
 
 PNG/JPEG palette export adapters render the generated SVG through the browser's image and canvas APIs, then verify the requested encoding MIME type. Adapter success/failure and URL cleanup have mocked automated coverage. Font appearance and rendered output pixels remain unverified.
