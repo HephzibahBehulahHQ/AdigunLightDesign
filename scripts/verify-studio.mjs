@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import axe from "axe-core";
 import { mkdir, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { PDFDocument } from "pdf-lib";
@@ -15,6 +16,15 @@ const viewports = [
   [1366, 768],
   [1754, 878],
 ];
+
+async function verifyAccessibility(page, screen) {
+  if (!await page.evaluate(() => Boolean(globalThis.axe))) await page.addScriptTag({content:axe.source});
+  const {violations} = await page.evaluate(() => globalThis.axe.run({
+    runOnly:{type:"tag", values:["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]},
+  }));
+  const failures = violations.map(rule => `${rule.id}: ${rule.nodes.map(node => node.target.join(" > ")).join(", ")}`);
+  assert.deepEqual(failures, [], `${screen} has no automated axe violations`);
+}
 
 async function verifyUtilityControls(page) {
   const menu = page.locator(".topbar .top-menu");
@@ -41,6 +51,7 @@ async function verifyVirtualPlayback(browser, studioUrl) {
   const page = await browser.newPage({viewport:{width:1440,height:900}});
   try {
     await page.goto(studioUrl);
+    await verifyAccessibility(page, "desktop studio");
     const projectMenu = page.locator('[data-command-menu-trigger="project"]');
     const sceneMenu = page.locator('[data-command-menu-trigger="scene"]');
     const projectDialog = page.locator(".project-dialog");
@@ -231,6 +242,7 @@ try {
     await video.evaluate(element => { element.pause(); element.currentTime = 0; });
   }
   await page.setViewportSize({width:1440,height:900});
+  await verifyAccessibility(page, "desktop landing page");
   await page.screenshot({path:resolve("outputs/landing-page-1440x900.png"),fullPage:true});
   await page.setViewportSize({width:1754,height:878});
   await page.getByRole("link",{name:/Go to the Studio/}).first().click();
@@ -517,8 +529,7 @@ try {
   const groupBounds=await page.locator("#fixture-groups").boundingBox();
   assert.ok(groupBounds.x>=0&&groupBounds.y>=0&&groupBounds.x+groupBounds.width<=1754&&groupBounds.y+groupBounds.height<=878,"Fixture Groups stays within the visible viewport");
   await page.mouse.move(1700,850);
-  await page.waitForTimeout(220);
-  assert.equal(await page.locator("#fixture-groups:popover-open").count(),0,"Fixture Groups closes after the pointer leaves the trigger and panel");
+  await page.locator("#fixture-groups:popover-open").waitFor({state:"detached",timeout:3000});
   await openFixtureList();
   await page.locator('.fixture-select[title="Moving Head RGB 2"]').click();
   assert.equal(await page.locator("#virtual-dmx-monitor .virtual-dmx-channel").count(),10,"Virtual DMX keeps the selected fixture's live channel values visible in the left sidebar");
@@ -1138,10 +1149,12 @@ try {
   const touchPage=await touchContext.newPage();
   await touchPage.goto(`http://127.0.0.1:${address.port}/`,{waitUntil:"networkidle"});
   assert.equal(await touchPage.locator(".marketing-home").isVisible(),true,"the marketing page loads at a mobile viewport");
+  await verifyAccessibility(touchPage, "phone landing page");
   assert.equal(await touchPage.evaluate(()=>globalThis.document.documentElement.scrollWidth<=globalThis.innerWidth),true,"the mobile landing page has no horizontal overflow");
   await touchPage.getByRole("link",{name:/Go to the Studio/}).first().tap();
   await touchPage.locator("body.studio-route").waitFor();
   assert.equal(await touchPage.locator(".studio-shell").isVisible(),true,"the studio CTA works on touch screens");
+  await verifyAccessibility(touchPage, "phone studio");
   await verifyUtilityControls(touchPage);
   for (const width of [320, 360, 390, 671, 768, 940, 941, 1024, 1099]) {
     await touchPage.setViewportSize({ width, height: 844 });
