@@ -210,6 +210,7 @@ function togglePlaybackPause() {
   button.setAttribute("aria-label",button.title);
   button.setAttribute("aria-pressed",String(playbackClock.paused));
 }
+const effectDraft={type:"pulse",period:"2"};
 function playEffect() {
   const input=document.querySelector("#effect-period");
   if (!input.value.trim() || !input.checkValidity()) return input.reportValidity();
@@ -604,7 +605,7 @@ function render() {
   document.querySelector("#create-cue").insertAdjacentHTML("beforebegin", `<label>${t("captureGroup")} <select id="cue-group"><option value="">${t("allFixtures")}</option>${(project.fixtureGroups ?? []).map((group)=>`<option value="${esc(group.id)}">${esc(group.name)}</option>`).join("")}</select></label>`);
   document.querySelector(".timeline > .dmx-actions").prepend(document.querySelector(".timeline-status"));
   document.querySelector(".timeline").insertAdjacentHTML("beforeend", `<label class="timeline-loop" title="${t("loopSequence")}" aria-label="${t("loopSequence")}"><input id="sequence-loop" type="checkbox" ${preferences.loopSequence ? "checked" : ""}> ↻</label>`);
-  document.querySelector(".timeline").insertAdjacentHTML("beforeend", `<div class="dmx-actions"><label>${t("virtualEffect")} <select id="effect-type"><option value="pulse">${t("pulse")}</option><option value="chase">${t("chase")}</option></select></label><label>${t("effectPeriod")} <input id="effect-period" type="number" min="0.1" max="120" step="0.1" value="2"></label><button id="play-effect" class="inspector-icon-action" type="button" aria-label="${t("previewEffect")}" title="${t("previewEffect")}" ${activeFixtures.length ? "" : "disabled"}>▶</button></div>`);
+  document.querySelector(".timeline").insertAdjacentHTML("beforeend", `<div class="dmx-actions"><label>${t("virtualEffect")} <select id="effect-type"><option value="pulse">${t("pulse")}</option><option value="chase">${t("chase")}</option></select></label><label>${t("effectPeriod")} <input id="effect-period" type="number" min="0.1" max="120" step="0.1"></label><button id="play-effect" class="inspector-icon-action" type="button" aria-label="${t("previewEffect")}" title="${t("previewEffect")}" ${activeFixtures.length ? "" : "disabled"}>▶</button></div>`);
   if (activeCue) {
     const index=sceneCueList.indexOf(activeCue);
     const scheduled=tracks.flatMap((track)=>track.entries).find((entry)=>entry.cue.id===activeCue.id);
@@ -1159,6 +1160,11 @@ function bind() {
   });
   document.querySelector("#pause-playback").onclick=togglePlaybackPause;
   const loopControl=document.querySelector("#sequence-loop");if(loopControl)loopControl.onchange=(event)=>{preferences.loopSequence=event.target.checked;savePreferences();};
+  const effectType=document.querySelector("#effect-type"),effectPeriod=document.querySelector("#effect-period");
+  effectType.value=effectDraft.type;
+  effectPeriod.value=effectDraft.period;
+  effectType.onchange=()=>{effectDraft.type=effectType.value;};
+  effectPeriod.oninput=()=>{effectDraft.period=effectPeriod.value;};
   document.querySelector("#play-effect").onclick=playEffect;
   document.querySelector("#play-tracks").onclick=playArrangement;
   const scheduledDuration = arrangementDuration(sceneCues());
