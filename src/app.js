@@ -17,7 +17,7 @@ import { createLightLabRenderer } from "./light-lab/renderer.js";
 import { normalizeCameraState,roomFitCameraDistance } from "./light-lab/math.js";
 import { lightLabFixtureState,lightLabRendererConfig,shouldReuseLightLabRenderer } from "./light-lab/renderer-lifecycle.js";
 import { fixturePlacementMarkup } from "./light-lab/fixture-placement.js";
-import { blackout, createFixture, dmxFrame, fixtureProfiles, getFixtureProfile, patchFixture, updateFixture } from "./dmx/engine.js";
+import { blackout, createFixture, dmxFrame, fixtureProfiles, getFixtureProfile, patchFixture, patchNewFixture, updateFixture } from "./dmx/engine.js";
 import { createCue, duplicateCue, removeCue, editCue, evaluateCue, moveCue } from "./timeline/engine.js";
 import { evaluateEffect } from "./timeline/effects.js";
 import { createPlaybackClock, playbackPosition } from "./timeline/playback-clock.js";
@@ -146,10 +146,10 @@ function sceneSelectMarkup() { const activeId=scene().id; return `<select id="sc
 function addVirtualFixture(profileId) {
   const activeScene=scene(),created=createFixture(project.fixtures.length+1,profileId);
   const fixture={...created,sceneId:activeScene.id,transform:{...created.transform,...fixturePlacementForRoom(profileId,activeScene.room,sceneFixtures())}};
-  commitProjectChange("fixture-add",(draft)=>{draft.fixtures=patchFixture([...draft.fixtures,fixture],fixture.id);});
+  commitProjectChange("fixture-add",(draft)=>{draft.fixtures=patchNewFixture(draft.fixtures,fixture);});
   preferences.fixtureId=fixture.id;savePreferences();
   const patch=project.fixtures.find((item)=>item.id===fixture.id)?.patchAssignment;
-  status=phrase("fixturePatched",{name:fixture.name,universe:1,address:patch?.startAddress ?? 1});
+  status=phrase("fixturePatched",{name:fixture.name,universe:patch.universe,address:patch.startAddress});
 }
 function activateBlackout() { const ids=new Set(sceneFixtures().map((fixture)=>fixture.id));commitProjectChange("dmx-blackout",(draft)=>{const values=new Map(blackout(draft.fixtures.filter((fixture)=>ids.has(fixture.id))).map((fixture)=>[fixture.id,fixture]));draft.fixtures=draft.fixtures.map((fixture)=>values.get(fixture.id) ?? fixture);}); status="Virtual blackout applied. Physical output remains disabled."; }
 function applyPaletteToVirtualFixtures() { const rgb=hexToRgb(selected().hex),ids=new Set(sceneFixtures().map((fixture)=>fixture.id)); commitProjectChange("palette-to-fixtures",(draft)=>{draft.fixtures=draft.fixtures.map((fixture)=>ids.has(fixture.id)?({ ...fixture, properties:{ ...fixture.properties, red:rgb.r, green:rgb.g, blue:rgb.b } }):fixture);}); updateRendererFromFixtures(); status=`${selected().hex} applied to ${sceneFixtures().length} virtual fixture(s).`; }

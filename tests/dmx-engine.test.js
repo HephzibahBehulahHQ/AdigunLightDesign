@@ -21,7 +21,7 @@ test("fixture edits validate values and patch overlaps without changing the sour
   assert.equal(fixtures[0].properties.dimmer,255);
   assert.equal(fixtures[0].patchAssignment.startAddress,1);
 });
-import { blackout, createFixture, dmxFrame, fixtureFootprint, fixtureProfiles, firstAvailableAddress, getFixtureProfile, patchFixture, validatePatch } from "../src/dmx/engine.js";
+import { blackout, createFixture, dmxFrame, fixtureFootprint, fixtureProfiles, firstAvailableAddress, getFixtureProfile, patchFixture, patchNewFixture, validatePatch } from "../src/dmx/engine.js";
 
 test("uses the declared footprint and validates universe bounds", () => { assert.equal(fixtureFootprint(), 6); assert.equal(validatePatch({fixtureId:"a",universe:1,startAddress:508,channelFootprint:6},[]).valid, false); });
 test("detects DMX overlaps and finds the next valid address", () => { const fixture=createFixture(); fixture.id="a"; fixture.name="Wash A"; fixture.patchAssignment={fixtureId:"a",universe:1,startAddress:1,channelFootprint:6}; assert.equal(validatePatch({fixtureId:"b",universe:1,startAddress:4,channelFootprint:6},[fixture]).valid,false); assert.equal(firstAvailableAddress([fixture],1,6),7); });
@@ -33,4 +33,11 @@ test('full universe rejects another fixture without modifying existing patches',
  const fixtures=Array.from({length:85},(_,index)=>{const f=createFixture(index+1);return {...f,patchAssignment:{fixtureId:f.id,universe:1,startAddress:index*6+1,channelFootprint:6}};});
  const extra=createFixture(86),all=[...fixtures,extra],before=structuredClone(all);
  assert.equal(firstAvailableAddress(all,1,6),null);assert.throws(()=>patchFixture(all,extra.id,1),/Start address/);assert.deepEqual(all,before);
+ const automaticallyPatched = patchNewFixture(fixtures, extra);
+ assert.deepEqual(automaticallyPatched.at(-1).patchAssignment, {fixtureId:extra.id,universe:2,startAddress:1,channelFootprint:6});
+ assert.deepEqual(automaticallyPatched.slice(0, -1), before.slice(0, -1));
+ assert.equal(extra.patchAssignment, null);
+ const withGap = patchNewFixture(fixtures.filter((_,index) => index !== 1), extra);
+ assert.equal(withGap.at(-1).patchAssignment.universe, 1);
+ assert.equal(withGap.at(-1).patchAssignment.startAddress, 7);
 });

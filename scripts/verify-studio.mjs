@@ -146,6 +146,19 @@ async function verifyVirtualPlayback(browser, studioUrl) {
     await projectName.press("Enter");
     await projectDialog.waitFor({state:"detached"});
     await requireFocus(projectMenu, "saving returns focus to the Project menu after rendering");
+    await page.locator('[data-module="library"]').click();
+    const profiles = [
+      ["generic-rgb-wash", "RGB Wash", 6],
+      ["generic-moving-head-rgbw", "Moving Head RGBW", 10],
+      ["generic-led-strip-rgb", "LED Strip RGB", 4],
+    ];
+    for (const [id, name, footprint] of profiles) {
+      const optionsBefore = await page.locator("#fixture-select option").count();
+      await page.locator(`.fixture-library [data-profile="${id}"]`).click();
+      assert.equal(await page.locator("#fixture-select option").count(), optionsBefore + 1, `${name} is added to the active room`);
+      assert.ok((await page.locator("#fixture-select option:checked").textContent()).startsWith(name), `${name} is selected after adding it`);
+      assert.equal(await page.locator("#virtual-dmx-monitor .virtual-dmx-channel").count(), footprint, `${name} is patched with its profile's channel footprint`);
+    }
   } finally {
     await page.close();
   }

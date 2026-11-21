@@ -35,6 +35,14 @@ export function validatePatch(candidate:FixturePatch, fixtures:readonly Fixture[
 }
 export function firstAvailableAddress(fixtures:readonly Fixture[], universe:number, footprint:number) { for(let start=1;start+footprint-1<=512;start+=1) { if (validatePatch({fixtureId:"candidate",universe,startAddress:start,channelFootprint:footprint},fixtures).valid) return start; } return null; }
 export function patchFixture(fixtures:readonly Fixture[], fixtureId:string, universe = 1, startAddress?:number):Fixture[] { const fixture=fixtures.find((item)=>item.id===fixtureId); if(!fixture) throw new Error("Fixture was not found."); const profile=getFixtureProfile(fixture.profileId),footprint=fixtureFootprint(profile,fixture.modeId),address=startAddress ?? firstAvailableAddress(fixtures,universe,footprint); if(address===null)throw new Error("Start address must be 1–512."); const patch:FixturePatch={fixtureId,universe,startAddress:address,channelFootprint:footprint}; const result=validatePatch(patch,fixtures); if(!result.valid) throw new Error(result.errors.join(" ")); return fixtures.map((item)=>item.id===fixtureId?{...item,patchAssignment:patch}:item); }
+export function patchNewFixture(fixtures:readonly Fixture[], fixture:Fixture):Fixture[] {
+  const footprint = fixtureFootprint(getFixtureProfile(fixture.profileId), fixture.modeId);
+  if (footprint < 1 || footprint > 512) throw new Error("Fixture requires a valid channel footprint.");
+  for (let universe = 1; ; universe++) {
+    const startAddress = firstAvailableAddress(fixtures, universe, footprint);
+    if (startAddress !== null) return patchFixture([...fixtures, fixture], fixture.id, universe, startAddress);
+  }
+}
 export function updateFixture(fixtures:readonly Fixture[], fixtureId:string, { name, properties = {}, transform = {}, universe, startAddress }:FixtureChanges = {}) {
   const fixture=fixtures.find((item)=>item.id===fixtureId);
   if (!fixture) throw new Error("Fixture was not found.");
