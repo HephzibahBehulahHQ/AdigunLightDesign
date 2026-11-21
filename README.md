@@ -2,11 +2,11 @@
 
 AdigunLightDesign is the unified color and lighting design studio from **Hephzibah Behulah → HB Elektroniker**.
 
-It is being built as an offline-first browser application. It will connect palette design, lighting previsualization, virtual DMX, cue authoring, structured exports and an optional, securely hosted Lux copilot in one versioned project document.
+The browser studio brings palette design, artistic lighting previsualization, virtual DMX, cue authoring, and exports together in one versioned project document. After the first online visit caches the release, the studio can reopen local projects offline.
 
 ## Status
 
-Milestone 0 is documented. Partial implementations of the shell, palette engine, artistic 3D preview, virtual fixture/DMX engine, cue timeline and basic exports are available on the feature branch. This is not a completed M1–M5 acceptance claim: browser interaction, screenshot fidelity and remaining specification requirements still need implementation or verification. The product repository was empty before this work; no existing application has been replaced.
+[Open the live studio](https://adigunlightdesign.hephzibahbehulah.com/). The public landing page runs an interactive 3D preview and offers studio recordings and editable lighting samples. See [delivery evidence and open gates](docs/DELIVERY_PROGRESS.md) for the current release and [milestone acceptance](docs/MILESTONES.md) for the full scope.
 
 ## Local development
 
@@ -18,9 +18,10 @@ npm ci --ignore-scripts
 npm test
 npm run check
 npm run build
+npm run verify:studio
 ```
 
-`npm run build` produces a static `dist/` folder. It is suitable for GitHub Pages once a Pages workflow is configured and verified.
+The GitHub Pages release workflow builds `dist/` from `main` and verifies the deployed files against their checksums. The browser acceptance runner uses Playwright Chromium and the built `dist/` for its offline test.
 
 ## Documentation
 
@@ -38,9 +39,9 @@ npm run build
 - [Lux action contract](docs/AI_TOOLS.md)
 - [Accessibility](docs/ACCESSIBILITY.md)
 
-## Honest integration status
+## Integration status
 
-The application currently has no AI provider, cloud database, authentication service, physical DMX bridge, licensed GDTF catalog, MVR adapter or deployment workflow. Those integrations will remain visibly unavailable until independently implemented and verified.
+The public release supports Guest editing with local saves and downloads. Supabase account and cloud project adapters exist, with live authenticated verification pending. Lux has local suggestions and an optional service adapter, with live provider acceptance pending. Fixture output is virtual. Physical DMX, licensed GDTF catalog integration, and MVR interchange remain outside the verified release.
 
-The official corporate logo source is maintained in the shared design-system repository. It will be referenced only from the verified asset path; no replacement or generated logo will be used.
+The build includes the verified corporate logo from the shared design-system repository.
 
