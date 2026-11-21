@@ -88,10 +88,6 @@ async function verifyVirtualPlayback(browser, studioUrl) {
       channel.querySelector("span")?.textContent === "dimmer" && channel.querySelector("strong")?.textContent !== before), savedDimmer);
     await page.locator("#pause-playback").click();
     const pulseDifference = colorDifference(await readPreviewPixels());
-    const effectRuler=page.locator(".arrangement-timeline .timeline-ruler");
-    await page.locator("#locale").selectOption("de");
-    assert.equal(await effectRuler.getAttribute("aria-valuenow"),"0","effect playback leaves the arrangement ruler at zero after rendering");
-    await page.locator("#locale").selectOption("en");
     assert.ok(pulseDifference > 1, `the virtual pulse changes rendered fixture lighting (${pulseDifference.toFixed(2)})`);
     assert.match(await page.locator("#virtual-dmx-monitor header").textContent(), /output:\s*disabled/i);
     await page.locator("#stop-cue").click();
@@ -111,6 +107,10 @@ async function verifyVirtualPlayback(browser, studioUrl) {
     assert.equal(await effectType.inputValue(),"chase","the controls identify the running effect");
     assert.equal(await effectPeriod.inputValue(),"12","the controls retain the chosen period");
     await waitForChannel("dimmer","0");
+    const effectRuler=page.locator(".arrangement-timeline .timeline-ruler");
+    await page.locator("#locale").selectOption("de");
+    assert.equal(await effectRuler.getAttribute("aria-valuenow"),"0","effect playback leaves the arrangement ruler at zero after rendering");
+    await page.locator("#locale").selectOption("en");
     await page.locator("#stop-cue").click();
     assert.equal(await effectType.inputValue(),"chase","stopping retains the selected effect");
     assert.equal(await virtualDimmer.textContent(),savedDimmer,"stopping Chase restores the saved dimmer");
