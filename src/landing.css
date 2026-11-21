@@ -94,6 +94,8 @@
 .marketing-demos video { display:block; width:100%; aspect-ratio:16/9; background:#090f1d; object-fit:contain; }
 .marketing-demos article > div,.marketing-capabilities article { padding:clamp(1rem,2vw,1.65rem); }
 .marketing-demos h3,.marketing-capabilities h3 { margin:0 0 .5rem; font-size:clamp(1.15rem,1.8vw,1.5rem); letter-spacing:-.025em; }
+.marketing-video-description { margin-top:.55rem; }
+.marketing-video-description summary { min-height:2.75rem; padding:.6rem 0; color:var(--landing-cyan); cursor:pointer; }
 .marketing-capabilities { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:1px; overflow:hidden; border:1px solid var(--landing-stroke); border-radius:.9rem; background:var(--landing-stroke); }
 .marketing-capabilities article { background:#0f192c; }
 .marketing-faq { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.35fr); gap:1.4rem; }

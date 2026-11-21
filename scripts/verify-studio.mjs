@@ -240,7 +240,17 @@ try {
     await page.waitForFunction(({src, start}) => [...globalThis.document.querySelectorAll("video")].some(element =>
       element.getAttribute("src") === src && element.currentTime > start + .1), {src:await video.getAttribute("src"), start});
     await video.evaluate(element => { element.pause(); element.currentTime = 0; });
+    const captions = video.locator("track");
+    await captions.evaluate(track => { track.track.mode = "showing"; });
+    await page.waitForFunction(src => [...globalThis.document.querySelectorAll("video track")].some(track =>
+      track.getAttribute("src") === src && track.readyState === 2), await captions.getAttribute("src"), {timeout:10000});
+    assert.equal(await video.evaluate(element => element.textTracks[0].cues.length), 2, "the actual demo exposes its visual captions");
+    await video.evaluate(element => { element.textTracks[0].mode = "disabled"; });
   }
+  const videoDescription = page.locator(".marketing-video-description").first();
+  await videoDescription.locator("summary").press("Enter");
+  assert.equal(await videoDescription.locator("p").isVisible(), true, "a keyboard user can open the text alternative to the camera tour");
+  await videoDescription.locator("summary").press("Enter");
   await page.setViewportSize({width:1440,height:900});
   await verifyAccessibility(page, "desktop landing page");
   await page.screenshot({path:resolve("outputs/landing-page-1440x900.png"),fullPage:true});
