@@ -493,6 +493,15 @@ try {
   const consent = assistant.locator(".bot-composer .lux-consent");
   assert.equal(await consent.evaluate(label => label.scrollWidth <= label.clientWidth + 1 && label.scrollHeight <= label.clientHeight + 1), true, "the consent disclosure wraps without clipping");
   assert.equal(await assistant.locator(".bot-composer > button").isDisabled(), true, "an unconfigured service cannot submit a request");
+  await assistant.locator('[name="endpoint"]').fill("https://example.test/api/lux");
+  await assistant.locator('[name="token"]').fill("test-only-service-token-32-characters-long");
+  await assistant.getByRole("button", {name:"Configure",exact:true}).click();
+  assert.match(await assistant.locator(".lux-message b").innerText(), /connection not verified/i);
+  assert.doesNotMatch(await assistant.locator(".lux-heading").innerText(), /offline/i);
+  assert.equal(await assistant.locator(".bot-composer > button").isEnabled(), true);
+  await assistant.getByRole("button", {name:"Disconnect",exact:true}).click();
+  assert.match(await assistant.locator(".lux-message b").innerText(), /offline/i);
+  assert.equal(await assistant.locator(".bot-composer > button").isDisabled(), true);
   await page.locator("#toggle-lux").click();
   assert.equal(await page.locator("#toggle-lux").getAttribute("aria-expanded"), "false");
   assert.equal(await consent.isHidden(), true, "the collapsed assistant hides its request form");

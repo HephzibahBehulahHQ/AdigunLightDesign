@@ -402,7 +402,6 @@ body:not(.studio-route) .studio-shell { display:none; }
 .lux-panel.is-docked .lux-heading { min-height:32px; flex-basis:32px; padding:3px 7px; cursor:default; }
 .lux-panel.is-docked .lux-heading h2 { font-size:12px; }
 .lux-panel.is-docked .lux-heading .lux-icon { width:22px; height:22px; font-size:13px; }
-.lux-panel.is-docked .lux-heading .lux-dock-status { margin-left:auto; color:var(--muted); font-size:9px; }
 .lux-panel.is-docked .lux-heading [data-bot-minimize], .lux-panel.is-docked .lux-heading [data-bot-maximize], .lux-panel.is-docked .bot-resize-handle { display:none; }
 .lux-panel.is-docked .bot-window-body { max-height:138px; padding:0 5px 5px; }
 .lux-panel.is-docked .lux-subtitle, .lux-panel.is-docked .lux-message ul { display:none; }
