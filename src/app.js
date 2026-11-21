@@ -930,7 +930,7 @@ function bind() {
       stopPlayback();
       const result=await confirmAuthenticatedAction({getState:()=>({project,undoStack,redoStack}),proposal,account,confirmed:true,isCurrent:()=>generation===workspaceGeneration && luxProposal===proposal});
       if(generation!==workspaceGeneration)return;
-      project=result.project;undoStack=result.undoStack;redoStack=result.redoStack;luxProposal=null;projectPersisted=false;status=t("botChangesUnsaved");
+      project=result.project;undoStack=result.undoStack;redoStack=result.redoStack;luxProposal=null;updateUnsavedStatus();status=t("botChangesUnsaved");
     } catch(error) {if(generation===workspaceGeneration){if(luxProposal===proposal)luxProposal=null;status=t(error.message);}}
     finally{if(generation===workspaceGeneration){luxConfirmationPending=false;render();}}
   };
