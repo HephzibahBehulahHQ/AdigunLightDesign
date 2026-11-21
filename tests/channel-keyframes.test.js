@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { setChannelKeyframe,validateChannelKeyframes } from "../src/timeline/keyframes.js";
-import { createCue,evaluateCue,duplicateCue } from "../src/timeline/engine.js";
+import { createCue,evaluateCue,duplicateCue,editCue } from "../src/timeline/engine.js";
 import { createStudioMoodProject } from "../src/domain/studio-mood.js";
 import { validateProject } from "../src/domain/project.js";
 const source=[{id:"a",properties:{dimmer:20,red:0}}];
@@ -33,6 +33,12 @@ test("native imports retain channel keyframes and reject duration edits that tru
   const project=createStudioMoodProject(),cue=createCue(project.fixtures,{duration:8});
   project.cues=[setChannelKeyframe(cue,{fixtureId:project.fixtures[0].id,property:"dimmer",time:7,value:100})];
   assert.equal(validateProject(JSON.parse(JSON.stringify(project))).valid,true);
+  const saved=project.cues[0];
+  assert.throws(()=>editCue(saved,{duration:6}),{message:"cueDurationBeforeKeyframe",cause:7});
+  const shortened=editCue(saved,{duration:7});
+  assert.equal(shortened.duration,7);
+  assert.deepEqual(shortened.channelKeyframes,saved.channelKeyframes);
+  assert.equal(saved.duration,8);
   project.cues[0].duration=6;
   assert.equal(validateProject(project).valid,false);
 });

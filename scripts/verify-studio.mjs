@@ -1307,6 +1307,13 @@ try {
   const keyframeRemoval=page.locator("[data-remove-keyframe]").first();
   assert.ok((await keyframeRemoval.locator("..").textContent()).startsWith(`${channelName} · 2.5s → 192`));
   assert.equal(await keyframeRemoval.getAttribute("aria-label"),`Remove keyframe · ${channelName} · 2.5s`);
+  await page.locator("#edit-cue-duration").fill("2");
+  await page.locator("#edit-cue-fadeOut").fill("0");
+  await page.locator("#edit-cue").click();
+  assert.match(await page.locator("#status").textContent(),/Keep the duration at 2.5 s or longer/);
+  assert.equal(await keyframeRemoval.count(),1,"a rejected duration edit preserves its keyframe");
+  await page.locator('.arrangement-timeline .cue-block[aria-pressed="true"]').click();
+  assert.equal(await page.locator("#edit-cue-duration").inputValue(),"8","a rejected edit preserves the stored duration");
   const ruler = page.locator('.arrangement-timeline .timeline-ruler[role="slider"]');
   await ruler.press("Home");
   await ruler.press("ArrowRight");

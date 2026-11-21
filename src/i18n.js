@@ -342,6 +342,11 @@ Object.assign(messages.de,{cueName:"Cue-Name"});
 Object.assign(messages.yo,{cueName:"Orúkọ ìtànná"});
 Object.assign(messages.pcm,{cueName:"Cue name"});
 
+Object.assign(messages.en,{cueDurationBeforeKeyframe:"Keep the duration at {time} s or longer, or remove the last keyframe first."});
+Object.assign(messages.de,{cueDurationBeforeKeyframe:"Lass die Dauer bei mindestens {time} s oder entferne zuerst den letzten Keyframe."});
+Object.assign(messages.yo,{cueDurationBeforeKeyframe:"Jẹ́ kí àkókò jẹ́ {time} s tàbí jù bẹ́ẹ̀ lọ, tàbí yọ àmì àkókò tó kẹ́yìn kọ́kọ́."});
+Object.assign(messages.pcm,{cueDurationBeforeKeyframe:"Make duration reach {time} s or more, or remove di last keyframe first."});
+
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }
 
 Object.assign(messages.en,{moduleDesign:"Design",moduleStudio:"3D Studio",moduleFixtures:"Fixture Library",paintSurface:"Paint surface",applySwatchColour:"Set swatch colour",applySwatchToFixtures:"Apply swatch to fixtures",previewSelectedCue:"Preview selected cue",playCueList:"Play cue list",previewEffect:"Preview effect"});

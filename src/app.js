@@ -1340,7 +1340,10 @@ function bind() {
       const cue=sceneCues().find((item)=>item.id===preferences.cueId) ?? sceneCues().at(-1);
       commitProjectChange("cue-edit",(draft)=>{draft.cues=draft.cues.map((item)=>item.id===cue.id ? editCue(item,changes) : item);});
       render();
-    } catch(error) { document.querySelector("#status").textContent=status=error.message; }
+    } catch(error) {
+      status=error.message==="cueDurationBeforeKeyframe" ? phrase(error.message,{time:error.cause}) : error.message;
+      document.querySelector("#status").textContent=status;
+    }
   };
   document.querySelectorAll("[data-cue]").forEach((button)=>button.onclick=()=>{
     stopPlayback();
