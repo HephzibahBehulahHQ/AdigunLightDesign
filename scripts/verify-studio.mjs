@@ -334,6 +334,54 @@ async function verifyVirtualPlayback(browser, studioUrl) {
   }
 }
 
+async function verifyPaletteVersions(browser,studioUrl) {
+  const page=await browser.newPage({viewport:{width:1440,height:900}});
+  try {
+    await page.goto(studioUrl);
+    await page.locator('[data-module="palette"]').click();
+    const paletteMenu=page.locator('[data-command-menu-trigger="palette"]');
+    const openPalette=async()=>{if(await paletteMenu.getAttribute("aria-expanded")!=="true")await paletteMenu.click();};
+    const openVersions=async()=>{
+      await openPalette();
+      const versions=page.locator("#open-versions");
+      if(await versions.getAttribute("aria-expanded")!=="true")await versions.click();
+    };
+    const versions=page.locator("#palette-version");
+    const hex=page.locator("#swatch-hex"),opacity=page.locator("#swatch-opacity");
+    const harmony=page.locator("#harmony");
+    const originalHex=await hex.inputValue(),originalOpacity=await opacity.inputValue(),originalHarmony=await harmony.inputValue();
+    await openVersions();
+    await page.locator("#save-version").click();
+    const first=await versions.inputValue();
+    await hex.fill("#114488");
+    await page.locator("#apply-colour").click();
+    await opacity.fill("60");
+    await page.locator("#apply-opacity").click();
+    await openPalette();
+    await harmony.selectOption("square");
+    await openVersions();
+    await page.locator("#save-version").click();
+    const second=await versions.inputValue();
+    assert.notEqual(second,first,"saving a version selects the new snapshot");
+    await openVersions();
+    await versions.selectOption(first);
+    await page.locator("#locale").selectOption("de");
+    assert.equal(await versions.inputValue(),first,"a redraw preserves the selected snapshot");
+    await openVersions();
+    await page.locator("#restore-version").click();
+    assert.equal(await hex.inputValue(),originalHex,"Restore recovers the snapshot color");
+    assert.equal(await opacity.inputValue(),originalOpacity,"Restore recovers the snapshot opacity");
+    assert.equal(await harmony.inputValue(),originalHarmony,"Restore recovers the snapshot harmony");
+    await page.locator('[data-command-menu-trigger="history"]').click();
+    await page.locator("#undo").click();
+    assert.equal(await hex.inputValue(),"#114488","one Undo restores the edited color");
+    assert.equal(await opacity.inputValue(),"60","one Undo restores the edited opacity");
+    assert.equal(await harmony.inputValue(),"square","one Undo restores the edited harmony");
+  } finally {
+    await page.close();
+  }
+}
+
 async function verifyOfflineStudio(browser) {
   const previewServer = await preview({configFile:false, logLevel:"error", preview:{host:"127.0.0.1", port:0}});
   try {
@@ -1489,6 +1537,7 @@ try {
   await touchContext.close();
   await context.close();
   await verifyVirtualPlayback(browser, `http://127.0.0.1:${address.port}/#AdigunStudio`);
+  await verifyPaletteVersions(browser,`http://127.0.0.1:${address.port}/#AdigunStudio`);
   await verifyOfflineStudio(browser);
 } finally {
   await browser?.close();
