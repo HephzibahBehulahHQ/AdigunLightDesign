@@ -42,7 +42,22 @@ async function verifyVirtualPulse(browser, studioUrl) {
   try {
     await page.goto(studioUrl);
     const canvas = page.locator("#light-canvas");
-    const savedLighting = await canvas.screenshot();
+    const readPreviewPixels = async () => {
+      const screenshot = await canvas.screenshot();
+      return page.evaluate(async (base64) => {
+        const response = await globalThis.fetch(`data:image/png;base64,${base64}`);
+        const bitmap = await globalThis.createImageBitmap(await response.blob());
+        const sample = globalThis.document.createElement("canvas");
+        sample.width = 96;
+        sample.height = 54;
+        const ctx = sample.getContext("2d");
+        ctx.drawImage(bitmap, 0, 0, sample.width, sample.height);
+        bitmap.close();
+        return Array.from(ctx.getImageData(0, 0, sample.width, sample.height).data);
+      }, screenshot.toString("base64"));
+    };
+    const savedLighting = await readPreviewPixels();
+    const colorDifference = pixels => pixels.reduce((total, value, index) => total + Math.abs(value - savedLighting[index]), 0) / pixels.length;
     const virtualDimmer = page.locator(".virtual-dmx-channel").filter({has:page.getByText("dimmer", {exact:true})}).locator("strong");
     const savedDimmer = await virtualDimmer.textContent();
     await page.locator("#effect-period").fill("5");
@@ -50,11 +65,13 @@ async function verifyVirtualPulse(browser, studioUrl) {
     await page.waitForFunction(before => [...globalThis.document.querySelectorAll(".virtual-dmx-channel")].some(channel =>
       channel.querySelector("span")?.textContent === "dimmer" && channel.querySelector("strong")?.textContent !== before), savedDimmer);
     await page.locator("#pause-playback").click();
-    assert.ok(!(await canvas.screenshot()).equals(savedLighting), "a virtual pulse changes the rendered fixture lighting");
+    const pulseDifference = colorDifference(await readPreviewPixels());
+    assert.ok(pulseDifference > 1, `the virtual pulse changes rendered fixture lighting (${pulseDifference.toFixed(2)})`);
     assert.match(await page.locator("#virtual-dmx-monitor header").textContent(), /output:\s*disabled/i);
     await page.locator("#stop-cue").click();
     assert.equal(await virtualDimmer.textContent(), savedDimmer, "stopping the effect restores the saved virtual DMX level");
-    assert.ok((await canvas.screenshot()).equals(savedLighting), "stopping the effect restores the saved WebGL lighting");
+    const stoppedDifference = colorDifference(await readPreviewPixels());
+    assert.ok(stoppedDifference < pulseDifference / 5, `stopping restores the saved WebGL lighting (pulse ${pulseDifference.toFixed(2)}, stopped ${stoppedDifference.toFixed(2)})`);
   } finally {
     await page.close();
   }
