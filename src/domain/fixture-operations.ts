@@ -1,4 +1,4 @@
-import {patchFixture} from "../dmx/engine.ts";
+import {firstAvailableAddress,patchFixture,patchNewFixture} from "../dmx/engine.ts";
 import type {Fixture} from "../dmx/engine.ts";
 
 type FixtureRecord = Fixture;
@@ -57,7 +57,11 @@ export function duplicateFixture(
   if (typeof copy.name !== "string" || !copy.name.trim()) throw new Error("Fixture name must not be empty.");
   copy.transform = {...copy.transform, x: (copy.transform?.x ?? 0) + .5};
   copy.patchAssignment = null;
-  result.fixtures = patchFixture([...result.fixtures, copy], id, source.patchAssignment?.universe ?? 1);
+  const sourcePatch=source.patchAssignment;
+  const address=sourcePatch ? firstAvailableAddress(result.fixtures,sourcePatch.universe,sourcePatch.channelFootprint) : null;
+  result.fixtures=sourcePatch && address!==null
+    ? patchFixture([...result.fixtures,copy],id,sourcePatch.universe,address)
+    : patchNewFixture(result.fixtures,copy);
   return result;
 }
 
