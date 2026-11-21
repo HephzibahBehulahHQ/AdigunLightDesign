@@ -7,7 +7,6 @@ export const studioDefaults = Object.freeze({
   tool:"select",
   selected:"deep-blue",
   luxOpen:true,
-  harmony:"analogous",
   seed:"#2196F3"
 });
 
