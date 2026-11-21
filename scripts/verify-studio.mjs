@@ -574,6 +574,7 @@ try {
     await openCommandMenu("palette");
     assert.equal(await page.locator("#seed").getAttribute("aria-label"),labels.seedColour,"the seed field has a localized accessible name");
     const harmony=page.locator("#harmony");
+    await harmony.hover();
     const beforeHarmony=await harmony.inputValue();
     await harmony.selectOption("complementary");
     assert.equal(await harmony.locator("option:checked").textContent(),labels.harmony_complementary);
