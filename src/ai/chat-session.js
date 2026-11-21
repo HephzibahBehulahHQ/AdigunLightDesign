@@ -12,6 +12,7 @@ export function createLuxChatSession({fetchImpl=globalThis.fetch}={}) {
       generation++;client=next;pending=false;
     },
     disconnect() {generation++;client=null;pending=false;},
+    clearProject() {generation++;pending=false;},
     get status() {return {configured:client!==null,pending,endpoint:client?.endpoint ?? null};},
     async request({project,question,locale,consent=false}) {
       if(!client)throw new Error("Configure a Adigun AI service before sending a request.");

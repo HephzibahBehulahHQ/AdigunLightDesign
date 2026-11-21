@@ -47,5 +47,12 @@ export function createLuxServicePanel({getProject,getLocale,translate,onPreview,
       } catch(e){onError(e.message);}
     });
   }
-  return {mount};
+  function clearProject() {
+    epoch++;
+    session.clearProject();
+    reply=null;
+    error="";
+    question="";
+  }
+  return {mount,clearProject};
 }

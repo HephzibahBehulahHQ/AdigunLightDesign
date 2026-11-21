@@ -248,6 +248,16 @@ async function verifyVirtualPlayback(browser, studioUrl) {
       await new Promise(resolve=>globalThis.requestAnimationFrame(resolve));
     });
     assert.equal(await page.locator("#fixture-select option").count(),countBeforeDelay,"a pending rig cannot modify a reopened copy of the same room");
+
+    await page.locator('.module-nav [data-module="copilot"]').click();
+    await page.locator("#preview-lux-palette").click();
+    assert.equal(await page.locator(".lux-action-preview").count(),1,"the assistant shows a local lighting proposal");
+    await projectMenu.click();
+    await page.locator("#open-project").click();
+    await page.getByRole("button",{name:/Keyboard acceptance/}).click();
+    await projectDialog.waitFor({state:"detached"});
+    await page.locator('.module-nav [data-module="copilot"]').click();
+    assert.equal(await page.locator(".lux-action-preview").count(),0,"reopening the same project clears the old proposal");
     await page.locator('[data-module="library"]').click();
     const profiles = [
       ["generic-rgb-wash", "RGB Wash", 6],

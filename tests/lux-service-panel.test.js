@@ -48,3 +48,20 @@ test("disconnect discards an outstanding response and leaves the panel offline",
   assert.ok(host.innerHTML.includes(translate("de","luxServiceDisconnected")));
   assert.ok(!host.innerHTML.includes("Discard this answer"));
 });
+test("switching projects clears assistant state and retains service configuration",async()=>{
+  const host=surface(),project=createStudioMoodProject(),responses=[];
+  const panel=createLuxServicePanel({getProject:()=>project,getLocale:()=>"en",translate,onPreview:assert.fail,onError:assert.fail,findContainer:()=>host,fetchImpl:()=>new Promise(resolve=>responses.push(resolve))});
+  const respond=(index,answer)=>responses[index]({ok:true,text:async()=>JSON.stringify({requestId:String(index),answer,calls:[]})});
+  panel.mount(host);configure(host);
+  const oldRequest=ask(host,true);
+  panel.clearProject();panel.mount(host);
+  assert.match(host.innerHTML,/Service configured/);
+  assert.doesNotMatch(host.innerHTML,/Light my scene/);
+  const currentRequest=ask(host,true);
+  respond(0,"Old workspace answer");await oldRequest;
+  assert.doesNotMatch(host.innerHTML,/Old workspace answer/);
+  respond(1,"Current workspace answer");await currentRequest;
+  assert.match(host.innerHTML,/Current workspace answer/);
+  panel.clearProject();panel.mount(host);
+  assert.doesNotMatch(host.innerHTML,/Current workspace answer/);
+});
