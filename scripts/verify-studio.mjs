@@ -978,6 +978,15 @@ try {
   assert.equal(await touchAssistant.locator(".bot-composer .lux-consent").evaluate(label => label.scrollWidth <= label.clientWidth + 1 && label.scrollHeight <= label.clientHeight + 1), true, "mobile consent disclosure fits without clipping");
   await touchToggle.tap();
   assert.equal(await touchToggle.getAttribute("aria-expanded"), "false");
+  const touchDimmer = touchPage.locator("#fixture-dimmer");
+  const touchApply = touchPage.locator("#apply-fixture");
+  await touchDimmer.fill("180");
+  await touchApply.scrollIntoViewIfNeeded();
+  assert.ok(await touchPage.locator(".studio-shell").evaluate(shell => shell.scrollTop > 0), "the mobile inspector is reached by scrolling");
+  await touchApply.tap();
+  assert.equal(await touchDimmer.inputValue(), "180", "the fixture edit persists through the studio render");
+  const applyBounds = await touchApply.boundingBox();
+  assert.ok(applyBounds.y >= 0 && applyBounds.y + applyBounds.height <= 844, "applying a mobile fixture edit keeps its action in view");
   await touchContext.close();
   await context.close();
 } finally {
