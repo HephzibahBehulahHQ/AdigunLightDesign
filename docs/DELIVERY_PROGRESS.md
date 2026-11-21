@@ -99,6 +99,10 @@ Each Pulse run uploaded 32 lighting frames. Browser frame counts describe
 animation callback cadence, which includes time between lighting updates.
 A separate CPU probe generated ten dimmer frames per mode. Matching SHA-256
 hashes verified identical geometry and color buffers in the sampled frames.
+Caching the static room and surface normals in a subsequent local run reduced
+Pulse p95 to 10.4 ms (Performance), 11.0 ms (Balanced), and 20.0 ms (Quality)
+on the same GPU and viewport. Each run still uploaded 32 lighting frames,
+and the stateless reference buffers still matched the original hashes.
 This is one GPU and one starter rig. Large rigs, other GPUs, and mobile
 hardware still need testing.
 

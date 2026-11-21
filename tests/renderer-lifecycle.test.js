@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createLightLabRenderer } from "../src/light-lab/renderer.js";
+import { createLightLabRenderer, sceneBuffers } from "../src/light-lab/renderer.js";
 import { multiply,studioCameraMatrix,viewportProjection } from "../src/light-lab/math.js";
 
 function screenPoint(matrix,[x,y,z],width,height){
@@ -11,7 +11,7 @@ function screenPoint(matrix,[x,y,z],width,height){
 test("camera movement reuses geometry; changes invalidate it and destroy removes listeners",()=>{
   const previousWindow=Object.getOwnPropertyDescriptor(globalThis,"window");
   const previousObserver=Object.getOwnPropertyDescriptor(globalThis,"ResizeObserver");
-  let resizeCanvas;
+  let resizeCanvas,lastUpload;
   let uploads=0,deletedBuffers=0,deletedPrograms=0,deletedShaders=0,disconnected=false;
   const events=new Map();
   const drawStates=[],uploadLengths=[],matrices=[];let depthWrites=true,blending=false;
@@ -23,7 +23,7 @@ test("camera movement reuses geometry; changes invalidate it and destroy removes
     createShader:()=>({}),createProgram:()=>({}),createBuffer:()=>({}),
     getAttribLocation:()=>0,getUniformLocation:()=>({}),
     uniformMatrix4fv:(location,transpose,matrix)=>matrices.push([...matrix]),
-    bufferData:(target,data)=>{uploads+=1;uploadLengths.push(data.length);},deleteBuffer:()=>{deletedBuffers+=1;},deleteProgram:()=>{deletedPrograms+=1;},deleteShader:()=>{deletedShaders+=1;}
+    bufferData:(target,data)=>{uploads+=1;uploadLengths.push(data.length);lastUpload=data;},deleteBuffer:()=>{deletedBuffers+=1;},deleteProgram:()=>{deletedPrograms+=1;},deleteShader:()=>{deletedShaders+=1;}
   },{get:(target,key)=>key in target ? target[key] : ()=>{}});
   const canvas={clientWidth:800,clientHeight:450,width:800,height:450,getBoundingClientRect:()=>({left:0,top:0,width:800,height:450}),
     getContext:()=>gl,setPointerCapture:()=>{},
@@ -61,6 +61,8 @@ test("camera movement reuses geometry; changes invalidate it and destroy removes
     assert.equal(uploads,2);
     renderer.setFixtures([fixture]);
     assert.equal(uploadLengths[2],uploadLengths[1],"playback values retain the selected fixture outline");
+    const freshRoom=sceneBuffers([1,0,0],[{...fixture,selected:true}]);
+    assert.equal(Buffer.compare(Buffer.from(lastUpload.buffer),Buffer.from(freshRoom.data.buffer)),0,"cached redraw after an accent change matches a fresh scene");
     assert.equal(Object.hasOwn(fixture,"selected"),false,"renderer selection must not mutate project fixtures");
     renderer.setFixtures([{...fixture,selected:false}]);
     assert.ok(uploadLengths[3]<uploadLengths[2],"explicit deselection removes outline geometry");

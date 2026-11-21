@@ -770,7 +770,7 @@ function roomPresetFurniture(data,type,accent){
   } else if(type==="warehouse"){
     const rack=hexVector("#4D6068");for(const x of [-3.7,0,3.7]){for(const dx of [-1,1])box(data,x+dx,.08,2.6,.12,5.2,.12,rack);for(const y of [1,2.6,4.2]){box(data,x,y,2.6,2.2,.12,.8,rack);for(let n=0;n<3;n++)box(data,x-.7+n*.7,y+.38,2.45,.58,.62,.6,[hexVector("#B96A48"),hexVector("#D4B56D"),hexVector("#607E8B")][n]);}}}
 }
-export function sceneData(accent, fixtures, visibility={}, room,includeBeams=true,materials={},quality="balanced",stage,ambience,roomType="living-room") {
+function buildStaticRoom(accent, visibility, room, materials, quality, stage, roomType) {
   const data=[],floor=hexVector(materials.floor ?? "#4A3431"),rearWall=hexVector(materials.wallRear ?? materials.wall ?? "#27324A"),leftWall=hexVector(materials.wallLeft ?? materials.wall ?? "#27324A"),rightWall=hexVector(materials.wallRight ?? materials.wall ?? "#27324A"),couch=hexVector("#9C4F48"),wood=hexVector("#67442F"),metal=hexVector("#151D2D");
   const {width,height,depth}=roomDimensions(room);
   const budget=previewQuality(quality);
@@ -874,10 +874,22 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
   for (let x=-4;x<=4;x+=.5) box(data,x,3.7,.4,.04,.3,.06,metal);
   const rigScale=Math.min(1,(width/2-.04)/4.02,(height-.05)/4.01,(depth/2-.04)/.46);
   scaleGeometryPositions(data,rigStart,data.length,rigScale);
-  const lights=virtualFixtureVisuals(visibility.lighting===false ? [] : fixtures,budget.fixtures);
-  const surfaceLights=visibility.props!==false && visibility.lighting!==false
-    ? [...lights,...shelfLamps.map(lamp=>({...lamp,x:lamp.x*roomPropsScaleX,y:lamp.y*roomPropsScaleY,z:lamp.z*roomPropsScaleZ,colour:[.85,.46,.16],range:.85*studioPropsScale}))]
-    : lights;
+  const propLights=propsVisible && visibility.lighting!==false
+    ? shelfLamps.map(lamp=>({...lamp,x:lamp.x*roomPropsScaleX,y:lamp.y*roomPropsScaleY,z:lamp.z*roomPropsScaleZ,colour:[.85,.46,.16],range:.85*studioPropsScale}))
+    : [];
+  const normals=[];
+  for(let triangle=0;triangle<data.length;triangle+=18){
+    const a=data.slice(triangle,triangle+3),b=data.slice(triangle+6,triangle+9),c=data.slice(triangle+12,triangle+15);
+    const ab=b.map((value,axis)=>value-a[axis]),ac=c.map((value,axis)=>value-a[axis]);
+    const normal=[ab[1]*ac[2]-ab[2]*ac[1],ab[2]*ac[0]-ab[0]*ac[2],ab[0]*ac[1]-ab[1]*ac[0]];
+    normals.push({normal,length:Math.hypot(...normal)});
+  }
+  return {data,normals,propLights,rearWallStart,rearWallEnd};
+}
+
+function shadeRoom({data:base,normals,propLights,rearWallStart,rearWallEnd},lights,ambience,includeBeams,beamSegments) {
+  const data=base.slice();
+  const surfaceLights=[...lights,...propLights];
   // Approximate the soft bounce from each fixture's floor footprint.
   const rearWallLights=lights.filter(light=>Number.isFinite(light.targetX)&&Number.isFinite(light.targetZ)).map(light=>({
     x:light.targetX,y:.65,z:light.targetZ,
@@ -885,28 +897,37 @@ export function sceneData(accent, fixtures, visibility={}, room,includeBeams=tru
   }));
   const lightSurface=prepareSurfaceLighting(surfaceLights,ambience);
   const lightRearSurface=prepareSurfaceLighting([...surfaceLights,...rearWallLights],ambience);
-  for (let triangle=0;triangle<data.length;triangle+=18) {
-    const a=data.slice(triangle,triangle+3),b=data.slice(triangle+6,triangle+9),c=data.slice(triangle+12,triangle+15);
-    const ab=b.map((value,axis)=>value-a[axis]),ac=c.map((value,axis)=>value-a[axis]);
-    const normal=[ab[1]*ac[2]-ab[2]*ac[1],ab[2]*ac[0]-ab[0]*ac[2],ab[0]*ac[1]-ab[1]*ac[0]];
-    const normalLength=Math.hypot(...normal);
+  const staticVertexEnd=data.length;
+  for(let triangle=0;triangle<staticVertexEnd;triangle+=18){
+    const {normal,length}=normals[triangle/18];
     const shade=triangle>=rearWallStart && triangle<rearWallEnd ? lightRearSurface : lightSurface;
     for (const offset of [triangle,triangle+6,triangle+12]) {
-      const colour=shade(data.slice(offset,offset+3),data.slice(offset+3,offset+6),normal,normalLength);
-      for (let channel=0;channel<3;channel+=1) data[offset+3+channel]=colour[channel];
+      const colour=shade(data.slice(offset,offset+3),data.slice(offset+3,offset+6),normal,length);
+      for(let channel=0;channel<3;channel++) data[offset+3+channel]=colour[channel];
     }
   }
-  lights.forEach((light)=>lightGeometry(data,light,includeBeams,budget.beamSegments));
+  for(const light of lights) lightGeometry(data,light,includeBeams,beamSegments);
   return new Float32Array(data);
 }
 
-export function sceneBuffers(accent,fixtures,visibility={},room,materials={},quality="balanced",stage,ambience,roomType="living-room") {
-  const opaque=sceneData(accent,fixtures,visibility,room,false,materials,quality,stage,ambience,roomType);
+export function sceneData(accent,fixtures,visibility={},room,includeBeams=true,materials={},quality="balanced",stage,ambience,roomType="living-room") {
   const budget=previewQuality(quality);
-  const beams=virtualFixtureVisuals(visibility.lighting===false ? [] : fixtures,budget.fixtures).filter((light)=>light.profileId!=="generic-led-strip-rgb"&&light.colour.some((value)=>value>0)).flatMap((light)=>beamVolume(light,budget.beamSegments));
+  const lights=virtualFixtureVisuals(visibility.lighting===false ? [] : fixtures,budget.fixtures);
+  return shadeRoom(buildStaticRoom(accent,visibility,room,materials,quality,stage,roomType),lights,ambience,includeBeams,budget.beamSegments);
+}
+
+function bufferedRoom(staticRoom,lights,ambience,beamSegments) {
+  const opaque=shadeRoom(staticRoom,lights,ambience,false,beamSegments);
+  const beams=lights.filter(light=>light.profileId!=="generic-led-strip-rgb" && light.colour.some(value=>value>0)).flatMap(light=>beamVolume(light,beamSegments));
   const data=new Float32Array(opaque.length+beams.length);
   data.set(opaque);data.set(beams,opaque.length);
   return {data,opaqueVertices:opaque.length/6};
+}
+
+export function sceneBuffers(accent,fixtures,visibility={},room,materials={},quality="balanced",stage,ambience,roomType="living-room") {
+  const budget=previewQuality(quality);
+  const lights=virtualFixtureVisuals(visibility.lighting===false ? [] : fixtures,budget.fixtures);
+  return bufferedRoom(buildStaticRoom(accent,visibility,room,materials,quality,stage,roomType),lights,ambience,budget.beamSegments);
 }
 
 export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = [], visibility = {}, room, roomType="living-room", ambience, materials={}, stage, quality="balanced", projection = "perspective", camera={}, onSelect=()=>{},onTransform=()=>{}, onTourChange=()=>{} } = {}) {
@@ -923,6 +944,8 @@ export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = 
   }
   let resources=createResources(),contextLost=false;
   let selectedAccent=accent,virtualFixtures=fixtures,drag;const dimensions=roomDimensions(room),fitDistance=roomFitCameraDistance(dimensions.width,dimensions.depth);let {yaw,pitch,distance}=normalizeCameraState({...camera,distance:camera?.distance ?? fitDistance});
+  let staticRoom=null;
+  const budget=previewQuality(quality);
   let geometry=null,viewProjection=null,pickOccluders=null,pickCacheFixtures=null,pickTargets=[];
   function draw(targetSize=null) {
     if (contextLost || gl.isContextLost()) return;
@@ -930,7 +953,9 @@ export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = 
     const ratio=Math.min(window.devicePixelRatio||1,previewQuality(quality).pixelRatio),width=Math.max(1,targetSize?.width ?? canvas.clientWidth),height=Math.max(1,targetSize?.height ?? canvas.clientHeight);
     gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
     if (!geometry) {
-      geometry=sceneBuffers(hexVector(selectedAccent),virtualFixtures,visibility,room,materials,quality,stage,ambience,roomType);
+      staticRoom??=buildStaticRoom(hexVector(selectedAccent),visibility,room,materials,quality,stage,roomType);
+      const lights=virtualFixtureVisuals(visibility.lighting===false ? [] : virtualFixtures,budget.fixtures);
+      geometry=bufferedRoom(staticRoom,lights,ambience,budget.beamSegments);
       gl.bufferData(gl.ARRAY_BUFFER,geometry.data,gl.STATIC_DRAW);
     }
     const pixelWidth=targetSize ? width : Math.max(1,Math.round(width*ratio)),pixelHeight=targetSize ? height : Math.max(1,Math.round(height*ratio));
@@ -1054,5 +1079,5 @@ export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = 
   canvas.addEventListener("wheel",wheel,{passive:false});
   canvas.addEventListener("pointercancel",up);
   canvas.addEventListener("lostpointercapture",up);
-  return { supported:true, cameraState(){return {yaw,pitch,distance};},tourPlaying(){return Boolean(tourFrame);},toggleTour,stopTour,async capturePng(){if(contextLost || gl.isContextLost())throw new Error("The 3D preview is recovering. Try exporting again after it returns.");return viewportPng(canvas,draw,{width:1920,height:1080});}, setAccent(value){selectedAccent=value;geometry=null;draw();}, setFixtures(value){const selectedId=virtualFixtures.find(fixture=>fixture.selected)?.id;virtualFixtures=value.some(fixture=>Object.hasOwn(fixture,"selected")) ? value : value.map(fixture=>({...fixture,selected:fixture.id===selectedId}));geometry=null;draw();}, setView(axis){stopTour();const view=cameraAxisView(axis);yaw=view.yaw;pitch=view.pitch;draw();}, reset(){stopTour();({yaw,pitch,distance}=normalizeCameraState({distance:fitDistance}));draw();}, destroy(){stopTour();resize.disconnect();canvas.removeEventListener("webglcontextlost",contextLostListener);canvas.removeEventListener("webglcontextrestored",contextRestoredListener);canvas.removeEventListener("wheel",wheel);canvas.removeEventListener("keydown",keydown);canvas.removeEventListener("pointercancel",up);canvas.removeEventListener("lostpointercapture",up);canvas.removeEventListener("pointerdown",pointerDown);canvas.removeEventListener("pointermove",move);canvas.removeEventListener("pointerup",up);geometry=null;gl.deleteBuffer(resources.buffer);gl.deleteProgram(resources.program);} };
+  return { supported:true, cameraState(){return {yaw,pitch,distance};},tourPlaying(){return Boolean(tourFrame);},toggleTour,stopTour,async capturePng(){if(contextLost || gl.isContextLost())throw new Error("The 3D preview is recovering. Try exporting again after it returns.");return viewportPng(canvas,draw,{width:1920,height:1080});}, setAccent(value){selectedAccent=value;staticRoom=null;geometry=null;draw();}, setFixtures(value){const selectedId=virtualFixtures.find(fixture=>fixture.selected)?.id;virtualFixtures=value.some(fixture=>Object.hasOwn(fixture,"selected")) ? value : value.map(fixture=>({...fixture,selected:fixture.id===selectedId}));geometry=null;draw();}, setView(axis){stopTour();const view=cameraAxisView(axis);yaw=view.yaw;pitch=view.pitch;draw();}, reset(){stopTour();({yaw,pitch,distance}=normalizeCameraState({distance:fitDistance}));draw();}, destroy(){stopTour();resize.disconnect();canvas.removeEventListener("webglcontextlost",contextLostListener);canvas.removeEventListener("webglcontextrestored",contextRestoredListener);canvas.removeEventListener("wheel",wheel);canvas.removeEventListener("keydown",keydown);canvas.removeEventListener("pointercancel",up);canvas.removeEventListener("lostpointercapture",up);canvas.removeEventListener("pointerdown",pointerDown);canvas.removeEventListener("pointermove",move);canvas.removeEventListener("pointerup",up);geometry=null;gl.deleteBuffer(resources.buffer);gl.deleteProgram(resources.program);} };
 }
