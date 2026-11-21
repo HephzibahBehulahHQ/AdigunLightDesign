@@ -171,12 +171,28 @@ async function verifyVirtualPlayback(browser, studioUrl) {
     const waitForPosition = seconds => page.waitForFunction(expected =>
       globalThis.document.querySelector("#arrangement-position")?.textContent === expected,
     `${seconds.toFixed(1)} / 8.0 s`, {timeout:7000});
+    const previewBrightness = async () => {
+      const pixels = await readPreviewPixels();
+      let total = 0;
+      for (let index = 0; index < pixels.length; index += 4) {
+        total += (pixels[index] + pixels[index + 1] + pixels[index + 2]) / 3;
+      }
+      return total / (pixels.length / 4);
+    };
+    const brightnessByPhase = {};
     for (const [time, expectedDimmer, phase] of [[.5,40,"delay"], [2,120,"fade-in"], [4,200,"hold"], [7,120,"fade-out"]]) {
       const {width,height} = await ruler.boundingBox();
       await ruler.click({position:{x:time / 30 * width, y:height / 2}});
       await waitForPosition(time);
       assert.equal(await virtualDimmer.textContent(), String(expectedDimmer), `virtual dimmer matches the ${phase} envelope`);
+      brightnessByPhase[phase] = await previewBrightness();
     }
+    const {delay, "fade-in": fadeIn, hold, "fade-out": fadeOut} = brightnessByPhase;
+    assert.ok(delay < fadeIn && fadeIn < hold && delay < fadeOut && fadeOut < hold,
+      `rendered cue brightens and dims through both fades (${JSON.stringify(brightnessByPhase)})`);
+    const smallestFadeStep = Math.min(fadeIn - delay, hold - fadeIn, fadeOut - delay, hold - fadeOut);
+    assert.ok(Math.abs(fadeIn - fadeOut) < smallestFadeStep / 10,
+      "equal dimmer values in fade-in and fade-out render with consistent brightness");
     await page.locator("#locale").selectOption("de");
     assert.equal(await ruler.getAttribute("aria-valuenow"),"7","redrawing preserves the paused arrangement position");
     assert.equal(await playbackReadout.textContent(),"7.0 / 8.0 s","the redrawn readout agrees with the ruler");
@@ -187,6 +203,8 @@ async function verifyVirtualPlayback(browser, studioUrl) {
     await waitForPosition(8);
     assert.equal(await ruler.getAttribute("aria-valuenow"), "8", "End holds the final frame while the arrangement is paused in loop mode");
     assert.equal(await virtualDimmer.textContent(), "40", "fade-out returns to the original nonzero dimmer value");
+    assert.ok(Math.abs(await previewBrightness() - delay) < smallestFadeStep / 10,
+      "the final rendered frame returns to the baseline brightness");
     await page.locator("#pause-playback").click();
     await page.waitForFunction(() => Number(globalThis.document.querySelector(".arrangement-timeline .timeline-ruler")?.getAttribute("aria-valuenow")) < 2);
     assert.match(await playbackReadout.textContent(), /^0?\d\.\d \/ 8\.0 s$/, "resuming at the end loops the arrangement");
