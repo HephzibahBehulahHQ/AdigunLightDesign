@@ -27,24 +27,43 @@ export async function palettePdf(palette,{raster=paletteRaster}={}){
   return new Blob([await doc.save()],{type:"application/pdf"});
 }
 
-export async function cuePdf(cues,{raster=svgRaster}={}) {
+function measureCueLabel() {
+  const context=document.createElement("canvas").getContext("2d");
+  if (!context) throw new Error("Cue sheet label measurement requires a 2D canvas.");
+  context.font="20px sans-serif";
+  return text=>context.measureText(text).width;
+}
+
+function fitCueLabel(value,maxWidth,measure) {
+  if (measure(value)<=maxWidth) return value;
+  const clusters=Array.from(segmenter.segment(value),item=>item.segment);
+  let text;
+  do {
+    clusters.pop();
+    text=clusters.join("")+"…";
+  } while (clusters.length && measure(text)>maxWidth);
+  return text;
+}
+
+export async function cuePdf(cues,{raster=svgRaster,measure=measureCueLabel()}={}) {
   const doc=await PDFDocument.create();
   doc.setTitle("AdigunLightDesign cue sheet");
   const font=await doc.embedFont(StandardFonts.Helvetica);
   const schedule=arrangeTracks(cues).flatMap(track=>track.entries.map(entry=>({...entry,track:track.id})));
   const escape=value=>String(value).replace(/[&<>]/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;"})[char]);
+  const columns=[24,70,286,592,680,768,856,944,1032,1120];
+  const widths=[44,210,300,84,84,84,84,84,84,76];
   const rows=schedule.map(({cue,start,track},index)=>{
     const delay=cue.delay ?? 0, fadeOut=cue.fadeOut ?? 0;
-    const timing=[start,start+cue.duration,delay,cue.fade,fadeOut].map(value=>Number(value.toFixed(6)));
-    return [index+1,shorten(track,10),shorten(cue.name,15),...timing,cue.targets.length].map(escape);
+    const hold=cue.duration-delay-cue.fade-fadeOut;
+    const timing=[start,start+cue.duration,delay,cue.fade,hold,fadeOut].map(value=>Number(value.toFixed(6)));
+    return [index+1,fitCueLabel(track,widths[1]-6,measure),fitCueLabel(cue.name,widths[2]-6,measure),...timing,cue.targets.length].map(escape);
   });
   const pageCount=Math.max(1,Math.ceil(rows.length/18));
   for(let pageIndex=0;pageIndex<pageCount;pageIndex++){
     const contents=rows.slice(pageIndex*18,pageIndex*18+18);
-    const columns=[24,70,275,580,686,792,898,1004,1110];
-    const widths=[44,200,300,102,102,102,102,102,86];
     const cells=(values,y)=>values.map((value,i)=>`<svg x="${columns[i]}" y="${y}" width="${widths[i]}" height="30" overflow="hidden"><text x="0" y="21"${i>=3 ? ` font-size="16"${value.length>10 ? ` textLength="${widths[i]-4}" lengthAdjust="spacingAndGlyphs"` : ""}` : ""}>${value}</text></svg>`).join("");
-    const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="${60+Math.max(1,contents.length)*34}"><rect width="100%" height="100%" fill="white"/><g font-family="sans-serif" font-size="20" fill="#0b1220">${cells(["#","Track","Cue","Start (s)","End (s)","Delay (s)","Fade (s)","Out (s)","Targets"],12)}${contents.map((row,i)=>cells(row,48+i*34)).join("")}</g></svg>`;
+    const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="${60+Math.max(1,contents.length)*34}"><rect width="100%" height="100%" fill="white"/><g font-family="sans-serif" font-size="20" fill="#0b1220">${cells(["#","Track","Cue","Start (s)","End (s)","Delay (s)","In (s)","Hold (s)","Out (s)","Targets"],12)}${contents.map((row,i)=>cells(row,48+i*34)).join("")}</g></svg>`;
     const image=await doc.embedPng(await (await raster(svg)).arrayBuffer());
     const [height,width]=PageSizes.A4;
     const page=doc.addPage([width,height]);
