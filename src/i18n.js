@@ -322,6 +322,11 @@ Object.assign(messages.de,{paintColon:"Bemalen:",applyColour:"Farbe anwenden",re
 Object.assign(messages.yo,{paintColon:"Kún:",applyColour:"Lò àwọ̀",resetView:"Tún ìwò padà"});
 Object.assign(messages.pcm,{paintColon:"Paint:",applyColour:"Apply colour",resetView:"Reset view"});
 
+Object.assign(messages.en,{harmony_analogous:"Analogous",harmony_complementary:"Complementary",harmony_splitComplementary:"Split complementary",harmony_triadic:"Triadic",harmony_tetradic:"Tetradic",harmony_square:"Square",harmony_monochromatic:"Monochromatic"});
+Object.assign(messages.de,{harmony_analogous:"Analog",harmony_complementary:"Komplementär",harmony_splitComplementary:"Geteilt komplementär",harmony_triadic:"Dreiklang",harmony_tetradic:"Vierklang",harmony_square:"Quadratisch",harmony_monochromatic:"Monochromatisch"});
+Object.assign(messages.yo,{harmony_analogous:"Àwọn àwọ̀ tó sún mọ́ra",harmony_complementary:"Àwọ̀ méjì tó dojú kọ ara wọn",harmony_splitComplementary:"Àwọ̀ kan àti méjì lẹ́gbẹ̀ẹ́ òdìkejì rẹ̀",harmony_triadic:"Àwọ̀ mẹ́ta tó jìnnà déédéé",harmony_tetradic:"Àwọ̀ mẹ́rin ní méjì-méjì",harmony_square:"Àwọ̀ mẹ́rin tó jìnnà déédéé",harmony_monochromatic:"Oríṣìíríṣìí ìpele àwọ̀ kan"});
+Object.assign(messages.pcm,{harmony_analogous:"Colours wey near each other",harmony_complementary:"Two opposite colours",harmony_splitComplementary:"One colour plus two near im opposite",harmony_triadic:"Three colours wey space equal",harmony_tetradic:"Two pairs of opposite colours",harmony_square:"Four colours wey space equal",harmony_monochromatic:"Different shades of one colour"});
+
 export function translate(locale, key) { return messages[locale]?.[key] ?? messages.en[key] ?? key; }
 
 Object.assign(messages.en,{moduleDesign:"Design",moduleStudio:"3D Studio",moduleFixtures:"Fixture Library",paintSurface:"Paint surface",applySwatchColour:"Set swatch colour",applySwatchToFixtures:"Apply swatch to fixtures",previewSelectedCue:"Preview selected cue",playCueList:"Play cue list",previewEffect:"Preview effect"});
