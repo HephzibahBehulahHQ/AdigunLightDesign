@@ -80,6 +80,28 @@ its selected look and dimmer setting into the studio.
   acceptance, and frame rates on representative hardware remain open. Chrome
   measurements cover device scale, unchanged frames and context recovery.
 
+## 3D playback performance sample
+
+On 21 November 2026, headless Chrome 158 on Windows reported an Intel Arc
+140T renderer using ANGLE Direct3D 11. In the starter studio at 1440 × 900
+CSS pixels and 2× device scale, the test timed animation callbacks for 3.2
+seconds after a 0.7-second warm-up and counted actual WebGL buffer uploads
+during Pulse. The baseline was the verified public release at commit
+`ce5cad4`. The second run used the optimized build on the same machine.
+
+| Preview | Baseline Pulse p95 | Optimized Pulse p95 | Baseline / optimized browser frames per second |
+| --- | ---: | ---: | ---: |
+| Performance | 48.8 ms | 20.1 ms | 56.4 / 70.7 |
+| Balanced | 57.7 ms | 30.0 ms | 52.7 / 72.7 |
+| Quality | 113.4 ms | 39.6 ms | 23.4 / 59.6 |
+
+Each Pulse run uploaded 32 lighting frames. Browser frame counts describe
+animation callback cadence, which includes time between lighting updates.
+A separate CPU probe generated ten dimmer frames per mode. Matching SHA-256
+hashes verified identical geometry and color buffers in the sampled frames.
+This is one GPU and one starter rig. Large rigs, other GPUs, and mobile
+hardware still need testing.
+
 ## Historical progress estimate, 15 November 2026
 
 The reported 48% is an engineering estimate, not the percentage of acceptance
