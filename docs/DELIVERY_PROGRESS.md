@@ -66,12 +66,16 @@ its selected look and dimmer setting into the studio.
   local save/reopen, timeline playback, and cue capture across scenes. The
   browser suite also checks cue timing, track scheduling, keyframe persistence,
   pointer and keyboard seeking, virtual effects, and representative delay,
-  fade-in, hold and fade-out values. Further rendered fade review remains open.
+  fade-in, hold and fade-out values. Chrome acceptance also compares rendered
+  WebGL brightness through all four phases and at the final baseline frame
+  ([#266](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/pull/266),
+  [Pages release](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44956270481)).
 - **M4, M7, and M9:** Virtual patching, fixture selection, and downloads have
   browser evidence, including a real cue PDF download checked for title and
   page count and a rendered review of the starter sheet.
-  The ASE RGB writer has independent Swatch parser evidence. GIMP and Adobe
-  application import, advanced interchange, licensed
+  The ASE RGB writer has independent Swatch parser evidence and real GIMP 3.2.6
+  import evidence for two palettes. Adobe application import, advanced
+  interchange, licensed
   catalog coverage, and physical fixture transport remain unverified.
 - **M6 and M8:** Production shows Guest mode. Signed-in cloud save/reopen,
   account isolation, and live Lux actions need configured services and real
