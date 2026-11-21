@@ -297,7 +297,9 @@ function openCloudProject(document) {
   });
 }
 async function importNativeProject(file) {
+  const generation=workspaceGeneration;
   const result=await readProjectFile(file);
+  if (generation!==workspaceGeneration) return;
   if(!result.valid) return setStatus(result.errors.join(" "));
   requestWorkspaceReplacement(()=>{
     stopPlayback();
@@ -311,12 +313,12 @@ async function importNativeProject(file) {
   });
 }
 async function importVirtualFixtureRig(file) {
-  const targetProject = project.id;
-  const targetScene = scene().id;
+  const generation=workspaceGeneration;
+  const targetScene=scene().id;
   try {
     if (file.size > 1_000_000) throw new Error("Fixture rig JSON must be smaller than 1 MB.");
     const specs = readFixtureRig(await file.text());
-    if (project.id !== targetProject || scene().id !== targetScene) return;
+    if (generation!==workspaceGeneration || scene().id!==targetScene) return;
     const fixtures = specs.map(spec => ({...spec, id:crypto.randomUUID(), sceneId:targetScene, patchAssignment:null}));
     commitProjectChange("fixture-rig-import", draft => {
       draft.fixtures = fixtures.reduce(patchNewFixture, draft.fixtures);
@@ -325,7 +327,9 @@ async function importVirtualFixtureRig(file) {
     preferences.inspectorMode = "fixture";
     savePreferences();
     setStatus(`${t("importAction")} · ${fixtures.length} ${t("fixturesPatched")}`);
-  } catch (error) { setStatus(error.message); }
+  } catch (error) {
+    if (generation===workspaceGeneration && scene().id===targetScene) setStatus(error.message);
+  }
 }
 function readSavedProjects() {
   const stored=safeParse(readBrowserStorage(savedProjectsKey).value);
