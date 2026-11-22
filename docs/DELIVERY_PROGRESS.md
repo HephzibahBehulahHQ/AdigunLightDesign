@@ -6,12 +6,20 @@ reference, the floating Bot and compact menu, and the canonical site.
 ## Release evidence as of 22 November 2026
 
 The [public editor](https://adigunlightdesign.hephzibahbehulah.com/) was verified
-through commit [`61287cd`](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/commit/61287cd7e8f6223f28cd5ee1a1415563ded8b77c).
-[CI](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/45008217246)
-and the [Pages release with asset checksums](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/45008396585)
+through commit [`997e2e6`](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/commit/997e2e6504f3d84dd9ac986250280c4cb5ef7fb0).
+[CI](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/45010758378)
+and the [Pages release with asset checksums](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/45010946355)
 passed. During the landing release (#225), Chrome verified the live 3D preview at desktop
 and phone widths, both recorded studio demos, and the editable sample carrying
 its selected look and dimmer setting into the studio.
+
+A clean Chrome session on the November 22 public release confirmed that the
+landing canvas responds to the selected look and intensity, both recorded
+demos play, and Cyan modern at 50% opens as an editable sample with dimmer
+105. The studio exported a 1920 × 1080 PNG and reopened the project after
+saving a fixture edit. Firefox 159 on Windows also reopened a saved project
+offline after installing the live site's service worker at a 390 × 844
+touch-enabled viewport. Both sessions reported zero uncaught page errors.
 
 | Merged work | Commit and release | Verified evidence |
 | --- | --- | --- |
@@ -78,6 +86,10 @@ its selected look and dimmer setting into the studio.
 | Eurolite three-channel mode (#279) | `c4c0730` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/45007347088) | Add RGB-only patching, preview, effects, blackout and rig transfer. |
 | RGB-only room looks (#280) | `f050a86` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/45007891366) | Scale actual RGB channels and omit an unavailable dimmer from Lux explanations. |
 | RGB-only cue preview (#281) | `61287cd` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/45008396585) | Capture and seek to RGB cue values, then restore the working fixture. |
+| Edge acceptance (#282) | `205dc85` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/45008836055) | Record the full Edge 158 studio run on Windows. |
+| Firefox acceptance (#283) | `4de9109` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/45009542585) | Add opt-in browser acceptance and record the Firefox 159 run. |
+| WebGL initialization fallback (#284) | `a46e868` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/45010219234) | Keep recordings and project editing available after shader failure. |
+| Studio renderer lifecycle (#285) | `997e2e6` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/45010946355) | Start studio WebGL on editor entry and release it on exit. |
 
 ## Remaining acceptance gates
 
