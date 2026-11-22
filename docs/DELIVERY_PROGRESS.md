@@ -6,9 +6,9 @@ reference, the floating Bot and compact menu, and the canonical site.
 ## Release evidence as of 22 November 2026
 
 The [public editor](https://adigunlightdesign.hephzibahbehulah.com/) was verified
-through commit [`0df7781`](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/commit/0df77814875e041c2b7eb7726c80a8a0f748d75d).
-[CI](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44960439889)
-and the [Pages release with asset checksums](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/45001921675)
+through commit [`61287cd`](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/commit/61287cd7e8f6223f28cd5ee1a1415563ded8b77c).
+[CI](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/45008217246)
+and the [Pages release with asset checksums](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/45008396585)
 passed. During the landing release (#225), Chrome verified the live 3D preview at desktop
 and phone widths, both recorded studio demos, and the editable sample carrying
 its selected look and dimmer setting into the studio.
@@ -67,6 +67,17 @@ its selected look and dimmer setting into the studio.
 | Palette download pixels (#268) | `521d7c6` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44957319821) | Compare rendered swatch colors in SVG, PNG and JPEG. |
 | Viewport PNG content (#269) | `6ee48b8` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44957810836) | Verify scene detail, camera changes and fixture edits in 1080p downloads. |
 | Palette PDF download (#270) | `0df7781` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/45001921675) | Render the actual starter export and verify title, footer and swatch colors. |
+| Sunday delivery ledger (#271) | `95b1e48` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/45002324147) | Reconciled verified releases through #270. |
+| Live Narrator walkthrough (#272) | `c28a2c1` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/45003154469) | Verified the skip link and Save Project dialog announcements. |
+| Persistent save announcement (#273) | `2034cf1` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/45003666981) | Send the save result to a live region that survives studio redraws. |
+| Storage quota recovery (#274) | `fad999e` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/45004290483) | Verify the warning, intact working project and successful retry in Chrome. |
+| Playback status updates (#275) | `465a4fe` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/45004796043) | Keep the visible playback readout without automatic announcements on every tick. |
+| Literal footer text (#276) | `a733b41` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/45005654356) | Preserve fixture name punctuation through a studio redraw. |
+| DMX address conflict (#277) | `4b754e1` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/45006129780) | Identify the occupying fixture and preserve every exported fixture record. |
+| Eurolite five-channel mode (#278) | `cec2987` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/45006725483) | Add the manufacturer-documented virtual RGB, dimmer and shutter slots. |
+| Eurolite three-channel mode (#279) | `c4c0730` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/45007347088) | Add RGB-only patching, preview, effects, blackout and rig transfer. |
+| RGB-only room looks (#280) | `f050a86` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/45007891366) | Scale actual RGB channels and omit an unavailable dimmer from Lux explanations. |
+| RGB-only cue preview (#281) | `61287cd` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/45008396585) | Capture and seek to RGB cue values, then restore the working fixture. |
 
 ## Remaining acceptance gates
 
@@ -115,6 +126,12 @@ its selected look and dimmer setting into the studio.
   `ALD_SUPABASE_PUBLISHABLE_KEY`. Assistive technology, production security
   acceptance, and frame rates on representative hardware remain open. Chrome
   measurements cover device scale, unchanged frames and context recovery.
+
+On November 22, the full studio suite passed on Windows using Microsoft Edge
+158.0.4370.33 against commit `61287cd`. It exercised the seven named desktop
+sizes, mobile emulation, WebGL playback, save and reopen, downloads, and the
+offline build. Edge and Chrome both use Chromium. Physical mobile hardware
+and other browser engines still need verification.
 
 ## 3D playback performance sample
 
