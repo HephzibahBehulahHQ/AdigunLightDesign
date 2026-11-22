@@ -49,6 +49,14 @@ test("maps the documented Eurolite five-channel mode to its virtual DMX slots", 
   assert.deepEqual([...dmxFrame(patched, 2).slice(507)], [33, 150, 243, 255, 0]);
   assert.deepEqual([...dmxFrame(blackout(patched), 2).slice(507)], [33, 150, 243, 0, 0]);
 });
+
+test("blackout clears only RGB slots in the Eurolite three-channel mode", () => {
+  const fixture=createFixture(1,"eurolite-led-par-56-tcl","3ch");
+  const patched=patchFixture([fixture],fixture.id,1,510);
+  assert.deepEqual([...dmxFrame(patched).slice(509)],[33,150,243]);
+  assert.deepEqual(blackout(patched)[0].properties,{red:0,green:0,blue:0});
+  assert.deepEqual(patched[0].properties,fixture.properties);
+});
 test("gives newly created virtual fixtures distinct preview positions", () => { assert.deepEqual([createFixture(1).transform.x,createFixture(2).transform.x,createFixture(3).transform.x],[-2.5,0,2.5]); });
 test('full universe rejects another fixture without modifying existing patches',()=>{
  const fixtures=Array.from({length:85},(_,index)=>{const f=createFixture(index+1);return {...f,patchAssignment:{fixtureId:f.id,universe:1,startAddress:index*6+1,channelFootprint:6}};});

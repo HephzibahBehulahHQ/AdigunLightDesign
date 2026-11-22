@@ -330,17 +330,26 @@ async function verifyVirtualPlayback(browser, studioUrl) {
     assert.equal(await page.locator(".lux-action-preview").count(),0,"reopening the same project clears the old proposal");
     await page.locator('[data-module="library"]').click();
     const profiles = [
-      ["eurolite-led-par-56-tcl", "LED PAR-56 TCL", 5],
+      ["eurolite-led-par-56-tcl", "LED PAR-56 TCL", 3, "3ch"],
+      ["eurolite-led-par-56-tcl", "LED PAR-56 TCL", 5, "5ch"],
       ["generic-rgb-wash", "RGB Wash", 6],
       ["generic-moving-head-rgbw", "Moving Head RGBW", 10],
       ["generic-led-strip-rgb", "LED Strip RGB", 4],
     ];
-    for (const [id, name, footprint] of profiles) {
+    for (const [id, name, footprint, mode] of profiles) {
       const optionsBefore = await page.locator("#fixture-select option").count();
-      await page.locator(`.fixture-library [data-profile="${id}"]`).click();
+      const modeSelector = mode ? `[data-mode="${mode}"]` : "";
+      await page.locator(`.fixture-library [data-profile="${id}"]${modeSelector}`).click();
       assert.equal(await page.locator("#fixture-select option").count(), optionsBefore + 1, `${name} is added to the active room`);
       assert.ok((await page.locator("#fixture-select option:checked").textContent()).startsWith(name), `${name} is selected after adding it`);
       assert.equal(await page.locator("#virtual-dmx-monitor .virtual-dmx-channel").count(), footprint, `${name} is patched with its profile's channel footprint`);
+      if (mode === "3ch") {
+        assert.equal(await page.locator("#fixture-dimmer").count(), 0, "RGB-only mode has no independent dimmer field");
+        await page.locator("#fixture-colour").fill("#356392");
+        await page.locator("#apply-fixture").click();
+        assert.deepEqual(await page.locator("#virtual-dmx-monitor .virtual-dmx-channel strong").allTextContents(),
+          ["53", "99", "146"], "the three-channel fixture commits RGB values without a dimmer");
+      }
     }
     await page.locator("#close-library").click();
     await page.locator("#fixture-universe").fill("2");

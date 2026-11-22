@@ -1,4 +1,4 @@
-import { getFixtureProfile } from "../dmx/engine.ts";
+import { getFixtureProfile, setFixtureIntensity } from "../dmx/engine.ts";
 import type {Fixture} from "../dmx/engine.ts";
 export interface EffectSettings {type?:"pulse"|"chase"|"panTilt";period?:number;minimum?:number;maximum?:number;}
 export function evaluateEffect(fixtures:readonly Fixture[],{type="pulse",period=2,minimum=0,maximum=255}:EffectSettings={},elapsed=0) {
@@ -15,6 +15,6 @@ export function evaluateEffect(fixtures:readonly Fixture[],{type="pulse",period=
       return {...fixture,properties};
     }
     const amount=type==="pulse" ? (1-Math.cos(phase*Math.PI*2))/2 : index===active ? 1 : 0;
-    return {...fixture,properties:{...fixture.properties,...(channels.includes("dimmer") ? {dimmer:Math.round(minimum+(maximum-minimum)*amount)} : {})}};
+    return setFixtureIntensity(fixture,Math.round(minimum+(maximum-minimum)*amount));
   });
 }

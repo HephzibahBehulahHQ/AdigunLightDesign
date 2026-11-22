@@ -102,8 +102,10 @@ export function studioBackCushion(x,y,z,width,height,depth,colour,columns=10,row
 const channel = (value) => Math.max(0, Math.min(255, Number(value) || 0)) / 255;
 export function virtualFixtureVisuals(fixtures = [],limit=12) {
   return fixtures.slice(0,limit).map((fixture,index)=>{
-    const stored=fixture.properties ?? {},channels=fixture.profileId ? getFixtureProfile(fixture.profileId).modes.find((mode)=>mode.id===fixture.modeId)?.channels ?? [] : Object.keys(stored);
-    const properties=Object.fromEntries(channels.map((key)=>[key,stored[key]])),white=channel(properties.white),dimmer=channel(properties.dimmer),transform=fixture.transform ?? {};
+    const stored=fixture.properties ?? {};
+    const mode=fixture.profileId ? getFixtureProfile(fixture.profileId).modes.find(item=>item.id===fixture.modeId) : undefined;
+    const channels=mode?.channels ?? (fixture.profileId ? [] : Object.keys(stored));
+    const properties=Object.fromEntries(channels.map((key)=>[key,stored[key]])),white=channel(properties.white),dimmer=mode && !channels.includes("dimmer") ? 1 : channel(properties.dimmer),transform=fixture.transform ?? {};
     const x=Number.isFinite(transform.x) ? transform.x : (index-1)*2.5;
     const z=Number.isFinite(transform.z) ? transform.z : .45;
     // Artistic normalized aiming, independent of manufacturer DMX calibration.

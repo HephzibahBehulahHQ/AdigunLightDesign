@@ -23,15 +23,25 @@ export const fixtureProfiles:FixtureProfile[] = [
     model: "LED PAR-56 TCL (virtual)",
     type: "LED wash",
     provenance: "Steinigke manual 00066178, version 1.0, page 22.",
-    validationStatus: "Documented 5-channel mapping",
-    modes: [{id:"5ch", name:"5-channel", channels:["red","green","blue","dimmer","shutter"]}]
+    validationStatus: "Documented channel mapping",
+    modes: [
+      {id:"5ch", name:"5 CH", channels:["red","green","blue","dimmer","shutter"]},
+      {id:"3ch", name:"3 CH", channels:["red","green","blue"]}
+    ]
   }
 ];
 
 export function getFixtureProfile(profileId:string) { return fixtureProfiles.find((profile) => profile.id === profileId) ?? genericRgbWash; }
 
 export function fixtureFootprint(profile:FixtureProfile = genericRgbWash, modeId = "rgb-6") { return profile.modes.find((mode) => mode.id === modeId)?.channels.length ?? 0; }
-export function createFixture(index = 1, profileId = genericRgbWash.id):Fixture { const profile=getFixtureProfile(profileId),mode=profile.modes[0],defaults:Record<string,number>={dimmer:255,red:33,green:150,blue:243,white:0,strobe:0,beam:128,pan:127,tilt:127,gobo:0},properties=Object.fromEntries(mode.channels.map((channel)=>[channel,defaults[channel] ?? 0])); return { id:crypto.randomUUID(), profileId:profile.id, modeId:mode.id, name:`${profile.model.replace(" (virtual)","")} ${index}`, transform:{ x:(index - 2) * 2.5,y:3.65,z:.45,rotation:0 }, properties, patchAssignment:null }; }
+export function createFixture(index = 1, profileId = genericRgbWash.id, modeId?:string):Fixture {
+  const profile=getFixtureProfile(profileId);
+  const mode=modeId === undefined ? profile.modes[0] : profile.modes.find(item=>item.id===modeId);
+  if (!mode) throw new Error("The selected fixture mode is unavailable.");
+  const defaults:Record<string,number>={dimmer:255,red:33,green:150,blue:243,white:0,strobe:0,beam:128,pan:127,tilt:127,gobo:0};
+  const properties=Object.fromEntries(mode.channels.map(channel=>[channel,defaults[channel] ?? 0]));
+  return {id:crypto.randomUUID(), profileId:profile.id, modeId:mode.id, name:`${profile.model.replace(" (virtual)","")} ${index}`, transform:{x:(index - 2) * 2.5,y:3.65,z:.45,rotation:0}, properties, patchAssignment:null};
+}
 export function patchRange(patch:FixturePatch) { return { start:patch.startAddress, end:patch.startAddress + patch.channelFootprint - 1 }; }
 export function validatePatch(candidate:FixturePatch, fixtures:readonly Fixture[]) {
   const errors=[]; const footprint=candidate.channelFootprint;
@@ -81,4 +91,16 @@ export function updateFixture(fixtures:readonly Fixture[], fixtureId:string, { n
   return patchFixture(revised,fixtureId,universe ?? fixture.patchAssignment?.universe ?? 1,startAddress ?? fixture.patchAssignment?.startAddress);
 }
 export function dmxFrame(fixtures:readonly Fixture[], universe = 1) { const frame=new Uint8Array(512); for(const fixture of fixtures){const patch=fixture.patchAssignment;if(!patch||patch.universe!==universe)continue;const profile=getFixtureProfile(fixture.profileId),mode=profile.modes.find((item)=>item.id===fixture.modeId) ?? profile.modes[0];mode.channels.forEach((channel,index)=>{frame[patch.startAddress-1+index]=Math.max(0,Math.min(255,Math.round(fixture.properties[channel] ?? 0)));});}return frame; }
-export function blackout(fixtures:readonly Fixture[]) { return fixtures.map((fixture)=>({...fixture,properties:{...fixture.properties,dimmer:0}})); }
+export function setFixtureIntensity(fixture:Fixture, level:number):Fixture {
+  const channels=getFixtureProfile(fixture.profileId).modes.find(mode=>mode.id===fixture.modeId)?.channels
+    ?? Object.keys(fixture.properties);
+  const properties={...fixture.properties};
+  if (channels.includes("dimmer")) properties.dimmer=level;
+  else {
+    for (const channel of ["red","green","blue","white"]) {
+      if (channels.includes(channel)) properties[channel]=Math.round((properties[channel] ?? 0)*level/255);
+    }
+  }
+  return {...fixture,properties};
+}
+export function blackout(fixtures:readonly Fixture[]) { return fixtures.map(fixture=>setFixtureIntensity(fixture,0)); }
