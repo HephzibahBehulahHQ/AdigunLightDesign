@@ -5,7 +5,20 @@ import {build} from "vite";
 
 const publishableKey=process.env.ALD_SUPABASE_PUBLISHABLE_KEY ?? "";
 if(publishableKey && !/^sb_publishable_[A-Za-z0-9_-]+$/.test(publishableKey))throw new Error("Only a Supabase publishable key may be embedded in the frontend build.");
-await build({configFile:false,base:"./",publicDir:false,define:{__ALD_SUPABASE_PUBLISHABLE_KEY__:JSON.stringify(publishableKey)},build:{outDir:"dist",emptyOutDir:true,sourcemap:false}});
+const contentSecurityPolicy={
+  name:"adigun-production-content-security-policy",
+  transformIndexHtml() {
+    return [{
+      tag:"meta",
+      attrs:{
+        "http-equiv":"Content-Security-Policy",
+        content:"script-src 'self'; object-src 'none'; base-uri 'none'"
+      },
+      injectTo:"head-prepend"
+    }];
+  }
+};
+await build({configFile:false,base:"./",publicDir:false,plugins:[contentSecurityPolicy],define:{__ALD_SUPABASE_PUBLISHABLE_KEY__:JSON.stringify(publishableKey)},build:{outDir:"dist",emptyOutDir:true,sourcemap:false}});
 cpSync("public/assets/corporate","dist/assets/corporate",{recursive:true});
 cpSync("public/demos","dist/demos",{recursive:true});
 cpSync("CNAME","dist/CNAME");
