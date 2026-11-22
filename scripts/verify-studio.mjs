@@ -353,8 +353,20 @@ async function verifyVirtualPlayback(browser, studioUrl) {
         assert.notDeepEqual(afterLook, beforeLook, "room looks change the RGB-only fixture's actual DMX values");
         await page.locator("#fixture-colour").fill("#356392");
         await page.locator("#apply-fixture").click();
-        assert.deepEqual(await page.locator("#virtual-dmx-monitor .virtual-dmx-channel strong").allTextContents(),
-          ["53", "99", "146"], "the three-channel fixture commits RGB values without a dimmer");
+        const capturedRgb = ["53", "99", "146"];
+        assert.deepEqual(await rgbValues.allTextContents(), capturedRgb,
+          "the three-channel fixture commits RGB values without a dimmer");
+        await page.locator("#create-cue").click();
+        await page.locator("#fixture-colour").fill("#102030");
+        await page.locator("#apply-fixture").click();
+        const savedRgb = await rgbValues.allTextContents();
+        assert.deepEqual(savedRgb, ["16", "32", "48"], "the working fixture has a different color from the captured cue");
+        await page.locator(".arrangement-timeline .timeline-ruler").press("End");
+        assert.deepEqual(await rgbValues.allTextContents(), capturedRgb,
+          "seeking to the captured cue restores its RGB-only virtual frame");
+        await page.locator("#stop-cue").click();
+        assert.deepEqual(await rgbValues.allTextContents(), savedRgb,
+          "stopping cue preview restores the working RGB-only fixture");
       }
     }
     await page.locator("#close-library").click();

@@ -98,6 +98,8 @@ its selected look and dimmer setting into the studio.
   and scales those values for room looks, virtual pulse, chase and blackout. The
   five-channel mode uses its dimmer and keeps the shutter open. Sound
   programs, strobe behavior and hardware operation remain outside this mapping.
+  Chrome verifies that a captured cue restores the three RGB values at the
+  timeline endpoint and that stopping preview restores the working fixture.
   The channel order was checked against the
   [manufacturer manual, page 22](https://www.steinigke.de/download/51913610-Manual-66247-1.00-eurolite-led-par-56-tcl-9x3w-short-sil-de_en.pdf)
   and [Open Fixture Library](https://open-fixture-library.org/eurolite/led-par-56-tcl).
