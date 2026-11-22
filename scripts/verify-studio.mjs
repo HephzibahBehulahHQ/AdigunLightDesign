@@ -528,6 +528,16 @@ async function verifyOfflineStudio(browser) {
   const previewServer = await preview({configFile:false, logLevel:"error", preview:{host:"127.0.0.1", port:0}});
   try {
     const address = previewServer.httpServer.address();
+    const missingLogo = await browser.newPage({serviceWorkers:"block"});
+    try {
+      await missingLogo.route("**/assets/corporate/hephzibah-behulah-official.jpg",route=>route.abort());
+      await missingLogo.goto(`http://127.0.0.1:${address.port}/#AdigunStudio`);
+      await missingLogo.locator(".topbar .brand-fallback").waitFor();
+      assert.equal(await missingLogo.locator(".topbar .corporate-mark").isHidden(),true,
+        "the production studio displays the brand name when the logo cannot load");
+    } finally {
+      await missingLogo.close();
+    }
     const context = await browser.newContext({viewport:{width:1440,height:900}, acceptDownloads:true});
     try {
       const page = await context.newPage();
