@@ -1701,8 +1701,10 @@ try {
   await clickCommand("project","#open-project");
   await page.locator(".project-dialog [data-import]").click();
   await page.locator("#project-file").setInputFiles(exportPath);
-  await page.waitForFunction(() => globalThis.document.querySelector("#project-name")?.value === "Studio Acceptance");
+  await page.waitForFunction(() => globalThis.document.querySelector(".header-save-status")?.textContent.trim() === "Unsaved project");
   assert.equal(await page.locator("#project-name").inputValue(), "Studio Acceptance", "Import project JSON opens the selected file");
+  const roundTrippedProject=JSON.parse(await downloadExportFile(projectExportSelector, ".ald.json"));
+  assert.deepEqual(roundTrippedProject,exportedProject,"importing and re-exporting preserves the complete versioned project document");
   await clickCommand("project","#new-project");
   assert.equal(await page.locator(".project-dialog [data-save]").count(),1,"unsaved replacement presents Save, Discard and Cancel");
   await page.locator(".project-dialog [data-cancel]").click();
