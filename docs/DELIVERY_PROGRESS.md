@@ -73,7 +73,12 @@ its selected look and dimmer setting into the studio.
 - **M1 and M3:** Exact editor and scene comparison needs the November 14
   reference identified in `VISUAL_ALIGNMENT.md`. The checked-in image has a
   different checksum. Browser layout results and actual WebGL rendering are
-  recorded separately. Assistive technology and language review remain open.
+  recorded separately. On November 22, Windows Narrator with Chrome on the
+  live studio announced the Skip to workspace link and the Save project
+  dialog, including the required Project name field and its current value.
+  Ctrl+S opened the dialog and Escape dismissed it. Speech Recap confirmed
+  those announcements. Save confirmation, broader screen-reader navigation
+  and language review remain open.
 - **M2 and M5:** Browser acceptance covers palette extraction, versions,
   contrast thresholds and suggested corrections, portable JSON round-trip,
   local save/reopen, timeline playback, and cue capture across scenes. The
