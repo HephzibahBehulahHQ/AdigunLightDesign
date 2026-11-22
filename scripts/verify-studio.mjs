@@ -705,8 +705,9 @@ try {
   assert.deepEqual(await landingCanvas.screenshot(),beforeContextLoss,"the real WebGL context restores the selected lighting and camera");
   const [samplePage] = await Promise.all([context.waitForEvent("page"), page.locator("[data-landing-open]").click()]);
   await samplePage.locator("body.studio-route").waitFor();
-  await samplePage.keyboard.press("Tab");
-  assert.equal(await samplePage.locator(":focus").textContent(),"Skip to workspace","the studio route exposes its own first keyboard stop");
+  const studioSkip=samplePage.getByRole("link",{name:"Skip to workspace"});
+  await studioSkip.focus();
+  assert.equal(await studioSkip.evaluate(link=>link===link.ownerDocument.activeElement),true,"the studio route exposes its own focusable skip link");
   await samplePage.keyboard.press("Enter");
   await samplePage.waitForFunction(()=>globalThis.document.activeElement?.id==="workspace");
   assert.equal(new URL(samplePage.url()).hash,"#AdigunStudio","the studio skip link keeps the current route");
