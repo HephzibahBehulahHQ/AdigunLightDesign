@@ -9,7 +9,15 @@ import { stageSettings } from "../domain/stage.js";
 const vertexSource = `attribute vec3 p;attribute vec3 c;uniform mat4 m;varying vec3 v;void main(){gl_Position=m*vec4(p,1.0);v=c;}`;
 const fragmentSource = `precision mediump float;varying vec3 v;uniform float opacity;void main(){gl_FragColor=vec4(v,opacity);}`;
 
-function compile(gl, type, source) { const value = gl.createShader(type); gl.shaderSource(value, source); gl.compileShader(value); if (!gl.getShaderParameter(value, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(value)); return value; }
+function compile(gl, type, source) {
+  const shader=gl.createShader(type);
+  if (!shader) return null;
+  gl.shaderSource(shader,source);
+  gl.compileShader(shader);
+  if (gl.getShaderParameter(shader,gl.COMPILE_STATUS)) return shader;
+  gl.deleteShader(shader);
+  return null;
+}
 function quad(target, a, b, c, d, colour) { for (const point of [a,b,c,a,c,d]) target.push(...point, ...colour); }
 function box(target, x, y, z, w, h, d, colour) { const X=x+w,Y=y+h,Z=z+d, shade=colour.map((value)=>value*.55),mid=colour.map((value)=>value*.78); quad(target,[x,y,z],[X,y,z],[X,Y,z],[x,Y,z],colour);quad(target,[X,y,Z],[x,y,Z],[x,Y,Z],[X,Y,Z],shade);quad(target,[x,y,Z],[X,y,Z],[X,y,z],[x,y,z],mid);quad(target,[x,Y,z],[X,Y,z],[X,Y,Z],[x,Y,Z],colour);quad(target,[x,y,Z],[x,y,z],[x,Y,z],[x,Y,Z],shade);quad(target,[X,y,z],[X,y,Z],[X,Y,Z],[X,Y,z],mid); }
 function garageWheel(target,x,y,z,radius,width){
@@ -941,17 +949,35 @@ export function sceneBuffers(accent,fixtures,visibility={},room,materials={},qua
 
 export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = [], visibility = {}, room, roomType="living-room", ambience, materials={}, stage, quality="balanced", projection = "perspective", camera={}, onSelect=()=>{},onTransform=()=>{}, onTourChange=()=>{} } = {}) {
   const gl = canvas.getContext("webgl", { antialias:true, alpha:false });
-  if (!gl) return { supported:false, destroy(){}, reset(){}, setAccent(){}, setFixtures(){} };
+  const unsupported={supported:false,destroy(){},reset(){},setAccent(){},setFixtures(){}};
+  if (!gl) return unsupported;
   function createResources() {
-    const program=gl.createProgram(),vertexShader=compile(gl,gl.VERTEX_SHADER,vertexSource),fragmentShader=compile(gl,gl.FRAGMENT_SHADER,fragmentSource);
-    gl.attachShader(program,vertexShader);gl.attachShader(program,fragmentShader);gl.linkProgram(program);
-    gl.detachShader(program,vertexShader);gl.detachShader(program,fragmentShader);
-    gl.deleteShader(vertexShader);gl.deleteShader(fragmentShader);
-    if(!gl.getProgramParameter(program,gl.LINK_STATUS)) { const message=gl.getProgramInfoLog(program);gl.deleteProgram(program);throw new Error(message); }
-    const buffer=gl.createBuffer(),position=gl.getAttribLocation(program,"p"),colour=gl.getAttribLocation(program,"c"),matrix=gl.getUniformLocation(program,"m"),opacity=gl.getUniformLocation(program,"opacity")
-    return {program,buffer,position,colour,matrix,opacity};
+    const vertex=compile(gl,gl.VERTEX_SHADER,vertexSource);
+    if (!vertex) return null;
+    const fragment=compile(gl,gl.FRAGMENT_SHADER,fragmentSource);
+    const program=fragment ? gl.createProgram() : null;
+    if (program) {
+      gl.attachShader(program,vertex);
+      gl.attachShader(program,fragment);
+      gl.linkProgram(program);
+      gl.detachShader(program,vertex);
+      gl.detachShader(program,fragment);
+    }
+    gl.deleteShader(vertex);
+    if (fragment) gl.deleteShader(fragment);
+    if (!program) return null;
+    const buffer=gl.getProgramParameter(program,gl.LINK_STATUS) ? gl.createBuffer() : null;
+    if (!buffer) {
+      gl.deleteProgram(program);
+      return null;
+    }
+    return {
+      program,buffer,position:gl.getAttribLocation(program,"p"),colour:gl.getAttribLocation(program,"c"),
+      matrix:gl.getUniformLocation(program,"m"),opacity:gl.getUniformLocation(program,"opacity")
+    };
   }
   let resources=createResources(),contextLost=false;
+  if (!resources) return unsupported;
   let selectedAccent=accent,virtualFixtures=fixtures,drag;const dimensions=roomDimensions(room),fitDistance=roomFitCameraDistance(dimensions.width,dimensions.depth);let {yaw,pitch,distance}=normalizeCameraState({...camera,distance:camera?.distance ?? fitDistance});
   let staticRoom=null;
   const budget=previewQuality(quality);
@@ -1062,7 +1088,9 @@ export function createLightLabRenderer(canvas, { accent = "#C21888", fixtures = 
     geometry=null;
   };
   const contextRestoredListener=()=>{
-    resources=createResources();
+    const restored=createResources();
+    if (!restored) return;
+    resources=restored;
     contextLost=false;
     draw();
   };

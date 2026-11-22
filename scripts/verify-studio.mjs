@@ -4,7 +4,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { PDFDocument } from "pdf-lib";
 import { messages, supportedLocales } from "../src/i18n.js";
-import { chromium, firefox } from "playwright";
+import { chromium, firefox, webkit } from "playwright";
 import { createServer, preview } from "vite";
 
 const viewports = [
@@ -515,21 +515,48 @@ async function verifyOfflineStudio(browser) {
   }
 }
 
+async function verifyShaderFailure(browser, rootUrl) {
+  const page = await browser.newPage();
+  try {
+    const errors = [];
+    page.on("pageerror", error => errors.push(error.message));
+    await page.addInitScript(() => {
+      const prototype = globalThis.WebGLRenderingContext.prototype;
+      const getShaderParameter = prototype.getShaderParameter;
+      prototype.getShaderParameter = function (shader, parameter) {
+        return parameter === this.COMPILE_STATUS ? false : getShaderParameter.call(this, shader, parameter);
+      };
+    });
+    await page.goto(rootUrl);
+    await page.locator("[data-preview-fallback]").waitFor();
+    assert.equal(await page.locator(".marketing-demos video").count(), 2, "studio recordings remain available if shaders fail");
+    await page.getByRole("link",{name:/Go to the Studio/}).first().click();
+    await page.locator(".webgl-unavailable").waitFor();
+    assert.equal(await page.locator("#export-viewport").isDisabled(), true, "the failed preview cannot export a PNG");
+    assert.equal(await page.locator("#project-name").isEditable(), true, "the studio remains editable after shader failure");
+    assert.deepEqual(errors, [], "a compiler failure does not become an uncaught page error");
+  } finally {
+    await page.close();
+  }
+}
+
+const browserTypes = new Map([["chromium", chromium], ["firefox", firefox], ["webkit", webkit]]);
+const browserType = browserTypes.get(process.env.STUDIO_TEST_BROWSER ?? "chromium");
+assert.ok(browserType, "STUDIO_TEST_BROWSER must be chromium, firefox, or webkit");
 const server = await createServer({
   configFile: false,
   logLevel: "error",
   server: { host: "127.0.0.1", port: 0, strictPort: false },
 });
 let browser;
-const useFirefox = process.env.STUDIO_TEST_BROWSER === "firefox";
 
 try {
   await server.listen();
   const address = server.httpServer.address();
   assert.ok(address && typeof address === "object", "Vite exposes a local test port");
-  browser = await (useFirefox ? firefox : chromium).launch({
+  browser = await browserType.launch({
     headless: true,
-    ...(!useFirefox && process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
+    ...(browserType === chromium && process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
       ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH }
       : {}),
   });
@@ -1675,7 +1702,7 @@ try {
   assert.deepEqual(runtimeErrors, [], "browser reports no runtime errors");
 
   console.log(JSON.stringify({ viewports: reports, tools: coreTools, shapeAndTextCreation: true, measurement: true, fixtureSelection: true, paletteSwitch: true, timelinePlayback: true, projectSaveReload: true, projectJsonImportExport: true, commandMenus: true, fixtureListScroll: true, inspectorScroll: true, canvasStayedFixed: true, runtimeErrors }, null, 2));
-  const touchContext=await browser.newContext({viewport:{width:390,height:844},hasTouch:true,isMobile:!useFirefox});
+  const touchContext=await browser.newContext({viewport:{width:390,height:844},hasTouch:true,isMobile:browserType!==firefox});
   const touchPage=await touchContext.newPage();
   await touchPage.goto(`http://127.0.0.1:${address.port}/`,{waitUntil:"networkidle"});
   assert.equal(await touchPage.locator(".marketing-home").isVisible(),true,"the marketing page loads at a mobile viewport");
@@ -1749,6 +1776,7 @@ try {
   await verifyVirtualPlayback(browser, `http://127.0.0.1:${address.port}/#AdigunStudio`);
   await verifyPaletteVersions(browser,`http://127.0.0.1:${address.port}/#AdigunStudio`);
   await verifyOfflineStudio(browser);
+  await verifyShaderFailure(browser, `http://127.0.0.1:${address.port}/`);
 } finally {
   await browser?.close();
   await server.close();
