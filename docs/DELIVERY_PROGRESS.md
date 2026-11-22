@@ -3,12 +3,12 @@
 Scope remains the supplied master specification, the owner-approved editor
 reference, the floating Bot and compact menu, and the canonical site.
 
-## Release evidence as of 21 November 2026
+## Release evidence as of 22 November 2026
 
 The [public editor](https://adigunlightdesign.hephzibahbehulah.com/) was verified
-through commit [`b0c7635`](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/commit/b0c76353cdcc9bc103062699e2182edf7f7b6d66).
-[CI](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44949537404)
-and the [Pages release with asset checksums](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44949732266)
+through commit [`0df7781`](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/commit/0df77814875e041c2b7eb7726c80a8a0f748d75d).
+[CI](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44960439889)
+and the [Pages release with asset checksums](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/45001921675)
 passed. During the landing release (#225), Chrome verified the live 3D preview at desktop
 and phone widths, both recorded studio demos, and the editable sample carrying
 its selected look and dimmer setting into the studio.
@@ -54,6 +54,19 @@ its selected look and dimmer setting into the studio.
 | Palette contrast (#255) | `d023c1a` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44948776653) | Chrome checks a just-below-AA ratio, a correction that meets AA, and a translucent swatch against its chosen background. |
 | Palette version restore (#256) | `a349b8b` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44949235158) | Chrome restores color, opacity, and harmony after a language redraw, then verifies one-step Undo. |
 | Portable palette import (#257) | `b0c7635` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44949732266) | Chrome imports an actual downloaded palette and undoes the complete import in one step. |
+| Release evidence reconciliation (#258) | `683b2a6` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44950192253) | Recorded verified releases through #257. |
+| Cue and keyframe labels (#259) | `1ce7fa3` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44950661569) | Identify fixture targets in timeline editing. |
+| Minimum cue duration (#260) | `8f4a249` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44951130650) | Explain edits that would cut off existing keyframes. |
+| Cue duplication (#261) | `a2a14a2` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44951561409) | Preserve later scheduled starts when duplicating a cue. |
+| CSV label handling (#262) | `ce5cad4` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44951998103) | Prefix formula-like cue and fixture labels as text. |
+| Surface lighting (#263) | `2e06ef3` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44952680222) | Precompute fixture directions. |
+| Room geometry cache (#264) | `1f78b81` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44953324439) | Reuse static geometry during playback. |
+| Spotlight shading (#265) | `a700d94` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44953890855) | Skip unlit samples and verify 32 fixtures on Windows Intel Arc. |
+| Rendered cue fades (#266) | `407e47a` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44956270481) | Compare each cue phase and the return to baseline in WebGL. |
+| GIMP ASE import (#267) | `3c8aeb7` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44956667836) | GIMP 3.2.6 preserved seven ordered swatch names and RGB values. |
+| Palette download pixels (#268) | `521d7c6` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44957319821) | Compare rendered swatch colors in SVG, PNG and JPEG. |
+| Viewport PNG content (#269) | `6ee48b8` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44957810836) | Verify scene detail, camera changes and fixture edits in 1080p downloads. |
+| Palette PDF download (#270) | `0df7781` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/45001921675) | Render the actual starter export and verify title, footer and swatch colors. |
 
 ## Remaining acceptance gates
 
@@ -74,9 +87,11 @@ its selected look and dimmer setting into the studio.
   browser evidence, including a real cue PDF download checked for title and
   page count and a rendered review of the starter sheet.
   The ASE RGB writer has independent Swatch parser evidence and real GIMP 3.2.6
-  import evidence for two palettes. Adobe application import, advanced
-  interchange, licensed
-  catalog coverage, and physical fixture transport remain unverified.
+  import evidence for two palettes. Chrome verified downloaded viewport PNG
+  content and the starter SVG, PNG and JPEG swatch pixels. Poppler rendered
+  the actual starter palette PDF with matching swatch colors. Adobe import,
+  advanced interchange, licensed catalog coverage and physical fixture
+  transport remain unverified.
 - **M6 and M8:** Production shows Guest mode. Signed-in cloud save/reopen,
   account isolation, and live Lux actions need configured services and real
   test identities. The Pages workflow reads the Supabase publishable key from
