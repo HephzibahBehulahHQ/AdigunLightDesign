@@ -1317,6 +1317,21 @@ try {
   await clickCommand("history","#undo");
   assert.equal(await fixtureColor.inputValue(), originalFixtureColor, "Undo restores the blue channel transaction");
   assert.equal(await page.locator("#fixture-colour-hex").innerText(), originalFixtureColor.toUpperCase(), "Undo also restores the visible hex readout");
+  const projectExportSelector = '[data-export="project"]';
+  const fixturesBeforePatch = JSON.parse(await downloadExportFile(projectExportSelector, ".ald.json")).fixtures;
+  const patchFixtureId = await page.locator("#fixture-select").inputValue();
+  const existingPatch = fixturesBeforePatch.find(fixture => fixture.id === patchFixtureId).patchAssignment;
+  const conflictingFixture = fixturesBeforePatch.find(fixture =>
+    fixture.id !== patchFixtureId && fixture.patchAssignment?.universe === existingPatch.universe);
+  assert.ok(conflictingFixture, "the starter rig has another fixture in the same universe");
+  const patchAddress = page.locator("#fixture-address");
+  await patchAddress.fill(String(conflictingFixture.patchAssignment.startAddress));
+  await page.locator("#apply-fixture-patch").click();
+  assert.ok((await page.locator("#status").textContent()).includes(`Address overlaps ${conflictingFixture.name}.`),
+    "a conflicting address identifies the fixture occupying it");
+  const fixturesAfterRejectedPatch = JSON.parse(await downloadExportFile(projectExportSelector, ".ald.json")).fixtures;
+  assert.deepEqual(fixturesAfterRejectedPatch, fixturesBeforePatch,
+    "a rejected address change preserves the saved assignments for every fixture");
   await page.locator("#fixture-address").fill("200");
   await page.locator("#apply-fixture-patch").click();
   assert.equal(await page.locator("#fixture-address").inputValue(),"200","Apply patch commits the requested valid start address");
