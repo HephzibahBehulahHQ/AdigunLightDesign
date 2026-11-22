@@ -56,6 +56,10 @@ test("account guard blocks guest cloud requests and rejects stale results after 
   let listener,resolveRead,requests=0;
   let identity={id:owner,is_anonymous:true};
   const account=createAccount({publishableKey:key,clientFactory:()=>({
+    rpc:async name=>{
+      assert.equal(name,"adigunlightdesign_has_verified_product_session");
+      return {data:true,error:null};
+    },
     auth:{
       onAuthStateChange(callback){listener=callback;return {data:{subscription:{unsubscribe(){}}}};},
       getUser:async()=>({data:{user:identity}}),

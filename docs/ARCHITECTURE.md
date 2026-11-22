@@ -86,3 +86,12 @@ The desktop target is a 1440 × 900 dark navy editor. Its surface hierarchy is: 
 
 
 
+
+## Product account rollout
+
+The product Worker issues a four-minute browser guest trial and handles
+LightDesign registration, password checks and email-code verification. A global
+Supabase identity is not a LightDesign account. The separate product-account
+schema and the restrictive project policy are in `docs/sql`; keep the existing
+owner policies. Worker endpoint and rollback-only schema checks have been run
+locally. The editor dialog and guest lock are integrated. Isolated browser preview and live release are pending.

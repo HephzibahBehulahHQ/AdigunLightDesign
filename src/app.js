@@ -89,6 +89,7 @@ const studioRoute = () => {
     releaseStudioRenderer();
     landingPreview?.show();
   }
+  refreshGuestAccess();
 };
 window.addEventListener("hashchange", studioRoute);
 document.querySelector(".studio-skip-link").addEventListener("click", event => {
@@ -117,6 +118,71 @@ let workspaceGeneration=0;
 const publishableKey = typeof __ALD_SUPABASE_PUBLISHABLE_KEY__ === "undefined" ? "" : __ALD_SUPABASE_PUBLISHABLE_KEY__;
 const clientFactory = publishableKey ? (await import("@supabase/supabase-js")).createClient : undefined;
 const account = createAccount({ publishableKey, clientFactory });
+
+let guestDeadline = 0;
+let guestTimer;
+let guestCheck;
+let guestStatus = "checking";
+
+function studioLocked() {
+  return account.configured && !account.user && guestDeadline <= Date.now();
+}
+
+function showGuestAccess() {
+  const studio = app.querySelector(".studio-shell");
+  if (!studio) return;
+  const locked = studioLocked();
+  const inStudio = location.hash === "#AdigunStudio";
+  studio.inert = locked;
+  const gate = app.querySelector("[data-guest-gate]");
+  if (!locked || !inStudio) {
+    gate?.remove();
+    return;
+  }
+  if (gate?.dataset.guestGate === guestStatus) return;
+  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  for (const dialog of document.querySelectorAll("dialog[open]:not([data-account-dialog])")) dialog.close();
+  const panel = gate ?? document.createElement("section");
+  panel.className = "studio-guest-gate";
+  panel.dataset.guestGate = guestStatus;
+  panel.setAttribute("aria-label", t("accountTitle"));
+  const message = guestStatus === "checking" ? "guestChecking" : guestStatus === "unavailable" ? "guestUnavailable" : "guestExpired";
+  panel.innerHTML = `<div class="panel"><h2 aria-live="polite">${t(message)}</h2><button type="button">${t("accountTitle")}</button></div>`;
+  panel.querySelector("button").onclick = () => openAccountDialog({account,t,getProject:()=>project,onOpen:openCloudProject});
+  if (guestStatus === "unavailable") {
+    const retry = document.createElement("button");
+    retry.type = "button";
+    retry.textContent = t("guestRetry");
+    retry.onclick = refreshGuestAccess;
+    panel.firstElementChild.append(retry);
+  }
+  if (!gate) app.append(panel);
+  if (guestStatus !== "checking" && !document.querySelector("dialog[open]")) panel.querySelector("button").focus();
+}
+
+function refreshGuestAccess() {
+  showGuestAccess();
+  if (!account.configured || account.user || location.hash !== "#AdigunStudio" || guestCheck) return;
+  if (!guestDeadline) {
+    guestStatus = "checking";
+    showGuestAccess();
+  }
+  const requestedAt = Date.now();
+  guestCheck = account.guestTrial(true).then(remaining => {
+    const deadline = requestedAt + remaining;
+    guestDeadline = guestDeadline ? Math.min(guestDeadline, deadline) : deadline;
+    guestStatus = "expired";
+    clearTimeout(guestTimer);
+    guestTimer = setTimeout(showGuestAccess, Math.max(0, guestDeadline - Date.now()));
+  }).catch(() => {
+    guestDeadline = 0;
+    guestStatus = "unavailable";
+  }).finally(() => {
+    guestCheck = null;
+    showGuestAccess();
+  });
+}
+
 const liveCanvasFeed=createCanvasStateFeed();
 const floatingBot=createFloatingBot({getProjectId:()=>project.id,getUserId:()=>account.user?.id ?? "guest",getLocale:()=>preferences.locale,translate});
 const liveCopilotPanel=createLiveCopilotPanel({feed:liveCanvasFeed,getLocale:()=>preferences.locale,translate,onNotify:()=>floatingBot.notify(),canAccept:()=>Boolean(account.user),onError:message=>setStatus(t(message)),onAccept:async(suggestion,isCurrent)=>{
@@ -1030,6 +1096,7 @@ function render() {
   if (studioScrollTop > 0) document.querySelector(".studio-shell").scrollTop = studioScrollTop;
   landingPreview = bindLanding(app.querySelector(".marketing-home"));
   if (!document.body.classList.contains("studio-route")) landingPreview.show();
+  showGuestAccess();
 }
 
 function bind() {
@@ -1613,10 +1680,13 @@ function bind() {
   const applyFixturePatchButton=document.querySelector("#apply-fixture-patch"); if(applyFixturePatchButton) applyFixturePatchButton.onclick=applyFixturePatch;
   const form = document.querySelector("#lux-form"); if (form) {const liveHost=document.createElement("section");liveHost.className="live-copilot-panel";form.before(liveHost);liveCopilotPanel.mount(liveHost);const host=document.createElement("section");host.dataset.luxService="";host.className="lux-service";form.replaceWith(host);luxService.mount(host);}
 }
-window.addEventListener("keydown", (event) => { if (isEditableTarget(event.target) || event.defaultPrevented || event.isComposing) return; const tool=toolShortcut(event);if(tool){const button=document.querySelector(`[data-tool="${tool}"]`);if(button && !button.disabled){event.preventDefault();button.click();}return;} const shortcut=editorShortcut(event); if (!shortcut) return; event.preventDefault(); if (shortcut === "save") { saveProject(); } else if (shortcut === "undo") undo(); else redo(); });
+window.addEventListener("keydown", (event) => { if (studioLocked() || isEditableTarget(event.target) || event.defaultPrevented || event.isComposing) return; const tool=toolShortcut(event);if(tool){const button=document.querySelector(`[data-tool="${tool}"]`);if(button && !button.disabled){event.preventDefault();button.click();}return;} const shortcut=editorShortcut(event); if (!shortcut) return; event.preventDefault(); if (shortcut === "save") { saveProject(); } else if (shortcut === "undo") undo(); else redo(); });
 window.addEventListener("beforeunload",(event)=>{if(!projectDirty)return;event.preventDefault();event.returnValue="";});
-account.subscribe(()=>render());
+account.subscribe(()=>{ render(); refreshGuestAccess(); });
+window.addEventListener("pageshow", refreshGuestAccess);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) refreshGuestAccess(); });
 render();
+refreshGuestAccess();
 if (import.meta.env.PROD && "serviceWorker" in navigator) {
   navigator.serviceWorker.register("./service-worker.js").catch(() => {
     // Editing still works in the current tab when offline caching is unavailable.
