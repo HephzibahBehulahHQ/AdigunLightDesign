@@ -90,6 +90,7 @@ touch-enabled viewport. Both sessions reported zero uncaught page errors.
 | Firefox acceptance (#283) | `4de9109` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/45009542585) | Add opt-in browser acceptance and record the Firefox 159 run. |
 | WebGL initialization fallback (#284) | `a46e868` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/45010219234) | Keep recordings and project editing available after shader failure. |
 | Studio renderer lifecycle (#285) | `997e2e6` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/45010946355) | Start studio WebGL on editor entry and release it on exit. |
+| Lux request cancellation (#294) | `643f9e0` · [Pages](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/45017482220) | Chrome verifies that disconnect closes the active HTTP request. Session tests cover cancellation on workspace changes. |
 
 ## Remaining acceptance gates
 
@@ -102,10 +103,11 @@ touch-enabled viewport. Both sessions reported zero uncaught page errors.
   Ctrl+S opened the dialog and Escape dismissed it. Speech Recap confirmed
   those announcements. Save confirmation, broader screen-reader navigation
   and language review remain open.
-- **M2 and M5:** Browser acceptance covers palette extraction, versions,
+- **M2:** Browser acceptance covers palette extraction, versions,
   contrast thresholds and suggested corrections, portable JSON round-trip,
-  local save/reopen, timeline playback, and cue capture across scenes. The
-  browser suite also checks cue timing, track scheduling, keyframe persistence,
+  and local save/reopen.
+- **M5 verified:** The browser suite checks timeline playback, cue capture
+  across scenes, cue timing, track scheduling, keyframe persistence,
   pointer and keyboard seeking, virtual effects, and representative delay,
   fade-in, hold and fade-out values. Chrome acceptance also compares rendered
   WebGL brightness through all four phases and at the final baseline frame
