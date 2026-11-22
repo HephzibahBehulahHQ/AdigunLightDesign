@@ -1,6 +1,14 @@
 # Server-side Lux provider adapter
 
-The browser transport module requires an explicit HTTPS endpoint (or loopback HTTP `/api/lux`), a session-held service access token and per-request consent. It omits ambient cookies, rejects redirects and validates suggestion envelopes. `buildLuxProjectContext` provides bounded palette/fixture/scene/cue summaries with total counts and explicit inclusion limits; raw images, history, credentials, description and canvas artwork are excluded. The transport stores no credentials. These modules are not connected to the browser settings/chat UI yet; mocked client tests do not establish a live provider or browser connection.
+The Lux settings panel accepts an explicit HTTPS endpoint (or loopback HTTP
+`/api/lux`) and a service token held in browser memory. Each request requires
+consent. The transport omits ambient cookies, rejects redirects and validates
+suggestion envelopes. `buildLuxProjectContext` provides bounded palette,
+fixture, scene and cue summaries with total counts. It excludes images,
+history, credentials, descriptions and canvas artwork. Disconnecting,
+reconfiguring the service or replacing the workspace aborts the browser
+request and discards stale replies. Any work already started by the remote
+provider is managed by that provider.
 
 ## Running the optional API host
 
@@ -24,4 +32,7 @@ The adapter requests structured suggestion JSON, maps its encoded argument objec
 
 Implementation references: [Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs?api-mode=responses) and [Responses migration guide](https://developers.openai.com/api/docs/guides/migrate-to-responses). The request sets `store: false`; this setting is not a claim of zero retention across every provider data-control policy.
 
-Mocked provider transport, endpoint and loopback HTTP host tests passed. No live provider request was made and no persistent service was started. Production identity, persistent audit, deployment and browser connection remain unconfigured. GitHub Pages cannot execute these server modules. Lux chat must remain offline until the required service layers are configured and verified.
+Client, endpoint and loopback host tests cover the service contracts.
+Chrome verifies browser cancellation against a loopback HTTP probe.
+Live provider and production identity, persistent audit, and server
+deployment acceptance remain open. GitHub Pages serves the browser UI.

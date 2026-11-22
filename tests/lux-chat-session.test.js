@@ -40,3 +40,24 @@ test("project edits during a request discard stale suggestions",async()=>{
   project.name="Edited during request";finish();await assert.rejects(pending,/Project changed/);
   assert.equal(session.status.pending,false);
 });
+
+test("changing workspaces aborts transport and leaves the next request independent",async()=>{
+  const requests=[];
+  const session=createLuxChatSession({fetchImpl:(_url,{signal})=>new Promise((resolve,reject)=>{
+    signal.addEventListener("abort",()=>reject(signal.reason),{once:true});
+    requests.push({signal,resolve});
+  })});
+  session.configure(configuration);
+  const input={project:createStudioMoodProject(),question:"Hello",locale:"en",consent:true};
+  const previous=session.request(input);
+  const previousResult=assert.rejects(previous,/discarded/);
+  session.clearProject();
+  assert.equal(requests[0].signal.aborted,true);
+  const next=session.request({...input,project:createStudioMoodProject()});
+  await previousResult;
+  assert.equal(session.status.pending,true);
+  assert.equal(requests[1].signal.aborted,false);
+  requests[1].resolve(response({...reply,calls:[]}));
+  await next;
+  assert.equal(session.status.pending,false);
+});

@@ -12,11 +12,13 @@ export function createLuxBrowserClient({endpoint,accessToken,fetchImpl=globalThi
   if(typeof accessToken!=="string" || !/^[\x21-\x7e]{32,512}$/.test(accessToken) || typeof fetchImpl!=="function" || !Number.isInteger(timeoutMs) || timeoutMs<1 || timeoutMs>60000)throw new Error("Invalid Adigun AI service access configuration.");
   return {
     endpoint:url,
-    async suggest({question,locale,context,consent=false}) {
+    async suggest({question,locale,context,consent=false,signal}) {
       if(consent!==true)throw new Error("Explicit consent is required before sending project context.");
       if(typeof question!=="string" || !question.trim() || question.length>4000 || !["en","de","yo","pcm"].includes(locale) || !context || typeof context!=="object" || Array.isArray(context) || JSON.stringify(context).length>50000)throw new Error("Invalid Adigun AI browser request.");
+      const timeout=AbortSignal.timeout(timeoutMs);
+      const requestSignal=signal ? AbortSignal.any([signal,timeout]) : timeout;
       let response;
-      try {response=await fetchImpl(url,{method:"POST",credentials:"omit",redirect:"error",signal:AbortSignal.timeout(timeoutMs),headers:{"Content-Type":"application/json",Authorization:`Bearer ${accessToken}`},body:JSON.stringify({question,locale,context,consent:true})});}
+      try {response=await fetchImpl(url,{method:"POST",credentials:"omit",redirect:"error",signal:requestSignal,headers:{"Content-Type":"application/json",Authorization:`Bearer ${accessToken}`},body:JSON.stringify({question,locale,context,consent:true})});}
       catch {throw new Error("Adigun AI service could not be reached.");}
       if(!response.ok)throw new Error(`Adigun AI service rejected the request (${response.status}).`);
       let result;

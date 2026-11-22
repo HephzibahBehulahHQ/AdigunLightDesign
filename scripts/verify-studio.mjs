@@ -609,9 +609,27 @@ async function verifyShaderFailure(browser, rootUrl) {
 const browserTypes = new Map([["chromium", chromium], ["firefox", firefox], ["webkit", webkit]]);
 const browserType = browserTypes.get(process.env.STUDIO_TEST_BROWSER ?? "chromium");
 assert.ok(browserType, "STUDIO_TEST_BROWSER must be chromium, firefox, or webkit");
+let requestStarted, requestClosed;
+const luxStarted = new Promise(resolve=>{requestStarted=resolve;});
+const luxClosed = new Promise(resolve=>{requestClosed=resolve;});
 const server = await createServer({
   configFile: false,
   logLevel: "error",
+  plugins:[{
+    name:"lux-cancellation-probe",
+    configureServer(testServer) {
+      testServer.middlewares.use("/api/lux",(request,response,next)=>{
+        if (request.method!=="POST") return next();
+        const timeout=setTimeout(()=>response.end(),8000);
+        response.once("close",()=>{
+          clearTimeout(timeout);
+          requestClosed(!response.writableEnded);
+        });
+        request.resume();
+        requestStarted();
+      });
+    }
+  }],
   server: { host: "127.0.0.1", port: 0, strictPort: false },
 });
 let browser;
@@ -974,13 +992,18 @@ try {
   const consent = assistant.locator(".bot-composer .lux-consent");
   assert.equal(await consent.evaluate(label => label.scrollWidth <= label.clientWidth + 1 && label.scrollHeight <= label.clientHeight + 1), true, "the consent disclosure wraps without clipping");
   assert.equal(await assistant.locator(".bot-composer > button").isDisabled(), true, "an unconfigured service cannot submit a request");
-  await assistant.locator('[name="endpoint"]').fill("https://example.test/api/lux");
+  await assistant.locator('[name="endpoint"]').fill(`http://127.0.0.1:${address.port}/api/lux`);
   await assistant.locator('[name="token"]').fill("test-only-service-token-32-characters-long");
   await assistant.getByRole("button", {name:"Configure",exact:true}).click();
   assert.match(await assistant.locator(".lux-message b").innerText(), /connection not verified/i);
   assert.doesNotMatch(await assistant.locator(".lux-heading").innerText(), /offline/i);
   assert.equal(await assistant.locator(".bot-composer > button").isEnabled(), true);
+  await assistant.locator('[name="question"]').fill("Review the current studio palette");
+  await consent.locator("input").check();
+  await assistant.locator(".bot-composer > button").click();
+  await Promise.race([luxStarted, new Promise((_,reject)=>setTimeout(()=>reject(new Error("Lux request did not reach the local HTTP probe")),5000))]);
   await assistant.getByRole("button", {name:"Disconnect",exact:true}).click();
+  assert.equal(await luxClosed,true,"disconnect closes the browser HTTP request before the server ends its response");
   assert.match(await assistant.locator(".lux-message b").innerText(), /offline/i);
   assert.equal(await assistant.locator(".bot-composer > button").isDisabled(), true);
   await page.locator("#toggle-lux").click();
