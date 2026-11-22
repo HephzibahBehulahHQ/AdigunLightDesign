@@ -122,9 +122,18 @@ touch-enabled viewport. Both sessions reported zero uncaught page errors.
   WebGL brightness through all four phases and at the final baseline frame
   ([#266](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/pull/266),
   [Pages release](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44956270481)).
-## Remaining fixture, interchange and release gates
+## Verified virtual fixture acceptance
 
-- **M4, M7, and M9:** Virtual patching, fixture selection, and downloads have
+- **M4:** Fixture rig tests reject unsupported profiles and invalid channel
+  values. The studio browser suite imports a rig into another room, checks
+  orientation, dimmer values and patching, then undoes the import and checks
+  both rooms. It verifies conflicting patch rejection, saves and deletes a
+  fixture group, and checks live channel values and the Output Disabled label
+  while virtual effects run.
+
+## Remaining interchange and release gates
+
+- **M7 and M9:** Virtual patching, fixture selection, and downloads have
   browser evidence, including a real cue PDF download checked for title and
   page count and a rendered review of the starter sheet.
   Chrome also verifies that a conflicting DMX address names the occupying
