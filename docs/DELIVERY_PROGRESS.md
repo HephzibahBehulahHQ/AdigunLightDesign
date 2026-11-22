@@ -105,7 +105,9 @@ touch-enabled viewport. Both sessions reported zero uncaught page errors.
   and language review remain open.
 - **M2:** Browser acceptance covers palette extraction, versions,
   contrast thresholds and suggested corrections, portable JSON round-trip,
-  and local save/reopen.
+  and local save/reopen. The studio suite applies HSL green and OKLCH neutral
+  gray through the inspector, checks undo and redo, and verifies that the
+  converted swatch retains its identity and color after saving and reopening.
 - **M5 verified:** The browser suite checks timeline playback, cue capture
   across scenes, cue timing, track scheduling, keyframe persistence,
   pointer and keyboard seeking, virtual effects, and representative delay,
