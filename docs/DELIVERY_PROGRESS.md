@@ -93,6 +93,13 @@ its selected look and dimmer setting into the studio.
   page count and a rendered review of the starter sheet.
   Chrome also verifies that a conflicting DMX address names the occupying
   fixture and leaves all fixture records unchanged in the downloaded project.
+  The virtual fixture library includes the Eurolite LED PAR-56 TCL in its
+  five-channel mode. RGB and dimmer drive the artistic preview. The shutter
+  slot stays at its open value of zero. Sound programs, strobe behavior,
+  the three-channel mode and hardware operation remain outside this mapping.
+  The channel order was checked against the
+  [manufacturer manual, page 22](https://www.steinigke.de/download/51913610-Manual-66247-1.00-eurolite-led-par-56-tcl-9x3w-short-sil-de_en.pdf)
+  and [Open Fixture Library](https://open-fixture-library.org/eurolite/led-par-56-tcl).
   The ASE RGB writer has independent Swatch parser evidence and real GIMP 3.2.6
   import evidence for two palettes. Chrome verified downloaded viewport PNG
   content and the starter SVG, PNG and JPEG swatch pixels. Poppler rendered

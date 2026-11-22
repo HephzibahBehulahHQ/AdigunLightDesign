@@ -330,6 +330,7 @@ async function verifyVirtualPlayback(browser, studioUrl) {
     assert.equal(await page.locator(".lux-action-preview").count(),0,"reopening the same project clears the old proposal");
     await page.locator('[data-module="library"]').click();
     const profiles = [
+      ["eurolite-led-par-56-tcl", "LED PAR-56 TCL", 5],
       ["generic-rgb-wash", "RGB Wash", 6],
       ["generic-moving-head-rgbw", "Moving Head RGBW", 10],
       ["generic-led-strip-rgb", "LED Strip RGB", 4],
@@ -820,7 +821,7 @@ try {
   const brandBounds=await page.locator(".brand-lockup,.product-lockup,.header-project-context").evaluateAll(nodes=>nodes.map(node=>node.getBoundingClientRect().toJSON()));
   assert.equal(brandBounds[0].right<=brandBounds[1].left&&brandBounds[1].right<=brandBounds[2].left,true,"brand, product name, and project context do not overlap");
   await page.locator('.module-nav [data-module="library"]').click();
-  assert.equal(await page.locator(".library-drawer .fixture-library article").count(),3,"Fixture Library opens the three real generic profiles");
+  assert.equal(await page.locator(".library-drawer .fixture-library article").count(),4,"Fixture Library opens the generic profiles and documented Eurolite profile");
   await page.locator("#close-library").click();
   await page.locator('.module-nav [data-module="copilot"]').click();
   const assistant = page.locator("#floating-lux-window");

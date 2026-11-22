@@ -16,7 +16,16 @@ export const genericRgbWash:FixtureProfile = {
 export const fixtureProfiles:FixtureProfile[] = [
   genericRgbWash,
   { id:"generic-moving-head-rgbw", manufacturer:"Generic", model:"Moving Head RGBW (virtual)", type:"Moving-head wash", provenance:"Application-defined virtual profile; not manufacturer validated.", validationStatus:"virtual mapping tested", license:"Product-authored generic data", physicalDimensions:{ width:.28,height:.42,depth:.25,unit:"m" }, panTiltLimits:{ pan:540,tilt:270 }, modes:[{ id:"rgbw-10", name:"10-channel RGBW moving head", channels:["pan","tilt","dimmer","red","green","blue","white","strobe","gobo","beam"] }] },
-  { id:"generic-led-strip-rgb", manufacturer:"Generic", model:"LED Strip RGB (virtual)", type:"LED strip", provenance:"Application-defined virtual profile; not manufacturer validated.", validationStatus:"virtual mapping tested", license:"Product-authored generic data", physicalDimensions:{ width:1,height:.02,depth:.01,unit:"m" }, modes:[{ id:"rgb-4", name:"4-channel RGB strip", channels:["dimmer","red","green","blue"] }] }
+  { id:"generic-led-strip-rgb", manufacturer:"Generic", model:"LED Strip RGB (virtual)", type:"LED strip", provenance:"Application-defined virtual profile; not manufacturer validated.", validationStatus:"virtual mapping tested", license:"Product-authored generic data", physicalDimensions:{ width:1,height:.02,depth:.01,unit:"m" }, modes:[{ id:"rgb-4", name:"4-channel RGB strip", channels:["dimmer","red","green","blue"] }] },
+  {
+    id: "eurolite-led-par-56-tcl",
+    manufacturer: "Eurolite",
+    model: "LED PAR-56 TCL (virtual)",
+    type: "LED wash",
+    provenance: "Steinigke manual 00066178, version 1.0, page 22.",
+    validationStatus: "Documented 5-channel mapping",
+    modes: [{id:"5ch", name:"5-channel", channels:["red","green","blue","dimmer","shutter"]}]
+  }
 ];
 
 export function getFixtureProfile(profileId:string) { return fixtureProfiles.find((profile) => profile.id === profileId) ?? genericRgbWash; }
