@@ -336,10 +336,10 @@ Object.assign(messages.en,{importPaletteJson:"Import palette (JSON / ASE)",palet
 Object.assign(messages.de,{importPaletteJson:"Palette importieren (JSON / ASE)",paletteImported:"Palette importiert.",paletteImportFailed:"Wähle eine unterstützte Palettendatei (JSON oder RGB-ASE, höchstens 5 MB)."});
 Object.assign(messages.yo,{importPaletteJson:"Gbé àkójọpọ̀ àwọ̀ wọlé (JSON / ASE)",paletteImported:"A ti gbé àkójọpọ̀ àwọ̀ wọlé.",paletteImportFailed:"Yan fáìlì àkójọpọ̀ àwọ̀ tó tọ́ (JSON / RGB ASE, tó pọ̀ jù 5 MB)."});
 Object.assign(messages.pcm,{importPaletteJson:"Import palette (JSON / ASE)",paletteImported:"Palette don enter.",paletteImportFailed:"Choose valid palette file (JSON or RGB ASE) wey no pass 5 MB."});
-Object.assign(messages.en,{paletteAseImportFailed:"Choose a valid ASE v1 file with RGB process swatches in one group or no groups."});
-Object.assign(messages.de,{paletteAseImportFailed:"Wähle eine gültige ASE-v1-Datei mit RGB-Prozessfarben in einer Gruppe oder ohne Gruppen."});
-Object.assign(messages.yo,{paletteAseImportFailed:"Yan fáìlì ASE v1 tó tọ́, pẹ̀lú àwọn àwọ̀ RGB process nínú ẹgbẹ́ kan tàbí láìsí ẹgbẹ́."});
-Object.assign(messages.pcm,{paletteAseImportFailed:"Choose valid ASE v1 file with RGB process swatches for one group or without group."});
+Object.assign(messages.en,{paletteAseImportFailed:"Choose a valid ASE v1 file with RGB process or global swatches.",aseGlobalNotice:"Global swatches will be imported as independent RGB colors. Links to the original artwork are not carried over."});
+Object.assign(messages.de,{paletteAseImportFailed:"Wähle eine gültige ASE-v1-Datei mit RGB-Prozessfarben oder globalen RGB-Farbfeldern.",aseGlobalNotice:"Globale Farbfelder werden als unabhängige RGB-Farben importiert. Verknüpfungen zum ursprünglichen Design werden nicht übernommen."});
+Object.assign(messages.yo,{paletteAseImportFailed:"Yan fáìlì ASE v1 tó tọ́, pẹ̀lú àwọn àwọ̀ RGB process tàbí global.",aseGlobalNotice:"A ó gbé àwọn àwọ̀ global wọlé gẹ́gẹ́ bí àwọ̀ RGB lọ́tọ̀ọ̀tọ̀. Àwọn ìsopọ̀ sí iṣẹ́ àwòrán àkọ́kọ́ kò ní wọlé."});
+Object.assign(messages.pcm,{paletteAseImportFailed:"Choose valid ASE v1 file with RGB process or global swatches.",aseGlobalNotice:"Global swatches go enter as separate RGB colours. Links to di original design no go follow dem."});
 
 Object.assign(messages.en,{cueName:"Cue name"});
 Object.assign(messages.de,{cueName:"Cue-Name"});

@@ -24,45 +24,53 @@ export function paletteAse(palette){
   let offset=12;for(const item of blocks){bytes.set(item,offset);offset+=item.length;}return bytes;
 }
 
-export function readPaletteAse(bytes, fileName="") {
+export function readAsePaletteLibrary(bytes, fileName="") {
   const view=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
-  const invalid=()=>new Error("Expected an ASE v1 RGB process palette with no groups or one named group.");
+  const invalid=()=>new Error("Expected an ASE v1 library with RGB process or global swatches.");
   if (view.byteLength<18 || view.getUint32(0)!==0x41534546 || view.getUint32(4)!==0x00010000) throw invalid();
   const blocks=view.getUint32(8);
-  const grouped=view.getUint16(12)===0xc001;
-  const colorCount=blocks-(grouped ? 2 : 0);
-  if (colorCount<1 || colorCount>256) throw invalid();
+  if (blocks<1 || blocks>768) throw invalid();
 
   const decoder=new TextDecoder("utf-16be",{fatal:true,ignoreBOM:true});
-  const colors=[];
-  let name=fileName.replace(/\.ase$/i,"").trim() || "ASE", offset=12;
+  const palettes=[];
+  let group=null, ungrouped=null, totalColors=0, offset=12;
   for (let index=0;index<blocks;index++) {
     if (offset+6>view.byteLength) throw invalid();
     const type=view.getUint16(offset), length=view.getUint32(offset+2);
     const start=offset+6, end=start+length;
     offset=end;
     if (end>view.byteLength) throw invalid();
-    if (grouped && index===blocks-1) {
-      if (type!==0xc002 || length!==0) throw invalid();
-      break;
+    if (type===0xc002) {
+      if (!group?.colors.length || length!==0) throw invalid();
+      group=null;
+      continue;
     }
-    const groupHeader=grouped && index===0;
-    if (type!==(groupHeader ? 0xc001 : 1) || length<2) throw invalid();
+    if ((type!==0xc001 && type!==1) || length<2) throw invalid();
     const count=view.getUint16(start), nameEnd=start+2+count*2;
     if (count<2 || count>256 || nameEnd>end || view.getUint16(nameEnd-2)!==0) throw invalid();
     const label=decoder.decode(bytes.subarray(start+2,nameEnd-2));
     if (label.includes("\0")) throw invalid();
-    if (groupHeader) {
-      if (nameEnd!==end || !label.trim()) throw invalid();
-      name=label;
+    if (type===0xc001) {
+      if (group || nameEnd!==end || !label.trim()) throw invalid();
+      group={name:label,colors:[],hasGlobal:false};
+      palettes.push(group);
       continue;
     }
-    if (nameEnd+18!==end || view.getUint32(nameEnd)!==0x52474220 || view.getUint16(end-2)!==2) throw invalid();
+    if (nameEnd+18!==end || view.getUint32(nameEnd)!==0x52474220) throw invalid();
+    const colorType=view.getUint16(end-2);
+    if (colorType!==0 && colorType!==2) throw invalid();
     const rgb=[4,8,12].map(delta=>view.getFloat32(nameEnd+delta));
     if (rgb.some(channel=>!Number.isFinite(channel)||channel<0||channel>1)) throw invalid();
     const [r,g,b]=rgb.map(channel=>Math.round(channel*255));
-    colors.push({id:crypto.randomUUID(),name:label,hex:rgbToHex({r,g,b}),locked:false});
+    if (++totalColors>256) throw invalid();
+    if (!group && !ungrouped) {
+      ungrouped={name:fileName.replace(/\.ase$/i,"").trim() || "ASE",colors:[],hasGlobal:false};
+      palettes.push(ungrouped);
+    }
+    const target=group ?? ungrouped;
+    target.colors.push({id:crypto.randomUUID(),name:label,hex:rgbToHex({r,g,b}),locked:false});
+    if (colorType===0) target.hasGlobal=true;
   }
-  if (offset!==view.byteLength) throw invalid();
-  return {name,colors};
+  if (group || offset!==view.byteLength || !totalColors) throw invalid();
+  return palettes;
 }

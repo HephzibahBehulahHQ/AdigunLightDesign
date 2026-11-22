@@ -497,6 +497,28 @@ async function verifyPaletteVersions(browser,studioUrl) {
     await page.locator("#undo").click();
     assert.equal(await hex.inputValue(),"#114488","one Undo restores the previous palette after ASE import");
     assert.equal(await opacity.inputValue(),"60");
+    const library=Buffer.concat([aseBytes,aseBytes.subarray(12)]);
+    library.writeUInt32BE(aseBytes.readUInt32BE(8)*2,8);
+    library.writeUInt16BE(0,library.length-8);
+    const openLibrary=async()=>{
+      await openPalette();
+      const [chooser]=await Promise.all([page.waitForEvent("filechooser"),page.locator("#import-palette").click()]);
+      await chooser.setFiles({name:"library.ase",mimeType:"application/octet-stream",buffer:library});
+      await page.locator("#ase-palette-group").waitFor();
+    };
+    await openLibrary();
+    assert.equal(await page.locator("#ase-palette-group option").count(),2,"the import dialog offers both ASE groups");
+    assert.equal(await page.locator("#ase-global-notice").isHidden(),true);
+    await page.locator("#ase-palette-group").selectOption("1");
+    assert.equal(await page.locator("#ase-global-notice").isVisible(),true,"the selected global group explains the conversion");
+    await page.locator("#ase-palette-group").press("Escape");
+    await page.locator("#ase-palette-group").waitFor({state:"detached"});
+    assert.equal(await hex.inputValue(),"#114488","cancel leaves the active palette untouched");
+    await openLibrary();
+    await page.locator("#ase-palette-group").selectOption("1");
+    await page.locator(".project-dialog [type=submit]").click();
+    await page.waitForFunction(expected=>globalThis.document.querySelector("#swatch-hex")?.value===expected,originalHex);
+    assert.equal(await opacity.inputValue(),originalOpacity,"explicitly importing the selected group applies opaque RGB values");
   } finally {
     await page.close();
   }
