@@ -4,7 +4,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { PDFDocument } from "pdf-lib";
 import { messages, supportedLocales } from "../src/i18n.js";
-import { chromium } from "playwright";
+import { chromium, firefox } from "playwright";
 import { createServer, preview } from "vite";
 
 const viewports = [
@@ -33,11 +33,14 @@ async function verifyUtilityControls(page) {
   assert.equal(await controls.count(), 5, "all five utility controls are present");
   let previousRight = 0;
   for (const control of await controls.all()) {
-    const bounds = await control.boundingBox();
+    const bounds = await control.evaluate(element => {
+      const {left, right, width, height} = element.getBoundingClientRect();
+      return {x:left, right, width, height};
+    });
     assert.ok(bounds && bounds.width >= 44 && bounds.height >= 44, "each utility control has a 44px target");
-    assert.ok(bounds.x >= previousRight && bounds.x + bounds.width <= viewport, "utility controls are separate and within the viewport");
+    assert.ok(bounds.x >= previousRight && bounds.right <= viewport, "utility controls are separate and within the viewport");
     assert.ok(await control.getAttribute("title"), "each utility control has a tooltip");
-    previousRight = bounds.x + bounds.width;
+    previousRight = bounds.right;
   }
   const account = menu.locator("#account-menu");
   await account.focus();
@@ -518,14 +521,15 @@ const server = await createServer({
   server: { host: "127.0.0.1", port: 0, strictPort: false },
 });
 let browser;
+const useFirefox = process.env.STUDIO_TEST_BROWSER === "firefox";
 
 try {
   await server.listen();
   const address = server.httpServer.address();
   assert.ok(address && typeof address === "object", "Vite exposes a local test port");
-  browser = await chromium.launch({
+  browser = await (useFirefox ? firefox : chromium).launch({
     headless: true,
-    ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
+    ...(!useFirefox && process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
       ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH }
       : {}),
   });
@@ -1671,7 +1675,7 @@ try {
   assert.deepEqual(runtimeErrors, [], "browser reports no runtime errors");
 
   console.log(JSON.stringify({ viewports: reports, tools: coreTools, shapeAndTextCreation: true, measurement: true, fixtureSelection: true, paletteSwitch: true, timelinePlayback: true, projectSaveReload: true, projectJsonImportExport: true, commandMenus: true, fixtureListScroll: true, inspectorScroll: true, canvasStayedFixed: true, runtimeErrors }, null, 2));
-  const touchContext=await browser.newContext({viewport:{width:390,height:844},hasTouch:true,isMobile:true});
+  const touchContext=await browser.newContext({viewport:{width:390,height:844},hasTouch:true,isMobile:!useFirefox});
   const touchPage=await touchContext.newPage();
   await touchPage.goto(`http://127.0.0.1:${address.port}/`,{waitUntil:"networkidle"});
   assert.equal(await touchPage.locator(".marketing-home").isVisible(),true,"the marketing page loads at a mobile viewport");

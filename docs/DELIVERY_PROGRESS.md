@@ -130,8 +130,10 @@ its selected look and dimmer setting into the studio.
 On November 22, the full studio suite passed on Windows using Microsoft Edge
 158.0.4370.33 against commit `61287cd`. It exercised the seven named desktop
 sizes, mobile emulation, WebGL playback, save and reopen, downloads, and the
-offline build. Edge and Chrome both use Chromium. Physical mobile hardware
-and other browser engines still need verification.
+offline build. The full suite also passed with Playwright Firefox 159.0 on
+Windows, including WebGL context recovery and downloads. Firefox used narrow
+desktop viewports with touch input enabled. Physical mobile hardware and
+WebKit still need verification.
 
 ## 3D playback performance sample
 
