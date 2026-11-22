@@ -7,6 +7,10 @@ one-page cue PDF, patch and cue CSV headers and sample rows, the experimental
 ASE signature, and edited vector text in the canvas SVG. Visual output quality
 and external application compatibility require separate verification.
 
+The native project browser check downloads an edited project, imports that
+file, downloads it again and compares the entire parsed versioned document,
+including scene, palette, fixture and cue data.
+
 Canvas SVG exports saved rectangle/text artwork as a standalone 800 × 450 SVG with a transparent background. It preserves object stacking order and strips editor selection decorations and interaction attributes. Text remains editable SVG text and uses the viewer's default font; fonts are not embedded. Structure, escaping and invalid-data rejection have tests. Font matching and external-editor compatibility remain unverified.
 
 Viewport PNG redraws the actual WebGL canvas and encodes a 1920 × 1080 image of
