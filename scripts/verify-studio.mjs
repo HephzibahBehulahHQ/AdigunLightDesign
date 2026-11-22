@@ -1822,6 +1822,17 @@ try {
     assert.ok(mobile.toolbarRight <= width && mobile.timelineRight <= width, `fullscreen and timeline controls stay reachable at ${width}px`);
     if (width > 670) assert.equal(mobile.railFits, true, `tablet palette controls fit the left rail at ${width}px`);
   }
+  for (const [width,height] of [[740,360],[844,390],[1024,500]]) {
+    await touchPage.setViewportSize({width,height});
+    await verifyUtilityControls(touchPage);
+    const header=await touchPage.locator(".topbar").boundingBox();
+    const canvas=await touchPage.locator("#light-canvas").boundingBox();
+    assert.ok(header.height <= 82,`the landscape ${width}×${height} header stays compact`);
+    assert.ok(height-canvas.y >= height*.33,`the landscape ${width}×${height} canvas starts within the initial view`);
+    assert.ok(canvas.height <= height*.7,`the landscape ${width}×${height} canvas fits short viewports`);
+    assert.equal(await touchPage.locator(".studio-shell").evaluate(shell=>shell.scrollWidth<=shell.clientWidth),true,
+      `the landscape ${width}×${height} studio has no horizontal overflow`);
+  }
   await touchPage.setViewportSize({ width: 390, height: 844 });
   const touchProject=touchPage.locator('[data-command-menu-trigger="project"]');
   await touchProject.tap();
