@@ -10,7 +10,7 @@ unavailable. No runtime secret is embedded. This supersedes the initial
 dependency-free packaging choice without claiming the remaining framework,
 type-checking or browser acceptance gates are complete.
 
-Browser-storage access handles denied access and quota failures. A new or unsuccessfully saved project shows an in-memory state instead of a saved indicator; editing continues in the active session and native JSON export remains available. The indicator changes to saved only after a successful storage write or loading a valid stored project. This does not provide recovery after the page closes without a successful save/export. Storage failure adapters have automated tests; browser failure paths remain unverified.
+Browser-storage access handles denied access and quota failures. A new or unsuccessfully saved project shows an in-memory state instead of a saved indicator; editing continues in the active session and native JSON export remains available. The indicator changes to saved only after a successful storage write or loading a valid stored project. This does not provide recovery after the page closes without a successful save/export. Chrome acceptance simulates a quota error while saving, checks the in-memory status and absence of a saved record, and then verifies that the project can be saved after storage recovers. The browser test checks the live region text. Spoken failure and retry announcements remain unverified.
 
 ```text
 Accessible editor UI
