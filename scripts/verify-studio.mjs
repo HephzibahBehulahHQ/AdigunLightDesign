@@ -534,6 +534,20 @@ async function verifyOfflineStudio(browser) {
       const openMenu = name => page.locator(`[data-command-menu-trigger="${name}"]`).click();
       await page.goto(`http://127.0.0.1:${address.port}/#AdigunStudio`);
       await page.waitForFunction(() => Boolean(globalThis.navigator.serviceWorker.controller));
+      const inlineBlocked=await page.evaluate(async()=>{
+        const document=globalThis.document;
+        const marker=document.createElement("script");
+        marker.textContent="document.body.dataset.inlineScriptProbe = 'ran'";
+        const event=new Promise(resolve=>{
+          document.addEventListener("securitypolicyviolation",resolve,{once:true});
+          globalThis.setTimeout(()=>resolve(null),2000);
+        });
+        document.head.append(marker);
+        const violation=await event;
+        marker.remove();
+        return violation?.blockedURI==="inline" && document.body.dataset.inlineScriptProbe===undefined;
+      });
+      assert.equal(inlineBlocked,true,"the production policy blocks inline scripts while the bundled studio runs");
       await openMenu("project");
       await page.locator("#save").click();
       await page.locator("#saved-project-name").fill("Offline acceptance");
