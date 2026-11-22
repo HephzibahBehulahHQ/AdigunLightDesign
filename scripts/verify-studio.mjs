@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import axe from "axe-core";
-import { mkdir, readFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { PDFDocument } from "pdf-lib";
 import { messages, supportedLocales } from "../src/i18n.js";
@@ -645,6 +645,11 @@ try {
   }
   const pdf = await downloadExportFile("#export-pdf", ".pdf");
   assert.equal(pdf.toString("ascii", 0, 5), "%PDF-", "palette PDF has the PDF signature");
+  const palettePdf = await PDFDocument.load(pdf);
+  assert.equal(palettePdf.getTitle(), exportedPalette.name, "palette PDF metadata identifies the active palette");
+  assert.equal(palettePdf.getPageCount(), Math.ceil(exportedPalette.colors.length / 10),
+    "the downloaded palette PDF has one page per ten swatches");
+  await writeFile(resolve("outputs", "studio-palette-sheet.pdf"), pdf);
   const tokens = JSON.parse(await downloadExportFile("#export-tokens", "-tokens.json"));
   assert.equal(tokens.format, "adigunlightdesign.design-tokens");
   assert.deepEqual(Object.values(tokens.color).map(token => token.sourceId), exportedPalette.colors.map(color => color.id), "design tokens retain active swatch order and IDs");
