@@ -103,12 +103,18 @@ touch-enabled viewport. Both sessions reported zero uncaught page errors.
   Ctrl+S opened the dialog and Escape dismissed it. Speech Recap confirmed
   those announcements. Save confirmation, broader screen-reader navigation
   and language review remain open.
+## Verified palette and timeline acceptance
+
 - **M2:** Browser acceptance covers palette extraction, versions,
   contrast thresholds and suggested corrections, portable JSON round-trip,
   and local save/reopen. The studio suite applies HSL green and OKLCH neutral
   gray through the inspector, checks undo and redo, and verifies that the
   converted swatch retains its identity and color after saving and reopening.
   A harmony reroll preserves the locked swatch and changes an unlocked swatch.
+  The browser verifies downloaded JSON, CSS, SVG, PNG, JPEG, PDF, token JSON
+  and experimental RGB ASE. It decodes the three image formats and samples
+  every starter swatch. Poppler rendered the palette PDF with matching colors,
+  and GIMP independently imported the ordered RGB ASE swatches.
 - **M5 verified:** The browser suite checks timeline playback, cue capture
   across scenes, cue timing, track scheduling, keyframe persistence,
   pointer and keyboard seeking, virtual effects, and representative delay,
@@ -116,6 +122,8 @@ touch-enabled viewport. Both sessions reported zero uncaught page errors.
   WebGL brightness through all four phases and at the final baseline frame
   ([#266](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/pull/266),
   [Pages release](https://github.com/HephzibahBehulahHQ/AdigunLightDesign/actions/runs/44956270481)).
+## Remaining fixture, interchange and release gates
+
 - **M4, M7, and M9:** Virtual patching, fixture selection, and downloads have
   browser evidence, including a real cue PDF download checked for title and
   page count and a rendered review of the starter sheet.
