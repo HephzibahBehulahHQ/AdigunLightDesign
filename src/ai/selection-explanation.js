@@ -6,9 +6,10 @@ export function explainSelection({project,selection}) {
   if(kind==="fixture"){
     const fixture=project.fixtures.find(item=>item.id===id);if(!fixture)return null;
     const profile=fixtureProfiles.find(item=>item.id===fixture.profileId),patch=fixture.patchAssignment;
+    const mode=profile?.modes.find(item=>item.id===fixture.modeId);
     return {name:fixture.name,descriptionKey:"explainFixture",facts:[
       {key:"explainProfile",value:profile?.model ?? fixture.profileId},
-      {key:"explainVirtualDimmer",value:String(fixture.properties.dimmer ?? 0)},
+      ...(!mode || mode.channels.includes("dimmer") ? [{key:"explainVirtualDimmer",value:String(fixture.properties.dimmer ?? 0)}] : []),
       {key:"explainPatch",value:patch ? `${patch.universe} / ${patch.startAddress}–${patch.startAddress+patch.channelFootprint-1}` : null},
       {key:"explainCueCount",value:String(project.cues.filter(cue=>cue.targets.some(target=>target.fixtureId===id)).length)}
     ]};

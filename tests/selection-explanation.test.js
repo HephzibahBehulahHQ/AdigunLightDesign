@@ -4,6 +4,7 @@ import {explainSelection} from "../src/ai/selection-explanation.js";
 import {createStudioMoodProject} from "../src/domain/studio-mood.js";
 import {createCue} from "../src/timeline/engine.js";
 import {addCanvasObject} from "../src/domain/canvas.js";
+import {createFixture} from "../src/dmx/engine.js";
 test("fixture explanations follow actual patch dimmer and cue membership without mutating state",()=>{
   const project=createStudioMoodProject(),fixture=project.fixtures[0];project.cues=[createCue(project.fixtures)];
   const before=JSON.stringify(project),state={project,selection:{kind:"fixture",id:fixture.id}},result=explainSelection(state);
@@ -11,6 +12,11 @@ test("fixture explanations follow actual patch dimmer and cue membership without
   assert.equal(result.facts.find(f=>f.key==="explainPatch").value,"1 / 1–10");assert.equal(JSON.stringify(project),before);
   fixture.patchAssignment=null;fixture.properties.dimmer=0;
   const revised=explainSelection(state);assert.equal(revised.facts.find(f=>f.key==="explainPatch").value,null);assert.equal(revised.facts.find(f=>f.key==="explainVirtualDimmer").value,"0");
+});
+test("RGB-only fixture explanations omit the dimmer field",()=>{
+  const fixture=createFixture(1,"eurolite-led-par-56-tcl","3ch");
+  const result=explainSelection({project:{fixtures:[fixture],cues:[]},selection:{kind:"fixture",id:fixture.id}});
+  assert.equal(result.facts.some(fact=>fact.key==="explainVirtualDimmer"),false);
 });
 test("selection kinds prevent stale or ambiguous matches and report actual swatch/object values",()=>{
   const project=createStudioMoodProject(),palette=project.palettes[0],swatch=palette.colors[0];

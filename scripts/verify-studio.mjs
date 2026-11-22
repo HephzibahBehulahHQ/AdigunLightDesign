@@ -345,6 +345,12 @@ async function verifyVirtualPlayback(browser, studioUrl) {
       assert.equal(await page.locator("#virtual-dmx-monitor .virtual-dmx-channel").count(), footprint, `${name} is patched with its profile's channel footprint`);
       if (mode === "3ch") {
         assert.equal(await page.locator("#fixture-dimmer").count(), 0, "RGB-only mode has no independent dimmer field");
+        const rgbValues = page.locator("#virtual-dmx-monitor .virtual-dmx-channel strong");
+        const beforeLook = await rgbValues.allTextContents();
+        await page.locator("#cycle-lighting-look").click();
+        const afterLook = await rgbValues.allTextContents();
+        assert.equal(afterLook.length, 3, "room looks preserve the three-channel patch");
+        assert.notDeepEqual(afterLook, beforeLook, "room looks change the RGB-only fixture's actual DMX values");
         await page.locator("#fixture-colour").fill("#356392");
         await page.locator("#apply-fixture").click();
         assert.deepEqual(await page.locator("#virtual-dmx-monitor .virtual-dmx-channel strong").allTextContents(),

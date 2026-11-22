@@ -1,1 +1,1 @@
-export {genericRgbWash,fixtureProfiles,getFixtureProfile,fixtureFootprint,createFixture,patchRange,validatePatch,firstAvailableAddress,firstAvailablePatch,patchFixture,patchNewFixture,updateFixture,dmxFrame,blackout} from "./engine.ts";
+export {genericRgbWash,fixtureProfiles,getFixtureProfile,fixtureFootprint,createFixture,patchRange,validatePatch,firstAvailableAddress,firstAvailablePatch,patchFixture,patchNewFixture,updateFixture,dmxFrame,setFixtureIntensity,blackout} from "./engine.ts";
