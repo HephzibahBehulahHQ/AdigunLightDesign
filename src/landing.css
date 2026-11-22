@@ -1,3 +1,6 @@
+.studio-route .landing-skip-link,
+body:not(.studio-route) .studio-skip-link { display:none; }
+
 .marketing-home {
   --landing-ink: #f3f6ff;
   --landing-muted: #aebbd4;

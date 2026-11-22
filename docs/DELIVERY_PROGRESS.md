@@ -103,6 +103,8 @@ touch-enabled viewport. Both sessions reported zero uncaught page errors.
   Ctrl+S opened the dialog and Escape dismissed it. Speech Recap confirmed
   those announcements. Save confirmation, broader screen-reader navigation
   and language review remain open.
+  Browser keyboard coverage checks route-specific skip links for the public
+  landing content and the studio workspace.
 ## Verified palette and timeline acceptance
 
 - **M2:** Browser acceptance covers palette extraction, versions,

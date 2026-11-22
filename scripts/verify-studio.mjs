@@ -665,6 +665,11 @@ try {
   assert.equal(await page.locator(".marketing-home").isVisible(),true,"the product landing page is the public entry point");
   assert.equal(await page.locator(".marketing-brand img").evaluate(image=>image.complete&&image.naturalWidth>0),true,"the approved corporate logo loads from the bundled product asset");
   assert.equal(await page.locator(".studio-shell").isVisible(),false,"the editor stays off the landing page until requested");
+  await page.keyboard.press("Tab");
+  assert.equal(await page.locator(":focus").textContent(),"Skip to main content","the landing skip link is first in the keyboard order");
+  await page.keyboard.press("Enter");
+  await page.waitForFunction(()=>globalThis.document.activeElement?.id==="landing-content");
+  assert.equal(await page.locator(".studio-shell").isVisible(),false,"skipping to the landing content keeps the editor closed");
   assert.equal(await page.evaluate(()=>globalThis.studioRendererStarts),0,"the landing page never initializes the hidden studio renderer");
   const landingCanvas = page.locator(".marketing-viewport canvas");
   const defaultPreview = await landingCanvas.screenshot();
@@ -700,6 +705,11 @@ try {
   assert.deepEqual(await landingCanvas.screenshot(),beforeContextLoss,"the real WebGL context restores the selected lighting and camera");
   const [samplePage] = await Promise.all([context.waitForEvent("page"), page.locator("[data-landing-open]").click()]);
   await samplePage.locator("body.studio-route").waitFor();
+  await samplePage.keyboard.press("Tab");
+  assert.equal(await samplePage.locator(":focus").textContent(),"Skip to workspace","the studio route exposes its own first keyboard stop");
+  await samplePage.keyboard.press("Enter");
+  await samplePage.waitForFunction(()=>globalThis.document.activeElement?.id==="workspace");
+  assert.equal(new URL(samplePage.url()).hash,"#AdigunStudio","the studio skip link keeps the current route");
   assert.equal(await samplePage.locator("#project-name").inputValue(), "Cyan modern", "the selected look opens as an editable sample");
   assert.match(await samplePage.locator("#cycle-lighting-look").getAttribute("title"), /Cyan modern/);
   assert.equal(await samplePage.locator("#fixture-dimmer").inputValue(), "105", "the sample carries the preview fixture intensity into the editable project");

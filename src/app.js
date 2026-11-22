@@ -91,6 +91,10 @@ const studioRoute = () => {
   }
 };
 window.addEventListener("hashchange", studioRoute);
+document.querySelector(".studio-skip-link").addEventListener("click", event => {
+  event.preventDefault();
+  document.querySelector("#workspace")?.focus();
+});
 studioRoute();
 const defaults = studioDefaults;
 const preferences = { ...defaults, ...safeParse(readBrowserStorage(preferencesKey).value) };
@@ -735,7 +739,7 @@ function render() {
       ${topMenuMarkup({t,locale:preferences.locale,saved:projectPersisted,user:account.user})}<button id="theme" type="button" hidden aria-label="${t("appearance")}"></button>
     </header>
     <nav class="module-nav" aria-label="${t("appModules")}"><div class="workspace-modules">${nav}</div>${commandMenusMarkup}</nav>
-    <main id="workspace" class="editor-layout">
+    <main id="workspace" class="editor-layout" tabindex="-1">
       <input id="palette-json-file" type="file" accept="application/json,.json,.ase" hidden />
       <input id="fixture-rig-file" type="file" accept="application/json,.json" hidden />
       <aside class="left-rail panel">

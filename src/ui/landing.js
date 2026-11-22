@@ -31,7 +31,7 @@ export function landingMarkup() {
       <nav class="marketing-nav" aria-label="Explore AdigunLightDesign"><a href="#lighting-lab">Live preview</a><a href="#studio-demos">Demos</a><a href="#studio-faq">FAQ</a></nav>
       <a class="marketing-cta" href="#AdigunStudio">Go to the Studio</a>
     </header>
-    <main class="marketing-main">
+    <main id="landing-content" class="marketing-main" tabindex="-1">
       <section class="marketing-hero" aria-labelledby="landing-title">
         <div class="marketing-copy">
           <p class="marketing-eyebrow">Color and lighting design studio</p>
