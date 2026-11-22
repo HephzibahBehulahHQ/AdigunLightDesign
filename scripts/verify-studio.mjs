@@ -92,6 +92,8 @@ async function verifyVirtualPlayback(browser, studioUrl) {
     const savedDimmer = await virtualDimmer.textContent();
     await page.locator("#effect-period").fill("5");
     await page.locator("#play-effect").click();
+    const studioStatus = page.locator("#status");
+    assert.equal(await studioStatus.getAttribute("aria-live"), "off", "playback does not announce every status refresh");
     await page.waitForFunction(before => [...globalThis.document.querySelectorAll(".virtual-dmx-channel")].some(channel =>
       channel.querySelector("span")?.textContent === "dimmer" && channel.querySelector("strong")?.textContent !== before), savedDimmer);
     await page.locator("#pause-playback").click();
@@ -106,6 +108,7 @@ async function verifyVirtualPlayback(browser, studioUrl) {
     assert.ok(pulseDifference > 1, `the virtual pulse changes rendered fixture lighting (${pulseDifference.toFixed(2)})`);
     assert.match(await page.locator("#virtual-dmx-monitor header").textContent(), /output:\s*disabled/i);
     await page.locator("#stop-cue").click();
+    assert.equal(await studioStatus.getAttribute("aria-live"), "polite", "ordinary studio announcements resume after playback");
     assert.equal(await virtualDimmer.textContent(), savedDimmer, "stopping the effect restores the saved virtual DMX level");
     const stoppedDifference = colorDifference(await readPreviewPixels());
     assert.ok(stoppedDifference < pulseDifference / 5, `stopping restores the saved WebGL lighting (pulse ${pulseDifference.toFixed(2)}, stopped ${stoppedDifference.toFixed(2)})`);
@@ -195,6 +198,7 @@ async function verifyVirtualPlayback(browser, studioUrl) {
       "equal dimmer values in fade-in and fade-out render with consistent brightness");
     await page.locator("#locale").selectOption("de");
     assert.equal(await ruler.getAttribute("aria-valuenow"),"7","redrawing preserves the paused arrangement position");
+    assert.equal(await studioStatus.getAttribute("aria-live"), "off", "a paused arrangement retains its quiet status after redrawing");
     assert.equal(await playbackReadout.textContent(),"7.0 / 8.0 s","the redrawn readout agrees with the ruler");
     assert.ok(parseFloat(await page.locator("#arrangement-playhead").evaluate(element=>element.style.left))>23,"the redrawn marker matches the paused position");
     await page.locator("#locale").selectOption("en");
