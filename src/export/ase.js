@@ -24,32 +24,35 @@ export function paletteAse(palette){
   let offset=12;for(const item of blocks){bytes.set(item,offset);offset+=item.length;}return bytes;
 }
 
-export function readPaletteAse(bytes) {
+export function readPaletteAse(bytes, fileName="") {
   const view=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
-  const invalid=()=>new Error("Expected an ASE v1 RGB process palette with one named group.");
-  if (view.byteLength<12 || view.getUint32(0)!==0x41534546 || view.getUint32(4)!==0x00010000) throw invalid();
+  const invalid=()=>new Error("Expected an ASE v1 RGB process palette with no groups or one named group.");
+  if (view.byteLength<18 || view.getUint32(0)!==0x41534546 || view.getUint32(4)!==0x00010000) throw invalid();
   const blocks=view.getUint32(8);
-  if (blocks<3 || blocks>258) throw invalid();
+  const grouped=view.getUint16(12)===0xc001;
+  const colorCount=blocks-(grouped ? 2 : 0);
+  if (colorCount<1 || colorCount>256) throw invalid();
 
   const decoder=new TextDecoder("utf-16be",{fatal:true,ignoreBOM:true});
   const colors=[];
-  let name="", offset=12;
+  let name=fileName.replace(/\.ase$/i,"").trim() || "ASE", offset=12;
   for (let index=0;index<blocks;index++) {
     if (offset+6>view.byteLength) throw invalid();
     const type=view.getUint16(offset), length=view.getUint32(offset+2);
     const start=offset+6, end=start+length;
     offset=end;
     if (end>view.byteLength) throw invalid();
-    if (index===blocks-1) {
-      if (type!==0xc002 || length!==0 || end!==view.byteLength) throw invalid();
+    if (grouped && index===blocks-1) {
+      if (type!==0xc002 || length!==0) throw invalid();
       break;
     }
-    if (type!==(index===0 ? 0xc001 : 1) || length<2) throw invalid();
+    const groupHeader=grouped && index===0;
+    if (type!==(groupHeader ? 0xc001 : 1) || length<2) throw invalid();
     const count=view.getUint16(start), nameEnd=start+2+count*2;
     if (count<2 || count>256 || nameEnd>end || view.getUint16(nameEnd-2)!==0) throw invalid();
     const label=decoder.decode(bytes.subarray(start+2,nameEnd-2));
     if (label.includes("\0")) throw invalid();
-    if (index===0) {
+    if (groupHeader) {
       if (nameEnd!==end || !label.trim()) throw invalid();
       name=label;
       continue;
@@ -60,5 +63,6 @@ export function readPaletteAse(bytes) {
     const [r,g,b]=rgb.map(channel=>Math.round(channel*255));
     colors.push({id:crypto.randomUUID(),name:label,hex:rgbToHex({r,g,b}),locked:false});
   }
+  if (offset!==view.byteLength) throw invalid();
   return {name,colors};
 }
