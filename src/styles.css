@@ -1096,3 +1096,7 @@ body:not(.studio-route) .studio-shell { display:none; }
   .studio-route .topbar .utility-controls.top-menu { grid-area:1 / 3 / 3 / 4; gap:6px; }
   .studio-route .scene-preview.light-canvas { height:clamp(230px,65dvh,340px); min-height:0; }
 }
+
+.studio-guest-gate { position:fixed; inset:0; z-index:1000; display:grid; place-items:center; padding:1rem; background:#0b1221ed; color:#f7f9ff; }
+.studio-guest-gate .panel { max-width:34rem; padding:1.5rem; background:#182338; }
+.studio-guest-gate button { margin-inline-end:.5rem; }
