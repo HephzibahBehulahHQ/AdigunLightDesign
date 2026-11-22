@@ -1065,3 +1065,34 @@ body:not(.studio-route) .studio-shell { display:none; }
   clip-path: inset(50%);
   white-space: nowrap;
 }
+
+@media (670px < width < 1100px) and (max-height:500px) and (orientation:landscape) {
+  .studio-route .topbar {
+    grid-template-columns:clamp(115px,18vw,160px) minmax(0,1fr) auto;
+    grid-template-rows:auto auto;
+    min-height:0;
+    gap:3px 10px;
+    padding:6px 10px;
+  }
+  .studio-route .topbar .brand-lockup { grid-area:1 / 1 / 3 / 2; min-width:0; }
+  .studio-route .topbar .corporate-mark { width:100%; height:42px; object-fit:contain; object-position:left center; }
+  .studio-route .topbar .brand-fallback { font-size:14px; line-height:1.1; white-space:normal; }
+  .studio-route .topbar .brand-fallback b { font-size:inherit; }
+  .studio-route .topbar .product-lockup { grid-area:1 / 2; min-width:0; text-align:left; }
+  .studio-route .topbar .product-lockup strong { font-size:clamp(18px,2.8vw,24px); letter-spacing:-.4px; }
+  .studio-route .topbar .product-lockup small { margin-top:3px; font-size:9px; }
+  .studio-route .topbar .header-project-context {
+    grid-area:2 / 2;
+    display:flex;
+    align-items:center;
+    gap:5px;
+    min-width:0;
+    overflow:hidden;
+    color:var(--muted);
+    font-size:11px;
+    white-space:nowrap;
+  }
+  .studio-route .topbar .header-project-context span:first-child { min-width:0; overflow:hidden; text-overflow:ellipsis; }
+  .studio-route .topbar .utility-controls.top-menu { grid-area:1 / 3 / 3 / 4; gap:6px; }
+  .studio-route .scene-preview.light-canvas { height:clamp(230px,65dvh,340px); min-height:0; }
+}

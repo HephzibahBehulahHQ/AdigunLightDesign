@@ -151,6 +151,10 @@ forces a shader compilation failure and verifies that the landing demos and
 non-3D studio tools stay available. Physical mobile hardware still needs
 verification.
 
+Chrome landscape acceptance at 740 × 360, 844 × 390 and 1024 × 500 checks
+that the preview starts within the initial view, the five utility controls
+retain their 44-pixel targets, and the studio has no horizontal overflow.
+
 ## 3D playback performance sample
 
 Chrome verifies that landing-page visits initialize only the landing preview.
