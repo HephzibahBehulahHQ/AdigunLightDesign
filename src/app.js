@@ -53,7 +53,7 @@ import { createLiveCopilotPanel } from "./ui/live-copilot-panel.js";
 import { arrangementTimelineMarkup } from "./ui/arrangement-timeline.js";
 import { bindFixtureSliders } from "./ui/fixture-sliders.js";
 import { bindCanvasMeasure } from "./ui/canvas-measure.js";
-import { paletteAse, readPaletteAse } from "./export/ase.js";
+import { paletteAse, readAsePaletteLibrary } from "./export/ase.js";
 import {topMenuMarkup,bindTopMenu} from "./ui/top-menu.js";
 import {bindCommandMenus} from "./ui/command-menus.js";
 import {helpGuideMarkup} from "./ui/help-guide.js";
@@ -348,9 +348,14 @@ async function importPaletteFile(file) {
   const isAse=/\.ase$/i.test(file.name);
   try {
     if (file.size>5_000_000) throw new Error("Palette file exceeds 5 MB.");
-    const imported=isAse
-      ? readPaletteAse(new Uint8Array(await file.arrayBuffer()),file.name)
-      : readPaletteJson(await file.text());
+    let imported;
+    if (isAse) {
+      const palettes=readAsePaletteLibrary(new Uint8Array(await file.arrayBuffer()),file.name);
+      if (generation!==workspaceGeneration) return;
+      const choice=palettes.length===1 && !palettes[0].hasGlobal ? palettes[0] : await chooseAsePalette(palettes);
+      if (!choice) return;
+      imported={name:choice.name,colors:choice.colors};
+    } else imported=readPaletteJson(await file.text());
     if (generation!==workspaceGeneration) return;
     commitProjectChange("palette-import",draft=>{
       draft.palettes[0]={...draft.palettes[0],...imported};
@@ -403,6 +408,34 @@ function makeProjectDialog(title,content) {
     (target ?? document.querySelector('[data-command-menu-trigger="project"]'))?.focus({preventScroll:true});
   }, {once:true});
   return dialog;
+}
+function chooseAsePalette(palettes) {
+  const options=palettes.map((palette,index)=>`<option value="${index}">${esc(palette.name)} (${palette.colors.length})</option>`).join("");
+  const dialog=makeProjectDialog(t("importPaletteJson"),
+    `<label class="project-dialog-field">${esc(t("palette"))}<select id="ase-palette-group">${options}</select></label>
+    <p id="ase-global-notice">${esc(t("aseGlobalNotice"))}</p>
+    <div class="project-dialog-actions"><button type="button" data-cancel>${esc(t("cancel"))}</button><button type="submit">${esc(t("importAction"))}</button></div>`);
+  const group=dialog.querySelector("#ase-palette-group");
+  const selectedGroup=()=>palettes[Number(group.value)];
+  const notice=dialog.querySelector("#ase-global-notice");
+  const updateNotice=()=>{
+    notice.hidden=!selectedGroup().hasGlobal;
+    if (notice.hidden) group.removeAttribute("aria-describedby");
+    else group.setAttribute("aria-describedby",notice.id);
+  };
+  group.onchange=updateNotice;
+  updateNotice();
+  return new Promise(resolve=>{
+    dialog.addEventListener("close",()=>resolve(null),{once:true});
+    dialog.querySelector("[data-cancel]").onclick=()=>dialog.close();
+    dialog.querySelector("form").onsubmit=event=>{
+      event.preventDefault();
+      resolve(selectedGroup());
+      dialog.close();
+    };
+    dialog.showModal();
+    group.focus();
+  });
 }
 function showRoomSceneDialog() {
   const options=roomPresetOptions(preferences.locale);

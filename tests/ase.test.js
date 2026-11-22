@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {paletteAse,readPaletteAse} from "../src/export/ase.js";
+import {paletteAse,readAsePaletteLibrary} from "../src/export/ase.js";
 test("ASE contains a complete big-endian group with named RGB process colors",()=>{
   const palette={name:"Yorùbá 🎨",colors:[{name:"Red",hex:"#FF0000"},{name:"Àwọ̀",hex:"#2196F3",opacity:1}]},before=JSON.stringify(palette);
   const buffer=Buffer.from(paletteAse(palette));assert.equal(buffer.toString("ascii",0,4),"ASEF");assert.equal(buffer.readUInt16BE(4),1);assert.equal(buffer.readUInt16BE(6),0);assert.equal(buffer.readUInt32BE(8),4);
@@ -19,7 +19,7 @@ test("ASE rejects opacity and malformed palettes instead of silently discarding 
 
 test("ASE import preserves the group, ordered RGB values, accents and emoji",()=>{
   const palette={name:"Àwọ̀ 🎨",colors:[{name:"Ìmọ́lẹ̀ 💡",hex:"#0180FE"},{name:"Dúdú",hex:"#000000"}]};
-  const decoded=readPaletteAse(paletteAse(palette));
+  const [decoded]=readAsePaletteLibrary(paletteAse(palette));
   assert.equal(decoded.name,palette.name);
   assert.deepEqual(decoded.colors.map(({name,hex})=>({name,hex})),palette.colors);
   assert.equal(new Set(decoded.colors.map(color=>color.id)).size,2);
@@ -31,18 +31,18 @@ test("ASE import reads the ungrouped RGB file emitted by Swatch 0.4.0",()=>{
   const warm="00010000001e0005005700610072006d0000524742203f8000003f000000000000000002";
   const blue="00010000001e00050042006c00750065000052474220000000003e8000003f8000000002";
   const bytes=Buffer.from(header+warm+blue,"hex");
-  const decoded=readPaletteAse(bytes,"Independent RGB.ASE");
+  const [decoded]=readAsePaletteLibrary(bytes,"Independent RGB.ASE");
   assert.equal(decoded.name,"Independent RGB");
   assert.deepEqual(decoded.colors.map(({name,hex})=>({name,hex})),[
     {name:"Warm",hex:"#FF8000"}, {name:"Blue",hex:"#0040FF"}
   ]);
-  assert.throws(()=>readPaletteAse(Buffer.from(header+warm+blue+"c00200000000","hex")));
+  assert.throws(()=>readAsePaletteLibrary(Buffer.from(header+warm+blue+"c00200000000","hex")));
 });
 
 test("ASE import rejects truncation, trailing data and unsupported color records",()=>{
   const valid=paletteAse({name:"Studio",colors:[{name:"Blue",hex:"#0000FF"}]});
   for (const bytes of [valid.subarray(0,-1),Uint8Array.of(...valid,0)]) {
-    assert.throws(()=>readPaletteAse(bytes));
+    assert.throws(()=>readAsePaletteLibrary(bytes));
   }
   const view=new DataView(valid.buffer);
   const colorBlock=18+view.getUint32(14);
@@ -51,5 +51,5 @@ test("ASE import rejects truncation, trailing data and unsupported color records
   new DataView(spot.buffer).setUint16(spot.length-8,1);
   nonRgb.set([67,77,89,75],model);
   new DataView(outOfRange.buffer).setFloat32(model+4,1.1);
-  for (const bytes of [spot,nonRgb,outOfRange]) assert.throws(()=>readPaletteAse(bytes));
+  for (const bytes of [spot,nonRgb,outOfRange]) assert.throws(()=>readAsePaletteLibrary(bytes));
 });
