@@ -4,6 +4,15 @@ import { evaluateEffect } from "../src/timeline/effects.js";
 import { createFixture,getFixtureProfile } from "../src/dmx/engine.js";
 import { virtualFixtureVisuals } from "../src/light-lab/renderer.js";
 const fixtures=[{id:"a",properties:{dimmer:72,red:200}},{id:"b",properties:{dimmer:90,red:100}}];
+test("an RGB-only fixture renders and pulses without an independent dimmer", () => {
+  const fixture=createFixture(1,"eurolite-led-par-56-tcl","3ch");
+  const [lit]=virtualFixtureVisuals([fixture]);
+  assert.deepEqual(lit.colour,[33/255,150/255,243/255]);
+  const [dark]=evaluateEffect([fixture],{},0);
+  assert.deepEqual(dark.properties,{red:0,green:0,blue:0});
+  assert.deepEqual(virtualFixtureVisuals([dark])[0].colour,[0,0,0]);
+  assert.deepEqual(evaluateEffect([fixture],{},1)[0].properties,fixture.properties);
+});
 test("pulse is deterministic, periodic and bounded without changing source fixtures",()=>{
   const sample=(time)=>evaluateEffect(fixtures,{type:"pulse",period:2,minimum:20,maximum:200},time)[0].properties.dimmer;
   assert.equal(sample(0),20);assert.equal(sample(1),200);assert.equal(sample(2),20);
