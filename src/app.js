@@ -348,7 +348,7 @@ async function importPaletteFile(file) {
   try {
     if (file.size>5_000_000) throw new Error("Palette file exceeds 5 MB.");
     const imported=/\.ase$/i.test(file.name)
-      ? readPaletteAse(new Uint8Array(await file.arrayBuffer()))
+      ? readPaletteAse(new Uint8Array(await file.arrayBuffer()),file.name)
       : readPaletteJson(await file.text());
     if (generation!==workspaceGeneration) return;
     commitProjectChange("palette-import",draft=>{

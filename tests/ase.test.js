@@ -26,6 +26,19 @@ test("ASE import preserves the group, ordered RGB values, accents and emoji",()=
   assert.ok(decoded.colors.every(color=>!color.locked));
 });
 
+test("ASE import reads the ungrouped RGB file emitted by Swatch 0.4.0",()=>{
+  const header="415345460001000000000002";
+  const warm="00010000001e0005005700610072006d0000524742203f8000003f000000000000000002";
+  const blue="00010000001e00050042006c00750065000052474220000000003e8000003f8000000002";
+  const bytes=Buffer.from(header+warm+blue,"hex");
+  const decoded=readPaletteAse(bytes,"Independent RGB.ASE");
+  assert.equal(decoded.name,"Independent RGB");
+  assert.deepEqual(decoded.colors.map(({name,hex})=>({name,hex})),[
+    {name:"Warm",hex:"#FF8000"}, {name:"Blue",hex:"#0040FF"}
+  ]);
+  assert.throws(()=>readPaletteAse(Buffer.from(header+warm+blue+"c00200000000","hex")));
+});
+
 test("ASE import rejects truncation, trailing data and unsupported color records",()=>{
   const valid=paletteAse({name:"Studio",colors:[{name:"Blue",hex:"#0000FF"}]});
   for (const bytes of [valid.subarray(0,-1),Uint8Array.of(...valid,0)]) {
