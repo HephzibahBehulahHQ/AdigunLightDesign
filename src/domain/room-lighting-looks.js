@@ -1,4 +1,4 @@
-import {createFixture,patchNewFixture} from "../dmx/engine.js";
+import {createFixture,getFixtureProfile,patchNewFixture,setFixtureIntensity} from "../dmx/engine.js";
 import {fixturePlacementForRoom} from "./fixture-placement.js";
 import {roomDimensions} from "./room.js";
 import {shiftHue,hexToRgb,rgbToHex,rgbToHsl} from "./color-engine.ts";
@@ -44,9 +44,12 @@ export function isRoomLightingLookIndex(index){return Number.isInteger(index)&&i
 
 function withLookChannels(fixture,look){
   const [red,green,blue]=look.rgb;
-  const properties={...fixture.properties,dimmer:look.dimmer,red,green,blue};
+  const properties={...fixture.properties,red,green,blue};
+  const mode=getFixtureProfile(fixture.profileId).modes.find(item=>item.id===fixture.modeId);
+  if(mode&&!mode.channels.includes("dimmer"))delete properties.dimmer;
+  if(!mode)properties.dimmer=look.dimmer;
   if(Object.hasOwn(properties,"strobe"))properties.strobe=0;
-  return {...fixture,properties};
+  return setFixtureIntensity({...fixture,properties},look.dimmer);
 }
 
 export function createRoomStarterLighting(scene,allFixtures=[],lookIndex=0){

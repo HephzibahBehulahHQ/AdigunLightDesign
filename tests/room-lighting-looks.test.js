@@ -13,6 +13,15 @@ test("one hundred lighting looks provide distinct paint, ambience and fixture ch
   assert.equal(isRoomLightingLookIndex(-1),false);assert.equal(isRoomLightingLookIndex(100),false);assert.equal(isRoomLightingLookIndex(2.5),false);
 });
 
+test("a room look scales the RGB channels when the fixture mode has no dimmer", () => {
+  const scene=createRoomScene("kitchen",{id:"kitchen"});
+  const fixture={...createFixture(1,"eurolite-led-par-56-tcl","3ch"),sceneId:scene.id};
+  fixture.properties.dimmer=255;
+  const {fixtures:[updated]}=applyRoomLightingLook(scene,[fixture],0);
+  assert.deepEqual(updated.properties,{red:220,green:143,blue:79});
+  assert.equal(fixture.properties.dimmer,255,"the source fixture remains available for Undo");
+});
+
 test("saved scene look metadata is validated while older scenes without it remain compatible",()=>{
   const project=createProject(),scene=createRoomScene("kitchen",{id:"kitchen"});
   project.scenes=[scene];assert.equal(validateProject(project).valid,true);

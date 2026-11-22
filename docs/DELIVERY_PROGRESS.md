@@ -95,7 +95,7 @@ its selected look and dimmer setting into the studio.
   fixture and leaves all fixture records unchanged in the downloaded project.
   The virtual fixture library includes the Eurolite LED PAR-56 TCL in its
   three- and five-channel modes. The three-channel mode uses RGB directly
-  and scales those values for virtual pulse, chase and blackout. The
+  and scales those values for room looks, virtual pulse, chase and blackout. The
   five-channel mode uses its dimmer and keeps the shutter open. Sound
   programs, strobe behavior and hardware operation remain outside this mapping.
   The channel order was checked against the
