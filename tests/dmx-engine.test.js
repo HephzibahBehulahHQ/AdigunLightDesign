@@ -39,7 +39,16 @@ test("auto-patching reserves every imported fixture range regardless of its ID",
 });
 test("patches virtual fixtures and creates a 512-channel frame", () => { const fixture=createFixture(); fixture.id="a"; const patched=patchFixture([fixture],"a",1); const frame=dmxFrame(patched); assert.equal(patched[0].patchAssignment.startAddress,1); assert.equal(frame.length,512); assert.equal(frame[0],255); assert.equal(frame[1],33); });
 test("blackout changes virtual dimmers without enabling physical output", () => { const fixture=createFixture(); assert.equal(blackout([fixture])[0].properties.dimmer,0); assert.equal(fixture.properties.dimmer,255); });
-test("keeps a small provenance-labelled generic fixture library", () => { const moving=getFixtureProfile("generic-moving-head-rgbw"), fixture=createFixture(1,moving.id), patched=patchFixture([fixture],fixture.id); assert.equal(fixtureProfiles.length,3); assert.match(moving.provenance,/not manufacturer validated/i); assert.equal(patched[0].patchAssignment.channelFootprint,10); assert.equal(dmxFrame(patched)[0],127); });
+test("keeps provenance-labelled generic fixture profiles", () => { const moving=getFixtureProfile("generic-moving-head-rgbw"), fixture=createFixture(1,moving.id), patched=patchFixture([fixture],fixture.id); assert.equal(fixtureProfiles.filter(profile=>profile.manufacturer==="Generic").length,3); assert.match(moving.provenance,/not manufacturer validated/i); assert.equal(patched[0].patchAssignment.channelFootprint,10); assert.equal(dmxFrame(patched)[0],127); });
+
+test("maps the documented Eurolite five-channel mode to its virtual DMX slots", () => {
+  const fixture = createFixture(1, "eurolite-led-par-56-tcl");
+  const patched = patchFixture([fixture], fixture.id, 2, 508);
+  assert.equal(patched[0].modeId, "5ch");
+  assert.equal(patched[0].patchAssignment.channelFootprint, 5);
+  assert.deepEqual([...dmxFrame(patched, 2).slice(507)], [33, 150, 243, 255, 0]);
+  assert.deepEqual([...dmxFrame(blackout(patched), 2).slice(507)], [33, 150, 243, 0, 0]);
+});
 test("gives newly created virtual fixtures distinct preview positions", () => { assert.deepEqual([createFixture(1).transform.x,createFixture(2).transform.x,createFixture(3).transform.x],[-2.5,0,2.5]); });
 test('full universe rejects another fixture without modifying existing patches',()=>{
  const fixtures=Array.from({length:85},(_,index)=>{const f=createFixture(index+1);return {...f,patchAssignment:{fixtureId:f.id,universe:1,startAddress:index*6+1,channelFootprint:6}};});
