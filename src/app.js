@@ -77,11 +77,18 @@ let landingPreview;
 const studioRoute = () => {
   const inStudio = location.hash === "#AdigunStudio";
   document.body.classList.toggle("studio-route", inStudio);
+  if (!app.firstElementChild) return;
   if (inStudio) {
     landingPreview?.stop();
     app.querySelectorAll(".marketing-home video").forEach(video => video.pause());
     window.scrollTo(0, 0);
-  } else landingPreview?.show();
+    if (!renderer && preferences.view==="light" && app.querySelector("#light-canvas")) {
+      mountStudioRenderer(lightLabRendererConfig(scene(),preferences.previewQuality,preferences.projection),false);
+    }
+  } else {
+    releaseStudioRenderer();
+    landingPreview?.show();
+  }
 };
 window.addEventListener("hashchange", studioRoute);
 studioRoute();
@@ -570,6 +577,41 @@ function applyFixturePatch() {
     render();
   } catch(error) { document.querySelector("#status").textContent=status=error.message; }
 }
+function releaseStudioRenderer() {
+  if (!renderer) return;
+  viewportCamera=renderer.cameraState?.() ?? viewportCamera;
+  renderer.destroy();
+  renderer=null;
+  rendererConfigSignature=null;
+  rendererFixtureSignature=null;
+  rendererAccent=null;
+}
+
+function mountStudioRenderer(nextRendererConfig,reuseRenderer) {
+  const fixtures=currentRendererFixtures(),fixtureSignature=lightLabFixtureState(fixtures),accent=scene().materialColor;
+  if (reuseRenderer) {
+    if(fixtureSignature!==rendererFixtureSignature)renderer.setFixtures(fixtures);
+    if(accent!==rendererAccent)renderer.setAccent(accent);
+  } else {
+    renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {camera:viewportCamera,accent,room:scene().room,roomType:scene().roomType,ambience:roomAmbience(scene()),materials:scene().materials,stage:scene().stage,quality:preferences.previewQuality,projection:preferences.projection==="orthographic" ? "orthographic" : "perspective",visibility:scene().visibility,fixtures,onTourChange:updateRoomTourButton,onSelect(id){stopPlayback();preferences.fixtureId=id;preferences.inspectorMode="fixture";savePreferences();render();},onTransform(id,transform){commitProjectChange("fixture-move",(draft)=>{draft.fixtures=updateFixture(draft.fixtures,id,{transform});});updateRendererFromFixtures();}});
+    rendererConfigSignature=nextRendererConfig;
+  }
+  rendererFixtureSignature=fixtureSignature;
+  rendererAccent=accent;
+  document.querySelectorAll("[data-camera-view]").forEach(button=>button.disabled=!renderer.supported);
+  if (renderer.supported) return;
+  const previewTitle=document.querySelector(".scene-title small");
+  previewTitle.title=phrase("previewFixtureCount",{shown:0,total:sceneFixtures().length});
+  previewTitle.setAttribute("aria-label",previewTitle.title);
+  const note=document.createElement("p");
+  note.className="webgl-unavailable";
+  note.setAttribute("role","status");
+  note.textContent=t("webglUnavailable");
+  document.querySelector("#light-canvas").replaceWith(note);
+  document.querySelector("#reset-camera").disabled=true;
+  document.querySelector("#export-viewport").disabled=true;
+}
+
 function render() {
   previewFixtureSignature=null;
   landingPreview?.stop();
@@ -579,7 +621,8 @@ function render() {
   cleanupTopMenu?.();
   cleanupCommandMenus?.();
   const previousCanvas=document.querySelector("#light-canvas");
-  const nextRendererConfig=preferences.view==="light" ? lightLabRendererConfig(scene(),preferences.previewQuality,preferences.projection) : null;
+  const nextRendererConfig=preferences.view==="light" && document.body.classList.contains("studio-route")
+    ? lightLabRendererConfig(scene(),preferences.previewQuality,preferences.projection) : null;
   const reuseRenderer=shouldReuseLightLabRenderer({renderer,canvas:previousCanvas,view:preferences.view,previousConfig:rendererConfigSignature,nextConfig:nextRendererConfig});
   const liveSelection=preferences.view==="palette" && scene().canvasObjects?.some(object=>object.id===preferences.objectId)
     ? {kind:"object",id:preferences.objectId,sceneId:scene().id}
@@ -587,7 +630,8 @@ function render() {
       ? {kind:"fixture",id:selectedFixture().id}
       : {kind:"swatch",id:selected().id,paletteId:palette().id};
   liveCanvasFeed.publish(project,{selection:liveSelection,playing:playbackTimer!==null});
-  if(renderer){viewportCamera=renderer.cameraState?.() ?? viewportCamera;if(!reuseRenderer){renderer.destroy();renderer=null;rendererConfigSignature=null;rendererFixtureSignature=null;rendererAccent=null;}}
+  if(reuseRenderer)viewportCamera=renderer.cameraState?.() ?? viewportCamera;
+  else releaseStudioRenderer();
   const currentRoom=scene().room,roomCameraKey=JSON.stringify({room:currentRoom,roomType:scene().roomType});
   if(viewportCameraRoomKey&&viewportCameraRoomKey!==roomCameraKey){const dimensions=roomDimensions(currentRoom);viewportCamera={...normalizeCameraState(viewportCamera),distance:roomFitCameraDistance(dimensions.width,dimensions.depth)};}
   viewportCameraRoomKey=roomCameraKey;
@@ -942,22 +986,7 @@ function render() {
   }});
   cleanupCommandMenus=bindCommandMenus();
   const guideSearch=document.querySelector("#guide-search");if(guideSearch)guideSearch.addEventListener("input",()=>{const query=guideSearch.value.trim().toLocaleLowerCase();document.querySelectorAll(".guide-section").forEach(section=>{section.hidden=!section.textContent.toLocaleLowerCase().includes(query);if(query&& !section.hidden)section.open=true;});});
-  if (preferences.view === "light") {
-    const fixtures=currentRendererFixtures(),fixtureSignature=lightLabFixtureState(fixtures),accent=scene().materialColor;
-    if(reuseRenderer){if(fixtureSignature!==rendererFixtureSignature)renderer.setFixtures(fixtures);if(accent!==rendererAccent)renderer.setAccent(accent);rendererFixtureSignature=fixtureSignature;rendererAccent=accent;}
-    else {renderer=createLightLabRenderer(document.querySelector("#light-canvas"), {camera:viewportCamera,accent,room:scene().room,roomType:scene().roomType,ambience:roomAmbience(scene()),materials:scene().materials,stage:scene().stage,quality:preferences.previewQuality,projection:preferences.projection==="orthographic" ? "orthographic" : "perspective",visibility:scene().visibility,fixtures,onTourChange:updateRoomTourButton,onSelect(id){stopPlayback();preferences.fixtureId=id;preferences.inspectorMode="fixture";savePreferences();render();},onTransform(id,transform){commitProjectChange("fixture-move",(draft)=>{draft.fixtures=updateFixture(draft.fixtures,id,{transform});});updateRendererFromFixtures();}});rendererConfigSignature=nextRendererConfig;rendererFixtureSignature=fixtureSignature;rendererAccent=accent;}
-    document.querySelectorAll("[data-camera-view]").forEach(button=>button.disabled=!renderer.supported);
-    if (!renderer.supported) {
-      document.querySelector(".scene-title small").title=phrase("previewFixtureCount",{shown:0,total:sceneFixtures().length}); document.querySelector(".scene-title small").setAttribute("aria-label",document.querySelector(".scene-title small").title);
-      const note=document.createElement("p");
-      note.className="webgl-unavailable";
-      note.setAttribute("role","status");
-      note.textContent=t("webglUnavailable");
-      document.querySelector("#light-canvas").replaceWith(note);
-      document.querySelector("#reset-camera").disabled=true;
-      document.querySelector("#export-viewport").disabled=true;
-    }
-  }
+  if (nextRendererConfig) mountStudioRenderer(nextRendererConfig,reuseRenderer);
   if (studioScrollTop > 0) document.querySelector(".studio-shell").scrollTop = studioScrollTop;
   landingPreview = bindLanding(app.querySelector(".marketing-home"));
   if (!document.body.classList.contains("studio-route")) landingPreview.show();
