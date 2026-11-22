@@ -436,6 +436,9 @@ async function verifyPaletteVersions(browser,studioUrl) {
     const hex=page.locator("#swatch-hex"),opacity=page.locator("#swatch-opacity");
     const harmony=page.locator("#harmony");
     const originalHex=await hex.inputValue(),originalOpacity=await opacity.inputValue(),originalHarmony=await harmony.inputValue();
+    await page.locator('[data-command-menu-trigger="export"]').click();
+    const [aseDownload]=await Promise.all([page.waitForEvent("download"),page.locator('[data-export="ase"]').click()]);
+    const asePath=await aseDownload.path();
     await openVersions();
     await page.locator("#save-version").click();
     const first=await versions.inputValue();
@@ -477,6 +480,16 @@ async function verifyPaletteVersions(browser,studioUrl) {
     assert.equal(await hex.inputValue(),"#114488","one Undo restores the edited color");
     assert.equal(await opacity.inputValue(),"60","one Undo restores the edited opacity");
     assert.equal(await harmony.inputValue(),"square","one Undo restores the edited harmony");
+    await openPalette();
+    const [aseChooser]=await Promise.all([page.waitForEvent("filechooser"),page.locator("#import-palette").click()]);
+    await aseChooser.setFiles({name:"studio-modern.ase",mimeType:"application/octet-stream",buffer:await readFile(asePath)});
+    await page.waitForFunction(expected=>globalThis.document.querySelector("#swatch-hex")?.value===expected,originalHex);
+    assert.equal(await opacity.inputValue(),originalOpacity,"the imported ASE swatches are opaque");
+    assert.equal(await harmony.inputValue(),"square","ASE import preserves the active harmony");
+    await page.locator('[data-command-menu-trigger="history"]').click();
+    await page.locator("#undo").click();
+    assert.equal(await hex.inputValue(),"#114488","one Undo restores the previous palette after ASE import");
+    assert.equal(await opacity.inputValue(),"60");
   } finally {
     await page.close();
   }

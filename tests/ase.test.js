@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {paletteAse} from "../src/export/ase.js";
+import {paletteAse,readPaletteAse} from "../src/export/ase.js";
 test("ASE contains a complete big-endian group with named RGB process colors",()=>{
   const palette={name:"Yorùbá 🎨",colors:[{name:"Red",hex:"#FF0000"},{name:"Àwọ̀",hex:"#2196F3",opacity:1}]},before=JSON.stringify(palette);
   const buffer=Buffer.from(paletteAse(palette));assert.equal(buffer.toString("ascii",0,4),"ASEF");assert.equal(buffer.readUInt16BE(4),1);assert.equal(buffer.readUInt16BE(6),0);assert.equal(buffer.readUInt32BE(8),4);
@@ -15,4 +15,28 @@ test("ASE contains a complete big-endian group with named RGB process colors",()
 test("ASE rejects opacity and malformed palettes instead of silently discarding data",()=>{
   const valid={name:"Test",colors:[{name:"Blue",hex:"#0000FF"}]};assert.ok(paletteAse(valid).length>12);
   for(const bad of [{...valid,colors:[]},{...valid,colors:Array(257).fill(valid.colors[0])},{...valid,name:"Bad\0name"},{...valid,name:"\ud800"},{...valid,colors:[{name:"Blue",hex:"#0000FF",opacity:.5}]},{...valid,colors:[{name:"Blue",hex:"invalid"}]}])assert.throws(()=>paletteAse(bad));
+});
+
+test("ASE import preserves the group, ordered RGB values, accents and emoji",()=>{
+  const palette={name:"Àwọ̀ 🎨",colors:[{name:"Ìmọ́lẹ̀ 💡",hex:"#0180FE"},{name:"Dúdú",hex:"#000000"}]};
+  const decoded=readPaletteAse(paletteAse(palette));
+  assert.equal(decoded.name,palette.name);
+  assert.deepEqual(decoded.colors.map(({name,hex})=>({name,hex})),palette.colors);
+  assert.equal(new Set(decoded.colors.map(color=>color.id)).size,2);
+  assert.ok(decoded.colors.every(color=>!color.locked));
+});
+
+test("ASE import rejects truncation, trailing data and unsupported color records",()=>{
+  const valid=paletteAse({name:"Studio",colors:[{name:"Blue",hex:"#0000FF"}]});
+  for (const bytes of [valid.subarray(0,-1),Uint8Array.of(...valid,0)]) {
+    assert.throws(()=>readPaletteAse(bytes));
+  }
+  const view=new DataView(valid.buffer);
+  const colorBlock=18+view.getUint32(14);
+  const model=colorBlock+8+view.getUint16(colorBlock+6)*2;
+  const spot=valid.slice(), nonRgb=valid.slice(), outOfRange=valid.slice();
+  new DataView(spot.buffer).setUint16(spot.length-8,1);
+  nonRgb.set([67,77,89,75],model);
+  new DataView(outOfRange.buffer).setFloat32(model+4,1.1);
+  for (const bytes of [spot,nonRgb,outOfRange]) assert.throws(()=>readPaletteAse(bytes));
 });
