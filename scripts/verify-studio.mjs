@@ -218,6 +218,31 @@ async function verifyVirtualPlayback(browser, studioUrl) {
     const saveAnnouncement = page.locator("#project-save-announcement");
     const originalAnnouncement = await saveAnnouncement.elementHandle();
     await requireFocus(projectName, "the Save dialog focuses the project name field");
+    const projectNameBeforeSave = await page.locator("#project-name").inputValue();
+    const originalStorageWriter = await page.evaluateHandle(() => globalThis.Storage.prototype.setItem);
+    await page.evaluate(originalWrite => {
+      globalThis.Storage.prototype.setItem = function (key, value) {
+        if (key === "adigunlightdesign/saved-projects-v1") {
+          throw new globalThis.DOMException("Storage is full", "QuotaExceededError");
+        }
+        return originalWrite.call(this, key, value);
+      };
+    }, originalStorageWriter);
+    try {
+      await projectName.fill("Failed save");
+      await projectName.press("Enter");
+      await projectDialog.waitFor({state:"detached"});
+      await page.waitForFunction(message =>
+        globalThis.document.querySelector("#project-save-announcement")?.textContent === message, messages.en.storageUnavailable);
+      assert.equal(await page.locator("#project-name").inputValue(), projectNameBeforeSave, "a failed save preserves the working project name");
+      assert.equal(await page.evaluate(() => globalThis.localStorage.getItem("adigunlightdesign/saved-projects-v1")), null,
+        "a failed save creates no saved project");
+    } finally {
+      await page.evaluate(originalWrite => {globalThis.Storage.prototype.setItem = originalWrite;}, originalStorageWriter);
+      await originalStorageWriter.dispose();
+    }
+    await page.keyboard.press("Control+s");
+    await requireFocus(projectName, "the project remains saveable after browser storage recovers");
     await projectName.fill("Keyboard acceptance");
     await projectName.press("Enter");
     await projectDialog.waitFor({state:"detached"});
