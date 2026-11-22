@@ -1054,3 +1054,14 @@ body:not(.studio-route) .studio-shell { display:none; }
   .timeline > .cue-editor > fieldset p { display:inline-flex; align-items:center; flex:0 1 auto; min-width:0; max-width:145px; margin:0; padding:0; overflow:hidden; font-size:7px; line-height:10px; white-space:nowrap; }
   .timeline > .cue-editor > fieldset p button { flex:0 0 16px; width:16px; min-width:16px; height:16px; min-height:16px; }
 }
+.visually-hidden {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

@@ -417,7 +417,7 @@ function persistProject(name) {
   const records=readSavedProjects();
   const id=activeSavedProjectId || (globalThis.crypto?.randomUUID?.() ?? ("saved-"+Date.now()+"-"+Math.random().toString(36).slice(2)));
   const next=[...records.filter((record)=>record.id!==id),{id,name,updatedAt:projectCopy.updatedAt,project:projectCopy}];
-  if(!writeBrowserStorage(savedProjectsKey,JSON.stringify({projects:next})).ok){projectPersisted=false;status=t("storageUnavailable");render();return false;}
+  if(!writeBrowserStorage(savedProjectsKey,JSON.stringify({projects:next})).ok){projectPersisted=false;status=t("storageUnavailable");return false;}
   project=prepareEditorProject(projectCopy);
   activeSavedProjectId=id;
   projectPersisted=true;
@@ -426,7 +426,15 @@ function persistProject(name) {
   return true;
 }
 function saveProject(onSaved) {
-  const save=(name)=>{if(persistProject(name)){render();onSaved?.();}};
+  const announcement=document.querySelector("#project-save-announcement");
+  announcement.textContent="";
+  const save=(name)=>{
+    const saved=persistProject(name);
+    render();
+    const message=status;
+    requestAnimationFrame(()=>{announcement.textContent=message;});
+    if(saved)onSaved?.();
+  };
   if(activeSavedProjectId){const current=readSavedProjects().find((record)=>record.id===activeSavedProjectId);if(current){save(current.name);return;}}
   showSaveDialog(save);
 }

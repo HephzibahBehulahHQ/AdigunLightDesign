@@ -215,11 +215,19 @@ async function verifyVirtualPlayback(browser, studioUrl) {
     await page.keyboard.press("ArrowDown");
     await page.keyboard.press("Enter");
     const projectName = page.locator("#saved-project-name");
+    const saveAnnouncement = page.locator("#project-save-announcement");
+    const originalAnnouncement = await saveAnnouncement.elementHandle();
     await requireFocus(projectName, "the Save dialog focuses the project name field");
     await projectName.fill("Keyboard acceptance");
     await projectName.press("Enter");
     await projectDialog.waitFor({state:"detached"});
     await requireFocus(projectMenu, "saving returns focus to the Project menu after rendering");
+    await page.waitForFunction(message =>
+      globalThis.document.querySelector("#project-save-announcement")?.textContent === message, messages.en.projectSaved);
+    assert.equal(await originalAnnouncement.evaluate(element =>
+      element === globalThis.document.querySelector("#project-save-announcement")), true,
+    "the save result updates the same live region across a studio redraw");
+    await originalAnnouncement.dispose();
 
     const imageBytes=await page.evaluate(()=>{
       const canvas=globalThis.document.createElement("canvas");
