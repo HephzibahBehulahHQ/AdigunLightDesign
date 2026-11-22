@@ -345,9 +345,10 @@ async function importNativeProject(file) {
 }
 async function importPaletteFile(file) {
   const generation=workspaceGeneration;
+  const isAse=/\.ase$/i.test(file.name);
   try {
     if (file.size>5_000_000) throw new Error("Palette file exceeds 5 MB.");
-    const imported=/\.ase$/i.test(file.name)
+    const imported=isAse
       ? readPaletteAse(new Uint8Array(await file.arrayBuffer()),file.name)
       : readPaletteJson(await file.text());
     if (generation!==workspaceGeneration) return;
@@ -359,7 +360,7 @@ async function importPaletteFile(file) {
     savePreferences();
     setStatus(t("paletteImported"));
   } catch {
-    if (generation===workspaceGeneration) setStatus(t("paletteImportFailed"));
+    if (generation===workspaceGeneration) setStatus(t(isAse && file.size<=5_000_000 ? "paletteAseImportFailed" : "paletteImportFailed"));
   }
 }
 async function importVirtualFixtureRig(file) {
