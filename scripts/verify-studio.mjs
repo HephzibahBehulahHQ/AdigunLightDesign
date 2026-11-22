@@ -1573,9 +1573,17 @@ try {
   const kitchenPosition=await page.evaluate(()=>["x","y","z"].map(axis=>Number(globalThis.document.querySelector(`#fixture-${axis}`).value)));
   assert.ok(Math.abs(kitchenPosition[0])<3&&kitchenPosition[1]>0&&kitchenPosition[1]<3&&Math.abs(kitchenPosition[2])<2.5,"new kitchen fixtures start inside the selected room");
   const originalKitchenViewport = await sampleCurrentViewport();
+  const kitchenFixtureName = "Kitchen <accent> & fill";
+  const fixtureConfiguration = page.locator(".fixture-configuration-details");
+  if (await fixtureConfiguration.getAttribute("open") === null) {
+    await fixtureConfiguration.locator("summary").click();
+  }
+  await page.locator("#fixture-name").fill(kitchenFixtureName);
   await page.locator("#fixture-colour").fill("#ff2030");
   await page.locator("#fixture-dimmer").fill("180");
   await page.locator("#apply-fixture").click();
+  assert.ok((await page.locator("#status").textContent()).includes(kitchenFixtureName),
+    "the footer displays fixture name punctuation literally after a studio redraw");
   assert.ok(viewportPixelDifference(originalKitchenViewport, await sampleCurrentViewport()) > 0.25,
     "changing kitchen fixture color and dimmer changes the pixels in the downloaded viewport");
   assert.match(await page.locator("#cycle-lighting-look").innerText(),/Custom/i,"manual fixture edits identify the room lighting as customized");
