@@ -91,6 +91,8 @@ its selected look and dimmer setting into the studio.
 - **M4, M7, and M9:** Virtual patching, fixture selection, and downloads have
   browser evidence, including a real cue PDF download checked for title and
   page count and a rendered review of the starter sheet.
+  Chrome also verifies that a conflicting DMX address names the occupying
+  fixture and leaves all fixture records unchanged in the downloaded project.
   The ASE RGB writer has independent Swatch parser evidence and real GIMP 3.2.6
   import evidence for two palettes. Chrome verified downloaded viewport PNG
   content and the starter SVG, PNG and JPEG swatch pixels. Poppler rendered
