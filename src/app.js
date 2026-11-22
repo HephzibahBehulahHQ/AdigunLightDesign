@@ -727,7 +727,7 @@ function render() {
     <div id="AdigunStudio" class="studio-shell" data-project-id="${esc(project.id)}">
     <header class="topbar">
       <a class="brand-lockup" href="#top" aria-label="${t("brandAlt")} — home">
-        <img class="corporate-mark" src="./assets/corporate/hephzibah-behulah-official.jpg" alt="Hephzibah Behulah" onerror="this.hidden=true;this.nextElementSibling.hidden=false" />
+        <img class="corporate-mark" src="./assets/corporate/hephzibah-behulah-official.jpg" alt="Hephzibah Behulah" />
         <span class="brand-fallback" hidden>HB <b>Hephzibah Behulah</b></span><span class="brand-divider"></span><span class="division">⚡ HB Elektroniker</span>
       </a>
       <div class="product-lockup"><strong>Adigun <span>Light</span> Design</strong><small>COLOR + LIGHT STUDIO</small></div>
@@ -1029,6 +1029,14 @@ function render() {
 }
 
 function bind() {
+  const corporateMark=document.querySelector(".topbar .corporate-mark");
+  const brandFallback=corporateMark.nextElementSibling;
+  const showBrandName=()=>{
+    corporateMark.hidden=true;
+    brandFallback.hidden=false;
+  };
+  corporateMark.addEventListener("error",showBrandName,{once:true});
+  if (corporateMark.complete && !corporateMark.naturalWidth) showBrandName();
   for(const id of ["viewport-fullscreen","viewport-exit-fullscreen"])document.querySelector(`#${id}`).onclick=async()=>{
     try {await toggleViewportFullscreen(document.querySelector(".scene-preview"),document);}
     catch {setStatus(t("fullscreenUnavailable"));}
