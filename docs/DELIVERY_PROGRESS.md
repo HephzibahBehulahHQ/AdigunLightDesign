@@ -132,8 +132,12 @@ On November 22, the full studio suite passed on Windows using Microsoft Edge
 sizes, mobile emulation, WebGL playback, save and reopen, downloads, and the
 offline build. The full suite also passed with Playwright Firefox 159.0 on
 Windows, including WebGL context recovery and downloads. Firefox used narrow
-desktop viewports with touch input enabled. Physical mobile hardware and
-WebKit still need verification.
+desktop viewports with touch input enabled. On the same Windows host,
+Playwright WebKit 27.2 lost its WebGL context during compilation even in a
+standalone canvas probe. The full WebKit run remains open. Chrome acceptance
+forces a shader compilation failure and verifies that the landing demos and
+non-3D studio tools stay available. Physical mobile hardware still needs
+verification.
 
 ## 3D playback performance sample
 
