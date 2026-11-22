@@ -141,6 +141,10 @@ verification.
 
 ## 3D playback performance sample
 
+Chrome verifies that landing-page visits initialize only the landing preview.
+The studio renderer starts on editor entry and releases its resources on exit.
+Returning to the landing page preserves the selected preview look.
+
 On 21 November 2026, headless Chrome 158 on Windows reported an Intel Arc
 140T renderer using ANGLE Direct3D 11. In the starter studio at 1440 × 900
 CSS pixels and 2× device scale, the test timed animation callbacks for 3.2

@@ -567,12 +567,21 @@ try {
   const openFixtureList=async()=>{const trigger=page.locator("#toggle-fixtures");if(await trigger.getAttribute("aria-expanded")!=="true")await trigger.click();};
   const runtimeErrors = [];
   page.on("pageerror", (error) => runtimeErrors.push(error.message));
-  await page.addInitScript(()=>localStorage.setItem("adigunlightdesign/project-v1",JSON.stringify({name:"stale working copy"})));
+  await page.addInitScript(()=>{
+    localStorage.setItem("adigunlightdesign/project-v1",JSON.stringify({name:"stale working copy"}));
+    globalThis.studioRendererStarts=0;
+    const getContext=globalThis.HTMLCanvasElement.prototype.getContext;
+    globalThis.HTMLCanvasElement.prototype.getContext=function (kind,options) {
+      if (kind==="webgl" && this.id==="light-canvas") globalThis.studioRendererStarts+=1;
+      return getContext.call(this,kind,options);
+    };
+  });
   await page.emulateMedia({reducedMotion:"reduce"});
   await page.goto(`http://127.0.0.1:${address.port}/`, { waitUntil: "networkidle" });
   assert.equal(await page.locator(".marketing-home").isVisible(),true,"the product landing page is the public entry point");
   assert.equal(await page.locator(".marketing-brand img").evaluate(image=>image.complete&&image.naturalWidth>0),true,"the approved corporate logo loads from the bundled product asset");
   assert.equal(await page.locator(".studio-shell").isVisible(),false,"the editor stays off the landing page until requested");
+  assert.equal(await page.evaluate(()=>globalThis.studioRendererStarts),0,"the landing page never initializes the hidden studio renderer");
   const landingCanvas = page.locator(".marketing-viewport canvas");
   const defaultPreview = await landingCanvas.screenshot();
   await page.locator('[data-landing-look="cyan-modern"]').click();
@@ -637,6 +646,14 @@ try {
   await page.getByRole("link",{name:/Go to the Studio/}).first().click();
   await page.waitForURL(/#AdigunStudio$/);
   await page.locator("body.studio-route").waitFor();
+  assert.equal(await page.evaluate(()=>globalThis.studioRendererStarts),1,"opening the studio initializes its WebGL renderer once");
+  await page.evaluate(()=>{globalThis.location.hash="#top";});
+  await page.locator(".marketing-home").waitFor();
+  assert.equal(await page.locator('[data-landing-look="cyan-modern"]').getAttribute("aria-pressed"),"true",
+    "returning to the landing page preserves the selected preview look");
+  await page.getByRole("link",{name:/Go to the Studio/}).first().click();
+  await page.locator("body.studio-route").waitFor();
+  assert.equal(await page.evaluate(()=>globalThis.studioRendererStarts),2,"reopening the studio recreates its released renderer");
   await verifyUtilityControls(page);
   assert.equal(await page.locator(".marketing-home").isVisible(),false,"the studio anchor replaces the landing view");
   assert.equal(await page.locator(".studio-shell").isVisible(),true,"the existing studio opens at its anchor");
