@@ -513,11 +513,14 @@ async function verifyPaletteVersions(browser,studioUrl) {
     assert.equal(await page.locator("#ase-global-notice").isVisible(),true,"the selected global group explains the conversion");
     await page.locator("#ase-palette-group").press("Escape");
     await page.locator("#ase-palette-group").waitFor({state:"detached"});
+    const focusedPaletteTrigger=page.locator('[data-command-menu-trigger="palette"]:focus');
+    await focusedPaletteTrigger.waitFor();
     assert.equal(await hex.inputValue(),"#114488","cancel leaves the active palette untouched");
     await openLibrary();
     await page.locator("#ase-palette-group").selectOption("1");
     await page.locator(".project-dialog [type=submit]").click();
     await page.waitForFunction(expected=>globalThis.document.querySelector("#swatch-hex")?.value===expected,originalHex);
+    await focusedPaletteTrigger.waitFor();
     assert.equal(await opacity.inputValue(),originalOpacity,"explicitly importing the selected group applies opaque RGB values");
   } finally {
     await page.close();

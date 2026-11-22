@@ -395,9 +395,9 @@ function readSavedProjects() {
   const stored=safeParse(readBrowserStorage(savedProjectsKey).value);
   return Array.isArray(stored.projects) ? stored.projects.filter((item)=>item?.id && validateProject(item.project).valid) : [];
 }
-function makeProjectDialog(title,content) {
+function makeProjectDialog(title,content,returnToMenu) {
   const opener = document.activeElement;
-  const menu = opener?.closest("[data-command-menu]")?.dataset.commandMenu;
+  const menu = returnToMenu ?? opener?.closest("[data-command-menu]")?.dataset.commandMenu;
   const dialog=document.createElement("dialog");
   dialog.className="project-dialog";
   dialog.setAttribute("aria-labelledby","project-dialog-title");
@@ -418,7 +418,7 @@ function chooseAsePalette(palettes) {
   const dialog=makeProjectDialog(t("importPaletteJson"),
     `<label class="project-dialog-field">${esc(t("palette"))}<select id="ase-palette-group">${options}</select></label>
     <p id="ase-global-notice">${esc(t("aseGlobalNotice"))}</p>
-    <div class="project-dialog-actions"><button type="button" data-cancel>${esc(t("cancel"))}</button><button type="submit">${esc(t("importAction"))}</button></div>`);
+    <div class="project-dialog-actions"><button type="button" data-cancel>${esc(t("cancel"))}</button><button type="submit">${esc(t("importAction"))}</button></div>`,"palette");
   const group=dialog.querySelector("#ase-palette-group");
   const selectedGroup=()=>palettes[Number(group.value)];
   const notice=dialog.querySelector("#ase-global-notice");
