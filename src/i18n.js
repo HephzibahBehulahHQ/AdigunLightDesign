@@ -332,10 +332,10 @@ Object.assign(messages.de,{fixtureNameAndPosition:"Name und Position",moreLightC
 Object.assign(messages.yo,{fixtureNameAndPosition:"Orúkọ àti ipò",moreLightControls:"Àwọn ìṣàkóso ìmọ́lẹ̀ míì",validFixtureValue:"Tẹ iye tó tọ́ fún {field}."});
 Object.assign(messages.pcm,{fixtureNameAndPosition:"Name and position",moreLightControls:"More light controls",validFixtureValue:"Enter valid value for {field}."});
 
-Object.assign(messages.en,{importPaletteJson:"Import palette JSON",paletteImported:"Palette imported.",paletteImportFailed:"Choose a valid AdigunLightDesign palette JSON file of 5 MB or less."});
-Object.assign(messages.de,{importPaletteJson:"Paletten-JSON importieren",paletteImported:"Palette importiert.",paletteImportFailed:"Wähle eine gültige AdigunLightDesign-Paletten-JSON-Datei mit höchstens 5 MB."});
-Object.assign(messages.yo,{importPaletteJson:"Gbé JSON àkójọpọ̀ àwọ̀ wọlé",paletteImported:"A ti gbé àkójọpọ̀ àwọ̀ wọlé.",paletteImportFailed:"Yan fáìlì JSON àkójọpọ̀ àwọ̀ AdigunLightDesign tó tọ́, tí kò ju 5 MB lọ."});
-Object.assign(messages.pcm,{importPaletteJson:"Import palette JSON",paletteImported:"Palette don enter.",paletteImportFailed:"Choose valid AdigunLightDesign palette JSON file wey no pass 5 MB."});
+Object.assign(messages.en,{importPaletteJson:"Import palette (JSON / ASE)",paletteImported:"Palette imported.",paletteImportFailed:"Choose a supported palette file (JSON or RGB ASE, up to 5 MB)."});
+Object.assign(messages.de,{importPaletteJson:"Palette importieren (JSON / ASE)",paletteImported:"Palette importiert.",paletteImportFailed:"Wähle eine unterstützte Palettendatei (JSON oder RGB-ASE, höchstens 5 MB)."});
+Object.assign(messages.yo,{importPaletteJson:"Gbé àkójọpọ̀ àwọ̀ wọlé (JSON / ASE)",paletteImported:"A ti gbé àkójọpọ̀ àwọ̀ wọlé.",paletteImportFailed:"Yan fáìlì àkójọpọ̀ àwọ̀ tó tọ́ (JSON / RGB ASE, tó pọ̀ jù 5 MB)."});
+Object.assign(messages.pcm,{importPaletteJson:"Import palette (JSON / ASE)",paletteImported:"Palette don enter.",paletteImportFailed:"Choose valid palette file (JSON or RGB ASE) wey no pass 5 MB."});
 
 Object.assign(messages.en,{cueName:"Cue name"});
 Object.assign(messages.de,{cueName:"Cue-Name"});

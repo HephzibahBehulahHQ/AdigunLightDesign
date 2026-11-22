@@ -53,7 +53,7 @@ import { createLiveCopilotPanel } from "./ui/live-copilot-panel.js";
 import { arrangementTimelineMarkup } from "./ui/arrangement-timeline.js";
 import { bindFixtureSliders } from "./ui/fixture-sliders.js";
 import { bindCanvasMeasure } from "./ui/canvas-measure.js";
-import { paletteAse } from "./export/ase.js";
+import { paletteAse, readPaletteAse } from "./export/ase.js";
 import {topMenuMarkup,bindTopMenu} from "./ui/top-menu.js";
 import {bindCommandMenus} from "./ui/command-menus.js";
 import {helpGuideMarkup} from "./ui/help-guide.js";
@@ -347,7 +347,9 @@ async function importPaletteFile(file) {
   const generation=workspaceGeneration;
   try {
     if (file.size>5_000_000) throw new Error("Palette file exceeds 5 MB.");
-    const imported=readPaletteJson(await file.text());
+    const imported=/\.ase$/i.test(file.name)
+      ? readPaletteAse(new Uint8Array(await file.arrayBuffer()))
+      : readPaletteJson(await file.text());
     if (generation!==workspaceGeneration) return;
     commitProjectChange("palette-import",draft=>{
       draft.palettes[0]={...draft.palettes[0],...imported};
@@ -700,7 +702,7 @@ function render() {
     </header>
     <nav class="module-nav" aria-label="${t("appModules")}"><div class="workspace-modules">${nav}</div>${commandMenusMarkup}</nav>
     <main id="workspace" class="editor-layout">
-      <input id="palette-json-file" type="file" accept="application/json,.json" hidden />
+      <input id="palette-json-file" type="file" accept="application/json,.json,.ase" hidden />
       <input id="fixture-rig-file" type="file" accept="application/json,.json" hidden />
       <aside class="left-rail panel">
         <div class="left-rail-heading"><h2>${t("project")} • ${t("layers")} • ${t("tools")}</h2></div>

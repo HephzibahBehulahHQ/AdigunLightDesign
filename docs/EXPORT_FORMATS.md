@@ -53,9 +53,14 @@ all seven swatches in order, with exact 8-bit RGB values and swatch names,
 including Yoruba accents and emoji. GIMP used each input filename as the
 default palette title.
 
-The experimental label remains in the studio. Adobe application import, studio
-ASE re-import, CMYK/Lab/spot-color output, and ICC profiles remain outside this
-verification.
+The Palette menu reopens ASE v1 files in the studio's one-group RGB process
+subset. Import preserves the palette name, swatch order and names, and RGB
+values rounded to the nearest 8-bit channel value. ASE does not carry studio
+IDs, locks, or harmony. Imported swatches get new IDs and are unlocked, and
+the active harmony stays in place. One Undo restores the previous palette.
+The importer rejects unsupported color models, spot colors, extra groups,
+and malformed records. Adobe application import and ICC profiles remain
+unverified.
 
 ## PDF palette sheets
 
