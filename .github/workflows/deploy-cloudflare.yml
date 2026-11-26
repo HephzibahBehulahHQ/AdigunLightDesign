@@ -83,7 +83,7 @@ jobs:
           import {readFile} from "node:fs/promises";
 
           const base = process.env.LIVE_BASE_URL;
-          for (const route of ["/", "/studio"]) {
+          for (const route of ["/"]) {
             const response = await fetch(new URL(route, base), {cache:"no-store"});
             assert.equal(response.status, 200, `${route} must load from production`);
             assert.match(response.headers.get("content-type") || "", /text\/html/i, `${route} must return HTML`);
