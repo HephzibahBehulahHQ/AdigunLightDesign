@@ -1,0 +1,91 @@
+name: Build and deploy AdigunLightDesign
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows:
+      - Validate static core
+    branches:
+      - main
+    types:
+      - completed
+
+permissions:
+  contents: read
+
+concurrency:
+  group: adigunlightdesign-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Validate and deploy production Worker
+    if: ${{ (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the exact validated commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Project checks
+        run: npm run check
+
+      - name: Install Chromium for studio acceptance
+        run: npx playwright install --with-deps chromium
+
+      - name: Verify studio and accessibility
+        run: npm run verify:studio
+
+      - name: Build production assets
+        run: npm run build
+        env:
+          ALD_SUPABASE_PUBLISHABLE_KEY: ${{ vars.ALD_SUPABASE_PUBLISHABLE_KEY }}
+
+      - name: Deploy production Worker and static assets
+        uses: cloudflare/wrangler-action@2ef9f398b9175c68f953e40d679493850d640a85
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: 4.168.0
+          environment: production
+
+      - name: Verify deployed studio and offline worker
+        env:
+          LIVE_BASE_URL: https://adigunlightdesign.hephzibahbehulah.com
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from "node:assert/strict";
+          import {readFile} from "node:fs/promises";
+
+          const base = process.env.LIVE_BASE_URL;
+          for (const route of ["/", "/studio"]) {
+            const response = await fetch(new URL(route, base), {cache:"no-store"});
+            assert.equal(response.status, 200, `${route} must load from production`);
+            assert.match(response.headers.get("content-type") || "", /text\/html/i, `${route} must return HTML`);
+            assert.match(await response.text(), /AdigunLightDesign/, `${route} must identify the product`);
+          }
+
+          const response = await fetch(new URL("/service-worker.js", base), {cache:"no-store"});
+          assert.equal(response.status, 200, "the updated offline worker must be published");
+          const deployedWorker = Buffer.from(await response.arrayBuffer());
+          const builtWorker = await readFile("dist/service-worker.js");
+          assert.deepEqual(deployedWorker, builtWorker, "the live offline worker must match this exact release");
+          NODE
