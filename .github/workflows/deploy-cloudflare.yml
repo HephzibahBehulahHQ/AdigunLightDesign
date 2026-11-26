@@ -21,6 +21,7 @@ jobs:
   deploy:
     name: Validate and deploy production Worker
     if: ${{ (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main') }}
+    environment: cloudflare-production
     runs-on: ubuntu-latest
     steps:
       - name: Check out the exact validated commit
@@ -69,7 +70,7 @@ jobs:
         uses: cloudflare/wrangler-action@2ef9f398b9175c68f953e40d679493850d640a85
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          accountId: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           wranglerVersion: 4.168.0
           environment: production
 
